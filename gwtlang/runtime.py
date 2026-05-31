@@ -134,6 +134,20 @@ class RunResult:
         return self.scenarios[0].output
 
 
+@dataclass
+class CallFrame:
+    name: str
+    call_line: Line
+    caller_env: dict[str, Any]
+
+
+@dataclass
+class StackFrame:
+    name: str
+    line: Line
+    locals: dict[str, Any]
+
+
 def run_source(source: str, filename: str = "<source>") -> RunResult:
     program = parse_program(source, filename)
     runtime = Runtime(program)
@@ -327,6 +341,7 @@ class Runtime:
         self.output: list[str] = []
         self.actions = self._index_actions(program.actions)
         self.debugger = debugger
+        self.call_stack: list[CallFrame] = []
 
     def run(self) -> RunResult:
         results: list[ScenarioResult] = []
@@ -488,7 +503,16 @@ class Runtime:
         for action in reversed(candidates):
             env = self._match_action(action, call, caller_env)
             if env is not None:
-                return self._run_body(action.body, env)
+                frame = CallFrame(
+                    action.signature_text or " ".join(action.signature),
+                    line,
+                    caller_env,
+                )
+                self.call_stack.append(frame)
+                try:
+                    return self._run_body(action.body, env)
+                finally:
+                    self.call_stack.pop()
         raise GwtError(f"line {line.number}: no action matches: {' '.join(call)}")
 
     def _run_body(self, body: list[Any], env: dict[str, Any]) -> BehaviorReturn | None:
@@ -512,7 +536,18 @@ class Runtime:
 
     def _before_line(self, line: Line, env: dict[str, Any]) -> None:
         if self.debugger is not None:
-            self.debugger.before_line(line, self.state, env)
+            self.debugger.before_line(line, self.state, env, self._stack_frames(line, env))
+
+    def _stack_frames(self, line: Line, env: dict[str, Any]) -> list[StackFrame]:
+        if not self.call_stack:
+            return [StackFrame("Main", line, env)]
+
+        frames = [StackFrame(self.call_stack[-1].name, line, env)]
+        for index in range(len(self.call_stack) - 1, -1, -1):
+            active = self.call_stack[index]
+            caller_name = self.call_stack[index - 1].name if index > 0 else "Main"
+            frames.append(StackFrame(caller_name, active.call_line, active.caller_env))
+        return frames
 
     def _run_for(self, statement: ForBlock, env: dict[str, Any]) -> BehaviorReturn | None:
         if statement.name in env or self._path_exists(statement.name):

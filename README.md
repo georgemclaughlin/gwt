@@ -161,9 +161,10 @@ Run and Debug panel, then press `F5`. In the Extension Development Host window,
 open a `.gwt` file such as `/home/g/code/gwt/examples/typed_contracts.gwt`.
 Pressing `F5` on a `.gwt` file in that host window runs it through the GWT
 debug adapter. Line breakpoints pause before matching executable GWT lines, and
-the Variables panel shows current locals and state while paused. Breakpoints on
-non-executable lines are shown as unverified, while blank/comment lines move to
-the next executable line when one is available.
+the Call Stack and Variables panels show active behavior calls, frame locals,
+and current state while paused. Breakpoints on non-executable lines are shown as
+unverified, while blank/comment lines move to the next executable line when one
+is available.
 
 The same analysis layer is available from Python:
 

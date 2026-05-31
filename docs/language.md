@@ -238,7 +238,8 @@ currently supports:
 
 `gwt debug file.gwt --breakpoint line` runs a GWT file using the debugger
 protocol. The VS Code extension uses this mode to support line breakpoints,
-continue, step over, and state/local variable inspection.
+continue, step over, source-level call stacks, and state/local variable
+inspection.
 
 `gwt debug-lines file.gwt --json` reports the executable source lines that can
 accept debugger breakpoints. The VS Code extension uses this to verify

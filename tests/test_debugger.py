@@ -37,7 +37,43 @@ THEN count == 3
         self.assertEqual(messages[0]["line"], 2)
         self.assertEqual(messages[0]["locals"]["amount"], 2)
         self.assertEqual(messages[0]["state"]["count"], 1)
+        self.assertEqual([frame["name"] for frame in messages[0]["stack"]], ["increase amount in count", "Main"])
         self.assertEqual(messages[-1], {"event": "terminated", "exitCode": 0})
+
+    def test_debug_runner_reports_nested_call_stack(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "nested.gwt"
+            program.write_text(
+                """
+WHEN double amount into result
+  add amount to result
+
+WHEN wrap amount into result
+  double amount into result
+
+GIVEN result is 0
+WHEN wrap 2 into result
+THEN result == 2
+""".lstrip()
+            )
+            stdin = io.StringIO('{"command":"continue"}\n')
+            stdout = io.StringIO()
+
+            status = run_debug_file(
+                program,
+                breakpoints=[Breakpoint(str(program.resolve()), 2)],
+                stdin=stdin,
+                stdout=stdout,
+            )
+
+        messages = [json.loads(line) for line in stdout.getvalue().splitlines()]
+        stack = messages[0]["stack"]
+        self.assertEqual(status, 0)
+        self.assertEqual([frame["name"] for frame in stack], ["double amount into result", "wrap amount into result", "Main"])
+        self.assertEqual([frame["line"] for frame in stack], [2, 5, 8])
+        self.assertEqual(stack[0]["locals"]["amount"], 2)
+        self.assertEqual(stack[1]["locals"]["amount"], 2)
+        self.assertEqual(stack[2]["locals"], {})
 
     def test_debug_runner_step_next_stops_on_next_statement(self):
         with tempfile.TemporaryDirectory() as temp_dir:

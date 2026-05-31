@@ -7,7 +7,7 @@ import sys
 from typing import Any, TextIO
 
 from .errors import GwtError
-from .runtime import DtoValidation, ForBlock, IfBlock, Line, PathRef, Program, Runtime, parse_program
+from .runtime import DtoValidation, ForBlock, IfBlock, Line, PathRef, Program, Runtime, StackFrame, parse_program
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,13 @@ class DebugController:
         self.stdout = stdout
         self.pause_next = False
 
-    def before_line(self, line: Line, state: dict[str, Any], env: dict[str, Any]) -> None:
+    def before_line(
+        self,
+        line: Line,
+        state: dict[str, Any],
+        env: dict[str, Any],
+        stack: list[StackFrame] | None = None,
+    ) -> None:
         if not self._should_pause(line):
             return
         self.pause_next = False
@@ -63,6 +69,7 @@ class DebugController:
                 "text": line.text,
                 "state": _debug_value(state),
                 "locals": _debug_value(env),
+                "stack": _debug_stack(stack or [StackFrame("Main", line, env)]),
             }
         )
         self._wait_for_resume()
@@ -215,3 +222,17 @@ def _debug_value(value: Any) -> Any:
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
     return repr(value)
+
+
+def _debug_stack(stack: list[StackFrame]) -> list[dict[str, Any]]:
+    return [
+        {
+            "name": frame.name,
+            "file": frame.line.filename,
+            "line": frame.line.number,
+            "column": frame.line.column,
+            "text": frame.line.text,
+            "locals": _debug_value(frame.locals),
+        }
+        for frame in stack
+    ]
