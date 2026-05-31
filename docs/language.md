@@ -194,6 +194,24 @@ keeping inputs in the same language shape.
 
 Request files can use DTOs declared by the program file.
 
+## Embedding API
+
+Host applications can call GWT through the Python package instead of shelling
+out to the CLI:
+
+```python
+from gwtlang import check_file, run_file
+
+check = check_file("rules.gwt")
+if check.ok:
+    execution = run_file("rules.gwt", request_file="request.gwt")
+    state = execution.state
+```
+
+`check_file` returns a structured result with `ok`, `diagnostics`, and
+`as_payload()`. `run_file` returns an execution result with `state`, `output`,
+`scenarios`, and `as_payload()`.
+
 ## Static Checking
 
 `gwt check file.gwt` parses a program and runs semantic checks without
