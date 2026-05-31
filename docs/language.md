@@ -236,6 +236,10 @@ currently supports:
 - go-to-definition for behavior calls
 - completions for known language symbols
 
+`gwt debug file.gwt --breakpoint line` runs a GWT file using the debugger
+protocol. The VS Code extension uses this mode to support line breakpoints,
+continue, step over, and state/local variable inspection.
+
 ## Examples Tables
 
 `EXAMPLES` turns one scenario into multiple scenario runs by replacing

@@ -320,11 +320,12 @@ def parse_program(
 
 
 class Runtime:
-    def __init__(self, program: Program) -> None:
+    def __init__(self, program: Program, debugger: Any | None = None) -> None:
         self.program = program
         self.state: dict[str, Any] = {}
         self.output: list[str] = []
         self.actions = self._index_actions(program.actions)
+        self.debugger = debugger
 
     def run(self) -> RunResult:
         results: list[ScenarioResult] = []
@@ -346,12 +347,14 @@ class Runtime:
         thens = [*self.program.background.thens, *_substitute_lines(scenario.thens, example)]
         for line in givens:
             if isinstance(line, DtoValidation):
+                self._before_line(line.line, {})
                 self._validate_dto(line)
             else:
                 self._run_given(line)
         for line in whens:
             self._run_command_or_action(line, {})
         for line in thens:
+            self._before_line(line, {})
             try:
                 assertion_passed = self._evaluate_condition(line.text, {})
             except GwtError as exc:
@@ -400,6 +403,7 @@ class Runtime:
                 )
 
     def _run_given(self, line: Line) -> None:
+        self._before_line(line, {})
         try:
             left, right = _split_required(line.text, " is ", line.number)
             self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {})
@@ -407,6 +411,7 @@ class Runtime:
             raise _with_line_context(line, exc) from exc
 
     def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
+        self._before_line(line, env)
         try:
             return self._run_command_or_action_inner(line, env, allow_let=allow_let)
         except GwtError as exc:
@@ -488,6 +493,7 @@ class Runtime:
     def _run_body(self, body: list[Any], env: dict[str, Any]) -> BehaviorReturn | None:
         for statement in body:
             if isinstance(statement, IfBlock):
+                self._before_line(statement.condition, env)
                 try:
                     condition_result = self._evaluate_condition(statement.condition.text, env)
                 except GwtError as exc:
@@ -495,12 +501,17 @@ class Runtime:
                 branch = statement.then_body if condition_result else statement.else_body
                 result = self._run_body(branch, env)
             elif isinstance(statement, ForBlock):
+                self._before_line(statement.name_line or statement.iterable, env)
                 result = self._run_for(statement, env)
             else:
                 result = self._run_command_or_action(statement, env, allow_let=True)
             if isinstance(result, BehaviorReturn):
                 return result
         return None
+
+    def _before_line(self, line: Line, env: dict[str, Any]) -> None:
+        if self.debugger is not None:
+            self.debugger.before_line(line, self.state, env)
 
     def _run_for(self, statement: ForBlock, env: dict[str, Any]) -> BehaviorReturn | None:
         if statement.name in env or self._path_exists(statement.name):

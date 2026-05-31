@@ -37,11 +37,14 @@ Expected behavior:
 - hover shows DTO, behavior, parameter, local, and field information.
 - go-to-definition works for behavior calls.
 - completion offers known GWT symbols.
-- pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter and
-  streams output to the Debug Console.
+- pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter.
+- line breakpoints pause execution before matching executable GWT lines.
+- Continue resumes execution; Step Over advances to the next executable line.
+- the Variables panel shows current locals and GWT state while paused.
 
-The first debugger version launches `gwt test` for the current file. It reports
-process output and exit status; step debugging and breakpoints are future work.
+The debugger currently supports line breakpoints, continue, step over, stop,
+and state/local inspection. It does not yet support step into/out, conditional
+breakpoints, watch expressions, or variable editing.
 
 ## Settings
 
