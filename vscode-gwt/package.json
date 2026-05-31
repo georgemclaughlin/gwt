@@ -44,6 +44,11 @@
         "title": "GWT: Debug Current File"
       }
     ],
+    "breakpoints": [
+      {
+        "language": "gwt"
+      }
+    ],
     "debuggers": [
       {
         "type": "gwt",
