@@ -234,6 +234,24 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("behavior declares number but does not return a value", messages)
 
+    def test_reports_examples_placeholder_mismatches_in_given_tables(self):
+        messages = check_messages(
+            """
+            SCENARIO table example
+            GIVEN order.items are
+              | sku      | quantity  |
+              | "widget" | <missing> |
+
+            THEN true
+
+            EXAMPLES
+              | other |
+              | 1     |
+            """
+        )
+
+        self.assertIn("EXAMPLES has no value for <missing>", messages)
+
 
 if __name__ == "__main__":
     unittest.main()

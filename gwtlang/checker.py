@@ -16,6 +16,7 @@ from .runtime import (
     Line,
     Program,
     Scenario,
+    TableAssignment,
     _condition_to_expression,
     _is_local_name,
     _split_required,
@@ -166,7 +167,9 @@ class Checker:
             *self.program.background.thens,
         ]
         for line in background_lines:
-            if isinstance(line, Line):
+            if isinstance(line, TableAssignment):
+                self._check_table_placeholders(line, set())
+            elif isinstance(line, Line):
                 self._check_placeholders(line, set())
 
         for line in self.program.background.givens:
@@ -180,7 +183,9 @@ class Checker:
     def _check_scenario(self, scenario: Scenario) -> None:
         example_headers = set(scenario.examples[0]) if scenario.examples else set()
         for line in scenario.givens:
-            if isinstance(line, Line):
+            if isinstance(line, TableAssignment):
+                self._check_table_placeholders(line, example_headers)
+            elif isinstance(line, Line):
                 self._check_placeholders(line, example_headers)
         for line in scenario.whens:
             self._check_placeholders(line, example_headers)
@@ -200,6 +205,9 @@ class Checker:
         for given in givens:
             if isinstance(given, DtoValidation):
                 self._add_typed_name(scope, given.path, given.dto_name)
+            elif isinstance(given, TableAssignment):
+                scope.names.add(given.path)
+                scope.types[given.path] = "list"
             elif isinstance(given, Line) and " is " in given.text:
                 path, expression = given.text.split(" is ", 1)
                 path = path.strip()
@@ -250,6 +258,12 @@ class Checker:
         if isinstance(statement, DtoValidation):
             if statement.dto_name not in self.program.dtos:
                 self._add_line(statement.line, f"unknown DTO: {statement.dto_name}", "GWT014")
+            return
+        if isinstance(statement, TableAssignment):
+            self._check_path(statement.path, statement.line)
+            for row in statement.rows:
+                for value in row.values():
+                    self._check_expression(value, statement.line)
             return
         if not isinstance(statement, Line):
             return
@@ -493,6 +507,13 @@ class Checker:
         for placeholder in PLACEHOLDER_PATTERN.findall(line.text):
             if placeholder not in example_headers:
                 self._add_line(line, f"EXAMPLES has no value for <{placeholder}>", "GWT012")
+
+    def _check_table_placeholders(self, table: TableAssignment, example_headers: set[str]) -> None:
+        for row in table.rows:
+            for value in row.values():
+                for placeholder in PLACEHOLDER_PATTERN.findall(value):
+                    if placeholder not in example_headers:
+                        self._add_line(table.line, f"EXAMPLES has no value for <{placeholder}>", "GWT012")
 
     def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
         indexed: dict[str, list[Action]] = {}

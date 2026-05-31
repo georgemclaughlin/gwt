@@ -9,9 +9,19 @@ shipping details.
 - `request.gwt` is a production-style request with no expected output.
 - `request_with_assertions.gwt` is the same request with `THEN` assertions.
 
-The example intentionally uses explicit SKU fields (`widget_qty`, `gadget_qty`,
-`cable_qty`) because GWT does not yet support records inside lists or list
-indexing. That limitation is useful pressure for the next language features.
+The order lines use a GWT data table:
+
+```gwt
+GIVEN order.items are
+  | sku      | quantity |
+  | "widget" | 1        |
+  | "gadget" | 2        |
+```
+
+Each row becomes a record, so behavior can loop over `order.items` and read
+`item.sku` or `item.quantity`. Inventory is still modeled with explicit fields,
+which keeps the example inside the current language while showing where future
+lookup/filter operations would help.
 
 ## Commands
 

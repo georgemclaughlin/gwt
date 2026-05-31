@@ -84,6 +84,13 @@ class DtoValidation:
 
 
 @dataclass(frozen=True)
+class TableAssignment:
+    path: str
+    rows: list[dict[str, str]]
+    line: Line
+
+
+@dataclass(frozen=True)
 class BehaviorReturn:
     value: Any
 
@@ -272,7 +279,11 @@ def parse_program(
             index += 1
         elif text.startswith("GIVEN "):
             statement = text.removeprefix("GIVEN ").strip()
-            if _is_typed_record_header(statement):
+            if _is_table_header(statement):
+                index += 1
+                table, index = _parse_table_assignment(statement, lines, index, filename, line)
+                current.givens.append(table)
+            elif _is_typed_record_header(statement):
                 index += 1
                 expanded, index, validation = _expand_typed_record_block(statement, lines, index, filename, program.dtos)
                 current.givens.extend(expanded)
@@ -365,6 +376,8 @@ class Runtime:
             if isinstance(line, DtoValidation):
                 self._before_line(line.line, {})
                 self._validate_dto(line)
+            elif isinstance(line, TableAssignment):
+                self._run_table_assignment(line)
             else:
                 self._run_given(line)
         for line in whens:
@@ -425,6 +438,20 @@ class Runtime:
             self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {})
         except GwtError as exc:
             raise _with_line_context(line, exc) from exc
+
+    def _run_table_assignment(self, table: TableAssignment) -> None:
+        self._before_line(table.line, {})
+        try:
+            rows = [
+                {
+                    field: self._eval_expression(value, {})
+                    for field, value in row.items()
+                }
+                for row in table.rows
+            ]
+            self._set_path(table.path, rows, {})
+        except GwtError as exc:
+            raise _with_line_context(table.line, exc) from exc
 
     def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
         self._before_line(line, env)
@@ -622,6 +649,10 @@ class Runtime:
             if isinstance(value, PathRef):
                 return self._get_path(value.path, {})
             return value
+        if "." in name:
+            env_value = self._get_env_path(name, env)
+            if env_value is not None:
+                return env_value
         if self._path_exists(self._resolve_path(name, env)):
             return self._get_path(name, env)
         raise GwtError(f"unknown name: {name}")
@@ -662,6 +693,19 @@ class Runtime:
                 return False
             current = current[part]
         return True
+
+    def _get_env_path(self, path: str, env: dict[str, Any]) -> Any:
+        parts = path.split(".")
+        if not parts or parts[0] not in env:
+            return None
+        current = env[parts[0]]
+        if isinstance(current, PathRef):
+            current = self._get_path(current.path, {})
+        for part in parts[1:]:
+            if not isinstance(current, dict) or part not in current:
+                return None
+            current = current[part]
+        return current
 
 
 class ExpressionScope:
@@ -919,22 +963,7 @@ def _parse_import(text: str, line: Line, filename: str, importing: set[Path]) ->
 def _parse_examples_table(
     lines: list[Line], index: int, filename: str, examples_line: int
 ) -> tuple[list[dict[str, str]], int]:
-    if index >= len(lines) or not lines[index].text.startswith("  "):
-        raise GwtError(f"{filename}:{examples_line}: EXAMPLES requires a table")
-
-    rows: list[list[str]] = []
-    while index < len(lines) and lines[index].text.startswith("  "):
-        line = lines[index]
-        if _indent_width(line.text) != 2:
-            raise GwtError(f"{filename}:{line.number}: EXAMPLES table rows must use two spaces")
-        row_text = line.text.strip()
-        if not (row_text.startswith("|") and row_text.endswith("|")):
-            raise GwtError(f"{filename}:{line.number}: EXAMPLES rows must use table pipes")
-        cells = [cell.strip() for cell in row_text.strip("|").split("|")]
-        if not cells or any(cell == "" for cell in cells):
-            raise GwtError(f"{filename}:{line.number}: EXAMPLES cells cannot be empty")
-        rows.append(cells)
-        index += 1
+    rows, index = _parse_pipe_table(lines, index, filename, examples_line, "EXAMPLES")
 
     if len(rows) < 2:
         raise GwtError(f"{filename}:{examples_line}: EXAMPLES requires at least one data row")
@@ -951,6 +980,61 @@ def _parse_examples_table(
     return examples, index
 
 
+def _parse_table_assignment(
+    header: str,
+    lines: list[Line],
+    index: int,
+    filename: str,
+    header_line: Line,
+) -> tuple[TableAssignment, int]:
+    path = header.removesuffix(" are").strip()
+    if not path:
+        raise GwtError(f"{filename}:{header_line.number}: table assignment requires a path")
+    rows, index = _parse_pipe_table(lines, index, filename, header_line.number, "GIVEN table")
+
+    if len(rows) < 2:
+        raise GwtError(f"{filename}:{header_line.number}: GIVEN table requires at least one data row")
+    headers = rows[0]
+    if len(set(headers)) != len(headers):
+        raise GwtError(f"{filename}:{header_line.number}: GIVEN table headers must be unique")
+    for header_name in headers:
+        if not _is_local_name(header_name):
+            raise GwtError(f"{filename}:{header_line.number}: GIVEN table header must be a field name: {header_name}")
+
+    records: list[dict[str, str]] = []
+    for offset, row in enumerate(rows[1:], start=1):
+        if len(row) != len(headers):
+            raise GwtError(f"{filename}:{header_line.number + offset}: GIVEN table row has wrong number of cells")
+        records.append(dict(zip(headers, row)))
+    return TableAssignment(path, records, _derived_line(header_line, header, len("GIVEN "))), index
+
+
+def _parse_pipe_table(
+    lines: list[Line],
+    index: int,
+    filename: str,
+    table_line: int,
+    label: str,
+) -> tuple[list[list[str]], int]:
+    if index >= len(lines) or not lines[index].text.startswith("  "):
+        raise GwtError(f"{filename}:{table_line}: {label} requires a table")
+
+    rows: list[list[str]] = []
+    while index < len(lines) and lines[index].text.startswith("  "):
+        line = lines[index]
+        if _indent_width(line.text) != 2:
+            raise GwtError(f"{filename}:{line.number}: {label} rows must use two spaces")
+        row_text = line.text.strip()
+        if not (row_text.startswith("|") and row_text.endswith("|")):
+            raise GwtError(f"{filename}:{line.number}: {label} rows must use table pipes")
+        cells = [cell.strip() for cell in row_text.strip("|").split("|")]
+        if not cells or any(cell == "" for cell in cells):
+            raise GwtError(f"{filename}:{line.number}: {label} cells cannot be empty")
+        rows.append(cells)
+        index += 1
+    return rows, index
+
+
 def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[Any]:
     if values is None:
         return lines
@@ -958,6 +1042,20 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
     for line in lines:
         if isinstance(line, DtoValidation):
             substituted.append(line)
+        elif isinstance(line, TableAssignment):
+            substituted.append(
+                TableAssignment(
+                    line.path,
+                    [
+                        {
+                            field: _substitute_placeholders(value, values, line.line.number)
+                            for field, value in row.items()
+                        }
+                        for row in line.rows
+                    ],
+                    line.line,
+                )
+            )
         else:
             substituted.append(
                 Line(
@@ -1000,6 +1098,10 @@ def _has_error_location(message: str) -> bool:
 
 def _is_record_header(text: str) -> bool:
     return text.endswith(" is")
+
+
+def _is_table_header(text: str) -> bool:
+    return text.endswith(" are")
 
 
 def _is_typed_record_header(text: str) -> bool:

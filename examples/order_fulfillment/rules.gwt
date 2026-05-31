@@ -5,10 +5,7 @@ DTO OrderRequest
   payment_status: text
   fraud_score: number
   expedited: boolean
-  requested_units: list
-  widget_qty: number
-  gadget_qty: number
-  cable_qty: number
+  items: list
 
 DTO InventoryState
   widget_available: number
@@ -52,8 +49,8 @@ WHEN reset_fulfillment fulfillment
 WHEN count_units order into fulfillment
   GIVEN order is OrderRequest
   AND fulfillment is FulfillmentState
-  FOR quantity in order.requested_units
-    add quantity to fulfillment.requested_units
+  FOR item in order.items
+    add item.quantity to fulfillment.requested_units
 
 WHEN authorize order into fulfillment
   GIVEN order is OrderRequest
@@ -69,55 +66,67 @@ WHEN authorize order into fulfillment
       set fulfillment.status to "authorized"
       set fulfillment.reason to "authorized"
 
-WHEN reserve_widget order from inventory into fulfillment
-  GIVEN order is OrderRequest
+WHEN reserve_widget quantity from inventory into fulfillment
+  GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
-  IF inventory.widget_available >= order.widget_qty
-    set fulfillment.widget_reserved to order.widget_qty
+  IF inventory.widget_available >= quantity
+    set fulfillment.widget_reserved to quantity
     set fulfillment.widget_backordered to 0
-    subtract order.widget_qty from inventory.widget_available
+    subtract quantity from inventory.widget_available
   ELSE
     set fulfillment.widget_reserved to inventory.widget_available
-    set fulfillment.widget_backordered to order.widget_qty - inventory.widget_available
+    set fulfillment.widget_backordered to quantity - inventory.widget_available
     set inventory.widget_available to 0
   add fulfillment.widget_reserved to inventory.widget_reserved
 
-WHEN reserve_gadget order from inventory into fulfillment
-  GIVEN order is OrderRequest
+WHEN reserve_gadget quantity from inventory into fulfillment
+  GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
-  IF inventory.gadget_available >= order.gadget_qty
-    set fulfillment.gadget_reserved to order.gadget_qty
+  IF inventory.gadget_available >= quantity
+    set fulfillment.gadget_reserved to quantity
     set fulfillment.gadget_backordered to 0
-    subtract order.gadget_qty from inventory.gadget_available
+    subtract quantity from inventory.gadget_available
   ELSE
     set fulfillment.gadget_reserved to inventory.gadget_available
-    set fulfillment.gadget_backordered to order.gadget_qty - inventory.gadget_available
+    set fulfillment.gadget_backordered to quantity - inventory.gadget_available
     set inventory.gadget_available to 0
   add fulfillment.gadget_reserved to inventory.gadget_reserved
 
-WHEN reserve_cable order from inventory into fulfillment
-  GIVEN order is OrderRequest
+WHEN reserve_cable quantity from inventory into fulfillment
+  GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
-  IF inventory.cable_available >= order.cable_qty
-    set fulfillment.cable_reserved to order.cable_qty
+  IF inventory.cable_available >= quantity
+    set fulfillment.cable_reserved to quantity
     set fulfillment.cable_backordered to 0
-    subtract order.cable_qty from inventory.cable_available
+    subtract quantity from inventory.cable_available
   ELSE
     set fulfillment.cable_reserved to inventory.cable_available
-    set fulfillment.cable_backordered to order.cable_qty - inventory.cable_available
+    set fulfillment.cable_backordered to quantity - inventory.cable_available
     set inventory.cable_available to 0
   add fulfillment.cable_reserved to inventory.cable_reserved
+
+WHEN reserve item from inventory into fulfillment
+  GIVEN item is any
+  AND inventory is InventoryState
+  AND fulfillment is FulfillmentState
+  IF item.sku == "widget"
+    reserve_widget item.quantity from inventory into fulfillment
+  ELSE
+    IF item.sku == "gadget"
+      reserve_gadget item.quantity from inventory into fulfillment
+    ELSE
+      IF item.sku == "cable"
+        reserve_cable item.quantity from inventory into fulfillment
 
 WHEN allocate order from inventory into fulfillment
   GIVEN order is OrderRequest
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
-  reserve_widget order from inventory into fulfillment
-  reserve_gadget order from inventory into fulfillment
-  reserve_cable order from inventory into fulfillment
+  FOR item in order.items
+    reserve item from inventory into fulfillment
   set fulfillment.reserved_units to fulfillment.widget_reserved + fulfillment.gadget_reserved + fulfillment.cable_reserved
   set fulfillment.backordered_units to fulfillment.widget_backordered + fulfillment.gadget_backordered + fulfillment.cable_backordered
 
@@ -189,10 +198,13 @@ GIVEN order is OrderRequest
   payment_status: <payment_status>
   fraud_score: <fraud_score>
   expedited: <expedited>
-  requested_units: <requested_units>
-  widget_qty: <widget_qty>
-  gadget_qty: <gadget_qty>
-  cable_qty: <cable_qty>
+  items: []
+
+GIVEN order.items are
+  | sku      | quantity     |
+  | "widget" | <widget_qty> |
+  | "gadget" | <gadget_qty> |
+  | "cable"  | <cable_qty>  |
 
 GIVEN inventory is InventoryState
   widget_available: <widget_available>
@@ -231,9 +243,9 @@ AND inventory.gadget_reserved == <gadget_reserved>
 AND inventory.cable_reserved == <cable_reserved>
 
 EXAMPLES
-  | order_id | payment_status | fraud_score | expedited | requested_units | widget_qty | gadget_qty | cable_qty | widget_available | gadget_available | cable_available | status        | reason              | requested_total | reserved_units | backordered_units | package_count | shipping_fee | widget_reserved | gadget_reserved | cable_reserved |
-  | "A100"   | "paid"         | 10          | false     | [2, 1, 2]       | 2          | 1          | 2         | 5                | 3                | 10              | "ready"       | "ready_to_ship"     | 5               | 5              | 0                 | 2             | 0            | 2               | 1               | 2              |
-  | "A101"   | "paid"         | 15          | false     | [4, 3, 2]       | 4          | 3          | 2         | 2                | 3                | 0               | "partial"     | "partial_inventory" | 9               | 5              | 4                 | 2             | 0            | 2               | 3               | 0              |
-  | "A102"   | "declined"     | 5           | false     | [1, 1, 0]       | 1          | 1          | 0         | 10               | 10               | 10              | "held"        | "payment_required"  | 2               | 0              | 0                 | 0             | 0            | 0               | 0               | 0              |
-  | "A103"   | "paid"         | 20          | false     | [2, 0, 1]       | 2          | 0          | 1         | 0                | 0                | 0               | "backordered" | "no_inventory"      | 3               | 0              | 3                 | 0             | 0            | 0               | 0               | 0              |
-  | "A104"   | "paid"         | 90          | true      | [1, 2, 1]       | 1          | 2          | 1         | 5                | 5                | 5               | "held"        | "fraud_review"      | 4               | 0              | 0                 | 0             | 0            | 0               | 0               | 0              |
+  | order_id | payment_status | fraud_score | expedited | widget_qty | gadget_qty | cable_qty | widget_available | gadget_available | cable_available | status        | reason              | requested_total | reserved_units | backordered_units | package_count | shipping_fee | widget_reserved | gadget_reserved | cable_reserved |
+  | "A100"   | "paid"         | 10          | false     | 2          | 1          | 2         | 5                | 3                | 10              | "ready"       | "ready_to_ship"     | 5               | 5              | 0                 | 2             | 0            | 2               | 1               | 2              |
+  | "A101"   | "paid"         | 15          | false     | 4          | 3          | 2         | 2                | 3                | 0               | "partial"     | "partial_inventory" | 9               | 5              | 4                 | 2             | 0            | 2               | 3               | 0              |
+  | "A102"   | "declined"     | 5           | false     | 1          | 1          | 0         | 10               | 10               | 10              | "held"        | "payment_required"  | 2               | 0              | 0                 | 0             | 0            | 0               | 0               | 0              |
+  | "A103"   | "paid"         | 20          | false     | 2          | 0          | 1         | 0                | 0                | 0               | "backordered" | "no_inventory"      | 3               | 0              | 3                 | 0             | 0            | 0               | 0               | 0              |
+  | "A104"   | "paid"         | 90          | true      | 1          | 2          | 1         | 5                | 5                | 5               | "held"        | "fraud_review"      | 4               | 0              | 0                 | 0             | 0            | 0               | 0               | 0              |

@@ -59,7 +59,8 @@ print          = "print" expression ;
 assignment_or_record
               = path "is" expression
               | path "is", record_block
-              | path "is" name, record_block ;
+              | path "is" name, record_block
+              | path "are", table ;
 
 condition_or_record
               = condition
