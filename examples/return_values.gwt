@@ -1,0 +1,21 @@
+PROGRAM return values
+
+GIVEN account is
+  balance: 100
+  status: "open"
+
+WHEN calculate fee for amount
+  RETURN amount * 0.1
+
+WHEN withdraw amount from account
+  LET fee be calculate fee for amount
+  LET total be amount + fee
+  REQUIRE account.status == "open"
+  AND account.balance >= total
+  subtract total from account.balance
+
+WHEN withdraw 30 from account
+
+THEN account is
+  balance: 67
+  status: "open"

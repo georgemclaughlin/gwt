@@ -1,0 +1,14 @@
+PROGRAM expressions
+
+GIVEN account.balance is 100
+AND account.status is "open"
+AND fee is 3
+
+WHEN withdraw amount from account
+  LET total be amount + fee
+  REQUIRE account.status == "open" and account.balance >= total
+  subtract total from account.balance
+
+WHEN withdraw 30 from account
+
+THEN account.balance == 67

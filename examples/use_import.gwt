@@ -1,0 +1,11 @@
+PROGRAM use import
+
+USE "./banking_module.gwt"
+
+GIVEN account is
+  balance: 100
+  status: "open"
+
+WHEN withdraw 30 from account
+
+THEN account.balance == 67

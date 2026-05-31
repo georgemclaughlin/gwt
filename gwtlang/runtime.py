@@ -1,0 +1,800 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+import re
+import shlex
+import textwrap
+from typing import Any
+
+from .errors import GwtError
+from .expressions import evaluate_expression
+
+CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
+
+
+@dataclass(frozen=True)
+class Line:
+    number: int
+    text: str
+    filename: str | None = None
+
+
+@dataclass(frozen=True)
+class PathRef:
+    path: str
+
+
+@dataclass
+class Action:
+    name: str
+    signature: list[str]
+    body: list[Any]
+    line: int
+
+
+@dataclass
+class IfBlock:
+    condition: Line
+    then_body: list[Any]
+    else_body: list[Any]
+
+
+@dataclass
+class ForBlock:
+    name: str
+    iterable: Line
+    body: list[Any]
+
+
+@dataclass(frozen=True)
+class BehaviorReturn:
+    value: Any
+
+
+@dataclass
+class Scenario:
+    name: str
+    line: int
+    givens: list[Line] = field(default_factory=list)
+    whens: list[Line] = field(default_factory=list)
+    thens: list[Line] = field(default_factory=list)
+    examples: list[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class Program:
+    name: str | None = None
+    background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
+    actions: list[Action] = field(default_factory=list)
+    scenarios: list[Scenario] = field(default_factory=list)
+
+
+@dataclass
+class ScenarioResult:
+    name: str
+    state: dict[str, Any]
+    output: list[str]
+
+
+@dataclass
+class RunResult:
+    scenarios: list[ScenarioResult]
+
+    @property
+    def state(self) -> dict[str, Any]:
+        if len(self.scenarios) != 1:
+            raise GwtError("state is only available when exactly one scenario runs")
+        return self.scenarios[0].state
+
+    @property
+    def output(self) -> list[str]:
+        if len(self.scenarios) != 1:
+            raise GwtError("output is only available when exactly one scenario runs")
+        return self.scenarios[0].output
+
+
+def run_source(source: str, filename: str = "<source>") -> RunResult:
+    program = parse_program(source, filename)
+    runtime = Runtime(program)
+    return runtime.run()
+
+
+def run_request(
+    program_source: str,
+    request_source: str,
+    *,
+    filename: str = "<program>",
+    request_filename: str = "<request>",
+) -> RunResult:
+    program = parse_program(program_source, filename)
+    request = parse_program(request_source, request_filename)
+    combined = Program(
+        name=program.name,
+        background=Scenario(
+            "Background",
+            request.background.line or program.background.line,
+            [*program.background.givens, *request.background.givens],
+            [*program.background.whens, *request.background.whens],
+            [*program.background.thens, *request.background.thens],
+        ),
+        actions=[*program.actions, *request.actions],
+        scenarios=request.scenarios,
+    )
+    runtime = Runtime(combined)
+    return runtime.run()
+
+
+def parse_program(source: str, filename: str = "<source>", importing: set[Path] | None = None) -> Program:
+    lines = _logical_lines(textwrap.dedent(source), filename)
+    program = Program()
+    importing = set() if importing is None else importing
+    current = Scenario("Main", 0)
+    in_background = False
+    saw_explicit_scenario = False
+    index = 0
+    last_top_keyword: str | None = None
+
+    while index < len(lines):
+        line = lines[index]
+        text = line.text
+
+        if text.startswith("BACKGROUND"):
+            if text != "BACKGROUND":
+                raise GwtError(f"{filename}:{line.number}: BACKGROUND does not take a name")
+            if saw_explicit_scenario:
+                raise GwtError(f"{filename}:{line.number}: BACKGROUND must appear before SCENARIO")
+            current = program.background
+            current.line = line.number
+            in_background = True
+            last_top_keyword = None
+            index += 1
+            continue
+
+        if text.startswith("SCENARIO "):
+            scenario_name = text.removeprefix("SCENARIO ").strip()
+            if not scenario_name:
+                raise GwtError(f"{filename}:{line.number}: SCENARIO requires a name")
+            current = Scenario(scenario_name, line.number)
+            program.scenarios.append(current)
+            in_background = False
+            saw_explicit_scenario = True
+            last_top_keyword = None
+            index += 1
+            continue
+
+        if text.startswith("USE "):
+            imported = _parse_import(text, line, filename, importing)
+            program.actions.extend(imported.actions)
+            index += 1
+            continue
+
+        if text == "EXAMPLES":
+            if in_background:
+                raise GwtError(f"{filename}:{line.number}: EXAMPLES cannot appear in BACKGROUND")
+            examples, index = _parse_examples_table(lines, index + 1, filename, line.number)
+            current.examples.extend(examples)
+            last_top_keyword = None
+            continue
+
+        if text.startswith("AND "):
+            if last_top_keyword is None:
+                raise GwtError(f"{filename}:{line.number}: AND has no previous GIVEN, WHEN, or THEN")
+            text = f"{last_top_keyword} {text.removeprefix('AND ').strip()}"
+
+        if text.startswith("PROGRAM "):
+            program.name = text.removeprefix("PROGRAM ").strip()
+            if not program.name:
+                raise GwtError(f"{filename}:{line.number}: PROGRAM requires a name")
+            index += 1
+        elif text.startswith("GIVEN "):
+            statement = text.removeprefix("GIVEN ").strip()
+            if _is_record_header(statement):
+                index += 1
+                expanded, index = _expand_record_block(statement, lines, index, filename)
+                current.givens.extend(expanded)
+            else:
+                current.givens.append(Line(line.number, statement, line.filename))
+                index += 1
+            last_top_keyword = "GIVEN"
+        elif text.startswith("WHEN "):
+            signature_text = text.removeprefix("WHEN ").strip()
+            index += 1
+            if index < len(lines) and lines[index].text.startswith("  ") and not in_background:
+                signature = _tokens(signature_text, filename, line.number)
+                if not signature:
+                    raise GwtError(f"{filename}:{line.number}: WHEN requires a behavior signature")
+                body, index = _parse_behavior_block(lines, index, filename)
+                if not body:
+                    raise GwtError(f"{filename}:{line.number}: behavior '{signature[0]}' has no body")
+                program.actions.append(Action(signature[0], signature, body, line.number))
+            elif index < len(lines) and lines[index].text.startswith("  "):
+                raise GwtError(f"{filename}:{line.number}: BACKGROUND cannot define WHEN behavior")
+            else:
+                current.whens.append(Line(line.number, signature_text, line.filename))
+            last_top_keyword = "WHEN"
+        elif text.startswith("THEN "):
+            statement = text.removeprefix("THEN ").strip()
+            if _is_record_header(statement):
+                index += 1
+                expanded, index = _expand_record_block(statement, lines, index, filename)
+                current.thens.extend(expanded)
+            else:
+                current.thens.append(Line(line.number, statement, line.filename))
+                index += 1
+            last_top_keyword = "THEN"
+        elif text.startswith("  "):
+            raise GwtError(f"{filename}:{line.number}: indented line outside a block")
+        else:
+            raise GwtError(f"{filename}:{line.number}: unknown top-level form: {text}")
+
+    if not program.scenarios:
+        program.scenarios.append(current)
+
+    return program
+
+
+class Runtime:
+    def __init__(self, program: Program) -> None:
+        self.program = program
+        self.state: dict[str, Any] = {}
+        self.output: list[str] = []
+        self.actions = self._index_actions(program.actions)
+
+    def run(self) -> RunResult:
+        results: list[ScenarioResult] = []
+        for scenario in self.program.scenarios:
+            if scenario.examples:
+                for index, example in enumerate(scenario.examples, start=1):
+                    results.append(self._run_scenario(scenario, example, f"{scenario.name} example {index}"))
+            else:
+                results.append(self._run_scenario(scenario))
+        return RunResult(results)
+
+    def _run_scenario(
+        self, scenario: Scenario, example: dict[str, str] | None = None, result_name: str | None = None
+    ) -> ScenarioResult:
+        self.state = {}
+        self.output = []
+        givens = [*self.program.background.givens, *_substitute_lines(scenario.givens, example)]
+        whens = [*self.program.background.whens, *_substitute_lines(scenario.whens, example)]
+        thens = [*self.program.background.thens, *_substitute_lines(scenario.thens, example)]
+        for line in givens:
+            self._run_given(line)
+        for line in whens:
+            self._run_command_or_action(line, {})
+        for line in thens:
+            try:
+                assertion_passed = self._evaluate_condition(line.text, {})
+            except GwtError as exc:
+                raise _with_line_context(line, exc) from exc
+            if not assertion_passed:
+                raise GwtError(f"{scenario.name}: line {line.number}: assertion failed: {line.text}")
+        return ScenarioResult(result_name or scenario.name, self.state, self.output)
+
+    def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
+        indexed: dict[str, list[Action]] = {}
+        for action in actions:
+            indexed.setdefault(action.name, []).append(action)
+        return indexed
+
+    def _run_given(self, line: Line) -> None:
+        try:
+            left, right = _split_required(line.text, " is ", line.number)
+            self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {})
+        except GwtError as exc:
+            raise _with_line_context(line, exc) from exc
+
+    def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
+        try:
+            return self._run_command_or_action_inner(line, env, allow_let=allow_let)
+        except GwtError as exc:
+            raise _with_line_context(line, exc) from exc
+
+    def _run_command_or_action_inner(
+        self, line: Line, env: dict[str, Any], *, allow_let: bool = False
+    ) -> BehaviorReturn | None:
+        tokens = _tokens(line.text, "<source>", line.number)
+        if not tokens:
+            return
+
+        command = tokens[0]
+        if command == "RETURN":
+            if not allow_let:
+                raise GwtError(f"line {line.number}: RETURN is only allowed inside behavior")
+            expression = line.text[len("RETURN") :].strip()
+            if not expression:
+                raise GwtError(f"line {line.number}: RETURN requires a value")
+            return BehaviorReturn(self._eval_expression_or_returning_action(expression, line, env))
+        if command == "LET":
+            if not allow_let:
+                raise GwtError(f"line {line.number}: LET is only allowed inside behavior")
+            self._run_let(line, env)
+            return
+        if command == "REQUIRE":
+            condition = line.text.removeprefix("REQUIRE ").strip()
+            if not self._evaluate_condition(condition, env):
+                raise GwtError(f"line {line.number}: requirement failed: {condition}")
+            return
+        if command in {"set", "add", "subtract", "print"}:
+            self._run_builtin(tokens, line, env)
+            return
+
+        self._call_action(tokens, line, env)
+        return None
+
+    def _run_let(self, line: Line, env: dict[str, Any]) -> None:
+        binding = line.text.removeprefix("LET ").strip()
+        name, expression = _split_required(binding, " be ", line.number)
+        name = name.strip()
+        if not _is_local_name(name):
+            raise GwtError(f"line {line.number}: LET requires a simple local name")
+        if name in env or self._path_exists(name):
+            raise GwtError(f"line {line.number}: LET cannot overwrite an existing name")
+        env[name] = self._eval_expression_or_returning_action(expression.strip(), line, env)
+
+    def _run_builtin(self, tokens: list[str], line: Line, env: dict[str, Any]) -> None:
+        if tokens[0] == "set":
+            if len(tokens) < 4 or tokens[2] != "to":
+                raise GwtError(f"line {line.number}: expected 'set path to value'")
+            self._set_path(tokens[1], self._eval_expression(_after_keyword(line.text, " to "), env), env)
+        elif tokens[0] == "add":
+            if len(tokens) < 4 or "to" not in tokens:
+                raise GwtError(f"line {line.number}: expected 'add value to path'")
+            value_text, path = _split_required(line.text.removeprefix("add ").strip(), " to ", line.number)
+            value = self._eval_expression(value_text, env)
+            self._set_path(path, self._get_path(path, env) + value, env)
+        elif tokens[0] == "subtract":
+            if len(tokens) < 4 or "from" not in tokens:
+                raise GwtError(f"line {line.number}: expected 'subtract value from path'")
+            value_text, path = _split_required(
+                line.text.removeprefix("subtract ").strip(), " from ", line.number
+            )
+            value = self._eval_expression(value_text, env)
+            self._set_path(path, self._get_path(path, env) - value, env)
+        elif tokens[0] == "print":
+            value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
+            self.output.append(str(value))
+
+    def _call_action(self, call: list[str], line: Line, caller_env: dict[str, Any]) -> BehaviorReturn | None:
+        candidates = self.actions.get(call[0], [])
+        for action in reversed(candidates):
+            env = self._match_action(action, call, caller_env)
+            if env is not None:
+                return self._run_body(action.body, env)
+        raise GwtError(f"line {line.number}: no action matches: {' '.join(call)}")
+
+    def _run_body(self, body: list[Any], env: dict[str, Any]) -> BehaviorReturn | None:
+        for statement in body:
+            if isinstance(statement, IfBlock):
+                try:
+                    condition_result = self._evaluate_condition(statement.condition.text, env)
+                except GwtError as exc:
+                    raise _with_line_context(statement.condition, exc) from exc
+                branch = statement.then_body if condition_result else statement.else_body
+                result = self._run_body(branch, env)
+            elif isinstance(statement, ForBlock):
+                result = self._run_for(statement, env)
+            else:
+                result = self._run_command_or_action(statement, env, allow_let=True)
+            if isinstance(result, BehaviorReturn):
+                return result
+        return None
+
+    def _run_for(self, statement: ForBlock, env: dict[str, Any]) -> BehaviorReturn | None:
+        if statement.name in env or self._path_exists(statement.name):
+            raise GwtError(f"line {statement.iterable.number}: FOR cannot overwrite an existing name")
+        try:
+            values = self._eval_expression(statement.iterable.text, env)
+        except GwtError as exc:
+            raise _with_line_context(statement.iterable, exc) from exc
+        if not isinstance(values, list):
+            raise GwtError(f"line {statement.iterable.number}: FOR requires a list")
+
+        for value in values:
+            loop_env = dict(env)
+            loop_env[statement.name] = value
+            result = self._run_body(statement.body, loop_env)
+            if isinstance(result, BehaviorReturn):
+                return result
+        return None
+
+    def _match_action(self, action: Action, call: list[str], caller_env: dict[str, Any]) -> dict[str, Any] | None:
+        if len(action.signature) != len(call):
+            return None
+
+        env: dict[str, Any] = {}
+        for pattern, actual in zip(action.signature, call):
+            if pattern == action.name:
+                if pattern != actual:
+                    return None
+            elif pattern in CONNECTORS:
+                if pattern != actual:
+                    return None
+            else:
+                env[pattern] = self._argument_value(actual, caller_env)
+        return env
+
+    def _argument_value(self, token: str, env: dict[str, Any]) -> Any:
+        if token in env:
+            return env[token]
+        if self._path_exists(self._resolve_path(token, env)):
+            return PathRef(token)
+        try:
+            return self._eval_expression(token, env)
+        except GwtError:
+            pass
+        return token
+
+    def _evaluate_condition(self, text: str, env: dict[str, Any]) -> bool:
+        expression = _condition_to_expression(text)
+        value = self._eval_expression(expression, env)
+        if not isinstance(value, bool):
+            raise GwtError(f"condition must evaluate to a boolean: {text}")
+        return value
+
+    def _eval_expression(self, text: str, env: dict[str, Any]) -> Any:
+        return evaluate_expression(text, ExpressionScope(self, env))
+
+    def _eval_expression_or_returning_action(self, text: str, line: Line, env: dict[str, Any]) -> Any:
+        try:
+            return self._eval_expression(text, env)
+        except GwtError as expression_error:
+            tokens = _tokens(text, "<source>", line.number)
+            if not tokens or tokens[0] not in self.actions:
+                raise expression_error
+            result = self._call_action(tokens, line, env)
+            if isinstance(result, BehaviorReturn):
+                return result.value
+            raise GwtError(f"line {line.number}: behavior did not return a value: {text}")
+
+    def _resolve_name(self, name: str, env: dict[str, Any]) -> Any:
+        if name in env:
+            value = env[name]
+            if isinstance(value, PathRef):
+                return self._get_path(value.path, {})
+            return value
+        if self._path_exists(self._resolve_path(name, env)):
+            return self._get_path(name, env)
+        raise GwtError(f"unknown name: {name}")
+
+    def _resolve_path(self, path: str, env: dict[str, Any]) -> str:
+        parts = path.split(".")
+        if parts[0] in env and isinstance(env[parts[0]], PathRef):
+            parts[0] = env[parts[0]].path
+        return ".".join(parts)
+
+    def _get_path(self, path: str, env: dict[str, Any]) -> Any:
+        resolved = self._resolve_path(path, env)
+        current: Any = self.state
+        for part in resolved.split("."):
+            if not isinstance(current, dict) or part not in current:
+                raise GwtError(f"unknown path: {resolved}")
+            current = current[part]
+        return current
+
+    def _set_path(self, path: str, value: Any, env: dict[str, Any]) -> None:
+        resolved = self._resolve_path(path, env)
+        parts = resolved.split(".")
+        if not all(parts):
+            raise GwtError(f"invalid path: {path}")
+
+        current = self.state
+        for part in parts[:-1]:
+            next_value = current.setdefault(part, {})
+            if not isinstance(next_value, dict):
+                raise GwtError(f"cannot create nested path under scalar: {part}")
+            current = next_value
+        current[parts[-1]] = value
+
+    def _path_exists(self, path: str) -> bool:
+        current: Any = self.state
+        for part in path.split("."):
+            if not isinstance(current, dict) or part not in current:
+                return False
+            current = current[part]
+        return True
+
+
+class ExpressionScope:
+    def __init__(self, runtime: Runtime, env: dict[str, Any]) -> None:
+        self.runtime = runtime
+        self.env = env
+
+    def resolve_name(self, name: str) -> Any:
+        return self.runtime._resolve_name(name, self.env)
+
+
+def _logical_lines(source: str, filename: str) -> list[Line]:
+    lines: list[Line] = []
+    for number, raw in enumerate(source.splitlines(), start=1):
+        without_comment = raw.split("#", 1)[0].rstrip()
+        if without_comment.strip():
+            lines.append(Line(number, without_comment, filename))
+    return lines
+
+
+def _parse_behavior_block(
+    lines: list[Line], index: int, filename: str, indent: int = 2
+) -> tuple[list[Any], int]:
+    body: list[Any] = []
+    last_body_keyword: str | None = None
+
+    while index < len(lines):
+        line = lines[index]
+        line_indent = _indent_width(line.text)
+        text = line.text.strip()
+
+        if line_indent < indent:
+            break
+        if line_indent > indent:
+            raise GwtError(f"{filename}:{line.number}: behavior statement is indented too far")
+        if text == "ELSE":
+            break
+        if text.startswith("ELSE "):
+            raise GwtError(f"{filename}:{line.number}: ELSE does not take a condition")
+
+        if text.startswith("AND "):
+            if last_body_keyword is None:
+                raise GwtError(f"{filename}:{line.number}: AND has no previous behavior statement")
+            text = f"{last_body_keyword} {text.removeprefix('AND ').strip()}"
+
+        if text.startswith("IF "):
+            condition = text.removeprefix("IF ").strip()
+            if not condition:
+                raise GwtError(f"{filename}:{line.number}: IF requires a condition")
+            index += 1
+            then_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not then_body:
+                raise GwtError(f"{filename}:{line.number}: IF requires a body")
+
+            else_body: list[Any] = []
+            if index < len(lines) and _indent_width(lines[index].text) == indent and lines[index].text.strip() == "ELSE":
+                else_line = lines[index]
+                index += 1
+                else_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+                if not else_body:
+                    raise GwtError(f"{filename}:{else_line.number}: ELSE requires a body")
+
+            body.append(IfBlock(Line(line.number, condition, line.filename), then_body, else_body))
+            last_body_keyword = None
+            continue
+
+        if text.startswith("FOR "):
+            name, expression = _parse_for_header(text, filename, line.number)
+            index += 1
+            loop_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not loop_body:
+                raise GwtError(f"{filename}:{line.number}: FOR requires a body")
+            body.append(ForBlock(name, Line(line.number, expression, line.filename), loop_body))
+            last_body_keyword = None
+            continue
+
+        tokens = _tokens(text, filename, line.number)
+        if tokens:
+            last_body_keyword = tokens[0]
+        body.append(Line(line.number, text, line.filename))
+        index += 1
+
+    return body, index
+
+
+def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, str]:
+    header = text.removeprefix("FOR ").strip()
+    if " in " not in header:
+        raise GwtError(f"{filename}:{line_number}: FOR expects 'name in expression'")
+    name, expression = header.split(" in ", 1)
+    name = name.strip()
+    expression = expression.strip()
+    if not _is_local_name(name):
+        raise GwtError(f"{filename}:{line_number}: FOR requires a simple local name")
+    if not expression:
+        raise GwtError(f"{filename}:{line_number}: FOR requires an iterable expression")
+    return name, expression
+
+
+def _parse_import(text: str, line: Line, filename: str, importing: set[Path]) -> Program:
+    tokens = _tokens(text, filename, line.number)
+    if len(tokens) != 2:
+        raise GwtError(f"{filename}:{line.number}: USE expects one quoted path")
+
+    base_dir = Path.cwd() if filename == "<source>" else Path(filename).resolve().parent
+    import_path = Path(tokens[1])
+    if not import_path.is_absolute():
+        import_path = base_dir / import_path
+    import_path = import_path.resolve()
+
+    if import_path in importing:
+        raise GwtError(f"{filename}:{line.number}: circular USE import: {import_path}")
+    if not import_path.exists():
+        raise GwtError(f"{filename}:{line.number}: USE file not found: {import_path}")
+    if not import_path.is_file():
+        raise GwtError(f"{filename}:{line.number}: USE path is not a file: {import_path}")
+
+    importing.add(import_path)
+    try:
+        return parse_program(import_path.read_text(), str(import_path), importing)
+    finally:
+        importing.remove(import_path)
+
+
+def _parse_examples_table(
+    lines: list[Line], index: int, filename: str, examples_line: int
+) -> tuple[list[dict[str, str]], int]:
+    if index >= len(lines) or not lines[index].text.startswith("  "):
+        raise GwtError(f"{filename}:{examples_line}: EXAMPLES requires a table")
+
+    rows: list[list[str]] = []
+    while index < len(lines) and lines[index].text.startswith("  "):
+        line = lines[index]
+        if _indent_width(line.text) != 2:
+            raise GwtError(f"{filename}:{line.number}: EXAMPLES table rows must use two spaces")
+        row_text = line.text.strip()
+        if not (row_text.startswith("|") and row_text.endswith("|")):
+            raise GwtError(f"{filename}:{line.number}: EXAMPLES rows must use table pipes")
+        cells = [cell.strip() for cell in row_text.strip("|").split("|")]
+        if not cells or any(cell == "" for cell in cells):
+            raise GwtError(f"{filename}:{line.number}: EXAMPLES cells cannot be empty")
+        rows.append(cells)
+        index += 1
+
+    if len(rows) < 2:
+        raise GwtError(f"{filename}:{examples_line}: EXAMPLES requires at least one data row")
+
+    headers = rows[0]
+    if len(set(headers)) != len(headers):
+        raise GwtError(f"{filename}:{examples_line}: EXAMPLES headers must be unique")
+
+    examples: list[dict[str, str]] = []
+    for offset, row in enumerate(rows[1:], start=1):
+        if len(row) != len(headers):
+            raise GwtError(f"{filename}:{examples_line + offset}: EXAMPLES row has wrong number of cells")
+        examples.append(dict(zip(headers, row)))
+    return examples, index
+
+
+def _substitute_lines(lines: list[Line], values: dict[str, str] | None) -> list[Line]:
+    if values is None:
+        return lines
+    return [Line(line.number, _substitute_placeholders(line.text, values, line.number), line.filename) for line in lines]
+
+
+def _substitute_placeholders(text: str, values: dict[str, str], line_number: int) -> str:
+    def replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name not in values:
+            raise GwtError(f"line {line_number}: EXAMPLES has no value for <{name}>")
+        return values[name]
+
+    return re.sub(r"<([A-Za-z_][A-Za-z0-9_]*)>", replace, text)
+
+
+def _with_line_context(line: Line, error: GwtError) -> GwtError:
+    message = str(error)
+    if _has_error_location(message):
+        return error
+    if line.filename:
+        return GwtError(f"{line.filename}:{line.number}: {message}")
+    return GwtError(f"line {line.number}: {message}")
+
+
+def _has_error_location(message: str) -> bool:
+    return (
+        re.match(r"^.+:\d+:", message) is not None
+        or re.match(r"^.+: line \d+:", message) is not None
+        or re.match(r"^line \d+:", message) is not None
+    )
+
+
+def _is_record_header(text: str) -> bool:
+    return text.endswith(" is")
+
+
+def _expand_record_block(
+    header: str, lines: list[Line], index: int, filename: str
+) -> tuple[list[Line], int]:
+    base_path = header.removesuffix(" is").strip()
+    if not base_path:
+        raise GwtError(f"{filename}: record block requires a path")
+    if index >= len(lines) or not lines[index].text.startswith("  "):
+        raise GwtError(f"{filename}: line {lines[index - 1].number}: record block requires fields")
+
+    expanded: list[Line] = []
+    parents: list[str] = []
+
+    while index < len(lines) and lines[index].text.startswith("  "):
+        line = lines[index]
+        indent = _indent_width(line.text)
+        if indent % 2 != 0:
+            raise GwtError(f"{filename}:{line.number}: record indentation must use two spaces")
+
+        depth = indent // 2 - 1
+        if depth < 0:
+            break
+        if depth > len(parents):
+            raise GwtError(f"{filename}:{line.number}: record field is indented too far")
+
+        field_text = line.text.strip()
+        if ":" not in field_text:
+            raise GwtError(f"{filename}:{line.number}: record field must use 'name: value'")
+        field, value = field_text.split(":", 1)
+        field = field.strip()
+        value = value.strip()
+        if not field:
+            raise GwtError(f"{filename}:{line.number}: record field requires a name")
+
+        parent = base_path if depth == 0 else parents[depth - 1]
+        path = f"{parent}.{field}"
+        parents = parents[:depth]
+        parents.append(path)
+
+        if value:
+            expanded.append(Line(line.number, f"{path} is {value}", line.filename))
+        index += 1
+
+    if not expanded:
+        raise GwtError(f"{filename}: line {lines[index - 1].number}: record block requires values")
+    return expanded, index
+
+
+def _indent_width(text: str) -> int:
+    return len(text) - len(text.lstrip(" "))
+
+
+def _is_local_name(text: str) -> bool:
+    if not text or "." in text:
+        return False
+    if not (text[0].isalpha() or text[0] == "_"):
+        return False
+    return all(char.isalnum() or char == "_" for char in text)
+
+
+def _tokens(text: str, filename: str, line_number: int) -> list[str]:
+    try:
+        return shlex.split(text)
+    except ValueError as exc:
+        raise GwtError(f"{filename}:{line_number}: {exc}") from exc
+
+
+def _split_required(text: str, separator: str, line_number: int) -> tuple[str, str]:
+    if separator not in text:
+        raise GwtError(f"line {line_number}: expected '{separator.strip()}' in: {text}")
+    left, right = text.split(separator, 1)
+    return left, right
+
+
+def _after_keyword(text: str, separator: str) -> str:
+    if separator not in text:
+        raise GwtError(f"expected '{separator.strip()}' in: {text}")
+    return text.split(separator, 1)[1]
+
+
+def _condition_to_expression(text: str) -> str:
+    if " is " not in text:
+        return text
+
+    left, right_text = text.split(" is ", 1)
+    right_text = right_text.strip()
+
+    if right_text.startswith("not "):
+        operator = "!="
+        right = right_text.removeprefix("not ").strip()
+    elif right_text.startswith("greater than "):
+        operator = ">"
+        right = right_text.removeprefix("greater than ").strip()
+    elif right_text.startswith("less than "):
+        operator = "<"
+        right = right_text.removeprefix("less than ").strip()
+    elif right_text.startswith("at least "):
+        operator = ">="
+        right = right_text.removeprefix("at least ").strip()
+    elif right_text.startswith("at most "):
+        operator = "<="
+        right = right_text.removeprefix("at most ").strip()
+    else:
+        operator = "=="
+        right = right_text
+
+    if not left.strip() or not right:
+        raise GwtError(f"invalid condition: {text}")
+    return f"{left.strip()} {operator} {right}"
