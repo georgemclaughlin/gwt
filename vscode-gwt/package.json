@@ -12,7 +12,9 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:gwt"
+    "onLanguage:gwt",
+    "onDebug:gwt",
+    "onCommand:gwt.debugCurrentFile"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -34,6 +36,77 @@
         "language": "gwt",
         "scopeName": "source.gwt",
         "path": "./syntaxes/gwt.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "gwt.debugCurrentFile",
+        "title": "GWT: Debug Current File"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "gwt",
+        "label": "GWT",
+        "languages": [
+          "gwt"
+        ],
+        "initialConfigurations": [
+          {
+            "type": "gwt",
+            "request": "launch",
+            "name": "Debug Current GWT File",
+            "program": "${file}",
+            "mode": "test",
+            "json": false
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "GWT: Debug Current File",
+            "description": "Run the current GWT file through the GWT debugger.",
+            "body": {
+              "type": "gwt",
+              "request": "launch",
+              "name": "Debug Current GWT File",
+              "program": "${file}",
+              "mode": "test",
+              "json": false
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to the GWT file to run.",
+                "default": "${file}"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "test",
+                  "run"
+                ],
+                "default": "test",
+                "description": "Run with gwt test or gwt run."
+              },
+              "json": {
+                "type": "boolean",
+                "default": false,
+                "description": "Pass --json to the GWT command."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for the debug run."
+              }
+            }
+          }
+        }
       }
     ],
     "configuration": {

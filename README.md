@@ -158,6 +158,9 @@ npm install
 Open `/home/g/code/gwt` in VS Code, choose **Run GWT VS Code Extension** in the
 Run and Debug panel, then press `F5`. In the Extension Development Host window,
 open a `.gwt` file such as `/home/g/code/gwt/examples/typed_contracts.gwt`.
+Pressing `F5` on a `.gwt` file in that host window runs it through the GWT
+debug adapter and streams output to the Debug Console. Breakpoints/stepping are
+not implemented yet.
 
 The same analysis layer is available from Python:
 
