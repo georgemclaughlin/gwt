@@ -25,6 +25,10 @@ GIVEN record is DtoName
   nested:
     field: value
 
+GIVEN rows are
+  | field | count |
+  | "a"   | 1     |
+
 WHEN behavior parameter from target
   GIVEN parameter is DtoName
   THEN returns number
@@ -330,6 +334,34 @@ THEN account is
 Record blocks support object fields, nested object fields, and expression
 values such as list literals.
 
+## Data Tables
+
+`GIVEN path are` creates a list of records from a pipe table:
+
+```gwt
+GIVEN order.items are
+  | sku      | quantity |
+  | "widget" | 2        |
+  | "gadget" | 1        |
+```
+
+This creates:
+
+```json
+{
+  "order": {
+    "items": [
+      { "sku": "widget", "quantity": 2 },
+      { "sku": "gadget", "quantity": 1 }
+    ]
+  }
+}
+```
+
+Table headers become record field names. Cell values use the normal GWT value
+and expression syntax, so quote strings and leave numbers/booleans unquoted.
+Scenario `EXAMPLES` placeholders can be used inside table cells.
+
 ## Statements
 
 ```gwt
@@ -387,16 +419,21 @@ local bindings and state.
 Behavior blocks can also iterate over lists:
 
 ```gwt
-GIVEN cart.items is [10, 20, 30]
-AND cart.total is 0
+GIVEN cart.items are
+  | sku      | price |
+  | "widget" | 10    |
+  | "gadget" | 20    |
+
+GIVEN cart.total is 0
 
 WHEN total cart
   FOR item in cart.items
-    add item to cart.total
+    add item.price to cart.total
 ```
 
 `FOR` loop variables are local to each iteration. Returning from inside a loop
-exits the current behavior.
+exits the current behavior. When a loop item is a record, its fields can be
+read with dot paths such as `item.price`.
 
 ## Return Values
 

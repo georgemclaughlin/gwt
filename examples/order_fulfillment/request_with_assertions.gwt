@@ -5,10 +5,13 @@ GIVEN order is OrderRequest
   payment_status: "paid"
   fraud_score: 12
   expedited: true
-  requested_units: [1, 2, 1]
-  widget_qty: 1
-  gadget_qty: 2
-  cable_qty: 1
+  items: []
+
+GIVEN order.items are
+  | sku      | quantity |
+  | "widget" | 1        |
+  | "gadget" | 2        |
+  | "cable"  | 1        |
 
 GIVEN inventory is InventoryState
   widget_available: 5

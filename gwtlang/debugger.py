@@ -7,7 +7,18 @@ import sys
 from typing import Any, TextIO
 
 from .errors import GwtError
-from .runtime import DtoValidation, ForBlock, IfBlock, Line, PathRef, Program, Runtime, StackFrame, parse_program
+from .runtime import (
+    DtoValidation,
+    ForBlock,
+    IfBlock,
+    Line,
+    PathRef,
+    Program,
+    Runtime,
+    StackFrame,
+    TableAssignment,
+    parse_program,
+)
 
 
 @dataclass(frozen=True)
@@ -155,6 +166,8 @@ def executable_lines(program: Program) -> list[DebugLine]:
 
     def collect_statement(statement: Any) -> None:
         if isinstance(statement, DtoValidation):
+            add(statement.line)
+        elif isinstance(statement, TableAssignment):
             add(statement.line)
         elif isinstance(statement, Line):
             add(statement)

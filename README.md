@@ -44,6 +44,7 @@ In this first version:
 - `SCENARIO`, `BACKGROUND`, and `EXAMPLES` support BDD-style runs.
 - `USE` imports reusable behavior from another GWT file.
 - `DTO` declares header-like contracts for request/state records.
+- `GIVEN path are` data tables create lists of records.
 - Behavior contracts type parameters and return values with `GIVEN` and
   `THEN returns`.
 

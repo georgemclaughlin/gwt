@@ -732,6 +732,60 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["cart"]["items"], [10, 20, 30])
         self.assertEqual(result.state["cart"]["total"], 60)
 
+    def test_given_table_creates_list_of_records(self):
+        result = run_source(
+            '''
+            GIVEN order.items are
+              | sku      | quantity |
+              | "widget" | 2        |
+              | "gadget" | 3        |
+
+            GIVEN fulfillment.requested_units is 0
+
+            WHEN count items
+              FOR item in order.items
+                add item.quantity to fulfillment.requested_units
+
+            WHEN count items
+
+            THEN fulfillment.requested_units == 5
+            '''
+        )
+
+        self.assertEqual(
+            result.state["order"]["items"],
+            [{"sku": "widget", "quantity": 2}, {"sku": "gadget", "quantity": 3}],
+        )
+        self.assertEqual(result.state["fulfillment"]["requested_units"], 5)
+
+    def test_given_table_supports_examples_placeholders(self):
+        result = run_source(
+            '''
+            SCENARIO table examples
+            GIVEN order.items are
+              | sku      | quantity |
+              | "widget" | <widget> |
+              | "gadget" | <gadget> |
+
+            GIVEN total is 0
+
+            WHEN count items
+              FOR item in order.items
+                add item.quantity to total
+
+            WHEN count items
+
+            THEN total == <total>
+
+            EXAMPLES
+              | widget | gadget | total |
+              | 2      | 3      | 5     |
+              | 1      | 4      | 5     |
+            '''
+        )
+
+        self.assertEqual([scenario.state["total"] for scenario in result.scenarios], [5, 5])
+
     def test_for_loop_can_return_from_behavior(self):
         result = run_source(
             '''
