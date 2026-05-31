@@ -167,6 +167,11 @@ after `WHEN` execution. When a program has one or more `OUTPUT` declarations,
 JSON/API payloads return only those declared output paths; `state` still keeps
 the full final runtime state for debugging and tests.
 
+Declared DTO, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
+contracts also protect later writes. A `set`, `add`, or `subtract` that would
+change a known `number` field to `text`, or replace a `list<OrderItem>` with a
+non-list value, fails at the mutation line.
+
 ## Behavior Contracts
 
 Block-form `WHEN` behaviors can declare parameter and return contracts before
@@ -455,7 +460,9 @@ subtract amount + fee from account.balance
 print account.balance
 ```
 
-`value` can be an expression.
+`value` can be an expression. If the target path has a known type from a DTO,
+program contract, typed table, or behavior contract, mutations are checked
+against that type immediately.
 
 ## Local Bindings
 

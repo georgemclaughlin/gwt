@@ -382,6 +382,8 @@ class Runtime:
         self.actions = self._index_actions(program.actions)
         self.debugger = debugger
         self.call_stack: list[CallFrame] = []
+        self.base_path_types = self._base_path_types()
+        self.path_types: dict[str, str] = {}
 
     def run(self) -> RunResult:
         results: list[ScenarioResult] = []
@@ -398,6 +400,7 @@ class Runtime:
     ) -> ScenarioResult:
         self.state = {}
         self.output = []
+        self.path_types = dict(self.base_path_types)
         givens = [*self.program.background.givens, *_substitute_lines(scenario.givens, example)]
         whens = [*self.program.background.whens, *_substitute_lines(scenario.whens, example)]
         thens = [*self.program.background.thens, *_substitute_lines(scenario.thens, example)]
@@ -429,6 +432,43 @@ class Runtime:
             indexed.setdefault(action.name, []).append(action)
         return indexed
 
+    def _base_path_types(self) -> dict[str, str]:
+        path_types: dict[str, str] = {}
+        for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
+            self._register_path_type(binding.path, binding.value_type, path_types)
+        return path_types
+
+    def _register_path_type(self, path: str, value_type: str, path_types: dict[str, str] | None = None) -> None:
+        target = self.path_types if path_types is None else path_types
+        target[path] = value_type
+
+        dto = self.program.dtos.get(value_type)
+        if dto is None:
+            return
+        for field, field_type in dto.fields.items():
+            target[f"{path}.{field}"] = field_type
+            if field_type in self.program.dtos:
+                self._register_path_type(f"{path}.{field}", field_type, target)
+
+    def _apply_action_contract(self, action: Action, env: dict[str, Any], line: Line) -> None:
+        for name, value_type in action.contract.inputs.items():
+            if name not in env:
+                continue
+            value = env[name]
+            if isinstance(value, PathRef):
+                resolved = self._resolve_path(value.path, {})
+                self._register_path_type(resolved, value_type)
+                self._validate_value_type(resolved, self._get_path(resolved, {}), value_type, line)
+            else:
+                self._validate_value_type(name, value, value_type, line)
+
+    def _validate_assignment(self, path: str, value: Any, line: Line | None) -> None:
+        expected_type = self.path_types.get(path)
+        if expected_type is None:
+            return
+        validation_line = line or Line(0, path)
+        self._validate_value_type(path, value, expected_type, validation_line)
+
     def _validate_dto(self, validation: DtoValidation) -> None:
         dto = self.program.dtos.get(validation.dto_name)
         if dto is None:
@@ -438,6 +478,7 @@ class Runtime:
             if not isinstance(value, dict):
                 raise GwtError(f"expected {validation.path} to be a record")
             self._validate_dto_fields(validation.path, value, dto, validation.line)
+            self._register_path_type(validation.path, validation.dto_name)
         except GwtError as exc:
             raise _with_line_context(validation.line, exc) from exc
 
@@ -504,7 +545,7 @@ class Runtime:
         self._before_line(line, {})
         try:
             left, right = _split_required(line.text, " is ", line.number)
-            self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {})
+            self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {}, line)
         except GwtError as exc:
             raise _with_line_context(line, exc) from exc
 
@@ -524,7 +565,8 @@ class Runtime:
                     raise GwtError(f"unknown DTO: {table.item_type}")
                 for index, row in enumerate(rows, start=1):
                     self._validate_dto_fields(f"{table.path}[{index}]", row, dto, table.line)
-            self._set_path(table.path, rows, {})
+                self._register_path_type(table.path, f"list<{table.item_type}>")
+            self._set_path(table.path, rows, {}, table.line)
         except GwtError as exc:
             raise _with_line_context(table.line, exc) from exc
 
@@ -581,13 +623,18 @@ class Runtime:
         if tokens[0] == "set":
             if len(tokens) < 4 or tokens[2] != "to":
                 raise GwtError(f"line {line.number}: expected 'set path to value'")
-            self._set_path(tokens[1], self._eval_expression(_after_keyword(line.text, " to "), env), env)
+            self._set_path(tokens[1], self._eval_expression(_after_keyword(line.text, " to "), env), env, line)
         elif tokens[0] == "add":
             if len(tokens) < 4 or "to" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'add value to path'")
             value_text, path = _split_required(line.text.removeprefix("add ").strip(), " to ", line.number)
             value = self._eval_expression(value_text, env)
-            self._set_path(path, self._get_path(path, env) + value, env)
+            try:
+                new_value = self._get_path(path, env) + value
+            except TypeError as exc:
+                current_type = _value_type_name(self._get_path(path, env))
+                raise GwtError(f"line {line.number}: cannot add {_value_type_name(value)} to {current_type}") from exc
+            self._set_path(path, new_value, env, line)
         elif tokens[0] == "subtract":
             if len(tokens) < 4 or "from" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'subtract value from path'")
@@ -595,7 +642,14 @@ class Runtime:
                 line.text.removeprefix("subtract ").strip(), " from ", line.number
             )
             value = self._eval_expression(value_text, env)
-            self._set_path(path, self._get_path(path, env) - value, env)
+            try:
+                new_value = self._get_path(path, env) - value
+            except TypeError as exc:
+                current_type = _value_type_name(self._get_path(path, env))
+                raise GwtError(
+                    f"line {line.number}: cannot subtract {_value_type_name(value)} from {current_type}"
+                ) from exc
+            self._set_path(path, new_value, env, line)
         elif tokens[0] == "print":
             value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
             self.output.append(str(value))
@@ -605,6 +659,7 @@ class Runtime:
         for action in reversed(candidates):
             env = self._match_action(action, call, caller_env)
             if env is not None:
+                self._apply_action_contract(action, env, line)
                 frame = CallFrame(
                     action.signature_text or " ".join(action.signature),
                     line,
@@ -747,11 +802,12 @@ class Runtime:
             current = current[part]
         return current
 
-    def _set_path(self, path: str, value: Any, env: dict[str, Any]) -> None:
+    def _set_path(self, path: str, value: Any, env: dict[str, Any], line: Line | None = None) -> None:
         resolved = self._resolve_path(path, env)
         parts = resolved.split(".")
         if not all(parts):
             raise GwtError(f"invalid path: {path}")
+        self._validate_assignment(resolved, value, line)
 
         current = self.state
         for part in parts[:-1]:
