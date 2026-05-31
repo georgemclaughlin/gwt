@@ -1,0 +1,199 @@
+PROGRAM loan underwriting
+
+DTO LoanApplication
+  credit_score: number
+  annual_income: number
+  monthly_debt: number
+  home_price: number
+  down_payment: number
+  available_cash: number
+  late_payments: list
+  collections: list
+  bankruptcies: number
+  employment_years: number
+
+DTO LoanDecision
+  principal: number
+  dti: number
+  ltv: number
+  reserve_months: number
+  risk_points: number
+  interest_rate: number
+  status: text
+  reason: text
+
+WHEN ratios application into decision
+  GIVEN application is LoanApplication
+  AND decision is LoanDecision
+  LET monthly_income be application.annual_income / 12
+  LET principal be application.home_price - application.down_payment
+  LET payment be principal * 0.006
+  set decision.principal to principal
+  set decision.dti to application.monthly_debt / monthly_income
+  set decision.ltv to principal / application.home_price
+  set decision.reserve_months to (application.available_cash - application.down_payment) / payment
+
+WHEN credit score
+  GIVEN score is number
+  THEN returns number
+  IF score >= 760
+    RETURN 0
+  ELSE
+    IF score >= 700
+      RETURN 1
+    ELSE
+      IF score >= 660
+        RETURN 2
+      ELSE
+        RETURN 5
+
+WHEN dti ratio
+  GIVEN ratio is number
+  THEN returns number
+  IF ratio <= 0.36
+    RETURN 0
+  ELSE
+    IF ratio <= 0.43
+      RETURN 1
+    ELSE
+      IF ratio <= 0.50
+        RETURN 3
+      ELSE
+        RETURN 6
+
+WHEN ltv ratio
+  GIVEN ratio is number
+  THEN returns number
+  IF ratio <= 0.80
+    RETURN 0
+  ELSE
+    IF ratio <= 0.90
+      RETURN 1
+    ELSE
+      IF ratio <= 0.97
+        RETURN 3
+      ELSE
+        RETURN 5
+
+WHEN bankruptcy count
+  GIVEN count is number
+  THEN returns number
+  IF count > 0
+    RETURN 8
+  ELSE
+    RETURN 0
+
+WHEN employment years
+  GIVEN years is number
+  THEN returns number
+  IF years >= 2
+    RETURN 0
+  ELSE
+    RETURN 2
+
+WHEN risks application into decision
+  GIVEN application is LoanApplication
+  AND decision is LoanDecision
+  LET credit_points be credit application.credit_score
+  LET dti_points be dti decision.dti
+  LET ltv_points be ltv decision.ltv
+  LET bankruptcy_points be bankruptcy application.bankruptcies
+  LET employment_points be employment application.employment_years
+  add credit_points to decision.risk_points
+  add dti_points to decision.risk_points
+  add ltv_points to decision.risk_points
+  add bankruptcy_points to decision.risk_points
+  add employment_points to decision.risk_points
+
+WHEN history application into decision
+  GIVEN application is LoanApplication
+  AND decision is LoanDecision
+  FOR point in application.late_payments
+    add point to decision.risk_points
+  FOR point in application.collections
+    add point to decision.risk_points
+
+WHEN classify application into decision
+  GIVEN application is LoanApplication
+  AND decision is LoanDecision
+  IF application.bankruptcies > 0 and application.credit_score < 700
+    set decision.status to "denied"
+    set decision.reason to "recent_bankruptcy"
+  ELSE
+    IF decision.risk_points <= 4 and decision.dti <= 0.43 and decision.ltv <= 0.90 and decision.reserve_months >= 3
+      set decision.status to "approved"
+      set decision.reason to "strong_application"
+    ELSE
+      IF decision.risk_points <= 8 and decision.dti <= 0.50 and decision.ltv <= 0.97 and decision.reserve_months >= 1
+        set decision.status to "manual_review"
+        set decision.reason to "compensating_factors"
+      ELSE
+        set decision.status to "denied"
+        set decision.reason to "risk_too_high"
+
+WHEN price decision
+  GIVEN decision is LoanDecision
+  IF decision.status == "approved"
+    IF decision.risk_points <= 2
+      set decision.interest_rate to 6.25
+    ELSE
+      set decision.interest_rate to 6.5
+  ELSE
+    IF decision.status == "manual_review"
+      set decision.interest_rate to 7.25
+    ELSE
+      set decision.interest_rate to 0
+
+WHEN underwrite application into decision
+  GIVEN application is LoanApplication
+  AND decision is LoanDecision
+  set decision.principal to 0
+  set decision.dti to 0
+  set decision.ltv to 0
+  set decision.reserve_months to 0
+  set decision.risk_points to 0
+  set decision.interest_rate to 0
+  set decision.status to "new"
+  set decision.reason to "new"
+  ratios application into decision
+  risks application into decision
+  history application into decision
+  classify application into decision
+  price decision
+
+SCENARIO underwriting decisions
+GIVEN application is LoanApplication
+  credit_score: <credit_score>
+  annual_income: <annual_income>
+  monthly_debt: <monthly_debt>
+  home_price: <home_price>
+  down_payment: <down_payment>
+  available_cash: <available_cash>
+  late_payments: <late_payments>
+  collections: <collections>
+  bankruptcies: <bankruptcies>
+  employment_years: <employment_years>
+
+GIVEN decision is LoanDecision
+  principal: 0
+  dti: 0
+  ltv: 0
+  reserve_months: 0
+  risk_points: 0
+  interest_rate: 0
+  status: "new"
+  reason: "new"
+
+WHEN underwrite application into decision
+
+THEN decision.status == <status>
+AND decision.reason == <reason>
+AND decision.risk_points == <risk_points>
+AND decision.interest_rate == <interest_rate>
+AND decision.principal == <principal>
+
+EXAMPLES
+  | credit_score | annual_income | monthly_debt | home_price | down_payment | available_cash | late_payments | collections | bankruptcies | employment_years | status          | reason                 | risk_points | interest_rate | principal |
+  | 780          | 120000        | 1500         | 400000     | 100000       | 140000         | []            | []          | 0            | 5                | "approved"      | "strong_application"   | 0           | 6.25          | 300000    |
+  | 700          | 90000         | 3300         | 350000     | 35000        | 45000          | [1]           | []          | 0            | 1                | "manual_review" | "compensating_factors" | 8           | 7.25          | 315000    |
+  | 640          | 80000         | 4200         | 300000     | 6000         | 10000          | [1, 1, 1]     | [3]         | 1            | 0                | "denied"        | "recent_bankruptcy"    | 32          | 0             | 294000    |
