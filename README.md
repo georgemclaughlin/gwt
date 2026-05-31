@@ -47,67 +47,76 @@ In this first version:
 Run an example:
 
 ```sh
-python -m gwtlang examples/bank.gwt
+python -m gwtlang run examples/bank.gwt
 ```
 
 Run multiple scenarios:
 
 ```sh
-python -m gwtlang examples/scenarios.gwt --json
+python -m gwtlang test examples/scenarios.gwt
 ```
 
 Run the record example:
 
 ```sh
-python -m gwtlang examples/records.gwt --json
+python -m gwtlang run examples/records.gwt --json
 ```
 
 Run the local binding example:
 
 ```sh
-python -m gwtlang examples/let.gwt --json
+python -m gwtlang run examples/let.gwt --json
 ```
 
 Run the control-flow example:
 
 ```sh
-python -m gwtlang examples/control_flow.gwt --json
+python -m gwtlang run examples/control_flow.gwt --json
 ```
 
 Run the return-value example:
 
 ```sh
-python -m gwtlang examples/return_values.gwt --json
+python -m gwtlang run examples/return_values.gwt --json
 ```
 
 Run the examples-table scenario:
 
 ```sh
-python -m gwtlang examples/examples_table.gwt --json
+python -m gwtlang test examples/examples_table.gwt
 ```
 
 Run an imported module example:
 
 ```sh
-python -m gwtlang examples/use_import.gwt --json
+python -m gwtlang run examples/use_import.gwt --json
 ```
 
 Run the collections example:
 
 ```sh
-python -m gwtlang examples/collections.gwt --json
+python -m gwtlang run examples/collections.gwt --json
 ```
 
 Run a reusable workflow with a GWT-shaped request file:
 
 ```sh
-python -m gwtlang examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
+python -m gwtlang run examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
 ```
 
 Run checkout regression scenarios:
 
 ```sh
-python -m gwtlang examples/checkout_scenarios.gwt --json
+python -m gwtlang test examples/checkout_scenarios.gwt
+```
+
+Install a local `gwt` command:
+
+```sh
+python -m pip install -e .
+gwt run examples/bank.gwt
+gwt test examples/checkout_scenarios.gwt
+gwt check examples/checkout_app.gwt
 ```
 
 Expression example:

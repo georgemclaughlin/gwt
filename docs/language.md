@@ -107,7 +107,7 @@ signature as an imported behavior, the later local definition is tried first.
 The CLI can run a behavior file with a separate GWT-shaped request file:
 
 ```sh
-python -m gwtlang examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
+python -m gwtlang run examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
 ```
 
 The program file provides reusable block-form `WHEN` behavior. The input file

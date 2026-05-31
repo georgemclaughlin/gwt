@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gwtlang"
+version = "0.1.0"
+description = "A small deterministic workflow language with BDD-shaped syntax."
+readme = "README.md"
+requires-python = ">=3.11"
+
+[project.scripts]
+gwt = "gwtlang.__main__:main"
+
+[tool.setuptools]
+packages = ["gwtlang"]
