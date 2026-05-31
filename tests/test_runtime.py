@@ -929,6 +929,35 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.state["cart"]["total"], 42)
 
+    def test_behavior_contracts_are_metadata_not_runtime_steps(self):
+        result = run_source(
+            '''
+            DTO Cart
+              items: list
+              total: number
+
+            WHEN cart total for cart
+              GIVEN cart is Cart
+              THEN returns number
+              RETURN cart.total
+
+            WHEN mark cart
+              GIVEN cart is Cart
+              LET total be cart total for cart
+              set cart.total to total + 1
+
+            GIVEN cart is Cart
+              items: [10, 20]
+              total: 30
+
+            WHEN mark cart
+
+            THEN cart.total == 31
+            '''
+        )
+
+        self.assertEqual(result.state["cart"]["total"], 31)
+
     def test_use_imports_dto_definitions(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             module_path = Path(temp_dir) / "types.gwt"

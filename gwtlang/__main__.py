@@ -6,8 +6,9 @@ import re
 import sys
 from pathlib import Path
 
-from .checker import check_program
+from .checker import Diagnostic, check_program
 from .runtime import GwtError, parse_program, run_request, run_source
+from .symbols import build_symbol_table
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -116,6 +117,7 @@ def check_command(args: argparse.Namespace) -> int:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1
     diagnostics = check_program(program)
+    symbols = build_symbol_table(program)
 
     payload = {
         "file": str(args.file),
@@ -124,6 +126,7 @@ def check_command(args: argparse.Namespace) -> int:
         "behaviors": len(program.actions),
         "scenarios": len(program.scenarios),
         "diagnostics": [diagnostic.as_payload(str(args.file)) for diagnostic in diagnostics],
+        "symbols": symbols.as_payload(str(args.file)),
     }
     if diagnostics:
         if args.json:
@@ -131,11 +134,7 @@ def check_command(args: argparse.Namespace) -> int:
         else:
             print(
                 "\n\n".join(
-                    format_error(
-                        GwtError(diagnostic.as_error_message(str(args.file))),
-                        source,
-                        str(args.file),
-                    )
+                    format_diagnostic(diagnostic, source, str(args.file))
                     for diagnostic in diagnostics
                 ),
                 file=sys.stderr,
@@ -193,6 +192,20 @@ def format_error(error: GwtError, source: str, filename: str) -> str:
 
     source_line = source_lines[line_number - 1]
     caret_start, caret_width = _diagnostic_span(source_line, detail)
+    caret = " " * caret_start + "^" * caret_width
+    return f"{header}\n  {source_line}\n  {caret}"
+
+
+def format_diagnostic(diagnostic: Diagnostic, source: str, filename: str) -> str:
+    error_file = diagnostic.filename or filename
+    source_lines = _source_lines_for(error_file, filename, source)
+    header = f"gwt: {error_file}:{diagnostic.line}:{diagnostic.column}: {diagnostic.code} {diagnostic.message}"
+    if diagnostic.line < 1 or diagnostic.line > len(source_lines):
+        return header
+
+    source_line = source_lines[diagnostic.line - 1]
+    caret_start = max(0, min(len(source_line), diagnostic.column - 1))
+    caret_width = max(1, min(diagnostic.length, max(1, len(source_line) - caret_start)))
     caret = " " * caret_start + "^" * caret_width
     return f"{header}\n  {source_line}\n  {caret}"
 

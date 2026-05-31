@@ -121,6 +121,119 @@ class CheckerTests(unittest.TestCase):
 
         self.assertEqual(check_messages(source), [])
 
+    def test_accepts_typed_behavior_contracts(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              items: list
+              total: number
+
+            WHEN cart total for cart
+              GIVEN cart is Cart
+              THEN returns number
+              RETURN cart.total
+
+            GIVEN cart is Cart
+              items: []
+              total: 3
+
+            WHEN cart total for cart
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_and_continues_contract_given(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            DTO Customer
+              member: boolean
+
+            WHEN checkout cart for customer
+              GIVEN cart is Cart
+              AND customer is Customer
+              set cart.total to 1
+
+            GIVEN cart is Cart
+              total: 0
+            GIVEN customer is Customer
+              member: true
+
+            WHEN checkout cart for customer
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_unknown_contract_type(self):
+        messages = check_messages(
+            """
+            WHEN total cart
+              GIVEN cart is MissingCart
+              RETURN 1
+            """
+        )
+
+        self.assertIn("unknown contract type: MissingCart", messages)
+
+    def test_reports_contract_for_unknown_parameter(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            WHEN total cart
+              GIVEN customer is Cart
+              RETURN 1
+            """
+        )
+
+        self.assertIn("contract refers to unknown behavior parameter: customer", messages)
+
+    def test_reports_behavior_argument_type_mismatch(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            WHEN checkout cart
+              GIVEN cart is Cart
+              set cart.total to 1
+
+            GIVEN total is 3
+            WHEN checkout total
+            """
+        )
+
+        self.assertIn("behavior argument 'cart' expected Cart, got number", messages)
+
+    def test_reports_return_type_mismatch(self):
+        messages = check_messages(
+            """
+            WHEN total cart
+              GIVEN cart is any
+              THEN returns number
+              RETURN "not a number"
+            """
+        )
+
+        self.assertIn("RETURN expected number, got text", messages)
+
+    def test_reports_missing_declared_return(self):
+        messages = check_messages(
+            """
+            WHEN total cart
+              GIVEN cart is any
+              THEN returns number
+              print cart
+            """
+        )
+
+        self.assertIn("behavior declares number but does not return a value", messages)
+
 
 if __name__ == "__main__":
     unittest.main()

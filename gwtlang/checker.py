@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 from typing import Any
 
 from .errors import GwtError
-from .expressions import Expr, Literal, Name, parse_expression
+from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_expression
 from .runtime import (
     CONNECTORS,
     Action,
     DtoValidation,
+    DTO_TYPES,
     ForBlock,
     IfBlock,
     Line,
@@ -20,6 +21,7 @@ from .runtime import (
     _split_required,
     _tokens,
 )
+from .symbols import SourceRange
 
 
 BUILTINS = {"set", "add", "subtract", "print"}
@@ -33,15 +35,21 @@ class Diagnostic:
     filename: str | None
     line: int
     message: str
+    code: str = "GWT000"
+    severity: str = "error"
+    column: int = 1
+    length: int = 1
 
     def as_error_message(self, fallback_filename: str) -> str:
         filename = self.filename or fallback_filename
-        return f"{filename}:{self.line}: {self.message}"
+        return f"{filename}:{self.line}:{self.column}: {self.code} {self.message}"
 
     def as_payload(self, fallback_filename: str) -> dict[str, object]:
+        source_range = SourceRange(self.filename, self.line, self.column, self.length).as_payload(fallback_filename)
         return {
-            "file": self.filename or fallback_filename,
-            "line": self.line,
+            **source_range,
+            "code": self.code,
+            "severity": self.severity,
             "message": self.message,
         }
 
@@ -49,9 +57,10 @@ class Diagnostic:
 @dataclass
 class Scope:
     names: set[str]
+    types: dict[str, str] = field(default_factory=dict)
 
     def copy(self) -> Scope:
-        return Scope(set(self.names))
+        return Scope(set(self.names), dict(self.types))
 
 
 def check_program(program: Program) -> list[Diagnostic]:
@@ -78,16 +87,37 @@ class Checker:
         seen: dict[tuple[str | None, tuple[str, ...]], Action] = {}
         for action in self.program.actions:
             if action.name in RESERVED_BEHAVIOR_NAMES:
-                self._add(action.filename, action.line, f"behavior name is reserved: {action.name}")
+                self._add(
+                    action.filename,
+                    action.line,
+                    f"behavior name is reserved: {action.name}",
+                    "GWT003",
+                    action.column,
+                    len(action.name),
+                )
 
             parameters = _signature_parameters(action.signature)
             duplicate_parameter = _first_duplicate(parameters)
             if duplicate_parameter is not None:
-                self._add(action.filename, action.line, f"duplicate behavior parameter: {duplicate_parameter}")
+                self._add(
+                    action.filename,
+                    action.line,
+                    f"duplicate behavior parameter: {duplicate_parameter}",
+                    "GWT004",
+                    action.column,
+                    action.length,
+                )
 
             for parameter in parameters:
                 if not _is_local_name(parameter):
-                    self._add(action.filename, action.line, f"behavior parameter must be a simple name: {parameter}")
+                    self._add(
+                        action.filename,
+                        action.line,
+                        f"behavior parameter must be a simple name: {parameter}",
+                        "GWT005",
+                        action.column,
+                        action.length,
+                    )
 
             key = (action.filename, _signature_shape(action.signature))
             previous = seen.get(key)
@@ -97,13 +127,37 @@ class Checker:
                     action.line,
                     f"duplicate behavior signature: {_format_signature_shape(key[1])} "
                     f"(previously line {previous.line})",
+                    "GWT002",
+                    action.column,
+                    action.length,
                 )
             else:
                 seen[key] = action
 
     def _check_action(self, action: Action) -> None:
-        scope = Scope(set(_signature_parameters(action.signature)))
-        self._check_body(action.body, scope)
+        self._check_action_contract(action)
+        scope = Scope(set(_signature_parameters(action.signature)), {})
+        for name, value_type in action.contract.inputs.items():
+            self._add_typed_name(scope, name, value_type)
+        self._check_body(action.body, scope, action.contract.return_type)
+        if action.contract.return_type is not None and not _body_has_return(action.body):
+            line = action.contract.return_line
+            if line is not None:
+                self._add_line(line, f"behavior declares {action.contract.return_type} but does not return a value", "GWT017")
+
+    def _check_action_contract(self, action: Action) -> None:
+        parameters = set(_signature_parameters(action.signature))
+        for name, value_type in action.contract.inputs.items():
+            line = action.contract.input_lines[name]
+            if name not in parameters:
+                self._add_line(line, f"contract refers to unknown behavior parameter: {name}", "GWT015")
+            if not self._is_known_type(value_type):
+                self._add_line(line, f"unknown contract type: {value_type}", "GWT014")
+
+        if action.contract.return_type is not None and not self._is_known_type(action.contract.return_type):
+            line = action.contract.return_line
+            if line is not None:
+                self._add_line(line, f"unknown return type: {action.contract.return_type}", "GWT014")
 
     def _check_background(self) -> None:
         background_lines = [
@@ -117,8 +171,9 @@ class Checker:
 
         for line in self.program.background.givens:
             self._check_given(line)
+        background_scope = self._scope_from_givens(self.program.background.givens)
         for line in self.program.background.whens:
-            self._check_command_or_action(line, Scope(set()), allow_let=False)
+            self._check_command_or_action(line, background_scope, allow_let=False)
         for line in self.program.background.thens:
             self._check_condition(line)
 
@@ -134,38 +189,67 @@ class Checker:
 
         for line in scenario.givens:
             self._check_given(line)
+        scenario_scope = self._scope_from_givens([*self.program.background.givens, *scenario.givens])
         for line in scenario.whens:
-            self._check_command_or_action(line, Scope(set()), allow_let=False)
+            self._check_command_or_action(line, scenario_scope, allow_let=False)
         for line in scenario.thens:
             self._check_condition(line)
 
-    def _check_body(self, body: list[Any], scope: Scope) -> None:
+    def _scope_from_givens(self, givens: list[Any]) -> Scope:
+        scope = Scope(set())
+        for given in givens:
+            if isinstance(given, DtoValidation):
+                self._add_typed_name(scope, given.path, given.dto_name)
+            elif isinstance(given, Line) and " is " in given.text:
+                path, expression = given.text.split(" is ", 1)
+                path = path.strip()
+                if "." not in path:
+                    scope.names.add(path)
+                    try:
+                        expression_type = parse_expression(expression.strip())
+                    except GwtError:
+                        expression_type = None
+                    inferred_type = _infer_expression_type(expression_type, scope) if expression_type is not None else None
+                    if inferred_type is not None:
+                        self._add_typed_name(scope, path, inferred_type)
+        return scope
+
+    def _add_typed_name(self, scope: Scope, name: str, value_type: str) -> None:
+        scope.names.add(name)
+        scope.types[name] = value_type
+        dto = self.program.dtos.get(value_type)
+        if dto is not None:
+            for field_name, field_type in dto.fields.items():
+                scope.types[f"{name}.{field_name}"] = field_type
+
+    def _check_body(self, body: list[Any], scope: Scope, expected_return: str | None = None) -> None:
         for statement in body:
             if isinstance(statement, IfBlock):
                 self._check_condition(statement.condition)
-                self._check_body(statement.then_body, scope.copy())
-                self._check_body(statement.else_body, scope.copy())
+                self._check_body(statement.then_body, scope.copy(), expected_return)
+                self._check_body(statement.else_body, scope.copy(), expected_return)
             elif isinstance(statement, ForBlock):
-                self._check_for(statement, scope)
+                self._check_for(statement, scope, expected_return)
             else:
-                self._check_command_or_action(statement, scope, allow_let=True)
+                self._check_command_or_action(statement, scope, allow_let=True, expected_return=expected_return)
 
-    def _check_for(self, statement: ForBlock, scope: Scope) -> None:
+    def _check_for(self, statement: ForBlock, scope: Scope, expected_return: str | None = None) -> None:
         if statement.name in scope.names:
-            self._add(statement.iterable.filename, statement.iterable.number, f"FOR cannot overwrite: {statement.name}")
+            self._add_line(statement.name_line or statement.iterable, f"FOR cannot overwrite: {statement.name}", "GWT008")
 
         expression = self._check_expression(statement.iterable.text, statement.iterable)
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
-            self._add(statement.iterable.filename, statement.iterable.number, "FOR requires a list")
+            self._add_line(statement.iterable, "FOR requires a list", "GWT013")
 
         loop_scope = scope.copy()
         loop_scope.names.add(statement.name)
-        self._check_body(statement.body, loop_scope)
+        loop_scope.types[statement.name] = "any"
+        self._check_body(statement.body, loop_scope, expected_return)
 
     def _check_given(self, statement: Any) -> None:
         if isinstance(statement, DtoValidation):
             if statement.dto_name not in self.program.dtos:
-                self._add(statement.line.filename, statement.line.number, f"unknown DTO: {statement.dto_name}")
+                self._add_line(statement.line, f"unknown DTO: {statement.dto_name}", "GWT014")
             return
         if not isinstance(statement, Line):
             return
@@ -173,17 +257,24 @@ class Checker:
         try:
             path, expression = _split_required(statement.text, " is ", statement.number)
         except GwtError as exc:
-            self._add(statement.filename, statement.number, str(exc))
+            self._add_line(statement, str(exc), "GWT010")
             return
 
         self._check_path(path.strip(), statement)
         self._check_expression(expression.strip(), statement)
 
-    def _check_command_or_action(self, line: Line, scope: Scope, *, allow_let: bool) -> None:
+    def _check_command_or_action(
+        self,
+        line: Line,
+        scope: Scope,
+        *,
+        allow_let: bool,
+        expected_return: str | None = None,
+    ) -> None:
         try:
             tokens = _tokens(line.text, line.filename or "<source>", line.number)
         except GwtError as exc:
-            self._add(line.filename, line.number, _strip_location(str(exc)))
+            self._add_line(line, _strip_location(str(exc)), "GWT010")
             return
         if not tokens:
             return
@@ -191,18 +282,20 @@ class Checker:
         command = tokens[0]
         if command == "RETURN":
             if not allow_let:
-                self._add(line.filename, line.number, "RETURN is only allowed inside behavior")
+                self._add_line(line, "RETURN is only allowed inside behavior", "GWT007")
                 return
             expression = line.text.removeprefix("RETURN").strip()
             if not expression:
-                self._add(line.filename, line.number, "RETURN requires a value")
+                self._add_line(line, "RETURN requires a value", "GWT009")
                 return
-            self._check_expression_or_action(expression, line, scope, require_return_value=True)
+            actual_type = self._check_expression_or_action(expression, line, scope, require_return_value=True)
+            if expected_return is not None and actual_type is not None and not _assignable(actual_type, expected_return):
+                self._add_line(line, f"RETURN expected {expected_return}, got {actual_type}", "GWT016")
             return
 
         if command == "LET":
             if not allow_let:
-                self._add(line.filename, line.number, "LET is only allowed inside behavior")
+                self._add_line(line, "LET is only allowed inside behavior", "GWT007")
                 return
             self._check_let(line, scope)
             return
@@ -210,41 +303,43 @@ class Checker:
         if command == "REQUIRE":
             condition = line.text.removeprefix("REQUIRE").strip()
             if not condition:
-                self._add(line.filename, line.number, "REQUIRE requires a condition")
+                self._add_line(line, "REQUIRE requires a condition", "GWT010")
                 return
-            self._check_condition(Line(line.number, condition, line.filename))
+            self._check_condition(Line(line.number, condition, line.filename, line.column + len("REQUIRE "), len(condition)))
             return
 
         if command in BUILTINS:
             self._check_builtin(tokens, line)
             return
 
-        self._check_behavior_call(tokens, line, require_return_value=False)
+        self._check_behavior_call(tokens, line, scope, require_return_value=False)
 
     def _check_let(self, line: Line, scope: Scope) -> None:
         binding = line.text.removeprefix("LET").strip()
         try:
             name, expression = _split_required(binding, " be ", line.number)
         except GwtError as exc:
-            self._add(line.filename, line.number, str(exc))
+            self._add_line(line, str(exc), "GWT010")
             return
 
         name = name.strip()
         if not _is_local_name(name):
-            self._add(line.filename, line.number, "LET requires a simple local name")
+            self._add_line(line, "LET requires a simple local name", "GWT005")
             return
         if name in scope.names:
-            self._add(line.filename, line.number, f"LET cannot overwrite an existing name: {name}")
+            self._add_line(line, f"LET cannot overwrite an existing name: {name}", "GWT008")
             return
 
-        self._check_expression_or_action(expression.strip(), line, scope, require_return_value=True)
+        value_type = self._check_expression_or_action(expression.strip(), line, scope, require_return_value=True)
         scope.names.add(name)
+        if value_type is not None:
+            scope.types[name] = value_type
 
     def _check_builtin(self, tokens: list[str], line: Line) -> None:
         command = tokens[0]
         if command == "set":
             if len(tokens) < 4 or tokens[2] != "to":
-                self._add(line.filename, line.number, "expected 'set path to value'")
+                self._add_line(line, "expected 'set path to value'", "GWT006")
                 return
             self._check_path(tokens[1], line)
             expression = line.text.split(" to ", 1)[1].strip() if " to " in line.text else ""
@@ -253,12 +348,12 @@ class Checker:
 
         if command == "add":
             if len(tokens) < 4 or "to" not in tokens:
-                self._add(line.filename, line.number, "expected 'add value to path'")
+                self._add_line(line, "expected 'add value to path'", "GWT006")
                 return
             try:
                 value, path = _split_required(line.text.removeprefix("add").strip(), " to ", line.number)
             except GwtError as exc:
-                self._add(line.filename, line.number, str(exc))
+                self._add_line(line, str(exc), "GWT006")
                 return
             self._check_expression(value.strip(), line)
             self._check_path(path.strip(), line)
@@ -266,12 +361,12 @@ class Checker:
 
         if command == "subtract":
             if len(tokens) < 4 or "from" not in tokens:
-                self._add(line.filename, line.number, "expected 'subtract value from path'")
+                self._add_line(line, "expected 'subtract value from path'", "GWT006")
                 return
             try:
                 value, path = _split_required(line.text.removeprefix("subtract").strip(), " from ", line.number)
             except GwtError as exc:
-                self._add(line.filename, line.number, str(exc))
+                self._add_line(line, str(exc), "GWT006")
                 return
             self._check_expression(value.strip(), line)
             self._check_path(path.strip(), line)
@@ -280,7 +375,7 @@ class Checker:
         if command == "print":
             expression = line.text.removeprefix("print").strip()
             if not expression:
-                self._add(line.filename, line.number, "print requires a value")
+                self._add_line(line, "print requires a value", "GWT006")
                 return
             self._check_expression(expression, line)
 
@@ -290,11 +385,11 @@ class Checker:
         try:
             expression_text = _condition_to_expression(line.text)
         except GwtError as exc:
-            self._add(line.filename, line.number, str(exc))
+            self._add_line(line, str(exc), "GWT010")
             return
         expression = self._check_expression(expression_text, line)
         if isinstance(expression, Literal) and not isinstance(expression.value, bool):
-            self._add(line.filename, line.number, "condition must evaluate to a boolean")
+            self._add_line(line, "condition must evaluate to a boolean", "GWT010")
 
     def _check_expression_or_action(
         self,
@@ -303,36 +398,50 @@ class Checker:
         scope: Scope,
         *,
         require_return_value: bool,
-    ) -> None:
+    ) -> str | None:
         if _has_placeholder(text):
-            return
+            return None
         try:
             expression = parse_expression(text)
             if isinstance(expression, Name):
                 matches = self._matching_actions([expression.value])
                 if matches and require_return_value and not any(_body_has_return(action.body) for action in matches):
-                    self._add(line.filename, line.number, f"behavior does not return a value: {expression.value}")
-            return
+                    self._add_line(line, f"behavior does not return a value: {expression.value}", "GWT009")
+                if matches:
+                    return _common_return_type(matches)
+            return _infer_expression_type(expression, scope)
         except GwtError:
             pass
 
         try:
             tokens = _tokens(text, line.filename or "<source>", line.number)
         except GwtError as exc:
-            self._add(line.filename, line.number, _strip_location(str(exc)))
-            return
-        self._check_behavior_call(tokens, line, require_return_value=require_return_value)
+            self._add_line(line, _strip_location(str(exc)), "GWT010")
+            return None
+        return self._check_behavior_call(tokens, line, scope, require_return_value=require_return_value)
 
-    def _check_behavior_call(self, tokens: list[str], line: Line, *, require_return_value: bool) -> None:
+    def _check_behavior_call(
+        self,
+        tokens: list[str],
+        line: Line,
+        scope: Scope,
+        *,
+        require_return_value: bool,
+    ) -> str | None:
         if not tokens:
-            self._add(line.filename, line.number, "expected behavior call")
-            return
+            self._add_line(line, "expected behavior call", "GWT001")
+            return None
         matches = self._matching_actions(tokens)
         if not matches:
-            self._add(line.filename, line.number, f"no behavior matches: {' '.join(tokens)}")
-            return
+            self._add_line(line, f"no behavior matches: {' '.join(tokens)}", "GWT001")
+            return None
+        type_errors = [self._behavior_call_type_errors(action, tokens, line, scope) for action in matches]
+        if type_errors and all(errors for errors in type_errors):
+            self._add_line(line, type_errors[0][0], "GWT016")
         if require_return_value and not any(_body_has_return(action.body) for action in matches):
-            self._add(line.filename, line.number, f"behavior does not return a value: {' '.join(tokens)}")
+            self._add_line(line, f"behavior does not return a value: {' '.join(tokens)}", "GWT009")
+            return None
+        return _common_return_type(matches)
 
     def _matching_actions(self, call: list[str]) -> list[Action]:
         matches: list[Action] = []
@@ -341,23 +450,49 @@ class Checker:
                 matches.append(action)
         return matches
 
+    def _behavior_call_type_errors(self, action: Action, call: list[str], line: Line, scope: Scope) -> list[str]:
+        errors: list[str] = []
+        for index, (pattern, actual) in enumerate(zip(action.signature, call)):
+            if index == 0 or pattern in CONNECTORS:
+                continue
+            expected_type = action.contract.inputs.get(pattern)
+            if expected_type is None:
+                continue
+            actual_type = self._argument_type(actual, line, scope)
+            if actual_type is not None and not _assignable(actual_type, expected_type):
+                errors.append(f"behavior argument '{pattern}' expected {expected_type}, got {actual_type}")
+        return errors
+
+    def _argument_type(self, token: str, line: Line, scope: Scope) -> str | None:
+        if token in scope.types:
+            return scope.types[token]
+        if _has_placeholder(token):
+            return None
+        try:
+            return _infer_expression_type(parse_expression(token), scope)
+        except GwtError:
+            return None
+
+    def _is_known_type(self, value_type: str) -> bool:
+        return value_type in DTO_TYPES or value_type in self.program.dtos
+
     def _check_expression(self, text: str, line: Line) -> Expr | None:
         if _has_placeholder(text):
             return None
         try:
             return parse_expression(text)
         except GwtError as exc:
-            self._add(line.filename, line.number, f"invalid expression: {exc}")
+            self._add_line(line, f"invalid expression: {exc}", "GWT010")
             return None
 
     def _check_path(self, path: str, line: Line) -> None:
         if not PATH_PATTERN.match(path):
-            self._add(line.filename, line.number, f"invalid path: {path}")
+            self._add_line(line, f"invalid path: {path}", "GWT011")
 
     def _check_placeholders(self, line: Line, example_headers: set[str]) -> None:
         for placeholder in PLACEHOLDER_PATTERN.findall(line.text):
             if placeholder not in example_headers:
-                self._add(line.filename, line.number, f"EXAMPLES has no value for <{placeholder}>")
+                self._add_line(line, f"EXAMPLES has no value for <{placeholder}>", "GWT012")
 
     def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
         indexed: dict[str, list[Action]] = {}
@@ -365,8 +500,19 @@ class Checker:
             indexed.setdefault(action.name, []).append(action)
         return indexed
 
-    def _add(self, filename: str | None, line: int, message: str) -> None:
-        self.diagnostics.append(Diagnostic(filename, line, message))
+    def _add(
+        self,
+        filename: str | None,
+        line: int,
+        message: str,
+        code: str = "GWT000",
+        column: int = 1,
+        length: int = 1,
+    ) -> None:
+        self.diagnostics.append(Diagnostic(filename, line, message, code, "error", column, max(1, length)))
+
+    def _add_line(self, line: Line, message: str, code: str = "GWT000") -> None:
+        self._add(line.filename, line.number, message, code, line.column, line.length)
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:
@@ -416,6 +562,51 @@ def _body_has_return(body: list[Any]) -> bool:
         elif isinstance(statement, ForBlock) and _body_has_return(statement.body):
             return True
     return False
+
+
+def _common_return_type(actions: list[Action]) -> str | None:
+    return_types = {action.contract.return_type for action in actions if action.contract.return_type is not None}
+    if len(return_types) == 1:
+        return next(iter(return_types))
+    return None
+
+
+def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
+    if isinstance(expression, Literal):
+        value = expression.value
+        if isinstance(value, bool):
+            return "boolean"
+        if isinstance(value, (int, float)):
+            return "number"
+        if isinstance(value, str):
+            return "text"
+        if isinstance(value, list):
+            return "list"
+        return None
+    if isinstance(expression, ListLiteral):
+        return "list"
+    if isinstance(expression, Name):
+        return scope.types.get(expression.value)
+    if isinstance(expression, Unary):
+        if expression.operator == "not":
+            return "boolean"
+        if expression.operator == "-":
+            return _infer_expression_type(expression.right, scope)
+    if isinstance(expression, Binary):
+        if expression.operator in {"==", "!=", ">", "<", ">=", "<=", "and", "or"}:
+            return "boolean"
+        if expression.operator in {"+", "-", "*", "/"}:
+            left_type = _infer_expression_type(expression.left, scope)
+            right_type = _infer_expression_type(expression.right, scope)
+            if left_type == right_type == "number":
+                return "number"
+            if expression.operator == "+" and left_type == right_type == "text":
+                return "text"
+    return None
+
+
+def _assignable(actual_type: str, expected_type: str) -> bool:
+    return expected_type == "any" or actual_type == "any" or actual_type == expected_type
 
 
 def _has_placeholder(text: str) -> bool:

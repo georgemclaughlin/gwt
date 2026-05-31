@@ -44,6 +44,8 @@ In this first version:
 - `SCENARIO`, `BACKGROUND`, and `EXAMPLES` support BDD-style runs.
 - `USE` imports reusable behavior from another GWT file.
 - `DTO` declares header-like contracts for request/state records.
+- Behavior contracts type parameters and return values with `GIVEN` and
+  `THEN returns`.
 
 Run an example:
 
@@ -105,6 +107,12 @@ Run the DTO contract example:
 python -m gwtlang run examples/dto_contracts.gwt --json
 ```
 
+Run the typed behavior contract example:
+
+```sh
+python -m gwtlang run examples/typed_contracts.gwt --json
+```
+
 Run a reusable workflow with a GWT-shaped request file:
 
 ```sh
@@ -129,7 +137,8 @@ gwt check examples/checkout_app.gwt
 `gwt check` parses a program and runs semantic checks without executing
 scenarios. It reports problems such as unmatched behavior calls, duplicate
 behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
-misuse.
+misuse. JSON output includes diagnostic codes, source ranges, and symbols for
+future editor tooling.
 
 Expression example:
 
