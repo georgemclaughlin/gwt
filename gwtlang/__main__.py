@@ -6,24 +6,66 @@ import re
 import sys
 from pathlib import Path
 
-from .runtime import GwtError, run_request, run_source
+from .runtime import GwtError, parse_program, run_request, run_source
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run a GWT program.")
-    parser.add_argument("file", type=Path, help="Path to a .gwt file")
-    parser.add_argument(
+    argv = _normalize_argv(list(sys.argv[1:] if argv is None else argv))
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command == "run":
+        return run_command(args)
+    if args.command == "test":
+        return test_command(args)
+    if args.command == "check":
+        return check_command(args)
+
+    parser.print_help()
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run, test, and check GWT programs.")
+    subparsers = parser.add_subparsers(dest="command")
+
+    run_parser = subparsers.add_parser("run", help="Run a GWT program or request.")
+    add_file_arguments(run_parser)
+    run_parser.add_argument(
         "--input",
         type=Path,
         help="Path to a GWT request file containing GIVEN/WHEN/THEN steps.",
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--json",
         action="store_true",
         help="Print final state as JSON after successful execution.",
     )
-    args = parser.parse_args(argv)
 
+    test_parser = subparsers.add_parser("test", help="Run GWT scenarios.")
+    add_file_arguments(test_parser)
+    test_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print scenario results as JSON.",
+    )
+
+    check_parser = subparsers.add_parser("check", help="Parse a GWT file without running it.")
+    add_file_arguments(check_parser)
+    check_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print check result as JSON.",
+    )
+
+    return parser
+
+
+def add_file_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("file", type=Path, help="Path to a .gwt file")
+
+
+def run_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     request_source = args.input.read_text() if args.input else None
     try:
@@ -43,16 +85,77 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.json:
-        if len(result.scenarios) == 1:
-            payload = result.scenarios[0].state
-        else:
-            payload = {
-                scenario.name: {"state": scenario.state, "output": scenario.output}
-                for scenario in result.scenarios
-            }
-        print(json.dumps(payload, indent=2, sort_keys=True))
-
+        print(json.dumps(result_payload(result), indent=2, sort_keys=True))
+    else:
+        print_run_result(result)
     return 0
+
+
+def test_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        result = run_source(source, filename=str(args.file))
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(result_payload(result), indent=2, sort_keys=True))
+    else:
+        for scenario in result.scenarios:
+            print(f"PASS {scenario.name}")
+    return 0
+
+
+def check_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        program = parse_program(source, filename=str(args.file))
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    payload = {
+        "file": str(args.file),
+        "program": program.name,
+        "behaviors": len(program.actions),
+        "scenarios": len(program.scenarios),
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(
+            f"OK {args.file} "
+            f"({payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
+        )
+    return 0
+
+
+def result_payload(result: object) -> object:
+    scenarios = result.scenarios
+    if len(scenarios) == 1:
+        return scenarios[0].state
+    return {
+        scenario.name: {"state": scenario.state, "output": scenario.output}
+        for scenario in scenarios
+    }
+
+
+def print_run_result(result: object) -> None:
+    scenarios = result.scenarios
+    if len(scenarios) == 1:
+        print(f"PASS {scenarios[0].name}")
+    else:
+        for scenario in scenarios:
+            print(f"PASS {scenario.name}")
+
+
+def _normalize_argv(argv: list[str]) -> list[str]:
+    if not argv:
+        return argv
+    if argv[0] in {"run", "test", "check", "-h", "--help"}:
+        return argv
+    return ["run", *argv]
 
 
 def format_error(error: GwtError, source: str, filename: str) -> str:

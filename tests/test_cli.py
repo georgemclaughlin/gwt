@@ -54,10 +54,92 @@ class CliDiagnosticsTests(unittest.TestCase):
 
             stdout = io.StringIO()
             with redirect_stdout(stdout):
-                status = main([str(program_path), "--input", str(request_path), "--json"])
+                status = main(["run", str(program_path), "--input", str(request_path), "--json"])
 
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(stdout.getvalue())["cart"]["total"], 92)
+
+    def test_legacy_cli_invocation_still_runs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "counter.gwt"
+            program_path.write_text(
+                """
+                GIVEN count is 1
+                THEN count == 1
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main([str(program_path)])
+
+        self.assertEqual(status, 0)
+        self.assertIn("PASS Main", stdout.getvalue())
+
+    def test_test_command_prints_scenario_passes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "scenarios.gwt"
+            program_path.write_text(
+                """
+                SCENARIO one
+                GIVEN count is 1
+                THEN count == 1
+
+                SCENARIO two
+                GIVEN count is 2
+                THEN count == 2
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["test", str(program_path)])
+
+        self.assertEqual(status, 0)
+        self.assertIn("PASS one", stdout.getvalue())
+        self.assertIn("PASS two", stdout.getvalue())
+
+    def test_check_command_reports_counts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+
+                GIVEN count is 1
+                WHEN touch count
+                THEN count == 2
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["check", str(program_path)])
+
+        self.assertEqual(status, 0)
+        self.assertIn("OK", stdout.getvalue())
+        self.assertIn("1 behaviors", stdout.getvalue())
+        self.assertIn("1 scenarios", stdout.getvalue())
+
+    def test_check_command_json_reports_counts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["check", str(program_path), "--json"])
+
+        self.assertEqual(status, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["behaviors"], 1)
+        self.assertEqual(payload["scenarios"], 1)
 
 
 if __name__ == "__main__":
