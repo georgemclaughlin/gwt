@@ -1,18 +1,13 @@
 const vscode = require("vscode");
+const fs = require("fs");
+const path = require("path");
 const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
 
 let client;
 
 function activate(context) {
   const config = vscode.workspace.getConfiguration("gwt");
-  const command = config.get("server.command", "gwt");
-  const args = config.get("server.args", ["lsp"]);
-
-  const serverOptions = {
-    command,
-    args,
-    transport: TransportKind.stdio,
-  };
+  const serverOptions = serverOptionsFromConfig(context, config);
 
   const clientOptions = {
     documentSelector: [{ scheme: "file", language: "gwt" }],
@@ -23,6 +18,42 @@ function activate(context) {
 
   client = new LanguageClient("gwtLanguageServer", "GWT Language Server", serverOptions, clientOptions);
   client.start();
+}
+
+function serverOptionsFromConfig(context, config) {
+  const configuredCommand = config.get("server.command", "");
+  const configuredArgs = config.get("server.args", []);
+
+  if (configuredCommand) {
+    return {
+      command: configuredCommand,
+      args: configuredArgs,
+      transport: TransportKind.stdio,
+    };
+  }
+
+  const repoRoot = path.resolve(context.extensionPath, "..");
+  const repoServer = path.join(repoRoot, "gwtlang", "lsp.py");
+  if (fs.existsSync(repoServer)) {
+    return {
+      command: process.env.GWT_PYTHON || "python",
+      args: ["-m", "gwtlang", "lsp"],
+      transport: TransportKind.stdio,
+      options: {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          PYTHONPATH: [repoRoot, process.env.PYTHONPATH || ""].filter(Boolean).join(path.delimiter),
+        },
+      },
+    };
+  }
+
+  return {
+    command: "gwt",
+    args: ["lsp"],
+    transport: TransportKind.stdio,
+  };
 }
 
 function deactivate() {

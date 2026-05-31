@@ -41,18 +41,16 @@
       "properties": {
         "gwt.server.command": {
           "type": "string",
-          "default": "gwt",
-          "description": "Command used to start the GWT language server."
+          "default": "",
+          "description": "Optional command override used to start the GWT language server. Empty uses the repo-local Python server during development, falling back to gwt lsp."
         },
         "gwt.server.args": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "default": [
-            "lsp"
-          ],
-          "description": "Arguments passed to the GWT language server command."
+          "default": [],
+          "description": "Arguments passed to the GWT language server command when gwt.server.command is set."
         }
       }
     }
