@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
 from pathlib import Path
@@ -142,6 +142,43 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["dtos"], 0)
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
+        self.assertEqual(payload["diagnostics"], [])
+
+    def test_check_command_reports_static_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                GIVEN count is 1
+                WHEN missing count
+                """
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["check", str(program_path)])
+
+        self.assertEqual(status, 1)
+        self.assertIn("no behavior matches: missing count", stderr.getvalue())
+        self.assertIn("WHEN missing count", stderr.getvalue())
+
+    def test_check_command_json_reports_static_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                GIVEN count is 1
+                WHEN missing count
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["check", str(program_path), "--json"])
+
+        self.assertEqual(status, 1)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["diagnostics"][0]["message"], "no behavior matches: missing count")
 
 
 if __name__ == "__main__":

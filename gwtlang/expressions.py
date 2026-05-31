@@ -17,10 +17,13 @@ class Token:
     value: str
 
 
-def evaluate_expression(text: str, scope: Scope) -> Any:
+def parse_expression(text: str) -> Expr:
     parser = ExpressionParser(_scan(text))
-    expression = parser.parse()
-    return expression.evaluate(scope)
+    return parser.parse()
+
+
+def evaluate_expression(text: str, scope: Scope) -> Any:
+    return parse_expression(text).evaluate(scope)
 
 
 class Expr:

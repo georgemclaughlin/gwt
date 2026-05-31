@@ -158,6 +158,26 @@ keeping inputs in the same language shape.
 
 Request files can use DTOs declared by the program file.
 
+## Static Checking
+
+`gwt check file.gwt` parses a program and runs semantic checks without
+executing scenarios. The checker is intentionally conservative: reusable
+workflow files can still refer to request/state paths that are supplied later.
+
+The current checker reports:
+
+- unmatched behavior calls and signature/arity mismatches
+- duplicate behavior signatures within the same source file
+- reserved behavior names that conflict with built-ins
+- duplicate or invalid behavior parameters
+- invalid built-in statement shapes
+- `LET` and `RETURN` outside behavior bodies
+- `LET` names that overwrite parameters or earlier local names
+- `LET` bindings to behavior calls that do not return a value
+- invalid expression syntax in statically checkable expressions
+- missing `EXAMPLES` placeholders
+- obvious `FOR` use over a scalar literal
+
 ## Examples Tables
 
 `EXAMPLES` turns one scenario into multiple scenario runs by replacing

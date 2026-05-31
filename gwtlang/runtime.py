@@ -32,6 +32,7 @@ class Action:
     signature: list[str]
     body: list[Any]
     line: int
+    filename: str | None = None
 
 
 @dataclass
@@ -245,7 +246,7 @@ def parse_program(
                 body, index = _parse_behavior_block(lines, index, filename)
                 if not body:
                     raise GwtError(f"{filename}:{line.number}: behavior '{signature[0]}' has no body")
-                program.actions.append(Action(signature[0], signature, body, line.number))
+                program.actions.append(Action(signature[0], signature, body, line.number, line.filename))
             elif index < len(lines) and lines[index].text.startswith("  "):
                 raise GwtError(f"{filename}:{line.number}: BACKGROUND cannot define WHEN behavior")
             else:
