@@ -132,6 +132,7 @@ python -m pip install -e .
 gwt run examples/bank.gwt
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
+gwt lsp
 ```
 
 `gwt check` parses a program and runs semantic checks without executing
@@ -139,6 +140,20 @@ scenarios. It reports problems such as unmatched behavior calls, duplicate
 behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
 misuse. JSON output includes diagnostic codes, source ranges, and symbols for
 future editor tooling.
+
+`gwt lsp` starts a minimal Language Server Protocol server over stdio. It
+publishes diagnostics and supports document symbols, hover, go-to-definition for
+behavior calls, and completions for known language symbols.
+
+The same analysis layer is available from Python:
+
+```python
+from gwtlang import analyze_source
+
+analysis = analyze_source(source, "example.gwt")
+print(analysis.diagnostics)
+print(analysis.symbols)
+```
 
 Expression example:
 

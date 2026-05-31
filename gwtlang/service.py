@@ -1,0 +1,236 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import re
+from pathlib import Path
+
+from .checker import Diagnostic, check_program
+from .errors import GwtError
+from .runtime import Action, Program, parse_program, _tokens
+from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
+
+
+@dataclass(frozen=True)
+class Analysis:
+    source: str
+    filename: str
+    program: Program | None
+    diagnostics: list[Diagnostic]
+    symbols: SymbolTable
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "file": self.filename,
+            "program": self.program.name if self.program is not None else None,
+            "dtos": len(self.program.dtos) if self.program is not None else 0,
+            "behaviors": len(self.program.actions) if self.program is not None else 0,
+            "scenarios": len(self.program.scenarios) if self.program is not None else 0,
+            "diagnostics": [diagnostic.as_payload(self.filename) for diagnostic in self.diagnostics],
+            "symbols": self.symbols.as_payload(self.filename),
+        }
+
+
+@dataclass(frozen=True)
+class Hover:
+    contents: str
+    source_range: SourceRange
+
+
+def analyze_source(source: str, filename: str = "<source>") -> Analysis:
+    try:
+        program = parse_program(source, filename=filename)
+    except GwtError as exc:
+        return Analysis(source, filename, None, [_parse_error_diagnostic(str(exc), source, filename)], SymbolTable([]))
+
+    return Analysis(source, filename, program, check_program(program), build_symbol_table(program))
+
+
+def analyze_file(path: str | Path) -> Analysis:
+    file_path = Path(path)
+    return analyze_source(file_path.read_text(), str(file_path))
+
+
+def symbol_at(analysis: Analysis, line: int, character: int) -> Symbol | None:
+    for symbol in analysis.symbols.symbols:
+        if _range_contains(symbol.source_range, line, character):
+            return symbol
+    return None
+
+
+def hover_at(analysis: Analysis, line: int, character: int) -> Hover | None:
+    symbol = symbol_at(analysis, line, character)
+    if symbol is not None:
+        return Hover(_hover_text(symbol), symbol.source_range)
+
+    word = _word_at(analysis.source, line, character)
+    if word is None:
+        return None
+    symbol = _find_named_symbol(analysis, word)
+    if symbol is None:
+        return None
+    return Hover(_hover_text(symbol), symbol.source_range)
+
+
+def definition_at(analysis: Analysis, line: int, character: int) -> SourceRange | None:
+    if analysis.program is None:
+        return None
+
+    call_text = _call_text_at(analysis.source, line)
+    if call_text is not None:
+        action = _matching_action(analysis.program.actions, call_text)
+        if action is not None:
+            return SourceRange(action.filename, action.line, action.column, action.length)
+
+    word = _word_at(analysis.source, line, character)
+    if word is None:
+        return None
+    symbol = _find_named_symbol(analysis, word)
+    return symbol.source_range if symbol is not None else None
+
+
+def completion_items(analysis: Analysis) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    for symbol in analysis.symbols.symbols:
+        if symbol.kind not in {"behavior", "dto", "dto_field", "parameter", "local"}:
+            continue
+        key = (symbol.name, symbol.kind)
+        if key in seen:
+            continue
+        seen.add(key)
+        item: dict[str, object] = {
+            "label": symbol.name,
+            "kind": _completion_kind(symbol.kind),
+        }
+        detail = _hover_text(symbol)
+        if detail:
+            item["detail"] = detail
+        items.append(item)
+    return items
+
+
+def _parse_error_diagnostic(message: str, source: str, fallback_filename: str) -> Diagnostic:
+    filename = fallback_filename
+    line = 1
+    detail = message
+    match = re.match(r"^(.+):(\d+):\s*(.+)$", message)
+    if match:
+        filename = fallback_filename if match.group(1) == "<source>" else match.group(1)
+        line = int(match.group(2))
+        detail = match.group(3)
+    else:
+        line_match = re.match(r"^line (\d+):\s*(.+)$", message)
+        if line_match:
+            line = int(line_match.group(1))
+            detail = line_match.group(2)
+
+    source_lines = source.splitlines()
+    column = 1
+    length = 1
+    if 1 <= line <= len(source_lines):
+        source_line = source_lines[line - 1]
+        column = len(source_line) - len(source_line.lstrip(" ")) + 1
+        length = max(1, len(source_line.strip()))
+
+    return Diagnostic(filename, line, detail, "GWT900", "error", column, length)
+
+
+def _range_contains(source_range: SourceRange, line: int, character: int) -> bool:
+    start_line = source_range.line - 1
+    if line != start_line:
+        return False
+    start = max(0, source_range.column - 1)
+    end = start + max(1, source_range.length)
+    return start <= character <= end
+
+
+def _hover_text(symbol: Symbol) -> str:
+    label = symbol.kind.replace("_", " ")
+    parts = [f"{label}: {symbol.name}"]
+    if symbol.detail:
+        parts.append(symbol.detail)
+    if symbol.container:
+        parts.append(f"in {symbol.container}")
+    return "\n".join(parts)
+
+
+def _find_named_symbol(analysis: Analysis, name: str) -> Symbol | None:
+    for symbol in analysis.symbols.symbols:
+        if symbol.name == name and symbol.kind in {"behavior", "dto", "dto_field", "parameter", "local"}:
+            return symbol
+    return None
+
+
+def _word_at(source: str, line: int, character: int) -> str | None:
+    lines = source.splitlines()
+    if line < 0 or line >= len(lines):
+        return None
+    source_line = lines[line]
+    if character < 0 or character > len(source_line):
+        return None
+
+    left = character
+    while left > 0 and _is_word_char(source_line[left - 1]):
+        left -= 1
+    right = character
+    while right < len(source_line) and _is_word_char(source_line[right]):
+        right += 1
+    if left == right:
+        return None
+    return source_line[left:right]
+
+
+def _is_word_char(char: str) -> bool:
+    return char.isalnum() or char in "_."
+
+
+def _call_text_at(source: str, line: int) -> str | None:
+    lines = source.splitlines()
+    if line < 0 or line >= len(lines):
+        return None
+    text = lines[line].split("#", 1)[0].strip()
+    if not text:
+        return None
+    if text.startswith("WHEN "):
+        return text.removeprefix("WHEN ").strip()
+    if text.startswith("LET ") and " be " in text:
+        return text.split(" be ", 1)[1].strip()
+    if text.startswith("RETURN "):
+        return text.removeprefix("RETURN ").strip()
+    if text.startswith(("REQUIRE ", "IF ", "FOR ", "GIVEN ", "THEN ")):
+        return None
+    if text.split()[0] in {"set", "add", "subtract", "print"}:
+        return None
+    return text
+
+
+def _matching_action(actions: list[Action], call_text: str) -> Action | None:
+    try:
+        call = _tokens(call_text, "<source>", 1)
+    except GwtError:
+        return None
+    for action in reversed(actions):
+        if _signature_matches(action.signature, call):
+            return action
+    return None
+
+
+def _signature_matches(signature: list[str], call: list[str]) -> bool:
+    if len(signature) != len(call):
+        return False
+    for index, (pattern, actual) in enumerate(zip(signature, call)):
+        if index == 0 and pattern != actual:
+            return False
+        if index != 0 and pattern in {"from", "into", "to", "with", "by", "for", "using", "as"} and pattern != actual:
+            return False
+    return True
+
+
+def _completion_kind(symbol_kind: str) -> int:
+    return {
+        "behavior": 3,
+        "dto": 7,
+        "dto_field": 5,
+        "parameter": 6,
+        "local": 6,
+    }.get(symbol_kind, 1)

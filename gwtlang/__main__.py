@@ -6,9 +6,10 @@ import re
 import sys
 from pathlib import Path
 
-from .checker import Diagnostic, check_program
-from .runtime import GwtError, parse_program, run_request, run_source
-from .symbols import build_symbol_table
+from .checker import Diagnostic
+from .lsp import run_stdio_server
+from .runtime import GwtError, run_request, run_source
+from .service import analyze_file
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -22,13 +23,15 @@ def main(argv: list[str] | None = None) -> int:
         return test_command(args)
     if args.command == "check":
         return check_command(args)
+    if args.command == "lsp":
+        return lsp_command(args)
 
     parser.print_help()
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run, test, and check GWT programs.")
+    parser = argparse.ArgumentParser(description="Run, test, check, and serve GWT programs.")
     subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser("run", help="Run a GWT program or request.")
@@ -59,6 +62,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print check result as JSON.",
     )
+
+    subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
 
     return parser
 
@@ -110,32 +115,17 @@ def test_command(args: argparse.Namespace) -> int:
 
 
 def check_command(args: argparse.Namespace) -> int:
-    source = args.file.read_text()
-    try:
-        program = parse_program(source, filename=str(args.file))
-    except GwtError as exc:
-        print(format_error(exc, source, str(args.file)), file=sys.stderr)
-        return 1
-    diagnostics = check_program(program)
-    symbols = build_symbol_table(program)
-
-    payload = {
-        "file": str(args.file),
-        "program": program.name,
-        "dtos": len(program.dtos),
-        "behaviors": len(program.actions),
-        "scenarios": len(program.scenarios),
-        "diagnostics": [diagnostic.as_payload(str(args.file)) for diagnostic in diagnostics],
-        "symbols": symbols.as_payload(str(args.file)),
-    }
-    if diagnostics:
+    analysis = analyze_file(args.file)
+    source = analysis.source
+    payload = analysis.as_payload()
+    if analysis.diagnostics:
         if args.json:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
             print(
                 "\n\n".join(
                     format_diagnostic(diagnostic, source, str(args.file))
-                    for diagnostic in diagnostics
+                    for diagnostic in analysis.diagnostics
                 ),
                 file=sys.stderr,
             )
@@ -149,6 +139,10 @@ def check_command(args: argparse.Namespace) -> int:
             f"({payload['dtos']} DTOs, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
+
+
+def lsp_command(args: argparse.Namespace) -> int:
+    return run_stdio_server()
 
 
 def result_payload(result: object) -> object:
@@ -173,7 +167,7 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    if argv[0] in {"run", "test", "check", "-h", "--help"}:
+    if argv[0] in {"run", "test", "check", "lsp", "-h", "--help"}:
         return argv
     return ["run", *argv]
 

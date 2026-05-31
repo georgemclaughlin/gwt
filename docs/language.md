@@ -216,6 +216,26 @@ The current checker reports:
 source ranges, and a symbol list for DTOs, DTO fields, behavior signatures,
 parameters, local names, and scenarios.
 
+The same language-service API is available to tools:
+
+```python
+from gwtlang import analyze_source
+
+analysis = analyze_source(source, "example.gwt")
+analysis.diagnostics
+analysis.symbols
+analysis.program
+```
+
+`gwt lsp` starts a minimal Language Server Protocol server over stdio. It
+currently supports:
+
+- publish diagnostics on document open/change
+- document symbols
+- hover for known DTOs, fields, behaviors, parameters, and locals
+- go-to-definition for behavior calls
+- completions for known language symbols
+
 ## Examples Tables
 
 `EXAMPLES` turns one scenario into multiple scenario runs by replacing
