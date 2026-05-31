@@ -1,0 +1,22 @@
+PROGRAM bank scenarios
+
+WHEN withdraw amount from account
+  REQUIRE account.status == "open"
+  AND account.balance >= amount + fee
+  subtract amount + fee from account.balance
+
+BACKGROUND
+GIVEN account.status is "open"
+AND fee is 3
+
+SCENARIO successful withdrawal
+GIVEN account.balance is 100
+WHEN withdraw 30 from account
+THEN account.balance == 67
+AND account.status == "open"
+
+SCENARIO smaller withdrawal
+GIVEN account.balance is 50
+WHEN withdraw 10 from account
+THEN account.balance == 37
+AND account.status == "open"

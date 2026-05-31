@@ -1,0 +1,25 @@
+PROGRAM control flow
+
+GIVEN account is
+  balance: 20
+  status: "open"
+  last_transaction: "none"
+AND fee is 3
+
+WHEN withdraw amount from account
+  LET total be amount + fee
+  IF account.status != "open"
+    set account.last_transaction to "declined"
+  ELSE
+    IF account.balance < total
+      set account.last_transaction to "declined"
+    ELSE
+      subtract total from account.balance
+      set account.last_transaction to "approved"
+
+WHEN withdraw 30 from account
+
+THEN account is
+  balance: 20
+  status: "open"
+  last_transaction: "declined"

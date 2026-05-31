@@ -1,0 +1,20 @@
+PROGRAM records
+
+WHEN withdraw amount from account
+  REQUIRE account.status == "open"
+  AND account.balance >= amount
+  subtract amount from account.balance
+
+GIVEN account is
+  balance: 100
+  status: "open"
+  owner:
+    name: "Ada"
+
+WHEN withdraw 30 from account
+
+THEN account is
+  balance: 70
+  status: "open"
+  owner:
+    name: "Ada"

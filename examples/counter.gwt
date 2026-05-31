@@ -1,0 +1,11 @@
+PROGRAM counter
+
+GIVEN count is 0
+
+WHEN increment count
+  add 1 to count
+
+WHEN increment count
+WHEN increment count
+
+THEN count is 2

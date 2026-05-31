@@ -1,0 +1,28 @@
+PROGRAM checkout app
+
+WHEN subtotal cart
+  set cart.subtotal to 0
+  FOR item in cart.items
+    add item to cart.subtotal
+  RETURN cart.subtotal
+
+WHEN shipping for subtotal
+  IF subtotal >= 100
+    RETURN 0
+  ELSE
+    RETURN 8
+
+WHEN member discount for subtotal
+  IF customer.member
+    RETURN subtotal * 0.1
+  ELSE
+    RETURN 0
+
+WHEN checkout cart
+  LET subtotal be subtotal cart
+  LET shipping be shipping for subtotal
+  LET discount be member discount for subtotal
+  set cart.shipping to shipping
+  set cart.discount to discount
+  set cart.total to subtotal + shipping - discount
+  set order.status to "priced"

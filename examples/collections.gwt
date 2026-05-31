@@ -1,0 +1,13 @@
+PROGRAM collections
+
+GIVEN cart is
+  items: [10, 20, 30]
+  total: 0
+
+WHEN total cart
+  FOR item in cart.items
+    add item to cart.total
+
+WHEN total cart
+
+THEN cart.total == 60

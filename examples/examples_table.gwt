@@ -1,0 +1,15 @@
+PROGRAM examples table
+
+WHEN withdraw amount from account
+  REQUIRE account.balance >= amount
+  subtract amount from account.balance
+
+SCENARIO withdrawal examples
+GIVEN account.balance is <start>
+WHEN withdraw <amount> from account
+THEN account.balance == <end>
+
+EXAMPLES
+  | start | amount | end |
+  | 100   | 30     | 70  |
+  | 50    | 10     | 40  |

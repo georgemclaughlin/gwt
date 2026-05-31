@@ -1,0 +1,19 @@
+PROGRAM bank
+
+GIVEN account.balance is 100
+AND account.status is "open"
+
+WHEN withdraw amount from account
+  REQUIRE account.status is "open"
+  AND account.balance is at least amount
+  subtract amount from account.balance
+
+WHEN deposit amount into account
+  REQUIRE account.status is "open"
+  add amount to account.balance
+
+WHEN withdraw 30 from account
+AND deposit 10 into account
+
+THEN account.balance is 80
+AND account.status is "open"

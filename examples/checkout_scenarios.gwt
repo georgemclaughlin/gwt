@@ -1,0 +1,24 @@
+PROGRAM checkout scenarios
+
+USE "./checkout_app.gwt"
+
+SCENARIO checkout examples
+GIVEN customer.member is <member>
+AND cart.items is <items>
+AND cart.subtotal is 0
+AND cart.shipping is 0
+AND cart.discount is 0
+AND cart.total is 0
+AND order.status is "new"
+
+WHEN checkout cart
+
+THEN cart.total == <total>
+AND cart.shipping == <shipping>
+AND cart.discount == <discount>
+AND order.status == "priced"
+
+EXAMPLES
+  | member | items        | total | shipping | discount |
+  | true   | [20, 35, 45] | 90.0  | 0        | 10.0     |
+  | false  | [20, 35]     | 63    | 8        | 0        |

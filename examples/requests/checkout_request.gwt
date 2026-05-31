@@ -1,0 +1,22 @@
+PROGRAM checkout request
+
+GIVEN customer is
+  member: true
+
+GIVEN cart is
+  items: [20, 35, 45]
+  subtotal: 0
+  shipping: 0
+  discount: 0
+  total: 0
+
+GIVEN order.status is "new"
+
+WHEN checkout cart
+
+THEN cart is
+  subtotal: 100
+  shipping: 0
+  discount: 10.0
+  total: 90.0
+AND order.status == "priced"
