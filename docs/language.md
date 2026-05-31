@@ -3,7 +3,8 @@
 GWT is an executable behavior language. A program describes initial state,
 named behavior, execution, and expected results.
 
-See [grammar.md](grammar.md) for the v0.1 grammar.
+See [spec/v0.1.md](spec/v0.1.md) for the versioned v0.1 specification and
+[grammar.md](grammar.md) for the EBNF grammar.
 
 ## Program Shape
 
@@ -286,6 +287,11 @@ The current checker reports:
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
 source ranges, and a symbol list for DTOs, DTO fields, behavior signatures,
 parameters, local names, program contracts, and scenarios.
+
+`gwt format file.gwt` rewrites a valid GWT file using the canonical v0.1 source
+layout. Use `gwt format file.gwt --check` in CI to fail when a file needs
+formatting, or `gwt format file.gwt --stdout` to print the formatted source
+without writing.
 
 The same language-service API is available to tools:
 

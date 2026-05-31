@@ -1,6 +1,7 @@
 # GWT v0.1 Grammar
 
-This grammar describes the implemented v0.1 surface. The parser is currently
+This grammar describes the implemented v0.1 surface. The normative v0.1
+language notes live in [spec/v0.1.md](spec/v0.1.md). The parser is currently
 hand-written, but behavior bodies are parsed into structured statement nodes for
 blocks such as `IF`, `FOR`, and `ELSE`.
 

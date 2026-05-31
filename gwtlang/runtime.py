@@ -212,6 +212,7 @@ def parse_program(
     filename: str = "<source>",
     importing: set[Path] | None = None,
     initial_dtos: dict[str, DtoDefinition] | None = None,
+    allow_unknown_dtos: bool = False,
 ) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
@@ -316,7 +317,14 @@ def parse_program(
                 current.givens.append(table)
             elif _is_typed_record_header(statement):
                 index += 1
-                expanded, index, validation = _expand_typed_record_block(statement, lines, index, filename, program.dtos)
+                expanded, index, validation = _expand_typed_record_block(
+                    statement,
+                    lines,
+                    index,
+                    filename,
+                    program.dtos,
+                    allow_unknown_dtos=allow_unknown_dtos,
+                )
                 current.givens.extend(expanded)
                 current.givens.append(validation)
             elif _is_record_header(statement):
@@ -1343,12 +1351,14 @@ def _expand_typed_record_block(
     index: int,
     filename: str,
     dtos: dict[str, DtoDefinition],
+    *,
+    allow_unknown_dtos: bool = False,
 ) -> tuple[list[Line], int, DtoValidation]:
     header_line = lines[index - 1]
     path, dto_name = header.split(" is ", 1)
     path = path.strip()
     dto_name = dto_name.strip()
-    if dto_name not in dtos:
+    if dto_name not in dtos and not allow_unknown_dtos:
         raise GwtError(f"{filename}:{header_line.number}: unknown DTO: {dto_name}")
     expanded, index = _expand_record_block(f"{path} is", lines, index, filename)
     return expanded, index, DtoValidation(path, dto_name, header_line)

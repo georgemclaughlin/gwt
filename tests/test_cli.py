@@ -206,6 +206,36 @@ class CliDiagnosticsTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual([line["line"] for line in payload["lines"]], [3, 5, 6, 7])
 
+    def test_format_command_updates_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                GIVEN  count is 1
+                THEN count == 1
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["format", str(program_path)])
+
+            self.assertEqual(status, 0)
+            self.assertIn("Formatted", stdout.getvalue())
+            self.assertEqual(program_path.read_text(), "GIVEN count is 1\nTHEN count == 1\n")
+
+    def test_format_command_check_reports_unformatted_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text("GIVEN  count is 1\nTHEN count == 1\n")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["format", str(program_path), "--check"])
+
+            self.assertEqual(status, 1)
+            self.assertIn("needs formatting", stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
