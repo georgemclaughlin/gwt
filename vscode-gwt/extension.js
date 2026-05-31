@@ -163,6 +163,7 @@ class GwtDebugAdapter {
     this.pendingLaunch = undefined;
     this.configurationDone = false;
     this.lastStop = undefined;
+    this.stopStack = [];
     this.variableHandles = new Map();
     this.nextVariableHandle = 1;
     this.stdoutBuffer = "";
@@ -210,10 +211,10 @@ class GwtDebugAdapter {
         this.sendResponse(message);
         break;
       case "stackTrace":
-        this.sendResponse(message, { stackFrames: this.stackFrames(), totalFrames: this.lastStop ? 1 : 0 });
+        this.sendResponse(message, this.stackTrace(message));
         break;
       case "scopes":
-        this.sendResponse(message, { scopes: this.scopes() });
+        this.sendResponse(message, { scopes: this.scopes(message.arguments?.frameId) });
         break;
       case "variables":
         this.sendResponse(message, { variables: this.variables(message.arguments?.variablesReference) });
@@ -416,6 +417,7 @@ class GwtDebugAdapter {
   handleDebugEvent(message) {
     if (message.event === "stopped") {
       this.lastStop = message;
+      this.stopStack = this.stackFromStop(message);
       this.resetVariableHandles();
       this.sendOutput(`Stopped at ${message.file}:${message.line}: ${message.text}\n`);
       this.sendEvent("stopped", { reason: message.reason || "breakpoint", threadId: 1, allThreadsStopped: true });
@@ -442,29 +444,48 @@ class GwtDebugAdapter {
     }
   }
 
-  stackFrames() {
+  stackTrace(message) {
     if (!this.lastStop) {
-      return [];
+      return { stackFrames: [], totalFrames: 0 };
+    }
+
+    const start = message.arguments?.startFrame || 0;
+    const end = message.arguments?.levels ? start + message.arguments.levels : this.stopStack.length;
+    const stackFrames = this.stopStack.slice(start, end).map((frame, index) => ({
+      id: start + index + 1,
+      name: frame.name || frame.text || "GWT",
+      source: { name: path.basename(frame.file || ""), path: frame.file },
+      line: frame.line || 1,
+      column: frame.column || 1,
+    }));
+    return { stackFrames, totalFrames: this.stopStack.length };
+  }
+
+  stackFromStop(message) {
+    if (Array.isArray(message.stack) && message.stack.length > 0) {
+      return message.stack;
     }
     return [
       {
-        id: 1,
-        name: this.lastStop.text || "GWT",
-        source: { name: path.basename(this.lastStop.file || ""), path: this.lastStop.file },
-        line: this.lastStop.line || 1,
-        column: this.lastStop.column || 1,
+        name: message.text || "GWT",
+        file: message.file,
+        line: message.line,
+        column: message.column,
+        text: message.text,
+        locals: message.locals || {},
       },
     ];
   }
 
-  scopes() {
+  scopes(frameId) {
     if (!this.lastStop) {
       return [];
     }
+    const frame = this.stopStack[Math.max(0, (frameId || 1) - 1)] || this.stopStack[0] || {};
     return [
       {
         name: "Locals",
-        variablesReference: this.variableHandle(this.lastStop.locals || {}),
+        variablesReference: this.variableHandle(frame.locals || {}),
         expensive: false,
       },
       {

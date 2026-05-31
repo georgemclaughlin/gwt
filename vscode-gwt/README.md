@@ -41,11 +41,12 @@ Expected behavior:
 - line breakpoints pause execution before matching executable GWT lines.
 - breakpoint markers are verified against executable GWT lines before launch.
 - Continue resumes execution; Step Over advances to the next executable line.
-- the Variables panel shows current locals and GWT state while paused.
+- the Call Stack panel shows active behavior calls while paused.
+- the Variables panel shows locals for the selected stack frame and GWT state.
 
 The debugger currently supports line breakpoints, continue, step over, stop,
-and state/local inspection. It does not yet support step into/out, conditional
-breakpoints, watch expressions, or variable editing.
+source-level call stacks, and state/local inspection. It does not yet support
+step into/out, conditional breakpoints, watch expressions, or variable editing.
 
 ## Settings
 
