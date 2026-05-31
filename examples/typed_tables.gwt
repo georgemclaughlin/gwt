@@ -1,0 +1,49 @@
+PROGRAM typed tables
+
+DTO LineItem
+  name: text
+  quantity: number
+  unit_price: number
+
+DTO Invoice
+  items: list<LineItem>
+  subtotal: number
+  discount: number
+  total: number
+  status: text
+
+REQUEST invoice is Invoice
+OUTPUT invoice is Invoice
+
+WHEN calculate invoice
+  GIVEN invoice is Invoice
+  set invoice.subtotal to 0
+  FOR item in invoice.items
+    add item.quantity * item.unit_price to invoice.subtotal
+  IF invoice.subtotal >= 200
+    set invoice.discount to 20
+  ELSE
+    set invoice.discount to 0
+  set invoice.total to invoice.subtotal - invoice.discount
+  IF invoice.total > 0
+    set invoice.status to "ready"
+
+SCENARIO invoice totals typed rows
+GIVEN invoice is Invoice
+  items: []
+  subtotal: 0
+  discount: 0
+  total: 0
+  status: "draft"
+
+GIVEN invoice.items are LineItem
+  | name       | quantity | unit_price |
+  | "keyboard" | 2        | 75         |
+  | "mouse"    | 1        | 50         |
+
+WHEN calculate invoice
+
+THEN invoice.subtotal == 200
+AND invoice.discount == 20
+AND invoice.total == 180
+AND invoice.status == "ready"

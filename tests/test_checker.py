@@ -179,6 +179,89 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("unknown contract type: MissingCart", messages)
 
+    def test_accepts_request_and_output_contracts(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            REQUEST cart is Cart
+            OUTPUT cart is Cart
+
+            WHEN checkout cart
+              GIVEN cart is Cart
+              set cart.total to 1
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_unknown_request_output_contract_type(self):
+        messages = check_messages(
+            """
+            REQUEST cart is MissingCart
+            OUTPUT result is MissingResult
+            """
+        )
+
+        self.assertIn("unknown REQUEST contract type: MissingCart", messages)
+        self.assertIn("unknown OUTPUT contract type: MissingResult", messages)
+
+    def test_reports_unknown_dto_field_type(self):
+        messages = check_messages(
+            """
+            DTO Order
+              items: list<MissingItem>
+            """
+        )
+
+        self.assertIn("unknown DTO field type: list<MissingItem>", messages)
+
+    def test_accepts_typed_dto_collection_and_table(self):
+        messages = check_messages(
+            """
+            DTO OrderItem
+              sku: text
+              quantity: number
+
+            DTO Order
+              items: list<OrderItem>
+              total: number
+
+            WHEN count order
+              GIVEN order is Order
+              FOR item in order.items
+                add item.quantity to order.total
+
+            GIVEN order is Order
+              items: []
+              total: 0
+
+            GIVEN order.items are OrderItem
+              | sku      | quantity |
+              | "widget" | 2        |
+
+            WHEN count order
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_typed_table_row_mismatch(self):
+        messages = check_messages(
+            """
+            DTO OrderItem
+              sku: text
+              quantity: number
+
+            GIVEN order.items are OrderItem
+              | sku      | quantity |
+              | "widget" | "two"    |
+            """
+        )
+
+        self.assertIn("GIVEN table field 'quantity' expected number, got text", messages)
+
     def test_reports_contract_for_unknown_parameter(self):
         messages = check_messages(
             """

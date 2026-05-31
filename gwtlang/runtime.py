@@ -12,6 +12,7 @@ from .expressions import evaluate_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 DTO_TYPES = {"number", "text", "boolean", "list", "any"}
+LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
 
 
 @dataclass(frozen=True)
@@ -84,10 +85,19 @@ class DtoValidation:
 
 
 @dataclass(frozen=True)
+class ContractBinding:
+    kind: str
+    path: str
+    value_type: str
+    line: Line
+
+
+@dataclass(frozen=True)
 class TableAssignment:
     path: str
     rows: list[dict[str, str]]
     line: Line
+    item_type: str | None = None
 
 
 @dataclass(frozen=True)
@@ -112,6 +122,8 @@ class Scenario:
 class Program:
     name: str | None = None
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
+    inputs: dict[str, ContractBinding] = field(default_factory=dict)
+    outputs: dict[str, ContractBinding] = field(default_factory=dict)
     dtos: dict[str, DtoDefinition] = field(default_factory=dict)
     actions: list[Action] = field(default_factory=list)
     scenarios: list[Scenario] = field(default_factory=list)
@@ -122,6 +134,7 @@ class ScenarioResult:
     name: str
     state: dict[str, Any]
     output: list[str]
+    returned_state: dict[str, Any] | None = None
 
 
 @dataclass
@@ -182,6 +195,8 @@ def run_request(
             whens=[*program.background.whens, *request.background.whens],
             thens=[*program.background.thens, *request.background.thens],
         ),
+        inputs={**program.inputs, **request.inputs},
+        outputs={**program.outputs, **request.outputs},
         dtos={**program.dtos, **request.dtos},
         actions=[*program.actions, *request.actions],
         scenarios=request.scenarios,
@@ -269,7 +284,7 @@ def parse_program(
 
         if text.startswith("AND "):
             if last_top_keyword is None:
-                raise GwtError(f"{filename}:{line.number}: AND has no previous GIVEN, WHEN, or THEN")
+                raise GwtError(f"{filename}:{line.number}: AND has no previous GIVEN, WHEN, THEN, REQUEST, or OUTPUT")
             text = f"{last_top_keyword} {text.removeprefix('AND ').strip()}"
 
         if text.startswith("PROGRAM "):
@@ -277,6 +292,20 @@ def parse_program(
             if not program.name:
                 raise GwtError(f"{filename}:{line.number}: PROGRAM requires a name")
             index += 1
+        elif text.startswith("REQUEST "):
+            binding = _parse_contract_binding("REQUEST", text, filename, line)
+            if binding.path in program.inputs:
+                raise GwtError(f"{filename}:{line.number}: REQUEST already declares: {binding.path}")
+            program.inputs[binding.path] = binding
+            index += 1
+            last_top_keyword = "REQUEST"
+        elif text.startswith("OUTPUT "):
+            binding = _parse_contract_binding("OUTPUT", text, filename, line)
+            if binding.path in program.outputs:
+                raise GwtError(f"{filename}:{line.number}: OUTPUT already declares: {binding.path}")
+            program.outputs[binding.path] = binding
+            index += 1
+            last_top_keyword = "OUTPUT"
         elif text.startswith("GIVEN "):
             statement = text.removeprefix("GIVEN ").strip()
             if _is_table_header(statement):
@@ -380,8 +409,10 @@ class Runtime:
                 self._run_table_assignment(line)
             else:
                 self._run_given(line)
+        self._validate_contract_bindings(self.program.inputs, "REQUEST")
         for line in whens:
             self._run_command_or_action(line, {})
+        self._validate_contract_bindings(self.program.outputs, "OUTPUT")
         for line in thens:
             self._before_line(line, {})
             try:
@@ -390,7 +421,7 @@ class Runtime:
                 raise _with_line_context(line, exc) from exc
             if not assertion_passed:
                 raise GwtError(f"{scenario.name}: line {line.number}: assertion failed: {line.text}")
-        return ScenarioResult(result_name or scenario.name, self.state, self.output)
+        return ScenarioResult(result_name or scenario.name, self.state, self.output, self._declared_output_state())
 
     def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
         indexed: dict[str, list[Action]] = {}
@@ -425,11 +456,49 @@ class Runtime:
 
         for field, expected_type in dto.fields.items():
             field_value = flat_value[field]
-            if not _value_matches_dto_type(field_value, expected_type):
+            self._validate_value_type(f"{base_path}.{field}", field_value, expected_type, line)
+
+    def _validate_value_type(self, path: str, value: Any, expected_type: str, line: Line) -> None:
+        if expected_type == "any":
+            return
+        if expected_type in DTO_TYPES:
+            if not _value_matches_primitive_type(value, expected_type):
                 raise GwtError(
-                    f"DTO {dto.name} expected {base_path}.{field} to be {expected_type}, "
-                    f"got {_value_type_name(field_value)}"
+                    f"expected {path} to be {expected_type}, got {_value_type_name(value)}"
                 )
+            return
+
+        item_type = _list_item_type(expected_type)
+        if item_type is not None:
+            if not isinstance(value, list):
+                raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
+            for index, item in enumerate(value, start=1):
+                self._validate_value_type(f"{path}[{index}]", item, item_type, line)
+            return
+
+        dto = self.program.dtos.get(expected_type)
+        if dto is None:
+            raise GwtError(f"unknown DTO type: {expected_type}")
+        if not isinstance(value, dict):
+            raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
+        self._validate_dto_fields(path, value, dto, line)
+
+    def _validate_contract_bindings(self, bindings: dict[str, ContractBinding], label: str) -> None:
+        for binding in bindings.values():
+            try:
+                value = self._get_path(binding.path, {})
+                self._validate_value_type(binding.path, value, binding.value_type, binding.line)
+            except GwtError as exc:
+                raise _with_line_context(binding.line, GwtError(f"{label} contract failed for {binding.path}: {exc}")) from exc
+
+    def _declared_output_state(self) -> dict[str, Any] | None:
+        if not self.program.outputs:
+            return None
+
+        returned: dict[str, Any] = {}
+        for binding in self.program.outputs.values():
+            _set_nested_output(returned, binding.path, self._get_path(binding.path, {}))
+        return returned
 
     def _run_given(self, line: Line) -> None:
         self._before_line(line, {})
@@ -449,6 +518,12 @@ class Runtime:
                 }
                 for row in table.rows
             ]
+            if table.item_type is not None:
+                dto = self.program.dtos.get(table.item_type)
+                if dto is None:
+                    raise GwtError(f"unknown DTO: {table.item_type}")
+                for index, row in enumerate(rows, start=1):
+                    self._validate_dto_fields(f"{table.path}[{index}]", row, dto, table.line)
             self._set_path(table.path, rows, {})
         except GwtError as exc:
             raise _with_line_context(table.line, exc) from exc
@@ -784,6 +859,22 @@ def _parse_contract_input(text: str, filename: str, line_number: int) -> tuple[s
     return name, value_type
 
 
+def _parse_contract_binding(keyword: str, text: str, filename: str, line: Line) -> ContractBinding:
+    statement = text.removeprefix(f"{keyword} ").strip()
+    if " is " not in statement:
+        raise GwtError(f"{filename}:{line.number}: {keyword} expects '{keyword} path is Type'")
+    path, value_type = statement.split(" is ", 1)
+    path = path.strip()
+    value_type = value_type.strip()
+    if not _is_path(path):
+        raise GwtError(f"{filename}:{line.number}: {keyword} requires a state path")
+    if not value_type:
+        raise GwtError(f"{filename}:{line.number}: {keyword} requires a type")
+    if not _is_type_syntax(value_type):
+        raise GwtError(f"{filename}:{line.number}: invalid {keyword} type: {value_type}")
+    return ContractBinding(keyword.lower(), path, value_type, _derived_line(line, text, 0))
+
+
 def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: int = 2) -> tuple[list[Any], int]:
     body: list[Any] = []
     last_body_keyword: str | None = None
@@ -906,8 +997,8 @@ def _parse_dto_fields(
         parents.append(path)
 
         if value_type:
-            if value_type not in DTO_TYPES:
-                raise GwtError(f"{filename}:{line.number}: unknown DTO field type: {value_type}")
+            if not _is_type_syntax(value_type):
+                raise GwtError(f"{filename}:{line.number}: invalid DTO field type: {value_type}")
             if path in fields:
                 raise GwtError(f"{filename}:{line.number}: DTO field already defined: {path}")
             fields[path] = value_type
@@ -987,7 +1078,7 @@ def _parse_table_assignment(
     filename: str,
     header_line: Line,
 ) -> tuple[TableAssignment, int]:
-    path = header.removesuffix(" are").strip()
+    path, item_type = _parse_table_header(header, filename, header_line.number)
     if not path:
         raise GwtError(f"{filename}:{header_line.number}: table assignment requires a path")
     rows, index = _parse_pipe_table(lines, index, filename, header_line.number, "GIVEN table")
@@ -1006,7 +1097,20 @@ def _parse_table_assignment(
         if len(row) != len(headers):
             raise GwtError(f"{filename}:{header_line.number + offset}: GIVEN table row has wrong number of cells")
         records.append(dict(zip(headers, row)))
-    return TableAssignment(path, records, _derived_line(header_line, header, len("GIVEN "))), index
+    return TableAssignment(path, records, _derived_line(header_line, header, len("GIVEN ")), item_type), index
+
+
+def _parse_table_header(header: str, filename: str, line_number: int) -> tuple[str, str | None]:
+    match = re.match(
+        r"^(?P<path>[A-Za-z_][A-Za-z0-9_.]*) are(?: (?P<item_type>[A-Za-z_][A-Za-z0-9_]*))?$",
+        header,
+    )
+    if match is None:
+        raise GwtError(f"{filename}:{line_number}: table assignment expects 'path are' or 'path are RowDto'")
+    item_type = match.group("item_type")
+    if item_type is not None and not _is_dto_name(item_type):
+        raise GwtError(f"{filename}:{line_number}: GIVEN table type must be a DTO name")
+    return match.group("path"), item_type
 
 
 def _parse_pipe_table(
@@ -1054,6 +1158,7 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
                         for row in line.rows
                     ],
                     line.line,
+                    line.item_type,
                 )
             )
         else:
@@ -1101,7 +1206,7 @@ def _is_record_header(text: str) -> bool:
 
 
 def _is_table_header(text: str) -> bool:
-    return text.endswith(" are")
+    return re.match(r"^[A-Za-z_][A-Za-z0-9_.]* are(?: [A-Za-z_][A-Za-z0-9_]*)?$", text) is not None
 
 
 def _is_typed_record_header(text: str) -> bool:
@@ -1184,8 +1289,28 @@ def _is_local_name(text: str) -> bool:
     return all(char.isalnum() or char == "_" for char in text)
 
 
+def _is_path(text: str) -> bool:
+    return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$", text))
+
+
 def _is_dto_name(text: str) -> bool:
     return bool(re.match(r"^[A-Z][A-Za-z0-9_]*$", text))
+
+
+def _is_type_syntax(value_type: str) -> bool:
+    if value_type in DTO_TYPES or _is_dto_name(value_type):
+        return True
+    item_type = _list_item_type(value_type)
+    if item_type is None:
+        return False
+    return item_type in DTO_TYPES or _is_dto_name(item_type)
+
+
+def _list_item_type(value_type: str) -> str | None:
+    match = LIST_TYPE_PATTERN.match(value_type)
+    if match is None:
+        return None
+    return match.group(1)
 
 
 def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
@@ -1199,9 +1324,18 @@ def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
     return flattened
 
 
-def _value_matches_dto_type(value: Any, expected_type: str) -> bool:
-    if expected_type == "any":
-        return True
+def _set_nested_output(target: dict[str, Any], path: str, value: Any) -> None:
+    current = target
+    parts = path.split(".")
+    for part in parts[:-1]:
+        next_value = current.setdefault(part, {})
+        if not isinstance(next_value, dict):
+            raise GwtError(f"OUTPUT path collides with scalar: {path}")
+        current = next_value
+    current[parts[-1]] = value
+
+
+def _value_matches_primitive_type(value: Any, expected_type: str) -> bool:
     if expected_type == "number":
         return isinstance(value, (int, float)) and not isinstance(value, bool)
     if expected_type == "text":
@@ -1210,6 +1344,8 @@ def _value_matches_dto_type(value: Any, expected_type: str) -> bool:
         return isinstance(value, bool)
     if expected_type == "list":
         return isinstance(value, list)
+    if expected_type == "any":
+        return True
     raise AssertionError(expected_type)
 
 

@@ -210,6 +210,7 @@ def _symbol_kind(kind: str) -> int:
         "behavior": 12,
         "parameter": 13,
         "local": 13,
+        "contract": 13,
         "scenario": 2,
     }.get(kind, 13)
 
