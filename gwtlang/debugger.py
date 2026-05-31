@@ -7,13 +7,29 @@ import sys
 from typing import Any, TextIO
 
 from .errors import GwtError
-from .runtime import Line, PathRef, Runtime, parse_program
+from .runtime import DtoValidation, ForBlock, IfBlock, Line, PathRef, Program, Runtime, parse_program
 
 
 @dataclass(frozen=True)
 class Breakpoint:
     filename: str
     line: int
+
+
+@dataclass(frozen=True)
+class DebugLine:
+    filename: str
+    line: int
+    column: int
+    text: str
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "file": self.filename,
+            "line": self.line,
+            "column": self.column,
+            "text": self.text,
+        }
 
 
 class DebugStop(Exception):
@@ -110,6 +126,57 @@ def run_debug_file(
     return 0
 
 
+def debug_lines_for_file(file: str | Path) -> list[DebugLine]:
+    path = Path(file)
+    program = parse_program(path.read_text(), filename=str(path.resolve()))
+    return executable_lines(program)
+
+
+def executable_lines(program: Program) -> list[DebugLine]:
+    lines: list[DebugLine] = []
+    seen: set[tuple[str, int]] = set()
+
+    def add(line: Line) -> None:
+        filename = _debug_filename(line.filename)
+        if filename is None:
+            return
+        key = (filename, line.number)
+        if key in seen:
+            return
+        seen.add(key)
+        lines.append(DebugLine(filename, line.number, line.column, line.text))
+
+    def collect_statement(statement: Any) -> None:
+        if isinstance(statement, DtoValidation):
+            add(statement.line)
+        elif isinstance(statement, Line):
+            add(statement)
+        elif isinstance(statement, IfBlock):
+            add(statement.condition)
+            collect_body(statement.then_body)
+            collect_body(statement.else_body)
+        elif isinstance(statement, ForBlock):
+            add(statement.header_line or statement.name_line or statement.iterable)
+            collect_body(statement.body)
+
+    def collect_body(body: list[Any]) -> None:
+        for statement in body:
+            collect_statement(statement)
+
+    for action in program.actions:
+        collect_body(action.body)
+
+    for scenario in [program.background, *program.scenarios]:
+        for statement in scenario.givens:
+            collect_statement(statement)
+        for line in scenario.whens:
+            add(line)
+        for line in scenario.thens:
+            add(line)
+
+    return lines
+
+
 def parse_breakpoint(text: str, default_file: str | Path) -> Breakpoint:
     if ":" in text:
         filename, line_text = text.rsplit(":", 1)
@@ -128,6 +195,14 @@ def _send(stdout: TextIO, message: dict[str, Any]) -> None:
 
 def _breakpoint_key(filename: str, line: int) -> tuple[str, int]:
     return str(Path(filename).resolve()), line
+
+
+def _debug_filename(filename: str | None) -> str | None:
+    if filename is None:
+        return None
+    if filename.startswith("<") and filename.endswith(">"):
+        return filename
+    return str(Path(filename).resolve())
 
 
 def _debug_value(value: Any) -> Any:

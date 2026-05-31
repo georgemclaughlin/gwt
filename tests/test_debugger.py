@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from gwtlang.debugger import Breakpoint, parse_breakpoint, run_debug_file
+from gwtlang.debugger import Breakpoint, debug_lines_for_file, parse_breakpoint, run_debug_file
 
 
 class DebuggerTests(unittest.TestCase):
@@ -68,6 +68,41 @@ THEN count == 3
 
         self.assertEqual(breakpoint.filename, str(Path("/tmp/example.gwt").resolve()))
         self.assertEqual(breakpoint.line, 12)
+
+    def test_debug_lines_report_only_runtime_executable_lines(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            program.write_text(
+                """
+DTO Cart
+  total: number
+
+WHEN total items into cart
+  GIVEN items is list
+  FOR item in items
+    add item to cart.total
+
+GIVEN cart is
+  total: 0
+
+WHEN total [1, 2] into cart
+
+THEN cart.total == 3
+
+EXAMPLES
+  | unused |
+  | 1      |
+""".lstrip()
+            )
+
+            lines = debug_lines_for_file(program)
+
+        line_numbers = {line.line for line in lines}
+        self.assertEqual(line_numbers, {6, 7, 10, 12, 14})
+        self.assertNotIn(1, line_numbers)
+        self.assertNotIn(4, line_numbers)
+        self.assertNotIn(16, line_numbers)
+        self.assertNotIn(18, line_numbers)
 
 
 if __name__ == "__main__":

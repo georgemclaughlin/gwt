@@ -39,6 +39,7 @@ Expected behavior:
 - completion offers known GWT symbols.
 - pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter.
 - line breakpoints pause execution before matching executable GWT lines.
+- breakpoint markers are verified against executable GWT lines before launch.
 - Continue resumes execution; Step Over advances to the next executable line.
 - the Variables panel shows current locals and GWT state while paused.
 

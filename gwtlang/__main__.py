@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from .checker import Diagnostic
-from .debugger import parse_breakpoint, run_debug_file
+from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .lsp import run_stdio_server
 from .runtime import GwtError, run_request, run_source
 from .service import analyze_file
@@ -28,6 +28,8 @@ def main(argv: list[str] | None = None) -> int:
         return lsp_command(args)
     if args.command == "debug":
         return debug_command(args)
+    if args.command == "debug-lines":
+        return debug_lines_command(args)
 
     parser.print_help()
     return 0
@@ -81,6 +83,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Breakpoint as line or file:line. Can be repeated.",
+    )
+
+    debug_lines_parser = subparsers.add_parser(
+        "debug-lines",
+        help="List executable lines that can accept debugger breakpoints.",
+    )
+    add_file_arguments(debug_lines_parser)
+    debug_lines_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print executable lines as JSON.",
     )
 
     return parser
@@ -168,6 +181,22 @@ def debug_command(args: argparse.Namespace) -> int:
     return run_debug_file(args.file, mode=args.mode, breakpoints=breakpoints)
 
 
+def debug_lines_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        lines = debug_lines_for_file(args.file)
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps({"lines": [line.as_payload() for line in lines]}, indent=2, sort_keys=True))
+    else:
+        for line in lines:
+            print(f"{line.filename}:{line.line}:{line.column}: {line.text}")
+    return 0
+
+
 def result_payload(result: object) -> object:
     scenarios = result.scenarios
     if len(scenarios) == 1:
@@ -190,7 +219,7 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    if argv[0] in {"run", "test", "check", "lsp", "debug", "-h", "--help"}:
+    if argv[0] in {"run", "test", "check", "lsp", "debug", "debug-lines", "-h", "--help"}:
         return argv
     return ["run", *argv]
 

@@ -62,6 +62,7 @@ class ForBlock:
     iterable: Line
     body: list[Any]
     name_line: Line | None = None
+    header_line: Line | None = None
 
 
 @dataclass(frozen=True)
@@ -501,7 +502,7 @@ class Runtime:
                 branch = statement.then_body if condition_result else statement.else_body
                 result = self._run_body(branch, env)
             elif isinstance(statement, ForBlock):
-                self._before_line(statement.name_line or statement.iterable, env)
+                self._before_line(statement.header_line or statement.name_line or statement.iterable, env)
                 result = self._run_for(statement, env)
             else:
                 result = self._run_command_or_action(statement, env, allow_let=True)
@@ -756,7 +757,15 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             loop_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
             if not loop_body:
                 raise GwtError(f"{filename}:{line.number}: FOR requires a body")
-            body.append(ForBlock(name, _derived_line(line, expression, text.find(expression)), loop_body, _derived_line(line, name, len("FOR "))))
+            body.append(
+                ForBlock(
+                    name,
+                    _derived_line(line, expression, text.find(expression)),
+                    loop_body,
+                    _derived_line(line, name, len("FOR ")),
+                    _derived_line(line, text, 0),
+                )
+            )
             last_body_keyword = None
             continue
 

@@ -240,6 +240,10 @@ currently supports:
 protocol. The VS Code extension uses this mode to support line breakpoints,
 continue, step over, and state/local variable inspection.
 
+`gwt debug-lines file.gwt --json` reports the executable source lines that can
+accept debugger breakpoints. The VS Code extension uses this to verify
+breakpoints and reject lines such as declarations and `EXAMPLES` rows.
+
 ## Examples Tables
 
 `EXAMPLES` turns one scenario into multiple scenario runs by replacing
