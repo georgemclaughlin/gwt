@@ -125,6 +125,13 @@ Run checkout regression scenarios:
 python -m gwtlang test examples/checkout_scenarios.gwt
 ```
 
+Run a larger underwriting workflow sample:
+
+```sh
+python -m gwtlang test examples/loan_underwriting.gwt
+python -m gwtlang run examples/loan_underwriting.gwt --input examples/requests/loan_request.gwt --json
+```
+
 Install a local `gwt` command:
 
 ```sh
