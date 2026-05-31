@@ -37,6 +37,11 @@ Expected behavior:
 - hover shows DTO, behavior, parameter, local, and field information.
 - go-to-definition works for behavior calls.
 - completion offers known GWT symbols.
+- pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter and
+  streams output to the Debug Console.
+
+The first debugger version launches `gwt test` for the current file. It reports
+process output and exit status; step debugging and breakpoints are future work.
 
 ## Settings
 
