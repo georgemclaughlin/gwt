@@ -1,0 +1,66 @@
+{
+  "name": "gwt-vscode",
+  "displayName": "GWT",
+  "description": "VS Code language support for GWT programs.",
+  "version": "0.1.0",
+  "publisher": "gwt",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:gwt"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "gwt",
+        "aliases": [
+          "GWT",
+          "gwt"
+        ],
+        "extensions": [
+          ".gwt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gwt",
+        "scopeName": "source.gwt",
+        "path": "./syntaxes/gwt.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "GWT",
+      "properties": {
+        "gwt.server.command": {
+          "type": "string",
+          "default": "gwt",
+          "description": "Command used to start the GWT language server."
+        },
+        "gwt.server.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "lsp"
+          ],
+          "description": "Arguments passed to the GWT language server command."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node --check extension.js"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}
