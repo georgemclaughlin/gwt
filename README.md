@@ -132,6 +132,13 @@ python -m gwtlang test examples/loan_underwriting/rules.gwt
 python -m gwtlang run examples/loan_underwriting/rules.gwt --input examples/loan_underwriting/request.gwt --json
 ```
 
+Run an order fulfillment workflow sample:
+
+```sh
+python -m gwtlang test examples/order_fulfillment/rules.gwt
+python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/order_fulfillment/request.gwt --json
+```
+
 Install a local `gwt` command:
 
 ```sh

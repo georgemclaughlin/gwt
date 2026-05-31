@@ -1,0 +1,47 @@
+PROGRAM order fulfillment request
+
+GIVEN order is OrderRequest
+  order_id: "A200"
+  payment_status: "paid"
+  fraud_score: 12
+  expedited: true
+  requested_units: [1, 2, 1]
+  widget_qty: 1
+  gadget_qty: 2
+  cable_qty: 1
+
+GIVEN inventory is InventoryState
+  widget_available: 5
+  gadget_available: 1
+  cable_available: 5
+  widget_reserved: 0
+  gadget_reserved: 0
+  cable_reserved: 0
+
+GIVEN fulfillment is FulfillmentState
+  requested_units: 0
+  reserved_units: 0
+  backordered_units: 0
+  widget_reserved: 0
+  gadget_reserved: 0
+  cable_reserved: 0
+  widget_backordered: 0
+  gadget_backordered: 0
+  cable_backordered: 0
+  package_count: 0
+  shipping_fee: 0
+  status: "new"
+  reason: "new"
+
+WHEN fulfill order from inventory into fulfillment
+
+THEN fulfillment.status == "partial"
+AND fulfillment.reason == "partial_inventory"
+AND fulfillment.requested_units == 4
+AND fulfillment.reserved_units == 3
+AND fulfillment.backordered_units == 1
+AND fulfillment.package_count == 1
+AND fulfillment.shipping_fee == 19.5
+AND inventory.widget_available == 4
+AND inventory.gadget_available == 0
+AND inventory.cable_available == 4
