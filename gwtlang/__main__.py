@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from .checker import Diagnostic
+from .debugger import parse_breakpoint, run_debug_file
 from .lsp import run_stdio_server
 from .runtime import GwtError, run_request, run_source
 from .service import analyze_file
@@ -25,6 +26,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_command(args)
     if args.command == "lsp":
         return lsp_command(args)
+    if args.command == "debug":
+        return debug_command(args)
 
     parser.print_help()
     return 0
@@ -64,6 +67,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
+
+    debug_parser = subparsers.add_parser("debug", help="Run a GWT file under the debug protocol.")
+    add_file_arguments(debug_parser)
+    debug_parser.add_argument(
+        "--mode",
+        choices=["test", "run"],
+        default="test",
+        help="Run mode used by the debugger.",
+    )
+    debug_parser.add_argument(
+        "--breakpoint",
+        action="append",
+        default=[],
+        help="Breakpoint as line or file:line. Can be repeated.",
+    )
 
     return parser
 
@@ -145,6 +163,11 @@ def lsp_command(args: argparse.Namespace) -> int:
     return run_stdio_server()
 
 
+def debug_command(args: argparse.Namespace) -> int:
+    breakpoints = [parse_breakpoint(text, args.file) for text in args.breakpoint]
+    return run_debug_file(args.file, mode=args.mode, breakpoints=breakpoints)
+
+
 def result_payload(result: object) -> object:
     scenarios = result.scenarios
     if len(scenarios) == 1:
@@ -167,7 +190,7 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    if argv[0] in {"run", "test", "check", "lsp", "-h", "--help"}:
+    if argv[0] in {"run", "test", "check", "lsp", "debug", "-h", "--help"}:
         return argv
     return ["run", *argv]
 
