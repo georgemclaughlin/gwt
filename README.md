@@ -157,6 +157,22 @@ behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
 misuse. JSON output includes diagnostic codes, source ranges, and symbols for
 future editor tooling.
 
+Embed GWT from Python:
+
+```python
+from gwtlang import check_file, run_file
+
+check = check_file("examples/order_fulfillment/rules.gwt")
+if not check.ok:
+    raise SystemExit(check.as_payload())
+
+execution = run_file(
+    "examples/order_fulfillment/rules.gwt",
+    request_file="examples/order_fulfillment/request.gwt",
+)
+print(execution.state["fulfillment"]["status"])
+```
+
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
 behavior calls, and completions for known language symbols.

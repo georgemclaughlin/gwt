@@ -6,10 +6,11 @@ import re
 import sys
 from pathlib import Path
 
+from .api import run_file
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .lsp import run_stdio_server
-from .runtime import GwtError, run_request, run_source
+from .runtime import GwtError, run_source
 from .service import analyze_file
 
 
@@ -107,15 +108,7 @@ def run_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     request_source = args.input.read_text() if args.input else None
     try:
-        if args.input:
-            result = run_request(
-                source,
-                request_source or "",
-                filename=str(args.file),
-                request_filename=str(args.input),
-            )
-        else:
-            result = run_source(source, filename=str(args.file))
+        execution = run_file(args.file, request_file=args.input)
     except GwtError as exc:
         diagnostic_source = request_source if request_source is not None else source
         diagnostic_file = str(args.input) if args.input else str(args.file)
@@ -123,9 +116,9 @@ def run_command(args: argparse.Namespace) -> int:
         return 1
 
     if args.json:
-        print(json.dumps(result_payload(result), indent=2, sort_keys=True))
+        print(json.dumps(execution.as_payload(), indent=2, sort_keys=True))
     else:
-        print_run_result(result)
+        print_run_result(execution.result)
     return 0
 
 
