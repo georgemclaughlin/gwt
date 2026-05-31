@@ -53,9 +53,12 @@ class ExecutionResult:
     def as_payload(self) -> object:
         scenarios = self.result.scenarios
         if len(scenarios) == 1:
-            return scenarios[0].state
+            return scenarios[0].returned_state if scenarios[0].returned_state is not None else scenarios[0].state
         return {
-            scenario.name: {"state": scenario.state, "output": scenario.output}
+            scenario.name: {
+                "state": scenario.returned_state if scenario.returned_state is not None else scenario.state,
+                "output": scenario.output,
+            }
             for scenario in scenarios
         }
 

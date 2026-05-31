@@ -16,6 +16,9 @@ DTO Account
   balance: number
   status: text
 
+REQUEST request.path is Account
+OUTPUT result.path is Account
+
 BACKGROUND
 GIVEN state.path is value
 AND other.path is value
@@ -25,7 +28,7 @@ GIVEN record is DtoName
   nested:
     field: value
 
-GIVEN rows are
+GIVEN rows are RowDto
   | field | count |
   | "a"   | 1     |
 
@@ -105,8 +108,12 @@ available to every scenario in the file.
 `DTO` declares the expected shape of input/state records:
 
 ```gwt
+DTO CartItem
+  sku: text
+  price: number
+
 DTO Cart
-  items: list
+  items: list<CartItem>
   subtotal: number
   shipping: number
   discount: number
@@ -126,7 +133,8 @@ GIVEN cart is Cart
 
 DTO validation requires all declared fields, rejects unknown fields, and checks
 primitive value types. Supported DTO field types are `number`, `text`,
-`boolean`, `list`, and `any`. Nested fields are declared with nested blocks:
+`boolean`, `list`, `any`, declared DTO names, and typed collections such as
+`list<CartItem>`. Nested fields are declared with nested blocks:
 
 ```gwt
 DTO Account
@@ -136,6 +144,28 @@ DTO Account
 ```
 
 DTOs are contracts only; they do not define behavior or methods.
+
+## Program Contracts
+
+`REQUEST` declares state a host or request file must provide before execution.
+`OUTPUT` declares state the program promises to return after execution:
+
+```gwt
+DTO CheckoutRequest
+  subtotal: number
+  shipping: number
+  total: number
+
+REQUEST cart is CheckoutRequest
+OUTPUT cart is CheckoutRequest
+```
+
+Contracts use the same type syntax as DTO fields and behavior contracts,
+including `list<DtoName>`. `REQUEST` contracts are validated after all `GIVEN`
+setup has run and before any `WHEN` execution. `OUTPUT` contracts are validated
+after `WHEN` execution. When a program has one or more `OUTPUT` declarations,
+JSON/API payloads return only those declared output paths; `state` still keeps
+the full final runtime state for debugging and tests.
 
 ## Behavior Contracts
 
@@ -151,8 +181,8 @@ WHEN cart total for cart
 
 Contract `GIVEN` lines describe behavior parameters, not global state. They are
 metadata for `gwt check`, future editor tooling, and documentation. Contract
-types can use primitive DTO field types (`number`, `text`, `boolean`, `list`,
-`any`) or declared DTO names.
+types can use DTO field types (`number`, `text`, `boolean`, `list`, `any`,
+declared DTO names, or `list<DtoName>`).
 
 `AND` can continue contract `GIVEN` lines:
 
@@ -194,6 +224,10 @@ keeping inputs in the same language shape.
 
 Request files can use DTOs declared by the program file.
 
+If the program declares `REQUEST` contracts, request files must provide those
+paths through `GIVEN` setup before execution. If the program declares `OUTPUT`
+contracts, CLI JSON and API payloads contain only the declared output paths.
+
 ## Embedding API
 
 Host applications can call GWT through the Python package instead of shelling
@@ -210,7 +244,8 @@ if check.ok:
 
 `check_file` returns a structured result with `ok`, `diagnostics`, and
 `as_payload()`. `run_file` returns an execution result with `state`, `output`,
-`scenarios`, and `as_payload()`.
+`scenarios`, and `as_payload()`. `state` is the full final runtime state.
+`as_payload()` uses declared `OUTPUT` contracts when present.
 
 ## Static Checking
 
@@ -232,11 +267,13 @@ The current checker reports:
 - missing `EXAMPLES` placeholders
 - obvious `FOR` use over a scalar literal
 - unknown behavior contract types
+- unknown `REQUEST` / `OUTPUT` contract types
+- typed table row shape/type mismatches
 - statically known behavior argument and return type mismatches
 
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
 source ranges, and a symbol list for DTOs, DTO fields, behavior signatures,
-parameters, local names, and scenarios.
+parameters, local names, program contracts, and scenarios.
 
 The same language-service API is available to tools:
 
@@ -363,6 +400,23 @@ GIVEN order.items are
   | "gadget" | 1        |
 ```
 
+Typed tables validate every row against a DTO and give the checker a typed
+collection:
+
+```gwt
+DTO OrderItem
+  sku: text
+  quantity: number
+
+DTO Order
+  items: list<OrderItem>
+
+GIVEN order.items are OrderItem
+  | sku      | quantity |
+  | "widget" | 2        |
+  | "gadget" | 1        |
+```
+
 This creates:
 
 ```json
@@ -378,6 +432,8 @@ This creates:
 
 Table headers become record field names. Cell values use the normal GWT value
 and expression syntax, so quote strings and leave numbers/booleans unquoted.
+When a table names a DTO, each row must include all DTO fields, cannot include
+unknown fields, and must match the DTO field types.
 Scenario `EXAMPLES` placeholders can be used inside table cells.
 
 ## Statements

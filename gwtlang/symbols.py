@@ -85,6 +85,16 @@ def build_symbol_table(program: Program) -> SymbolTable:
                 )
             )
 
+    for binding in [*program.inputs.values(), *program.outputs.values()]:
+        symbols.append(
+            Symbol(
+                binding.path,
+                "contract",
+                _line_range(binding.line),
+                detail=f"{binding.kind.upper()} {binding.path} is {binding.value_type}",
+            )
+        )
+
     for action in program.actions:
         symbols.append(
             Symbol(

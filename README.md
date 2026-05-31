@@ -44,7 +44,8 @@ In this first version:
 - `SCENARIO`, `BACKGROUND`, and `EXAMPLES` support BDD-style runs.
 - `USE` imports reusable behavior from another GWT file.
 - `DTO` declares header-like contracts for request/state records.
-- `GIVEN path are` data tables create lists of records.
+- `list<DtoName>` and `GIVEN path are DtoName` model typed collections.
+- `REQUEST` and `OUTPUT` declare the host-facing program interface.
 - Behavior contracts type parameters and return values with `GIVEN` and
   `THEN returns`.
 
@@ -114,6 +115,12 @@ Run the typed behavior contract example:
 python -m gwtlang run examples/typed_contracts.gwt --json
 ```
 
+Run the typed table example:
+
+```sh
+python -m gwtlang test examples/typed_tables.gwt
+```
+
 Run a reusable workflow with a GWT-shaped request file:
 
 ```sh
@@ -171,6 +178,7 @@ execution = run_file(
     request_file="examples/order_fulfillment/request.gwt",
 )
 print(execution.state["fulfillment"]["status"])
+print(execution.as_payload())  # declared OUTPUT paths only, when present
 ```
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It

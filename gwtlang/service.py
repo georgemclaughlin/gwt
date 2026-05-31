@@ -22,6 +22,8 @@ class Analysis:
         return {
             "file": self.filename,
             "program": self.program.name if self.program is not None else None,
+            "inputs": len(self.program.inputs) if self.program is not None else 0,
+            "outputs": len(self.program.outputs) if self.program is not None else 0,
             "dtos": len(self.program.dtos) if self.program is not None else 0,
             "behaviors": len(self.program.actions) if self.program is not None else 0,
             "scenarios": len(self.program.scenarios) if self.program is not None else 0,
@@ -92,7 +94,7 @@ def completion_items(analysis: Analysis) -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
     seen: set[tuple[str, str]] = set()
     for symbol in analysis.symbols.symbols:
-        if symbol.kind not in {"behavior", "dto", "dto_field", "parameter", "local"}:
+        if symbol.kind not in {"behavior", "dto", "dto_field", "parameter", "local", "contract"}:
             continue
         key = (symbol.name, symbol.kind)
         if key in seen:
@@ -156,7 +158,7 @@ def _hover_text(symbol: Symbol) -> str:
 
 def _find_named_symbol(analysis: Analysis, name: str) -> Symbol | None:
     for symbol in analysis.symbols.symbols:
-        if symbol.name == name and symbol.kind in {"behavior", "dto", "dto_field", "parameter", "local"}:
+        if symbol.name == name and symbol.kind in {"behavior", "dto", "dto_field", "parameter", "local", "contract"}:
             return symbol
     return None
 
@@ -197,7 +199,7 @@ def _call_text_at(source: str, line: int) -> str | None:
         return text.split(" be ", 1)[1].strip()
     if text.startswith("RETURN "):
         return text.removeprefix("RETURN ").strip()
-    if text.startswith(("REQUIRE ", "IF ", "FOR ", "GIVEN ", "THEN ")):
+    if text.startswith(("REQUIRE ", "IF ", "FOR ", "GIVEN ", "THEN ", "REQUEST ", "OUTPUT ")):
         return None
     if text.split()[0] in {"set", "add", "subtract", "print"}:
         return None
@@ -233,4 +235,5 @@ def _completion_kind(symbol_kind: str) -> int:
         "dto_field": 5,
         "parameter": 6,
         "local": 6,
+        "contract": 6,
     }.get(symbol_kind, 1)

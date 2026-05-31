@@ -1,11 +1,15 @@
 PROGRAM order fulfillment
 
+DTO OrderItem
+  sku: text
+  quantity: number
+
 DTO OrderRequest
   order_id: text
   payment_status: text
   fraud_score: number
   expedited: boolean
-  items: list
+  items: list<OrderItem>
 
 DTO InventoryState
   widget_available: number
@@ -29,6 +33,13 @@ DTO FulfillmentState
   shipping_fee: number
   status: text
   reason: text
+
+REQUEST order is OrderRequest
+AND inventory is InventoryState
+AND fulfillment is FulfillmentState
+
+OUTPUT fulfillment is FulfillmentState
+AND inventory is InventoryState
 
 WHEN reset_fulfillment fulfillment
   GIVEN fulfillment is FulfillmentState
@@ -109,7 +120,7 @@ WHEN reserve_cable quantity from inventory into fulfillment
   add fulfillment.cable_reserved to inventory.cable_reserved
 
 WHEN reserve item from inventory into fulfillment
-  GIVEN item is any
+  GIVEN item is OrderItem
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
   IF item.sku == "widget"
@@ -200,7 +211,7 @@ GIVEN order is OrderRequest
   expedited: <expedited>
   items: []
 
-GIVEN order.items are
+GIVEN order.items are OrderItem
   | sku      | quantity     |
   | "widget" | <widget_qty> |
   | "gadget" | <gadget_qty> |

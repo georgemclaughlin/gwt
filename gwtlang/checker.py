@@ -19,6 +19,8 @@ from .runtime import (
     TableAssignment,
     _condition_to_expression,
     _is_local_name,
+    _is_type_syntax,
+    _list_item_type,
     _split_required,
     _tokens,
 )
@@ -76,6 +78,8 @@ class Checker:
         self.actions_by_name = self._index_actions(program.actions)
 
     def check(self) -> list[Diagnostic]:
+        self._check_dto_field_types()
+        self._check_program_contracts()
         self._check_behavior_signatures()
         for action in self.program.actions:
             self._check_action(action)
@@ -83,6 +87,26 @@ class Checker:
         for scenario in self.program.scenarios:
             self._check_scenario(scenario)
         return self.diagnostics
+
+    def _check_dto_field_types(self) -> None:
+        for dto in self.program.dtos.values():
+            for field, value_type in dto.fields.items():
+                if not self._is_known_type(value_type):
+                    self._add_line(
+                        dto.field_lines[field],
+                        f"unknown DTO field type: {value_type}",
+                        "GWT014",
+                    )
+
+    def _check_program_contracts(self) -> None:
+        for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
+            if not self._is_known_type(binding.value_type):
+                keyword = binding.kind.upper()
+                self._add_line(
+                    binding.line,
+                    f"unknown {keyword} contract type: {binding.value_type}",
+                    "GWT014",
+                )
 
     def _check_behavior_signatures(self) -> None:
         seen: dict[tuple[str | None, tuple[str, ...]], Action] = {}
@@ -201,13 +225,13 @@ class Checker:
             self._check_condition(line)
 
     def _scope_from_givens(self, givens: list[Any]) -> Scope:
-        scope = Scope(set())
+        scope = self._scope_from_inputs()
         for given in givens:
             if isinstance(given, DtoValidation):
                 self._add_typed_name(scope, given.path, given.dto_name)
             elif isinstance(given, TableAssignment):
                 scope.names.add(given.path)
-                scope.types[given.path] = "list"
+                scope.types[given.path] = f"list<{given.item_type}>" if given.item_type is not None else "list"
             elif isinstance(given, Line) and " is " in given.text:
                 path, expression = given.text.split(" is ", 1)
                 path = path.strip()
@@ -220,6 +244,12 @@ class Checker:
                     inferred_type = _infer_expression_type(expression_type, scope) if expression_type is not None else None
                     if inferred_type is not None:
                         self._add_typed_name(scope, path, inferred_type)
+        return scope
+
+    def _scope_from_inputs(self) -> Scope:
+        scope = Scope(set())
+        for binding in self.program.inputs.values():
+            self._add_typed_name(scope, binding.path, binding.value_type)
         return scope
 
     def _add_typed_name(self, scope: Scope, name: str, value_type: str) -> None:
@@ -246,12 +276,19 @@ class Checker:
             self._add_line(statement.name_line or statement.iterable, f"FOR cannot overwrite: {statement.name}", "GWT008")
 
         expression = self._check_expression(statement.iterable.text, statement.iterable)
+        iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
+            self._add_line(statement.iterable, "FOR requires a list", "GWT013")
+        elif iterable_type is not None and not _is_collection_type(iterable_type):
             self._add_line(statement.iterable, "FOR requires a list", "GWT013")
 
         loop_scope = scope.copy()
-        loop_scope.names.add(statement.name)
-        loop_scope.types[statement.name] = "any"
+        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        if item_type is not None:
+            self._add_typed_name(loop_scope, statement.name, item_type)
+        else:
+            loop_scope.names.add(statement.name)
+            loop_scope.types[statement.name] = "any"
         self._check_body(statement.body, loop_scope, expected_return)
 
     def _check_given(self, statement: Any) -> None:
@@ -261,9 +298,12 @@ class Checker:
             return
         if isinstance(statement, TableAssignment):
             self._check_path(statement.path, statement.line)
-            for row in statement.rows:
-                for value in row.values():
-                    self._check_expression(value, statement.line)
+            if statement.item_type is not None:
+                self._check_table_type(statement)
+            else:
+                for row in statement.rows:
+                    for value in row.values():
+                        self._check_expression(value, statement.line)
             return
         if not isinstance(statement, Line):
             return
@@ -276,6 +316,39 @@ class Checker:
 
         self._check_path(path.strip(), statement)
         self._check_expression(expression.strip(), statement)
+
+    def _check_table_type(self, statement: TableAssignment) -> None:
+        if statement.item_type is None:
+            return
+        dto = self.program.dtos.get(statement.item_type)
+        if dto is None:
+            self._add_line(statement.line, f"unknown DTO: {statement.item_type}", "GWT014")
+            return
+        if not statement.rows:
+            return
+
+        actual_fields = set(statement.rows[0])
+        expected_fields = set(dto.fields)
+        missing = sorted(expected_fields - actual_fields)
+        if missing:
+            self._add_line(statement.line, f"GIVEN table for {statement.item_type} missing field: {missing[0]}", "GWT014")
+        extra = sorted(actual_fields - expected_fields)
+        if extra:
+            self._add_line(statement.line, f"GIVEN table for {statement.item_type} has unknown field: {extra[0]}", "GWT014")
+
+        for row in statement.rows:
+            for field, value in row.items():
+                expected_type = dto.fields.get(field)
+                if expected_type is None or _has_placeholder(value):
+                    continue
+                expression = self._check_expression(value, statement.line)
+                actual_type = _infer_expression_type(expression, Scope(set())) if expression is not None else None
+                if actual_type is not None and not _assignable(actual_type, expected_type):
+                    self._add_line(
+                        statement.line,
+                        f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
+                        "GWT016",
+                    )
 
     def _check_command_or_action(
         self,
@@ -488,7 +561,14 @@ class Checker:
             return None
 
     def _is_known_type(self, value_type: str) -> bool:
-        return value_type in DTO_TYPES or value_type in self.program.dtos
+        if not _is_type_syntax(value_type):
+            return False
+        if value_type in DTO_TYPES or value_type in self.program.dtos:
+            return True
+        item_type = _list_item_type(value_type)
+        if item_type is None:
+            return False
+        return item_type in DTO_TYPES or item_type in self.program.dtos
 
     def _check_expression(self, text: str, line: Line) -> Expr | None:
         if _has_placeholder(text):
@@ -627,7 +707,21 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
 
 
 def _assignable(actual_type: str, expected_type: str) -> bool:
-    return expected_type == "any" or actual_type == "any" or actual_type == expected_type
+    if expected_type == "any" or actual_type == "any" or actual_type == expected_type:
+        return True
+    actual_item = _list_item_type(actual_type)
+    expected_item = _list_item_type(expected_type)
+    if expected_type == "list" and actual_item is not None:
+        return True
+    if actual_type == "list" and expected_item is not None:
+        return True
+    if actual_item is not None and expected_item is not None:
+        return _assignable(actual_item, expected_item)
+    return False
+
+
+def _is_collection_type(value_type: str) -> bool:
+    return value_type == "list" or _list_item_type(value_type) is not None
 
 
 def _has_placeholder(text: str) -> bool:

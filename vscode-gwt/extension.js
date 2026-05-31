@@ -599,6 +599,9 @@ function sourceLineKind(sourcePath, line) {
     if (stripped === "EXAMPLES" || stripped.startsWith("|")) {
       return "examples";
     }
+    if (/^(REQUEST|OUTPUT)\b/.test(stripped)) {
+      return "contract";
+    }
     if (/^(PROGRAM|BACKGROUND|SCENARIO|USE|DTO)\b/.test(stripped)) {
       return "declaration";
     }
@@ -625,7 +628,7 @@ function nonExecutableBreakpointMessage(kind) {
     return "Declarations are not executable GWT lines.";
   }
   if (kind === "contract") {
-    return "Behavior contracts are metadata; set breakpoints inside the behavior body or on a call.";
+    return "Contracts are metadata; set breakpoints inside behavior bodies or on executable steps.";
   }
   if (kind === "behavior-definition") {
     return "Behavior definitions are not executable; set breakpoints inside the body or on a call.";

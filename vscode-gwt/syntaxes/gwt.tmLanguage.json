@@ -57,7 +57,7 @@
       "patterns": [
         {
           "name": "keyword.control.gwt",
-          "match": "\\b(?:PROGRAM|USE|DTO|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|RETURN)\\b"
+          "match": "\\b(?:PROGRAM|USE|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|RETURN)\\b"
         }
       ]
     },

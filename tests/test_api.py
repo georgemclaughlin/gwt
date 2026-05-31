@@ -57,6 +57,34 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(result.state["cart"]["total"], 92)
         self.assertEqual(result.as_payload()["cart"]["total"], 92)
 
+    def test_output_contract_filters_execution_payload(self):
+        result = run_text(
+            """
+            DTO Cart
+              subtotal: number
+              shipping: number
+              total: number
+
+            REQUEST cart is Cart
+            OUTPUT cart is Cart
+
+            WHEN checkout cart
+              set cart.total to cart.subtotal + cart.shipping
+              set audit.status to "priced"
+            """,
+            request_source="""
+            GIVEN cart is Cart
+              subtotal: 84
+              shipping: 8
+              total: 0
+
+            WHEN checkout cart
+            """,
+        )
+
+        self.assertEqual(result.state["audit"]["status"], "priced")
+        self.assertEqual(result.as_payload(), {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
+
     def test_run_text_returns_execution_result(self):
         result = run_text(
             """

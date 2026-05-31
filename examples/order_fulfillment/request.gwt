@@ -7,7 +7,7 @@ GIVEN order is OrderRequest
   expedited: true
   items: []
 
-GIVEN order.items are
+GIVEN order.items are OrderItem
   | sku      | quantity |
   | "widget" | 1        |
   | "gadget" | 2        |

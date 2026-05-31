@@ -758,6 +758,63 @@ class RuntimeTests(unittest.TestCase):
         )
         self.assertEqual(result.state["fulfillment"]["requested_units"], 5)
 
+    def test_given_typed_table_validates_dto_rows(self):
+        result = run_source(
+            '''
+            DTO OrderItem
+              sku: text
+              quantity: number
+
+            DTO Order
+              items: list<OrderItem>
+
+            GIVEN order is Order
+              items: []
+
+            GIVEN order.items are OrderItem
+              | sku      | quantity |
+              | "widget" | 2        |
+
+            WHEN count items
+              FOR item in order.items
+                set last_sku to item.sku
+
+            WHEN count items
+
+            THEN last_sku == "widget"
+            '''
+        )
+
+        self.assertEqual(result.state["order"]["items"], [{"sku": "widget", "quantity": 2}])
+
+    def test_given_typed_table_rejects_missing_dto_field(self):
+        with self.assertRaisesRegex(GwtError, "DTO OrderItem missing field: order.items\\[1\\].quantity"):
+            run_source(
+                '''
+                DTO OrderItem
+                  sku: text
+                  quantity: number
+
+                GIVEN order.items are OrderItem
+                  | sku      |
+                  | "widget" |
+                '''
+            )
+
+    def test_given_typed_table_rejects_wrong_dto_field_type(self):
+        with self.assertRaisesRegex(GwtError, "expected order.items\\[1\\].quantity to be number, got text"):
+            run_source(
+                '''
+                DTO OrderItem
+                  sku: text
+                  quantity: number
+
+                GIVEN order.items are OrderItem
+                  | sku      | quantity |
+                  | "widget" | "two"    |
+                '''
+            )
+
     def test_given_table_supports_examples_placeholders(self):
         result = run_source(
             '''
@@ -982,6 +1039,34 @@ class RuntimeTests(unittest.TestCase):
         result = run_request(program, request)
 
         self.assertEqual(result.state["cart"]["total"], 42)
+
+    def test_request_contract_requires_declared_input_state(self):
+        with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
+            run_source(
+                '''
+                DTO Cart
+                  total: number
+
+                REQUEST cart is Cart
+                '''
+            )
+
+    def test_output_contract_rejects_invalid_final_state(self):
+        with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for cart: expected cart.total to be number, got text"):
+            run_source(
+                '''
+                DTO Cart
+                  total: number
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+
+                GIVEN cart is Cart
+                  total: 0
+
+                WHEN set cart.total to "bad"
+                '''
+            )
 
     def test_behavior_contracts_are_metadata_not_runtime_steps(self):
         result = run_source(
