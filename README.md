@@ -126,6 +126,11 @@ gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
 ```
 
+`gwt check` parses a program and runs semantic checks without executing
+scenarios. It reports problems such as unmatched behavior calls, duplicate
+behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
+misuse.
+
 Expression example:
 
 ```gwt

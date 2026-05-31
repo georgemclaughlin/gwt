@@ -6,6 +6,7 @@ import re
 import sys
 from pathlib import Path
 
+from .checker import check_program
 from .runtime import GwtError, parse_program, run_request, run_source
 
 
@@ -50,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print scenario results as JSON.",
     )
 
-    check_parser = subparsers.add_parser("check", help="Parse a GWT file without running it.")
+    check_parser = subparsers.add_parser("check", help="Parse and statically check a GWT file.")
     add_file_arguments(check_parser)
     check_parser.add_argument(
         "--json",
@@ -114,6 +115,7 @@ def check_command(args: argparse.Namespace) -> int:
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1
+    diagnostics = check_program(program)
 
     payload = {
         "file": str(args.file),
@@ -121,7 +123,25 @@ def check_command(args: argparse.Namespace) -> int:
         "dtos": len(program.dtos),
         "behaviors": len(program.actions),
         "scenarios": len(program.scenarios),
+        "diagnostics": [diagnostic.as_payload(str(args.file)) for diagnostic in diagnostics],
     }
+    if diagnostics:
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(
+                "\n\n".join(
+                    format_error(
+                        GwtError(diagnostic.as_error_message(str(args.file))),
+                        source,
+                        str(args.file),
+                    )
+                    for diagnostic in diagnostics
+                ),
+                file=sys.stderr,
+            )
+        return 1
+
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
