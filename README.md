@@ -46,6 +46,7 @@ In this first version:
 - `DTO` declares header-like contracts for request/state records.
 - `list<DtoName>` and `GIVEN path are DtoName` model typed collections.
 - `REQUEST` and `OUTPUT` declare the host-facing program interface.
+- `set`, `add`, and `subtract` enforce known DTO/contract field types.
 - Behavior contracts type parameters and return values with `GIVEN` and
   `THEN returns`.
 

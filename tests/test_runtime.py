@@ -1052,7 +1052,7 @@ class RuntimeTests(unittest.TestCase):
             )
 
     def test_output_contract_rejects_invalid_final_state(self):
-        with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for cart: expected cart.total to be number, got text"):
+        with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
             run_source(
                 '''
                 DTO Cart
@@ -1065,6 +1065,71 @@ class RuntimeTests(unittest.TestCase):
                   total: 0
 
                 WHEN set cart.total to "bad"
+                '''
+            )
+
+    def test_set_enforces_declared_field_type_at_mutation(self):
+        with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
+            run_source(
+                '''
+                DTO Cart
+                  total: number
+
+                REQUEST cart is Cart
+
+                GIVEN cart is Cart
+                  total: 0
+
+                WHEN set cart.total to "bad"
+                '''
+            )
+
+    def test_add_enforces_declared_field_type_at_mutation(self):
+        with self.assertRaisesRegex(GwtError, "cannot add text to number"):
+            run_source(
+                '''
+                DTO Cart
+                  total: number
+
+                REQUEST cart is Cart
+
+                GIVEN cart is Cart
+                  total: 0
+
+                WHEN add "bad" to cart.total
+                '''
+            )
+
+    def test_behavior_contract_enforces_pathref_mutation_type(self):
+        with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
+            run_source(
+                '''
+                DTO Cart
+                  total: number
+
+                WHEN break cart
+                  GIVEN cart is Cart
+                  set cart.total to "bad"
+
+                GIVEN cart.total is 0
+
+                WHEN break cart
+                '''
+            )
+
+    def test_typed_table_assignment_enforces_later_list_mutation(self):
+        with self.assertRaisesRegex(GwtError, "expected invoice.items to be list<LineItem>, got text"):
+            run_source(
+                '''
+                DTO LineItem
+                  name: text
+                  quantity: number
+
+                GIVEN invoice.items are LineItem
+                  | name       | quantity |
+                  | "keyboard" | 2        |
+
+                WHEN set invoice.items to "bad"
                 '''
             )
 
