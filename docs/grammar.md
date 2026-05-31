@@ -5,9 +5,12 @@ hand-written, but behavior bodies are parsed into structured statement nodes for
 blocks such as `IF`, `FOR`, and `ELSE`.
 
 ```ebnf
-program        = program_header?, use*, behavior*, background?, scenario* ;
+program        = program_header?, use*, dto*, behavior*, background?, scenario* ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
+dto            = "DTO" name, dto_block ;
+dto_block      = dto_field+ ;
+dto_field      = name ":" type | name ":", dto_block ;
 
 background     = "BACKGROUND", step* ;
 scenario       = "SCENARIO" text, step*, examples? ;
@@ -49,7 +52,8 @@ print          = "print" expression ;
 
 assignment_or_record
               = path "is" expression
-              | path "is", record_block ;
+              | path "is", record_block
+              | path "is" name, record_block ;
 
 condition_or_record
               = condition

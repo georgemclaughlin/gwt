@@ -12,11 +12,15 @@ PROGRAM name
 
 USE "./module.gwt"
 
+DTO Account
+  balance: number
+  status: text
+
 BACKGROUND
 GIVEN state.path is value
 AND other.path is value
 
-GIVEN record is
+GIVEN record is DtoName
   field: value
   nested:
     field: value
@@ -90,6 +94,43 @@ cannot define block-form `WHEN` behavior.
 Program-level block-form `WHEN` behavior can appear before scenarios and is
 available to every scenario in the file.
 
+## DTO Contracts
+
+`DTO` declares the expected shape of input/state records:
+
+```gwt
+DTO Cart
+  items: list
+  subtotal: number
+  shipping: number
+  discount: number
+  total: number
+```
+
+`GIVEN name is DtoName` creates a record and validates it against the contract:
+
+```gwt
+GIVEN cart is Cart
+  items: [20, 35, 45]
+  subtotal: 0
+  shipping: 0
+  discount: 0
+  total: 0
+```
+
+DTO validation requires all declared fields, rejects unknown fields, and checks
+primitive value types. Supported DTO field types are `number`, `text`,
+`boolean`, `list`, and `any`. Nested fields are declared with nested blocks:
+
+```gwt
+DTO Account
+  balance: number
+  owner:
+    name: text
+```
+
+DTOs are contracts only; they do not define behavior or methods.
+
 ## Imports
 
 `USE` imports behavior definitions from another GWT file:
@@ -114,6 +155,8 @@ The program file provides reusable block-form `WHEN` behavior. The input file
 provides the request as ordinary `GIVEN`, single-line `WHEN`, and optional
 `THEN` steps. This makes GWT usable as a deterministic workflow runner while
 keeping inputs in the same language shape.
+
+Request files can use DTOs declared by the program file.
 
 ## Examples Tables
 

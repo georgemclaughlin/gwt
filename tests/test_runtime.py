@@ -846,6 +846,113 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.state["account"]["balance"], 67)
 
+    def test_dto_validates_typed_given_record(self):
+        result = run_source(
+            '''
+            DTO Account
+              balance: number
+              status: text
+              owner:
+                name: text
+
+            GIVEN account is Account
+              balance: 100
+              status: "open"
+              owner:
+                name: "Ada"
+
+            THEN account.balance == 100
+            AND account.owner.name == "Ada"
+            '''
+        )
+
+        self.assertEqual(result.state["account"]["status"], "open")
+
+    def test_dto_rejects_missing_field(self):
+        with self.assertRaisesRegex(GwtError, "missing field: account.status"):
+            run_source(
+                '''
+                DTO Account
+                  balance: number
+                  status: text
+
+                GIVEN account is Account
+                  balance: 100
+                '''
+            )
+
+    def test_dto_rejects_unknown_field(self):
+        with self.assertRaisesRegex(GwtError, "unknown field: account.extra"):
+            run_source(
+                '''
+                DTO Account
+                  balance: number
+
+                GIVEN account is Account
+                  balance: 100
+                  extra: true
+                '''
+            )
+
+    def test_dto_rejects_wrong_type(self):
+        with self.assertRaisesRegex(GwtError, "expected account.balance to be number, got text"):
+            run_source(
+                '''
+                DTO Account
+                  balance: number
+
+                GIVEN account is Account
+                  balance: "100"
+                '''
+            )
+
+    def test_request_can_use_program_dto(self):
+        program = '''
+        DTO Cart
+          subtotal: number
+          total: number
+
+        WHEN price cart
+          set cart.total to cart.subtotal
+        '''
+        request = '''
+        GIVEN cart is Cart
+          subtotal: 42
+          total: 0
+
+        WHEN price cart
+
+        THEN cart.total == 42
+        '''
+
+        result = run_request(program, request)
+
+        self.assertEqual(result.state["cart"]["total"], 42)
+
+    def test_use_imports_dto_definitions(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            module_path = Path(temp_dir) / "types.gwt"
+            module_path.write_text(
+                '''
+                DTO Account
+                  balance: number
+                '''
+            )
+
+            result = run_source(
+                '''
+                USE "./types.gwt"
+
+                GIVEN account is Account
+                  balance: 100
+
+                THEN account.balance == 100
+                ''',
+                filename=str(Path(temp_dir) / "main.gwt"),
+            )
+
+        self.assertEqual(result.state["account"]["balance"], 100)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ from .errors import GwtError
 from .expressions import evaluate_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
+DTO_TYPES = {"number", "text", "boolean", "list", "any"}
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,20 @@ class ForBlock:
 
 
 @dataclass(frozen=True)
+class DtoDefinition:
+    name: str
+    fields: dict[str, str]
+    line: int
+
+
+@dataclass(frozen=True)
+class DtoValidation:
+    path: str
+    dto_name: str
+    line: Line
+
+
+@dataclass(frozen=True)
 class BehaviorReturn:
     value: Any
 
@@ -56,7 +71,7 @@ class BehaviorReturn:
 class Scenario:
     name: str
     line: int
-    givens: list[Line] = field(default_factory=list)
+    givens: list[Any] = field(default_factory=list)
     whens: list[Line] = field(default_factory=list)
     thens: list[Line] = field(default_factory=list)
     examples: list[dict[str, str]] = field(default_factory=list)
@@ -66,6 +81,7 @@ class Scenario:
 class Program:
     name: str | None = None
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
+    dtos: dict[str, DtoDefinition] = field(default_factory=dict)
     actions: list[Action] = field(default_factory=list)
     scenarios: list[Scenario] = field(default_factory=list)
 
@@ -108,7 +124,7 @@ def run_request(
     request_filename: str = "<request>",
 ) -> RunResult:
     program = parse_program(program_source, filename)
-    request = parse_program(request_source, request_filename)
+    request = parse_program(request_source, request_filename, initial_dtos=program.dtos)
     combined = Program(
         name=program.name,
         background=Scenario(
@@ -118,6 +134,7 @@ def run_request(
             [*program.background.whens, *request.background.whens],
             [*program.background.thens, *request.background.thens],
         ),
+        dtos={**program.dtos, **request.dtos},
         actions=[*program.actions, *request.actions],
         scenarios=request.scenarios,
     )
@@ -125,9 +142,16 @@ def run_request(
     return runtime.run()
 
 
-def parse_program(source: str, filename: str = "<source>", importing: set[Path] | None = None) -> Program:
+def parse_program(
+    source: str,
+    filename: str = "<source>",
+    importing: set[Path] | None = None,
+    initial_dtos: dict[str, DtoDefinition] | None = None,
+) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
+    if initial_dtos:
+        program.dtos.update(initial_dtos)
     importing = set() if importing is None else importing
     current = Scenario("Main", 0)
     in_background = False
@@ -165,8 +189,17 @@ def parse_program(source: str, filename: str = "<source>", importing: set[Path] 
 
         if text.startswith("USE "):
             imported = _parse_import(text, line, filename, importing)
+            program.dtos.update(imported.dtos)
             program.actions.extend(imported.actions)
             index += 1
+            continue
+
+        if text.startswith("DTO "):
+            dto, index = _parse_dto(lines, index, filename)
+            if dto.name in program.dtos:
+                raise GwtError(f"{filename}:{line.number}: DTO already defined: {dto.name}")
+            program.dtos[dto.name] = dto
+            last_top_keyword = None
             continue
 
         if text == "EXAMPLES":
@@ -189,7 +222,12 @@ def parse_program(source: str, filename: str = "<source>", importing: set[Path] 
             index += 1
         elif text.startswith("GIVEN "):
             statement = text.removeprefix("GIVEN ").strip()
-            if _is_record_header(statement):
+            if _is_typed_record_header(statement):
+                index += 1
+                expanded, index, validation = _expand_typed_record_block(statement, lines, index, filename, program.dtos)
+                current.givens.extend(expanded)
+                current.givens.append(validation)
+            elif _is_record_header(statement):
                 index += 1
                 expanded, index = _expand_record_block(statement, lines, index, filename)
                 current.givens.extend(expanded)
@@ -260,7 +298,10 @@ class Runtime:
         whens = [*self.program.background.whens, *_substitute_lines(scenario.whens, example)]
         thens = [*self.program.background.thens, *_substitute_lines(scenario.thens, example)]
         for line in givens:
-            self._run_given(line)
+            if isinstance(line, DtoValidation):
+                self._validate_dto(line)
+            else:
+                self._run_given(line)
         for line in whens:
             self._run_command_or_action(line, {})
         for line in thens:
@@ -277,6 +318,39 @@ class Runtime:
         for action in actions:
             indexed.setdefault(action.name, []).append(action)
         return indexed
+
+    def _validate_dto(self, validation: DtoValidation) -> None:
+        dto = self.program.dtos.get(validation.dto_name)
+        if dto is None:
+            raise GwtError(f"line {validation.line.number}: unknown DTO: {validation.dto_name}")
+        try:
+            value = self._get_path(validation.path, {})
+            if not isinstance(value, dict):
+                raise GwtError(f"expected {validation.path} to be a record")
+            self._validate_dto_fields(validation.path, value, dto, validation.line)
+        except GwtError as exc:
+            raise _with_line_context(validation.line, exc) from exc
+
+    def _validate_dto_fields(self, base_path: str, value: dict[str, Any], dto: DtoDefinition, line: Line) -> None:
+        flat_value = _flatten_record(value)
+        expected_fields = set(dto.fields)
+        actual_fields = set(flat_value)
+
+        missing = sorted(expected_fields - actual_fields)
+        if missing:
+            raise GwtError(f"DTO {dto.name} missing field: {base_path}.{missing[0]}")
+
+        extra = sorted(actual_fields - expected_fields)
+        if extra:
+            raise GwtError(f"DTO {dto.name} unknown field: {base_path}.{extra[0]}")
+
+        for field, expected_type in dto.fields.items():
+            field_value = flat_value[field]
+            if not _value_matches_dto_type(field_value, expected_type):
+                raise GwtError(
+                    f"DTO {dto.name} expected {base_path}.{field} to be {expected_type}, "
+                    f"got {_value_type_name(field_value)}"
+                )
 
     def _run_given(self, line: Line) -> None:
         try:
@@ -579,6 +653,68 @@ def _parse_behavior_block(
     return body, index
 
 
+def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinition, int]:
+    header = lines[index]
+    tokens = _tokens(header.text, filename, header.number)
+    if len(tokens) != 2:
+        raise GwtError(f"{filename}:{header.number}: DTO expects one name")
+    name = tokens[1]
+    if not _is_dto_name(name):
+        raise GwtError(f"{filename}:{header.number}: DTO name must start with an uppercase letter")
+    fields, index = _parse_dto_fields(lines, index + 1, filename, header.number)
+    return DtoDefinition(name, fields, header.number), index
+
+
+def _parse_dto_fields(
+    lines: list[Line], index: int, filename: str, dto_line: int
+) -> tuple[dict[str, str], int]:
+    if index >= len(lines) or not lines[index].text.startswith("  "):
+        raise GwtError(f"{filename}:{dto_line}: DTO requires fields")
+
+    fields: dict[str, str] = {}
+    parents: list[str] = []
+
+    while index < len(lines) and lines[index].text.startswith("  "):
+        line = lines[index]
+        indent = _indent_width(line.text)
+        if indent % 2 != 0:
+            raise GwtError(f"{filename}:{line.number}: DTO indentation must use two spaces")
+
+        depth = indent // 2 - 1
+        if depth < 0:
+            break
+        if depth > len(parents):
+            raise GwtError(f"{filename}:{line.number}: DTO field is indented too far")
+
+        field_text = line.text.strip()
+        if ":" not in field_text:
+            raise GwtError(f"{filename}:{line.number}: DTO field must use 'name: type'")
+        field, value_type = field_text.split(":", 1)
+        field = field.strip()
+        value_type = value_type.strip()
+        if not field:
+            raise GwtError(f"{filename}:{line.number}: DTO field requires a name")
+
+        parent = "" if depth == 0 else parents[depth - 1]
+        path = field if parent == "" else f"{parent}.{field}"
+        parents = parents[:depth]
+        parents.append(path)
+
+        if value_type:
+            if value_type not in DTO_TYPES:
+                raise GwtError(f"{filename}:{line.number}: unknown DTO field type: {value_type}")
+            if path in fields:
+                raise GwtError(f"{filename}:{line.number}: DTO field already defined: {path}")
+            fields[path] = value_type
+        elif index + 1 >= len(lines) or _indent_width(lines[index + 1].text) <= indent:
+            raise GwtError(f"{filename}:{line.number}: nested DTO field requires fields")
+        index += 1
+
+    if not fields:
+        raise GwtError(f"{filename}:{dto_line}: DTO requires typed fields")
+    return fields, index
+
+
 def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, str]:
     header = text.removeprefix("FOR ").strip()
     if " in " not in header:
@@ -653,10 +789,16 @@ def _parse_examples_table(
     return examples, index
 
 
-def _substitute_lines(lines: list[Line], values: dict[str, str] | None) -> list[Line]:
+def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[Any]:
     if values is None:
         return lines
-    return [Line(line.number, _substitute_placeholders(line.text, values, line.number), line.filename) for line in lines]
+    substituted: list[Any] = []
+    for line in lines:
+        if isinstance(line, DtoValidation):
+            substituted.append(line)
+        else:
+            substituted.append(Line(line.number, _substitute_placeholders(line.text, values, line.number), line.filename))
+    return substituted
 
 
 def _substitute_placeholders(text: str, values: dict[str, str], line_number: int) -> str:
@@ -688,6 +830,27 @@ def _has_error_location(message: str) -> bool:
 
 def _is_record_header(text: str) -> bool:
     return text.endswith(" is")
+
+
+def _is_typed_record_header(text: str) -> bool:
+    return re.match(r"^[A-Za-z_][A-Za-z0-9_.]* is [A-Z][A-Za-z0-9_]*$", text) is not None
+
+
+def _expand_typed_record_block(
+    header: str,
+    lines: list[Line],
+    index: int,
+    filename: str,
+    dtos: dict[str, DtoDefinition],
+) -> tuple[list[Line], int, DtoValidation]:
+    header_line = lines[index - 1]
+    path, dto_name = header.split(" is ", 1)
+    path = path.strip()
+    dto_name = dto_name.strip()
+    if dto_name not in dtos:
+        raise GwtError(f"{filename}:{header_line.number}: unknown DTO: {dto_name}")
+    expanded, index = _expand_record_block(f"{path} is", lines, index, filename)
+    return expanded, index, DtoValidation(path, dto_name, header_line)
 
 
 def _expand_record_block(
@@ -747,6 +910,49 @@ def _is_local_name(text: str) -> bool:
     if not (text[0].isalpha() or text[0] == "_"):
         return False
     return all(char.isalnum() or char == "_" for char in text)
+
+
+def _is_dto_name(text: str) -> bool:
+    return bool(re.match(r"^[A-Z][A-Za-z0-9_]*$", text))
+
+
+def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    flattened: dict[str, Any] = {}
+    for key, item in value.items():
+        path = key if prefix == "" else f"{prefix}.{key}"
+        if isinstance(item, dict):
+            flattened.update(_flatten_record(item, path))
+        else:
+            flattened[path] = item
+    return flattened
+
+
+def _value_matches_dto_type(value: Any, expected_type: str) -> bool:
+    if expected_type == "any":
+        return True
+    if expected_type == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected_type == "text":
+        return isinstance(value, str)
+    if expected_type == "boolean":
+        return isinstance(value, bool)
+    if expected_type == "list":
+        return isinstance(value, list)
+    raise AssertionError(expected_type)
+
+
+def _value_type_name(value: Any) -> str:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    if isinstance(value, str):
+        return "text"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "record"
+    return type(value).__name__
 
 
 def _tokens(text: str, filename: str, line_number: int) -> list[str]:

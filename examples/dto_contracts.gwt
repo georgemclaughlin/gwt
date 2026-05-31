@@ -1,0 +1,17 @@
+PROGRAM dto contracts
+
+DTO Account
+  balance: number
+  status: text
+  owner:
+    name: text
+
+GIVEN account is Account
+  balance: 100
+  status: "open"
+  owner:
+    name: "Ada"
+
+WHEN set account.status to "closed"
+
+THEN account.status == "closed"
