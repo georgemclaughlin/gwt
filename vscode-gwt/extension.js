@@ -178,11 +178,15 @@ class GwtDebugAdapter {
           supportsConfigurationDoneRequest: true,
           supportsTerminateRequest: true,
           supportsStepOverRequest: true,
+          supportsBreakpointLocationsRequest: true,
         });
         this.sendEvent("initialized");
         break;
       case "setBreakpoints":
         this.setBreakpoints(message);
+        break;
+      case "breakpointLocations":
+        this.breakpointLocations(message);
         break;
       case "setExceptionBreakpoints":
         this.sendResponse(message, { breakpoints: [] });
@@ -232,13 +236,113 @@ class GwtDebugAdapter {
   setBreakpoints(message) {
     const sourcePath = message.arguments?.source?.path;
     const breakpoints = message.arguments?.breakpoints || [];
-    const lines = breakpoints.map((breakpoint) => breakpoint.line);
+    if (breakpoints.length === 0) {
+      if (sourcePath) {
+        this.breakpoints.set(path.resolve(sourcePath), []);
+      }
+      this.sendResponse(message, { breakpoints: [] });
+      return;
+    }
+
+    const validation = this.executableLinesForSource(sourcePath);
+    const resolvedBreakpoints = breakpoints.map((breakpoint) =>
+      this.resolveBreakpoint(sourcePath, breakpoint.line, validation)
+    );
+    const lines = resolvedBreakpoints
+      .filter((breakpoint) => breakpoint.verified)
+      .map((breakpoint) => breakpoint.line);
     if (sourcePath) {
       this.breakpoints.set(path.resolve(sourcePath), lines);
     }
     this.sendResponse(message, {
-      breakpoints: lines.map((line) => ({ verified: true, line })),
+      breakpoints: resolvedBreakpoints,
     });
+  }
+
+  breakpointLocations(message) {
+    const sourcePath = message.arguments?.source?.path;
+    const startLine = message.arguments?.line || 1;
+    const endLine = message.arguments?.endLine || startLine;
+    const validation = this.executableLinesForSource(sourcePath);
+    if (!validation.lines) {
+      this.sendResponse(message, { breakpoints: [] });
+      return;
+    }
+
+    const breakpoints = [...validation.lines]
+      .filter((line) => line >= startLine && line <= endLine)
+      .sort((left, right) => left - right)
+      .map((line) => ({ line, column: 1 }));
+    this.sendResponse(message, { breakpoints });
+  }
+
+  executableLinesForSource(sourcePath) {
+    if (!sourcePath) {
+      return { lines: undefined, message: "Breakpoint source is unavailable." };
+    }
+
+    const processOptions = gwtProcessOptions(this.context, path.dirname(sourcePath));
+    const commandArgs = [...processOptions.baseArgs, "debug-lines", sourcePath, "--json"];
+    const result = childProcess.spawnSync(processOptions.command, commandArgs, {
+      cwd: processOptions.cwd,
+      env: processOptions.env,
+      encoding: "utf8",
+      shell: false,
+    });
+
+    if (result.error) {
+      return { lines: undefined, message: result.error.message };
+    }
+    if (result.status !== 0) {
+      return {
+        lines: undefined,
+        message: firstLine(result.stderr) || firstLine(result.stdout) || "Could not analyze GWT breakpoints.",
+      };
+    }
+
+    try {
+      const payload = JSON.parse(result.stdout || "{}");
+      const resolvedSourcePath = path.resolve(sourcePath);
+      const lines = new Set(
+        (payload.lines || [])
+          .filter((line) => line.file && path.resolve(line.file) === resolvedSourcePath)
+          .map((line) => line.line)
+      );
+      return { lines };
+    } catch (error) {
+      return { lines: undefined, message: `Could not parse GWT breakpoint analysis: ${error.message}` };
+    }
+  }
+
+  resolveBreakpoint(sourcePath, line, validation) {
+    if (!validation.lines) {
+      return {
+        verified: false,
+        line,
+        message: validation.message || "Could not analyze GWT breakpoints.",
+      };
+    }
+    if (validation.lines.has(line)) {
+      return { verified: true, line };
+    }
+
+    const sourceKind = sourceLineKind(sourcePath, line);
+    if (sourceKind === "blank" || sourceKind === "comment") {
+      const nextLine = nextExecutableLine(validation.lines, line);
+      if (nextLine !== undefined) {
+        return {
+          verified: true,
+          line: nextLine,
+          message: "Moved to the next executable GWT line.",
+        };
+      }
+    }
+
+    return {
+      verified: false,
+      line,
+      message: nonExecutableBreakpointMessage(sourceKind),
+    };
   }
 
   startPendingLaunch() {
@@ -448,6 +552,64 @@ function normalizeProgramPath(program) {
     return editor.document.uri.fsPath;
   }
   return program;
+}
+
+function firstLine(text) {
+  return (text || "").split(/\r?\n/).find((line) => line.trim())?.trim();
+}
+
+function nextExecutableLine(lines, line) {
+  return [...lines]
+    .filter((candidate) => candidate > line)
+    .sort((left, right) => left - right)[0];
+}
+
+function sourceLineKind(sourcePath, line) {
+  if (!sourcePath) {
+    return "unknown";
+  }
+  try {
+    const lines = fs.readFileSync(sourcePath, "utf8").split(/\r?\n/);
+    const text = lines[line - 1] || "";
+    const stripped = text.split("#", 1)[0].trim();
+    if (!stripped) {
+      return text.trim().startsWith("#") ? "comment" : "blank";
+    }
+    if (stripped === "EXAMPLES" || stripped.startsWith("|")) {
+      return "examples";
+    }
+    if (/^(PROGRAM|BACKGROUND|SCENARIO|USE|DTO)\b/.test(stripped)) {
+      return "declaration";
+    }
+    if (/^THEN returns\b/.test(stripped)) {
+      return "contract";
+    }
+    if (/^(GIVEN|AND)\b/.test(stripped) && /\bis\s+[A-Za-z][A-Za-z0-9_]*$/.test(stripped)) {
+      return "contract";
+    }
+    if (/^WHEN\b/.test(stripped)) {
+      return "behavior-definition";
+    }
+    return "unknown";
+  } catch (error) {
+    return "unknown";
+  }
+}
+
+function nonExecutableBreakpointMessage(kind) {
+  if (kind === "examples") {
+    return "EXAMPLES rows are data; set breakpoints on GIVEN, WHEN, THEN, or behavior body lines.";
+  }
+  if (kind === "declaration") {
+    return "Declarations are not executable GWT lines.";
+  }
+  if (kind === "contract") {
+    return "Behavior contracts are metadata; set breakpoints inside the behavior body or on a call.";
+  }
+  if (kind === "behavior-definition") {
+    return "Behavior definitions are not executable; set breakpoints inside the body or on a call.";
+  }
+  return "No executable GWT statement exists on this line.";
 }
 
 function collectionLabel(value) {

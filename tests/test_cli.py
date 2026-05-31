@@ -184,6 +184,28 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
         self.assertIn("range", payload["diagnostics"][0])
 
+    def test_debug_lines_command_reports_executable_lines(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+
+                GIVEN count is 1
+                WHEN touch count
+                THEN count == 2
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["debug-lines", str(program_path), "--json"])
+
+        self.assertEqual(status, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual([line["line"] for line in payload["lines"]], [3, 5, 6, 7])
+
 
 if __name__ == "__main__":
     unittest.main()
