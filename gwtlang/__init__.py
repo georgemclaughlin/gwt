@@ -10,6 +10,7 @@ from .api import (
     run_text,
 )
 from .checker import check_program
+from .formatter import FormatResult, format_file, format_text, is_formatted
 from .runtime import GwtError, parse_program, run_request, run_source
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
@@ -17,6 +18,7 @@ from .symbols import build_symbol_table
 __all__ = [
     "CheckResult",
     "ExecutionResult",
+    "FormatResult",
     "GwtError",
     "analyze_file",
     "analyze_source",
@@ -24,6 +26,9 @@ __all__ = [
     "check_file",
     "check_program",
     "check_text",
+    "format_file",
+    "format_text",
+    "is_formatted",
     "parse_program",
     "run_file",
     "run_result_payload",

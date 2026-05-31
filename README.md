@@ -51,6 +51,7 @@ In this first version:
 - `append`, `count`, `sum`, `find`, and `FOR ... WHERE` cover common list work.
 - Behavior contracts type parameters and return values with `GIVEN` and
   `THEN returns`.
+- `gwt format` applies the canonical v0.1 source layout.
 
 Run an example:
 
@@ -157,6 +158,7 @@ python -m pip install -e .
 gwt run examples/bank.gwt
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
+gwt format examples/bank.gwt --check
 gwt lsp
 gwt debug-lines examples/checkout_scenarios.gwt --json
 ```
@@ -166,6 +168,10 @@ scenarios. It reports problems such as unmatched behavior calls, duplicate
 behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
 misuse. JSON output includes diagnostic codes, source ranges, and symbols for
 future editor tooling.
+
+The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
+`gwt format file.gwt` rewrites valid source to that spec's canonical layout;
+`gwt format file.gwt --check` is intended for CI.
 
 Embed GWT from Python:
 

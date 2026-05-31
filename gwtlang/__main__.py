@@ -9,6 +9,7 @@ from pathlib import Path
 from .api import run_file, run_result_payload
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
+from .formatter import format_text
 from .lsp import run_stdio_server
 from .runtime import GwtError, run_source
 from .service import analyze_file
@@ -25,6 +26,8 @@ def main(argv: list[str] | None = None) -> int:
         return test_command(args)
     if args.command == "check":
         return check_command(args)
+    if args.command == "format":
+        return format_command(args)
     if args.command == "lsp":
         return lsp_command(args)
     if args.command == "debug":
@@ -67,6 +70,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help="Print check result as JSON.",
+    )
+
+    format_parser = subparsers.add_parser("format", help="Format a GWT file.")
+    add_file_arguments(format_parser)
+    format_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit with status 1 if the file is not formatted.",
+    )
+    format_parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Print formatted source instead of writing the file.",
     )
 
     subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
@@ -165,6 +181,34 @@ def check_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def format_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        formatted = format_text(source, filename=str(args.file))
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    changed = formatted != source
+    if args.check:
+        if changed:
+            print(f"gwt: {args.file} needs formatting", file=sys.stderr)
+            return 1
+        print(f"OK {args.file}")
+        return 0
+
+    if args.stdout:
+        print(formatted, end="")
+        return 0
+
+    if changed:
+        args.file.write_text(formatted)
+        print(f"Formatted {args.file}")
+    else:
+        print(f"OK {args.file}")
+    return 0
+
+
 def lsp_command(args: argparse.Namespace) -> int:
     return run_stdio_server()
 
@@ -202,7 +246,7 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    if argv[0] in {"run", "test", "check", "lsp", "debug", "debug-lines", "-h", "--help"}:
+    if argv[0] in {"run", "test", "check", "format", "lsp", "debug", "debug-lines", "-h", "--help"}:
         return argv
     return ["run", *argv]
 
