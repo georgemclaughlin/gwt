@@ -40,13 +40,16 @@ Expected behavior:
 
 ## Settings
 
-By default the extension starts:
+When running from this repo, the extension starts the repo-local language server:
 
 ```sh
-gwt lsp
+python -m gwtlang lsp
 ```
 
-If `gwt` is not on VS Code's PATH, set the command explicitly:
+It sets `PYTHONPATH` to the repo root for the language server process, so it
+does not depend on VS Code inheriting your shell's `gwt` PATH.
+
+To override the command explicitly:
 
 ```json
 {
