@@ -118,6 +118,7 @@ def check_command(args: argparse.Namespace) -> int:
     payload = {
         "file": str(args.file),
         "program": program.name,
+        "dtos": len(program.dtos),
         "behaviors": len(program.actions),
         "scenarios": len(program.scenarios),
     }
@@ -126,7 +127,7 @@ def check_command(args: argparse.Namespace) -> int:
     else:
         print(
             f"OK {args.file} "
-            f"({payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
+            f"({payload['dtos']} DTOs, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
 

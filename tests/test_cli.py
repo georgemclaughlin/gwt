@@ -119,6 +119,7 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertIn("OK", stdout.getvalue())
+        self.assertIn("0 DTOs", stdout.getvalue())
         self.assertIn("1 behaviors", stdout.getvalue())
         self.assertIn("1 scenarios", stdout.getvalue())
 
@@ -138,6 +139,7 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["dtos"], 0)
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
 

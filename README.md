@@ -43,6 +43,7 @@ In this first version:
 - `LET`, `RETURN`, `IF`/`ELSE`, and `FOR` make behavior programmable.
 - `SCENARIO`, `BACKGROUND`, and `EXAMPLES` support BDD-style runs.
 - `USE` imports reusable behavior from another GWT file.
+- `DTO` declares header-like contracts for request/state records.
 
 Run an example:
 
@@ -96,6 +97,12 @@ Run the collections example:
 
 ```sh
 python -m gwtlang run examples/collections.gwt --json
+```
+
+Run the DTO contract example:
+
+```sh
+python -m gwtlang run examples/dto_contracts.gwt --json
 ```
 
 Run a reusable workflow with a GWT-shaped request file:

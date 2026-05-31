@@ -1,16 +1,17 @@
 PROGRAM checkout request
 
-GIVEN customer is
+GIVEN customer is Customer
   member: true
 
-GIVEN cart is
+GIVEN cart is Cart
   items: [20, 35, 45]
   subtotal: 0
   shipping: 0
   discount: 0
   total: 0
 
-GIVEN order.status is "new"
+GIVEN order is Order
+  status: "new"
 
 WHEN checkout cart
 

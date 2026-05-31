@@ -1,5 +1,18 @@
 PROGRAM checkout app
 
+DTO Customer
+  member: boolean
+
+DTO Cart
+  items: list
+  subtotal: number
+  shipping: number
+  discount: number
+  total: number
+
+DTO Order
+  status: text
+
 WHEN subtotal cart
   set cart.subtotal to 0
   FOR item in cart.items
