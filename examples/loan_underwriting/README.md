@@ -49,15 +49,19 @@ decision; they only verify the decision that the workflow computed.
 would collect data from an API, database, or form, create a request, run the
 rules file, and read the JSON output.
 
-Example output from `request.gwt`:
+Excerpt from `request.gwt` JSON output:
 
 ```json
 {
-  "decision": {
-    "status": "approved",
-    "reason": "strong_application",
-    "risk_points": 2,
-    "interest_rate": 6.25
+  "ok": true,
+  "scenario_count": 1,
+  "result": {
+    "decision": {
+      "status": "approved",
+      "reason": "strong_application",
+      "risk_points": 2,
+      "interest_rate": 6.25
+    }
   }
 }
 ```

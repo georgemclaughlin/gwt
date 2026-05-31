@@ -35,7 +35,9 @@ then           = "THEN" condition_or_record ;
 and            = "AND" text ;
 
 behavior       = "WHEN" signature, behavior_contract*, behavior_block ;
-signature      = word+ ;
+signature      = signature_part+ ;
+signature_part = word | parameter ;
+parameter      = "<", name, ">" ;
 behavior_contract
                = contract_input
                | contract_return ;
@@ -57,13 +59,17 @@ behavior_statement
 let            = "LET" name "be" expression_or_behavior_call ;
 require        = "REQUIRE" condition ;
 if_block       = "IF" condition, behavior_block, ("ELSE", behavior_block)? ;
-for_block      = "FOR" name "in" expression, behavior_block ;
+for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
 
-builtin        = set | add | subtract | print ;
+builtin        = set | add | subtract | append | count | sum | find | print ;
 set            = "set" path "to" expression ;
 add            = "add" expression "to" path ;
 subtract       = "subtract" expression "from" path ;
+append         = "append" expression "to" path ;
+count          = "count" expression "into" path ;
+sum            = "sum" expression "into" path ;
+find           = "find" name "in" expression "where" condition "into" path ;
 print          = "print" expression ;
 
 assignment_or_record

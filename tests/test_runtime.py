@@ -147,6 +147,22 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.state["account"]["balance"], 70)
 
+    def test_explicit_signature_parameters_leave_unmarked_words_literal(self):
+        result = run_source(
+            '''
+            GIVEN count is 0
+
+            WHEN record literal <amount> in count
+              add amount to count
+
+            WHEN record literal 2 in count
+
+            THEN count == 2
+            '''
+        )
+
+        self.assertEqual(result.state["count"], 2)
+
     def test_runs_independent_scenarios_with_background(self):
         result = run_source(
             '''
@@ -865,6 +881,56 @@ class RuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(result.state["result"], 13)
+
+    def test_collection_helpers_and_for_where(self):
+        result = run_source(
+            '''
+            DTO LineItem
+              name: text
+              quantity: number
+
+            GIVEN invoice.items are LineItem
+              | name       | quantity |
+              | "keyboard" | 2        |
+              | "mouse"    | 1        |
+
+            GIVEN invoice.quantities is [2, 1]
+            AND invoice.names is []
+            AND invoice.count is 0
+            AND invoice.total_quantity is 0
+
+            WHEN summarize invoice
+              count invoice.items into invoice.count
+              sum invoice.quantities into invoice.total_quantity
+              FOR item in invoice.items WHERE item.quantity > 1
+                append item.name to invoice.names
+              find item in invoice.items WHERE item.name == "mouse" into invoice.found
+
+            WHEN summarize invoice
+
+            THEN invoice.count == 2
+            AND invoice.total_quantity == 3
+            AND invoice.names == ["keyboard"]
+            AND invoice.found.quantity == 1
+            '''
+        )
+
+        self.assertEqual(result.state["invoice"]["count"], 2)
+        self.assertEqual(result.state["invoice"]["names"], ["keyboard"])
+        self.assertEqual(result.state["invoice"]["found"]["name"], "mouse")
+
+    def test_find_requires_match(self):
+        with self.assertRaisesRegex(GwtError, "find found no matching item"):
+            run_source(
+                '''
+                GIVEN numbers is [1, 2]
+
+                WHEN choose number
+                  find number in numbers where number > 10 into found
+
+                WHEN choose number
+                '''
+            )
 
     def test_for_requires_list(self):
         with self.assertRaisesRegex(GwtError, "FOR requires a list"):

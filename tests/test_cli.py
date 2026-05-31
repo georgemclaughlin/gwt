@@ -57,7 +57,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                 status = main(["run", str(program_path), "--input", str(request_path), "--json"])
 
         self.assertEqual(status, 0)
-        self.assertEqual(json.loads(stdout.getvalue())["cart"]["total"], 92)
+        self.assertEqual(json.loads(stdout.getvalue())["result"]["cart"]["total"], 92)
 
     def test_legacy_cli_invocation_still_runs(self):
         with tempfile.TemporaryDirectory() as temp_dir:

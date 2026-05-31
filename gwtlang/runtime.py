@@ -13,6 +13,7 @@ from .expressions import evaluate_expression
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 DTO_TYPES = {"number", "text", "boolean", "list", "any"}
 LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
+SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,7 @@ class ForBlock:
     body: list[Any]
     name_line: Line | None = None
     header_line: Line | None = None
+    where: Line | None = None
 
 
 @dataclass(frozen=True)
@@ -602,7 +604,7 @@ class Runtime:
             if not self._evaluate_condition(condition, env):
                 raise GwtError(f"line {line.number}: requirement failed: {condition}")
             return
-        if command in {"set", "add", "subtract", "print"}:
+        if _is_builtin_statement(tokens, line.text):
             self._run_builtin(tokens, line, env)
             return
 
@@ -650,9 +652,62 @@ class Runtime:
                     f"line {line.number}: cannot subtract {_value_type_name(value)} from {current_type}"
                 ) from exc
             self._set_path(path, new_value, env, line)
+        elif tokens[0] == "append":
+            if len(tokens) < 4 or "to" not in tokens:
+                raise GwtError(f"line {line.number}: expected 'append value to path'")
+            value_text, path = _split_required(line.text.removeprefix("append ").strip(), " to ", line.number)
+            value = self._eval_expression(value_text, env)
+            current = self._get_path(path, env)
+            if not isinstance(current, list):
+                raise GwtError(f"line {line.number}: append requires a list target")
+            new_value = [*current, value]
+            self._set_path(path, new_value, env, line)
+        elif tokens[0] == "count":
+            if len(tokens) < 4 or "into" not in tokens:
+                raise GwtError(f"line {line.number}: expected 'count list into path'")
+            value_text, path = _split_required(line.text.removeprefix("count ").strip(), " into ", line.number)
+            value = self._eval_expression(value_text, env)
+            if not isinstance(value, list):
+                raise GwtError(f"line {line.number}: count requires a list")
+            self._set_path(path, len(value), env, line)
+        elif tokens[0] == "sum":
+            if len(tokens) < 4 or "into" not in tokens:
+                raise GwtError(f"line {line.number}: expected 'sum list into path'")
+            value_text, path = _split_required(line.text.removeprefix("sum ").strip(), " into ", line.number)
+            values = self._eval_expression(value_text, env)
+            if not isinstance(values, list):
+                raise GwtError(f"line {line.number}: sum requires a list")
+            total = 0
+            for value in values:
+                if not isinstance(value, (int, float)) or isinstance(value, bool):
+                    raise GwtError(f"line {line.number}: sum requires a list of numbers")
+                total += value
+            self._set_path(path, total, env, line)
+        elif tokens[0] == "find":
+            self._run_find(line, env)
         elif tokens[0] == "print":
             value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
             self.output.append(str(value))
+
+    def _run_find(self, line: Line, env: dict[str, Any]) -> None:
+        match = re.match(
+            r"^find ([A-Za-z_][A-Za-z0-9_]*) in (.+) where (.+) into ([A-Za-z_][A-Za-z0-9_.]*)$",
+            line.text,
+            re.IGNORECASE,
+        )
+        if match is None:
+            raise GwtError(f"line {line.number}: expected 'find name in list where condition into path'")
+        name, iterable_text, condition, path = match.groups()
+        values = self._eval_expression(iterable_text.strip(), env)
+        if not isinstance(values, list):
+            raise GwtError(f"line {line.number}: find requires a list")
+        for value in values:
+            find_env = dict(env)
+            find_env[name] = value
+            if self._evaluate_condition(condition.strip(), find_env):
+                self._set_path(path, value, env, line)
+                return
+        raise GwtError(f"line {line.number}: find found no matching item")
 
     def _call_action(self, call: list[str], line: Line, caller_env: dict[str, Any]) -> BehaviorReturn | None:
         candidates = self.actions.get(call[0], [])
@@ -719,6 +774,8 @@ class Runtime:
         for value in values:
             loop_env = dict(env)
             loop_env[statement.name] = value
+            if statement.where is not None and not self._evaluate_condition(statement.where.text, loop_env):
+                continue
             result = self._run_body(statement.body, loop_env)
             if isinstance(result, BehaviorReturn):
                 return result
@@ -729,15 +786,13 @@ class Runtime:
             return None
 
         env: dict[str, Any] = {}
-        for pattern, actual in zip(action.signature, call):
-            if pattern == action.name:
-                if pattern != actual:
-                    return None
-            elif pattern in CONNECTORS:
+        for index, (pattern, actual) in enumerate(zip(action.signature, call)):
+            parameter_name = _signature_parameter_name(action.signature, index, pattern)
+            if parameter_name is None:
                 if pattern != actual:
                     return None
             else:
-                env[pattern] = self._argument_value(actual, caller_env)
+                env[parameter_name] = self._argument_value(actual, caller_env)
         return env
 
     def _argument_value(self, token: str, env: dict[str, Any]) -> Any:
@@ -978,11 +1033,12 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             continue
 
         if text.startswith("FOR "):
-            name, expression = _parse_for_header(text, filename, line.number)
+            name, expression, where = _parse_for_header(text, filename, line.number)
             index += 1
             loop_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
             if not loop_body:
                 raise GwtError(f"{filename}:{line.number}: FOR requires a body")
+            where_line = _derived_line(line, where, text.find(where)) if where is not None else None
             body.append(
                 ForBlock(
                     name,
@@ -990,6 +1046,7 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
                     loop_body,
                     _derived_line(line, name, len("FOR ")),
                     _derived_line(line, text, 0),
+                    where_line,
                 )
             )
             last_body_keyword = None
@@ -1068,18 +1125,29 @@ def _parse_dto_fields(
     return fields, field_lines, index
 
 
-def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, str]:
+def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, str, str | None]:
     header = text.removeprefix("FOR ").strip()
     if " in " not in header:
         raise GwtError(f"{filename}:{line_number}: FOR expects 'name in expression'")
     name, expression = header.split(" in ", 1)
     name = name.strip()
     expression = expression.strip()
+    expression, where = _split_where_clause(expression)
+    if where is not None:
+        if not where:
+            raise GwtError(f"{filename}:{line_number}: FOR WHERE requires a condition")
     if not _is_local_name(name):
         raise GwtError(f"{filename}:{line_number}: FOR requires a simple local name")
     if not expression:
         raise GwtError(f"{filename}:{line_number}: FOR requires an iterable expression")
-    return name, expression
+    return name, expression, where
+
+
+def _split_where_clause(expression: str) -> tuple[str, str | None]:
+    match = re.search(r"\s+WHERE\s+", expression, re.IGNORECASE)
+    if match is None:
+        return expression, None
+    return expression[: match.start()].strip(), expression[match.end() :].strip()
 
 
 def _parse_import(text: str, line: Line, filename: str, importing: set[Path]) -> Program:
@@ -1367,6 +1435,73 @@ def _list_item_type(value_type: str) -> str | None:
     if match is None:
         return None
     return match.group(1)
+
+
+def _is_builtin_statement(tokens: list[str], text: str) -> bool:
+    if not tokens:
+        return False
+    command = tokens[0]
+    if command in {"set", "add", "subtract", "print"}:
+        return True
+    if command == "append":
+        return "to" in tokens
+    if command in {"count", "sum"}:
+        return "into" in tokens
+    if command == "find":
+        return (
+            re.match(
+                r"^find [A-Za-z_][A-Za-z0-9_]* in .+ where .+ into [A-Za-z_][A-Za-z0-9_.]*$",
+                text,
+                re.IGNORECASE,
+            )
+            is not None
+        )
+    return False
+
+
+def _signature_parameters(signature: list[str]) -> list[str]:
+    parameters: list[str] = []
+    for index, token in enumerate(signature):
+        parameter_name = _signature_parameter_name(signature, index, token)
+        if parameter_name is not None:
+            parameters.append(parameter_name)
+    return parameters
+
+
+def _signature_shape(signature: list[str]) -> tuple[str, ...]:
+    shape: list[str] = []
+    for index, token in enumerate(signature):
+        shape.append("_" if _signature_parameter_name(signature, index, token) is not None else token)
+    return tuple(shape)
+
+
+def _signature_matches(signature: list[str], call: list[str]) -> bool:
+    if len(signature) != len(call):
+        return False
+    for index, (pattern, actual) in enumerate(zip(signature, call)):
+        if _signature_parameter_name(signature, index, pattern) is None and pattern != actual:
+            return False
+    return True
+
+
+def _signature_parameter_name(signature: list[str], index: int, token: str) -> str | None:
+    if index == 0:
+        return None
+
+    explicit_match = SIGNATURE_PARAMETER_PATTERN.match(token)
+    if explicit_match is not None:
+        return explicit_match.group(1)
+
+    if _signature_has_explicit_parameters(signature):
+        return None
+
+    if token in CONNECTORS:
+        return None
+    return token
+
+
+def _signature_has_explicit_parameters(signature: list[str]) -> bool:
+    return any(SIGNATURE_PARAMETER_PATTERN.match(token) is not None for token in signature[1:])
 
 
 def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:

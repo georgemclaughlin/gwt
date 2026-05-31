@@ -65,11 +65,11 @@
       "patterns": [
         {
           "name": "support.function.builtin.gwt",
-          "match": "\\b(?:set|add|subtract|print)\\b"
+          "match": "\\b(?:set|add|subtract|append|count|sum|find|print)\\b"
         },
         {
           "name": "keyword.operator.word.gwt",
-          "match": "\\b(?:is|returns|in|to|from|into|with|by|for|using|as|not|and|or|greater than|less than|at least|at most)\\b"
+          "match": "\\b(?:is|returns|in|to|from|into|with|by|for|using|as|where|WHERE|not|and|or|greater than|less than|at least|at most)\\b"
         }
       ]
     },

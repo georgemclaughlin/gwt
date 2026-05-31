@@ -47,6 +47,8 @@ In this first version:
 - `list<DtoName>` and `GIVEN path are DtoName` model typed collections.
 - `REQUEST` and `OUTPUT` declare the host-facing program interface.
 - `set`, `add`, and `subtract` enforce known DTO/contract field types.
+- `<name>` marks explicit behavior parameters in new behavior signatures.
+- `append`, `count`, `sum`, `find`, and `FOR ... WHERE` cover common list work.
 - Behavior contracts type parameters and return values with `GIVEN` and
   `THEN returns`.
 
@@ -179,7 +181,7 @@ execution = run_file(
     request_file="examples/order_fulfillment/request.gwt",
 )
 print(execution.state["fulfillment"]["status"])
-print(execution.as_payload())  # declared OUTPUT paths only, when present
+print(execution.as_payload()["result"])  # declared OUTPUT paths only, when present
 ```
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It

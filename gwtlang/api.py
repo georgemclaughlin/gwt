@@ -50,17 +50,42 @@ class ExecutionResult:
     def output(self) -> list[str]:
         return self.result.output
 
-    def as_payload(self) -> object:
-        scenarios = self.result.scenarios
-        if len(scenarios) == 1:
-            return scenarios[0].returned_state if scenarios[0].returned_state is not None else scenarios[0].state
-        return {
-            scenario.name: {
-                "state": scenario.returned_state if scenario.returned_state is not None else scenario.state,
-                "output": scenario.output,
-            }
-            for scenario in scenarios
-        }
+    def as_payload(self) -> dict[str, object]:
+        return run_result_payload(self.result, file=self.file, request_file=self.request_file)
+
+
+def run_result_payload(
+    result: RunResult,
+    *,
+    file: str | None = None,
+    request_file: str | None = None,
+) -> dict[str, object]:
+    scenarios = [_scenario_payload(scenario) for scenario in result.scenarios]
+    payload: dict[str, object] = {
+        "ok": True,
+        "file": file,
+        "request_file": request_file,
+        "scenario_count": len(scenarios),
+        "scenarios": scenarios,
+        "state": None,
+        "result": None,
+        "output": None,
+    }
+    if len(scenarios) == 1:
+        payload["state"] = scenarios[0]["state"]
+        payload["result"] = scenarios[0]["result"]
+        payload["output"] = scenarios[0]["output"]
+    return payload
+
+
+def _scenario_payload(scenario: ScenarioResult) -> dict[str, object]:
+    result = scenario.returned_state if scenario.returned_state is not None else scenario.state
+    return {
+        "name": scenario.name,
+        "state": scenario.state,
+        "result": result,
+        "output": scenario.output,
+    }
 
 
 def check_file(path: str | Path) -> CheckResult:

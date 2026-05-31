@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-from .api import run_file
+from .api import run_file, run_result_payload
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .lsp import run_stdio_server
@@ -131,7 +131,7 @@ def test_command(args: argparse.Namespace) -> int:
         return 1
 
     if args.json:
-        print(json.dumps(result_payload(result), indent=2, sort_keys=True))
+        print(json.dumps(run_result_payload(result, file=str(args.file)), indent=2, sort_keys=True))
     else:
         for scenario in result.scenarios:
             print(f"PASS {scenario.name}")
@@ -188,19 +188,6 @@ def debug_lines_command(args: argparse.Namespace) -> int:
         for line in lines:
             print(f"{line.filename}:{line.line}:{line.column}: {line.text}")
     return 0
-
-
-def result_payload(result: object) -> object:
-    scenarios = result.scenarios
-    if len(scenarios) == 1:
-        return scenarios[0].returned_state if scenarios[0].returned_state is not None else scenarios[0].state
-    return {
-        scenario.name: {
-            "state": scenario.returned_state if scenario.returned_state is not None else scenario.state,
-            "output": scenario.output,
-        }
-        for scenario in scenarios
-    }
 
 
 def print_run_result(result: object) -> None:

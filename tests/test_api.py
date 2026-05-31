@@ -55,7 +55,10 @@ class PublicApiTests(unittest.TestCase):
             result = run_file(program, request_file=request)
 
         self.assertEqual(result.state["cart"]["total"], 92)
-        self.assertEqual(result.as_payload()["cart"]["total"], 92)
+        payload = result.as_payload()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["scenario_count"], 1)
+        self.assertEqual(payload["result"]["cart"]["total"], 92)
 
     def test_output_contract_filters_execution_payload(self):
         result = run_text(
@@ -83,7 +86,9 @@ class PublicApiTests(unittest.TestCase):
         )
 
         self.assertEqual(result.state["audit"]["status"], "priced")
-        self.assertEqual(result.as_payload(), {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
+        payload = result.as_payload()
+        self.assertEqual(payload["result"], {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
+        self.assertEqual(payload["state"]["audit"]["status"], "priced")
 
     def test_run_text_returns_execution_result(self):
         result = run_text(
@@ -95,6 +100,25 @@ class PublicApiTests(unittest.TestCase):
         )
 
         self.assertEqual(result.state["count"], 3)
+
+    def test_execution_payload_shape_is_stable_for_multiple_scenarios(self):
+        result = run_text(
+            """
+            SCENARIO one
+            GIVEN count is 1
+
+            SCENARIO two
+            GIVEN count is 2
+            """
+        )
+
+        payload = result.as_payload()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["scenario_count"], 2)
+        self.assertIsNone(payload["state"])
+        self.assertIsNone(payload["result"])
+        self.assertEqual([scenario["name"] for scenario in payload["scenarios"]], ["one", "two"])
+        self.assertEqual(payload["scenarios"][1]["result"]["count"], 2)
 
 
 if __name__ == "__main__":
