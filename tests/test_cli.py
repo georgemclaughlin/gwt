@@ -143,6 +143,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
         self.assertEqual(payload["diagnostics"], [])
+        self.assertTrue(any(symbol["kind"] == "behavior" for symbol in payload["symbols"]))
 
     def test_check_command_reports_static_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -159,6 +160,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                 status = main(["check", str(program_path)])
 
         self.assertEqual(status, 1)
+        self.assertIn("GWT001", stderr.getvalue())
         self.assertIn("no behavior matches: missing count", stderr.getvalue())
         self.assertIn("WHEN missing count", stderr.getvalue())
 
@@ -179,6 +181,8 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(status, 1)
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["diagnostics"][0]["message"], "no behavior matches: missing count")
+        self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
+        self.assertIn("range", payload["diagnostics"][0])
 
 
 if __name__ == "__main__":

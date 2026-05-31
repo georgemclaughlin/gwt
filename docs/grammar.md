@@ -24,8 +24,14 @@ when_call      = "WHEN" command ;
 then           = "THEN" condition_or_record ;
 and            = "AND" text ;
 
-behavior       = "WHEN" signature, behavior_block ;
+behavior       = "WHEN" signature, behavior_contract*, behavior_block ;
 signature      = word+ ;
+behavior_contract
+               = contract_input
+               | contract_return ;
+contract_input = "GIVEN" name "is" type ;
+contract_return
+               = "THEN returns" type ;
 behavior_block = behavior_statement+ ;
 
 behavior_statement

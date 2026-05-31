@@ -19,11 +19,21 @@ class Line:
     number: int
     text: str
     filename: str | None = None
+    column: int = 1
+    length: int = 1
 
 
 @dataclass(frozen=True)
 class PathRef:
     path: str
+
+
+@dataclass
+class BehaviorContract:
+    inputs: dict[str, str] = field(default_factory=dict)
+    input_lines: dict[str, Line] = field(default_factory=dict)
+    return_type: str | None = None
+    return_line: Line | None = None
 
 
 @dataclass
@@ -33,6 +43,10 @@ class Action:
     body: list[Any]
     line: int
     filename: str | None = None
+    column: int = 1
+    length: int = 1
+    signature_text: str = ""
+    contract: BehaviorContract = field(default_factory=BehaviorContract)
 
 
 @dataclass
@@ -47,6 +61,7 @@ class ForBlock:
     name: str
     iterable: Line
     body: list[Any]
+    name_line: Line | None = None
 
 
 @dataclass(frozen=True)
@@ -54,6 +69,10 @@ class DtoDefinition:
     name: str
     fields: dict[str, str]
     line: int
+    filename: str | None = None
+    column: int = 1
+    length: int = 1
+    field_lines: dict[str, Line] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -72,6 +91,9 @@ class BehaviorReturn:
 class Scenario:
     name: str
     line: int
+    filename: str | None = None
+    column: int = 1
+    length: int = 1
     givens: list[Any] = field(default_factory=list)
     whens: list[Line] = field(default_factory=list)
     thens: list[Line] = field(default_factory=list)
@@ -129,11 +151,14 @@ def run_request(
     combined = Program(
         name=program.name,
         background=Scenario(
-            "Background",
-            request.background.line or program.background.line,
-            [*program.background.givens, *request.background.givens],
-            [*program.background.whens, *request.background.whens],
-            [*program.background.thens, *request.background.thens],
+            name="Background",
+            line=request.background.line or program.background.line,
+            filename=request.background.filename or program.background.filename,
+            column=request.background.column or program.background.column,
+            length=request.background.length or program.background.length,
+            givens=[*program.background.givens, *request.background.givens],
+            whens=[*program.background.whens, *request.background.whens],
+            thens=[*program.background.thens, *request.background.thens],
         ),
         dtos={**program.dtos, **request.dtos},
         actions=[*program.actions, *request.actions],
@@ -171,6 +196,9 @@ def parse_program(
                 raise GwtError(f"{filename}:{line.number}: BACKGROUND must appear before SCENARIO")
             current = program.background
             current.line = line.number
+            current.filename = line.filename
+            current.column = line.column
+            current.length = len("BACKGROUND")
             in_background = True
             last_top_keyword = None
             index += 1
@@ -180,7 +208,13 @@ def parse_program(
             scenario_name = text.removeprefix("SCENARIO ").strip()
             if not scenario_name:
                 raise GwtError(f"{filename}:{line.number}: SCENARIO requires a name")
-            current = Scenario(scenario_name, line.number)
+            current = Scenario(
+                scenario_name,
+                line.number,
+                line.filename,
+                line.column + len("SCENARIO "),
+                max(1, len(scenario_name)),
+            )
             program.scenarios.append(current)
             in_background = False
             saw_explicit_scenario = True
@@ -233,7 +267,7 @@ def parse_program(
                 expanded, index = _expand_record_block(statement, lines, index, filename)
                 current.givens.extend(expanded)
             else:
-                current.givens.append(Line(line.number, statement, line.filename))
+                current.givens.append(_derived_line(line, statement, len("GIVEN ")))
                 index += 1
             last_top_keyword = "GIVEN"
         elif text.startswith("WHEN "):
@@ -243,14 +277,26 @@ def parse_program(
                 signature = _tokens(signature_text, filename, line.number)
                 if not signature:
                     raise GwtError(f"{filename}:{line.number}: WHEN requires a behavior signature")
-                body, index = _parse_behavior_block(lines, index, filename)
+                body, index, contract = _parse_action_block(lines, index, filename)
                 if not body:
                     raise GwtError(f"{filename}:{line.number}: behavior '{signature[0]}' has no body")
-                program.actions.append(Action(signature[0], signature, body, line.number, line.filename))
+                program.actions.append(
+                    Action(
+                        signature[0],
+                        signature,
+                        body,
+                        line.number,
+                        line.filename,
+                        line.column + len("WHEN "),
+                        max(1, len(signature_text)),
+                        signature_text,
+                        contract,
+                    )
+                )
             elif index < len(lines) and lines[index].text.startswith("  "):
                 raise GwtError(f"{filename}:{line.number}: BACKGROUND cannot define WHEN behavior")
             else:
-                current.whens.append(Line(line.number, signature_text, line.filename))
+                current.whens.append(_derived_line(line, signature_text, len("WHEN ")))
             last_top_keyword = "WHEN"
         elif text.startswith("THEN "):
             statement = text.removeprefix("THEN ").strip()
@@ -259,7 +305,7 @@ def parse_program(
                 expanded, index = _expand_record_block(statement, lines, index, filename)
                 current.thens.extend(expanded)
             else:
-                current.thens.append(Line(line.number, statement, line.filename))
+                current.thens.append(_derived_line(line, statement, len("THEN ")))
                 index += 1
             last_top_keyword = "THEN"
         elif text.startswith("  "):
@@ -585,13 +631,69 @@ def _logical_lines(source: str, filename: str) -> list[Line]:
     for number, raw in enumerate(source.splitlines(), start=1):
         without_comment = raw.split("#", 1)[0].rstrip()
         if without_comment.strip():
-            lines.append(Line(number, without_comment, filename))
+            column = len(without_comment) - len(without_comment.lstrip(" ")) + 1
+            lines.append(Line(number, without_comment, filename, column, len(without_comment.strip())))
     return lines
 
 
-def _parse_behavior_block(
-    lines: list[Line], index: int, filename: str, indent: int = 2
-) -> tuple[list[Any], int]:
+def _derived_line(source: Line, text: str, column_offset: int = 0) -> Line:
+    return Line(source.number, text, source.filename, source.column + column_offset, max(1, len(text)))
+
+
+def _parse_action_block(lines: list[Line], index: int, filename: str) -> tuple[list[Any], int, BehaviorContract]:
+    contract = BehaviorContract()
+    last_contract_keyword: str | None = None
+
+    while index < len(lines):
+        line = lines[index]
+        if _indent_width(line.text) != 2:
+            break
+        text = line.text.strip()
+        if text.startswith("AND "):
+            if last_contract_keyword != "GIVEN":
+                break
+            text = f"GIVEN {text.removeprefix('AND ').strip()}"
+        if text.startswith("GIVEN "):
+            name, value_type = _parse_contract_input(text, filename, line.number)
+            if name in contract.inputs:
+                raise GwtError(f"{filename}:{line.number}: behavior contract already defines: {name}")
+            contract.inputs[name] = value_type
+            contract.input_lines[name] = _derived_line(line, text, 0)
+            index += 1
+            last_contract_keyword = "GIVEN"
+            continue
+        if text.startswith("THEN returns "):
+            if contract.return_type is not None:
+                raise GwtError(f"{filename}:{line.number}: behavior contract already defines a return type")
+            return_type = text.removeprefix("THEN returns ").strip()
+            if not return_type:
+                raise GwtError(f"{filename}:{line.number}: THEN returns requires a type")
+            contract.return_type = return_type
+            contract.return_line = _derived_line(line, text, 0)
+            index += 1
+            last_contract_keyword = "THEN"
+            continue
+        break
+
+    body, index = _parse_behavior_block(lines, index, filename)
+    return body, index, contract
+
+
+def _parse_contract_input(text: str, filename: str, line_number: int) -> tuple[str, str]:
+    statement = text.removeprefix("GIVEN ").strip()
+    if " is " not in statement:
+        raise GwtError(f"{filename}:{line_number}: behavior contract expects 'GIVEN name is Type'")
+    name, value_type = statement.split(" is ", 1)
+    name = name.strip()
+    value_type = value_type.strip()
+    if not _is_local_name(name):
+        raise GwtError(f"{filename}:{line_number}: behavior contract requires a simple parameter name")
+    if not value_type:
+        raise GwtError(f"{filename}:{line_number}: behavior contract requires a type")
+    return name, value_type
+
+
+def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: int = 2) -> tuple[list[Any], int]:
     body: list[Any] = []
     last_body_keyword: str | None = None
 
@@ -608,6 +710,8 @@ def _parse_behavior_block(
             break
         if text.startswith("ELSE "):
             raise GwtError(f"{filename}:{line.number}: ELSE does not take a condition")
+        if text.startswith("GIVEN ") or text.startswith("THEN returns "):
+            raise GwtError(f"{filename}:{line.number}: behavior contracts must appear before executable statements")
 
         if text.startswith("AND "):
             if last_body_keyword is None:
@@ -631,7 +735,7 @@ def _parse_behavior_block(
                 if not else_body:
                     raise GwtError(f"{filename}:{else_line.number}: ELSE requires a body")
 
-            body.append(IfBlock(Line(line.number, condition, line.filename), then_body, else_body))
+            body.append(IfBlock(_derived_line(line, condition, len("IF ")), then_body, else_body))
             last_body_keyword = None
             continue
 
@@ -641,14 +745,14 @@ def _parse_behavior_block(
             loop_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
             if not loop_body:
                 raise GwtError(f"{filename}:{line.number}: FOR requires a body")
-            body.append(ForBlock(name, Line(line.number, expression, line.filename), loop_body))
+            body.append(ForBlock(name, _derived_line(line, expression, text.find(expression)), loop_body, _derived_line(line, name, len("FOR "))))
             last_body_keyword = None
             continue
 
         tokens = _tokens(text, filename, line.number)
         if tokens:
             last_body_keyword = tokens[0]
-        body.append(Line(line.number, text, line.filename))
+        body.append(_derived_line(line, text, 0))
         index += 1
 
     return body, index
@@ -662,17 +766,18 @@ def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinit
     name = tokens[1]
     if not _is_dto_name(name):
         raise GwtError(f"{filename}:{header.number}: DTO name must start with an uppercase letter")
-    fields, index = _parse_dto_fields(lines, index + 1, filename, header.number)
-    return DtoDefinition(name, fields, header.number), index
+    fields, field_lines, index = _parse_dto_fields(lines, index + 1, filename, header.number)
+    return DtoDefinition(name, fields, header.number, header.filename, header.column + len("DTO "), len(name), field_lines), index
 
 
 def _parse_dto_fields(
     lines: list[Line], index: int, filename: str, dto_line: int
-) -> tuple[dict[str, str], int]:
+) -> tuple[dict[str, str], dict[str, Line], int]:
     if index >= len(lines) or not lines[index].text.startswith("  "):
         raise GwtError(f"{filename}:{dto_line}: DTO requires fields")
 
     fields: dict[str, str] = {}
+    field_lines: dict[str, Line] = {}
     parents: list[str] = []
 
     while index < len(lines) and lines[index].text.startswith("  "):
@@ -707,13 +812,14 @@ def _parse_dto_fields(
             if path in fields:
                 raise GwtError(f"{filename}:{line.number}: DTO field already defined: {path}")
             fields[path] = value_type
+            field_lines[path] = _derived_line(line, field, 0)
         elif index + 1 >= len(lines) or _indent_width(lines[index + 1].text) <= indent:
             raise GwtError(f"{filename}:{line.number}: nested DTO field requires fields")
         index += 1
 
     if not fields:
         raise GwtError(f"{filename}:{dto_line}: DTO requires typed fields")
-    return fields, index
+    return fields, field_lines, index
 
 
 def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, str]:
@@ -798,7 +904,15 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
         if isinstance(line, DtoValidation):
             substituted.append(line)
         else:
-            substituted.append(Line(line.number, _substitute_placeholders(line.text, values, line.number), line.filename))
+            substituted.append(
+                Line(
+                    line.number,
+                    _substitute_placeholders(line.text, values, line.number),
+                    line.filename,
+                    line.column,
+                    line.length,
+                )
+            )
     return substituted
 
 
@@ -893,7 +1007,7 @@ def _expand_record_block(
         parents.append(path)
 
         if value:
-            expanded.append(Line(line.number, f"{path} is {value}", line.filename))
+            expanded.append(_derived_line(line, f"{path} is {value}", 0))
         index += 1
 
     if not expanded:

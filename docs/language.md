@@ -26,6 +26,8 @@ GIVEN record is DtoName
     field: value
 
 WHEN behavior parameter from target
+  GIVEN parameter is DtoName
+  THEN returns number
   LET name be expression
   REQUIRE condition
   AND condition
@@ -131,6 +133,36 @@ DTO Account
 
 DTOs are contracts only; they do not define behavior or methods.
 
+## Behavior Contracts
+
+Block-form `WHEN` behaviors can declare parameter and return contracts before
+their executable body:
+
+```gwt
+WHEN cart total for cart
+  GIVEN cart is Cart
+  THEN returns number
+  RETURN cart.total
+```
+
+Contract `GIVEN` lines describe behavior parameters, not global state. They are
+metadata for `gwt check`, future editor tooling, and documentation. Contract
+types can use primitive DTO field types (`number`, `text`, `boolean`, `list`,
+`any`) or declared DTO names.
+
+`AND` can continue contract `GIVEN` lines:
+
+```gwt
+WHEN checkout cart for customer
+  GIVEN cart is Cart
+  AND customer is Customer
+  set cart.total to 1
+```
+
+`THEN returns Type` declares the behavior's return type. If a behavior declares
+a return type, `gwt check` verifies that the body has a `RETURN` statement and
+that statically known return values match the declared type.
+
 ## Imports
 
 `USE` imports behavior definitions from another GWT file:
@@ -177,6 +209,12 @@ The current checker reports:
 - invalid expression syntax in statically checkable expressions
 - missing `EXAMPLES` placeholders
 - obvious `FOR` use over a scalar literal
+- unknown behavior contract types
+- statically known behavior argument and return type mismatches
+
+`gwt check --json` includes editor-oriented diagnostics with codes, severity,
+source ranges, and a symbol list for DTOs, DTO fields, behavior signatures,
+parameters, local names, and scenarios.
 
 ## Examples Tables
 
