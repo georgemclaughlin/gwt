@@ -20,14 +20,15 @@ cd /home/g/code/gwt/vscode-gwt
 npm install
 ```
 
-Open the extension folder in VS Code:
+Open the repo root in VS Code:
 
 ```sh
-code /home/g/code/gwt/vscode-gwt
+code /home/g/code/gwt
 ```
 
-Press `F5` to launch an Extension Development Host. In that new VS Code window,
-open `/home/g/code/gwt/examples/typed_contracts.gwt`.
+Choose **Run GWT VS Code Extension** in the Run and Debug panel, then press
+`F5`. In the Extension Development Host window, open
+`/home/g/code/gwt/examples/typed_contracts.gwt`.
 
 Expected behavior:
 

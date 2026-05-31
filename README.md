@@ -153,11 +153,11 @@ python -m pip install -e .
 
 cd vscode-gwt
 npm install
-code .
 ```
 
-Press `F5` in VS Code to launch an Extension Development Host, then open a
-`.gwt` file such as `examples/typed_contracts.gwt`.
+Open `/home/g/code/gwt` in VS Code, choose **Run GWT VS Code Extension** in the
+Run and Debug panel, then press `F5`. In the Extension Development Host window,
+open a `.gwt` file such as `/home/g/code/gwt/examples/typed_contracts.gwt`.
 
 The same analysis layer is available from Python:
 
