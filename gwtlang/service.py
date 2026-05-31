@@ -6,7 +6,14 @@ from pathlib import Path
 
 from .checker import Diagnostic, check_program
 from .errors import GwtError
-from .runtime import Action, Program, parse_program, _tokens
+from .runtime import (
+    Action,
+    Program,
+    parse_program,
+    _is_builtin_statement,
+    _signature_matches as _runtime_signature_matches,
+    _tokens,
+)
 from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
 
 
@@ -201,7 +208,7 @@ def _call_text_at(source: str, line: int) -> str | None:
         return text.removeprefix("RETURN ").strip()
     if text.startswith(("REQUIRE ", "IF ", "FOR ", "GIVEN ", "THEN ", "REQUEST ", "OUTPUT ")):
         return None
-    if text.split()[0] in {"set", "add", "subtract", "print"}:
+    if _is_builtin_statement(_tokens(text), text):
         return None
     return text
 
@@ -218,14 +225,7 @@ def _matching_action(actions: list[Action], call_text: str) -> Action | None:
 
 
 def _signature_matches(signature: list[str], call: list[str]) -> bool:
-    if len(signature) != len(call):
-        return False
-    for index, (pattern, actual) in enumerate(zip(signature, call)):
-        if index == 0 and pattern != actual:
-            return False
-        if index != 0 and pattern in {"from", "into", "to", "with", "by", "for", "using", "as"} and pattern != actual:
-            return False
-    return True
+    return _runtime_signature_matches(signature, call)
 
 
 def _completion_kind(symbol_kind: str) -> int:

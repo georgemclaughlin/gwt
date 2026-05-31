@@ -7,7 +7,6 @@ from typing import Any
 from .errors import GwtError
 from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_expression
 from .runtime import (
-    CONNECTORS,
     Action,
     DtoValidation,
     DTO_TYPES,
@@ -20,15 +19,19 @@ from .runtime import (
     _condition_to_expression,
     _is_local_name,
     _is_type_syntax,
+    _is_builtin_statement,
     _list_item_type,
+    _signature_matches as _runtime_signature_matches,
+    _signature_parameter_name,
+    _signature_parameters as _runtime_signature_parameters,
+    _signature_shape as _runtime_signature_shape,
     _split_required,
     _tokens,
 )
 from .symbols import SourceRange
 
 
-BUILTINS = {"set", "add", "subtract", "print"}
-RESERVED_BEHAVIOR_NAMES = BUILTINS | {"LET", "REQUIRE", "RETURN"}
+RESERVED_BEHAVIOR_NAMES = {"set", "add", "subtract", "print", "LET", "REQUIRE", "RETURN"}
 PLACEHOLDER_PATTERN = re.compile(r"<([A-Za-z_][A-Za-z0-9_]*)>")
 PATH_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 
@@ -289,6 +292,8 @@ class Checker:
         else:
             loop_scope.names.add(statement.name)
             loop_scope.types[statement.name] = "any"
+        if statement.where is not None:
+            self._check_condition_with_scope(statement.where, loop_scope)
         self._check_body(statement.body, loop_scope, expected_return)
 
     def _check_given(self, statement: Any) -> None:
@@ -395,8 +400,8 @@ class Checker:
             self._check_condition(Line(line.number, condition, line.filename, line.column + len("REQUIRE "), len(condition)))
             return
 
-        if command in BUILTINS:
-            self._check_builtin(tokens, line)
+        if _is_builtin_statement(tokens, line.text):
+            self._check_builtin(tokens, line, scope)
             return
 
         self._check_behavior_call(tokens, line, scope, require_return_value=False)
@@ -422,15 +427,18 @@ class Checker:
         if value_type is not None:
             scope.types[name] = value_type
 
-    def _check_builtin(self, tokens: list[str], line: Line) -> None:
+    def _check_builtin(self, tokens: list[str], line: Line, scope: Scope) -> None:
         command = tokens[0]
         if command == "set":
             if len(tokens) < 4 or tokens[2] != "to":
                 self._add_line(line, "expected 'set path to value'", "GWT006")
                 return
-            self._check_path(tokens[1], line)
+            path = tokens[1]
+            self._check_path(path, line)
             expression = line.text.split(" to ", 1)[1].strip() if " to " in line.text else ""
-            self._check_expression(expression, line)
+            parsed = self._check_expression(expression, line)
+            actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            self._check_assignment_type("set", path, actual_type, line, scope)
             return
 
         if command == "add":
@@ -442,8 +450,11 @@ class Checker:
             except GwtError as exc:
                 self._add_line(line, str(exc), "GWT006")
                 return
-            self._check_expression(value.strip(), line)
-            self._check_path(path.strip(), line)
+            path = path.strip()
+            parsed = self._check_expression(value.strip(), line)
+            actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            self._check_path(path, line)
+            self._check_add_type(path, actual_type, line, scope)
             return
 
         if command == "subtract":
@@ -455,8 +466,67 @@ class Checker:
             except GwtError as exc:
                 self._add_line(line, str(exc), "GWT006")
                 return
-            self._check_expression(value.strip(), line)
-            self._check_path(path.strip(), line)
+            path = path.strip()
+            parsed = self._check_expression(value.strip(), line)
+            actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            self._check_path(path, line)
+            self._check_subtract_type(path, actual_type, line, scope)
+            return
+
+        if command == "append":
+            if len(tokens) < 4 or "to" not in tokens:
+                self._add_line(line, "expected 'append value to path'", "GWT006")
+                return
+            try:
+                value, path = _split_required(line.text.removeprefix("append").strip(), " to ", line.number)
+            except GwtError as exc:
+                self._add_line(line, str(exc), "GWT006")
+                return
+            path = path.strip()
+            parsed = self._check_expression(value.strip(), line)
+            actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            self._check_path(path, line)
+            self._check_append_type(path, actual_type, line, scope)
+            return
+
+        if command == "count":
+            if len(tokens) < 4 or "into" not in tokens:
+                self._add_line(line, "expected 'count list into path'", "GWT006")
+                return
+            try:
+                value, path = _split_required(line.text.removeprefix("count").strip(), " into ", line.number)
+            except GwtError as exc:
+                self._add_line(line, str(exc), "GWT006")
+                return
+            path = path.strip()
+            parsed = self._check_expression(value.strip(), line)
+            value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            if value_type is not None and not _is_collection_type(value_type):
+                self._add_line(line, f"count requires a list, got {value_type}", "GWT016")
+            self._check_path(path, line)
+            self._check_assignment_type("count into", path, "number", line, scope)
+            return
+
+        if command == "sum":
+            if len(tokens) < 4 or "into" not in tokens:
+                self._add_line(line, "expected 'sum list into path'", "GWT006")
+                return
+            try:
+                value, path = _split_required(line.text.removeprefix("sum").strip(), " into ", line.number)
+            except GwtError as exc:
+                self._add_line(line, str(exc), "GWT006")
+                return
+            path = path.strip()
+            parsed = self._check_expression(value.strip(), line)
+            value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
+            if value_type is not None and not _is_collection_type(value_type):
+                self._add_line(line, f"sum requires a list, got {value_type}", "GWT016")
+            self._check_path(path, line)
+            self._check_assignment_type("sum into", path, "number", line, scope)
+            return
+
+        if command == "find":
+            self._check_find(line, scope)
             return
 
         if command == "print":
@@ -466,7 +536,70 @@ class Checker:
                 return
             self._check_expression(expression, line)
 
+    def _check_assignment_type(self, command: str, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
+        expected_type = scope.types.get(path)
+        if expected_type is None or actual_type is None:
+            return
+        if not _assignable(actual_type, expected_type):
+            self._add_line(line, f"{command} {path} expected {expected_type}, got {actual_type}", "GWT016")
+
+    def _check_add_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
+        expected_type = scope.types.get(path)
+        if expected_type is None or actual_type is None:
+            return
+        if not _assignable(actual_type, expected_type):
+            self._add_line(line, f"add to {path} expected {expected_type}, got {actual_type}", "GWT016")
+
+    def _check_append_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
+        expected_type = scope.types.get(path)
+        if expected_type is None:
+            return
+        item_type = _list_item_type(expected_type)
+        if expected_type != "list" and item_type is None:
+            self._add_line(line, f"append to {path} expected list, got {expected_type}", "GWT016")
+            return
+        if item_type is not None and actual_type is not None and not _assignable(actual_type, item_type):
+            self._add_line(line, f"append to {path} expected {item_type}, got {actual_type}", "GWT016")
+
+    def _check_subtract_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
+        expected_type = scope.types.get(path)
+        if expected_type is not None and expected_type != "number" and expected_type != "any":
+            self._add_line(line, f"subtract from {path} expected number, got {expected_type}", "GWT016")
+            return
+        if actual_type is not None and actual_type != "number" and actual_type != "any":
+            self._add_line(line, f"subtract value expected number, got {actual_type}", "GWT016")
+
+    def _check_find(self, line: Line, scope: Scope) -> None:
+        match = re.match(
+            r"^find ([A-Za-z_][A-Za-z0-9_]*) in (.+) where (.+) into ([A-Za-z_][A-Za-z0-9_.]*)$",
+            line.text,
+            re.IGNORECASE,
+        )
+        if match is None:
+            self._add_line(line, "expected 'find name in list where condition into path'", "GWT006")
+            return
+        name, iterable_text, condition, path = match.groups()
+        expression = self._check_expression(iterable_text.strip(), line)
+        iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
+        if iterable_type is not None and not _is_collection_type(iterable_type):
+            self._add_line(line, f"find requires a list, got {iterable_type}", "GWT016")
+
+        find_scope = scope.copy()
+        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        if item_type is not None:
+            self._add_typed_name(find_scope, name, item_type)
+        else:
+            find_scope.names.add(name)
+            find_scope.types[name] = "any"
+        self._check_condition_with_scope(Line(line.number, condition.strip(), line.filename, line.column, len(condition.strip())), find_scope)
+        self._check_path(path, line)
+        if item_type is not None:
+            self._check_assignment_type("find into", path, item_type, line, scope)
+
     def _check_condition(self, line: Line) -> None:
+        self._check_condition_with_scope(line, Scope(set()))
+
+    def _check_condition_with_scope(self, line: Line, scope: Scope) -> None:
         if _has_placeholder(line.text):
             return
         try:
@@ -476,6 +609,10 @@ class Checker:
             return
         expression = self._check_expression(expression_text, line)
         if isinstance(expression, Literal) and not isinstance(expression.value, bool):
+            self._add_line(line, "condition must evaluate to a boolean", "GWT010")
+        elif (
+            expression_type := _infer_expression_type(expression, scope) if expression is not None else None
+        ) is not None and expression_type != "boolean":
             self._add_line(line, "condition must evaluate to a boolean", "GWT010")
 
     def _check_expression_or_action(
@@ -540,14 +677,15 @@ class Checker:
     def _behavior_call_type_errors(self, action: Action, call: list[str], line: Line, scope: Scope) -> list[str]:
         errors: list[str] = []
         for index, (pattern, actual) in enumerate(zip(action.signature, call)):
-            if index == 0 or pattern in CONNECTORS:
+            parameter_name = _signature_parameter_name(action.signature, index, pattern)
+            if parameter_name is None:
                 continue
-            expected_type = action.contract.inputs.get(pattern)
+            expected_type = action.contract.inputs.get(parameter_name)
             if expected_type is None:
                 continue
             actual_type = self._argument_type(actual, line, scope)
             if actual_type is not None and not _assignable(actual_type, expected_type):
-                errors.append(f"behavior argument '{pattern}' expected {expected_type}, got {actual_type}")
+                errors.append(f"behavior argument '{parameter_name}' expected {expected_type}, got {actual_type}")
         return errors
 
     def _argument_type(self, token: str, line: Line, scope: Scope) -> str | None:
@@ -617,22 +755,15 @@ class Checker:
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:
-    return [token for index, token in enumerate(signature) if index != 0 and token not in CONNECTORS]
+    return _runtime_signature_parameters(signature)
 
 
 def _signature_shape(signature: list[str]) -> tuple[str, ...]:
-    return tuple(token if index == 0 or token in CONNECTORS else "_" for index, token in enumerate(signature))
+    return _runtime_signature_shape(signature)
 
 
 def _signature_matches(signature: list[str], call: list[str]) -> bool:
-    if len(signature) != len(call):
-        return False
-    for index, (pattern, actual) in enumerate(zip(signature, call)):
-        if index == 0 and pattern != actual:
-            return False
-        if index != 0 and pattern in CONNECTORS and pattern != actual:
-            return False
-    return True
+    return _runtime_signature_matches(signature, call)
 
 
 def _format_signature_shape(shape: tuple[str, ...]) -> str:

@@ -7,19 +7,30 @@ DTO LineItem
 
 DTO Invoice
   items: list<LineItem>
+  quantities: list<number>
   subtotal: number
   discount: number
   total: number
+  item_count: number
+  total_quantity: number
+  expensive_names: list<text>
+  featured_name: text
   status: text
 
 REQUEST invoice is Invoice
 OUTPUT invoice is Invoice
 
-WHEN calculate invoice
+WHEN calculate <invoice>
   GIVEN invoice is Invoice
+  count invoice.items into invoice.item_count
+  sum invoice.quantities into invoice.total_quantity
   set invoice.subtotal to 0
-  FOR item in invoice.items
+  FOR item in invoice.items WHERE item.quantity > 0
     add item.quantity * item.unit_price to invoice.subtotal
+  FOR item in invoice.items WHERE item.unit_price >= 75
+    append item.name to invoice.expensive_names
+  find item in invoice.items WHERE item.name == "mouse" into selected_item
+  set invoice.featured_name to selected_item.name
   IF invoice.subtotal >= 200
     set invoice.discount to 20
   ELSE
@@ -31,9 +42,14 @@ WHEN calculate invoice
 SCENARIO invoice totals typed rows
 GIVEN invoice is Invoice
   items: []
+  quantities: [2, 1]
   subtotal: 0
   discount: 0
   total: 0
+  item_count: 0
+  total_quantity: 0
+  expensive_names: []
+  featured_name: ""
   status: "draft"
 
 GIVEN invoice.items are LineItem
@@ -46,4 +62,8 @@ WHEN calculate invoice
 THEN invoice.subtotal == 200
 AND invoice.discount == 20
 AND invoice.total == 180
+AND invoice.item_count == 2
+AND invoice.total_quantity == 3
+AND invoice.expensive_names == ["keyboard"]
+AND invoice.featured_name == "mouse"
 AND invoice.status == "ready"

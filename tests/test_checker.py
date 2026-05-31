@@ -45,6 +45,44 @@ class CheckerTests(unittest.TestCase):
 
         self.assertTrue(any(message.startswith("duplicate behavior signature: touch _") for message in messages))
 
+    def test_accepts_explicit_signature_parameters(self):
+        messages = check_messages(
+            """
+            WHEN record literal <amount> in count
+              GIVEN amount is number
+              add amount to count
+
+            GIVEN count is 0
+            WHEN record literal 2 in count
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_explicit_signature_words_are_literals(self):
+        messages = check_messages(
+            """
+            WHEN record literal <amount> in count
+              GIVEN literal is text
+              add amount to count
+            """
+        )
+
+        self.assertIn("contract refers to unknown behavior parameter: literal", messages)
+
+    def test_reports_duplicate_explicit_behavior_signature(self):
+        messages = check_messages(
+            """
+            WHEN record literal <amount> in count
+              add amount to count
+
+            WHEN record literal <value> in count
+              add value to count
+            """
+        )
+
+        self.assertTrue(any(message.startswith("duplicate behavior signature: record literal _ in count") for message in messages))
+
     def test_reports_let_overwriting_parameter(self):
         messages = check_messages(
             """
@@ -74,6 +112,63 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.assertIn("expected 'set path to value'", messages)
+
+    def test_reports_set_type_mismatch_for_known_dto_field(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            GIVEN cart is Cart
+              total: 0
+
+            WHEN set cart.total to "bad"
+            """
+        )
+
+        self.assertIn("set cart.total expected number, got text", messages)
+
+    def test_reports_add_type_mismatch_for_known_dto_field(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            REQUEST cart is Cart
+
+            WHEN add "bad" to cart.total
+            """
+        )
+
+        self.assertIn("add to cart.total expected number, got text", messages)
+
+    def test_reports_subtract_type_mismatch_for_known_dto_field(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              status: text
+
+            REQUEST cart is Cart
+
+            WHEN subtract 1 from cart.status
+            """
+        )
+
+        self.assertIn("subtract from cart.status expected number, got text", messages)
+
+    def test_reports_set_type_mismatch_inside_behavior_contract(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+
+            WHEN break cart
+              GIVEN cart is Cart
+              set cart.total to "bad"
+            """
+        )
+
+        self.assertIn("set cart.total expected number, got text", messages)
 
     def test_reports_let_behavior_call_without_return_value(self):
         messages = check_messages(
@@ -261,6 +356,57 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.assertIn("GIVEN table field 'quantity' expected number, got text", messages)
+
+    def test_accepts_collection_helpers_and_for_where(self):
+        messages = check_messages(
+            """
+            DTO LineItem
+              name: text
+              quantity: number
+
+            GIVEN invoice.items are LineItem
+              | name       | quantity |
+              | "keyboard" | 2        |
+
+            GIVEN invoice.quantities is [2, 1]
+            AND invoice.names is []
+            AND invoice.count is 0
+            AND invoice.total_quantity is 0
+
+            WHEN summarize invoice
+              count invoice.items into invoice.count
+              sum invoice.quantities into invoice.total_quantity
+              FOR item in invoice.items WHERE item.quantity > 1
+                append item.name to invoice.names
+              find item in invoice.items WHERE item.name == "keyboard" into invoice.found
+
+            WHEN summarize invoice
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_collection_helper_type_mismatches(self):
+        messages = check_messages(
+            """
+            DTO Cart
+              total: number
+              status: text
+
+            REQUEST cart is Cart
+
+            WHEN summarize cart
+              GIVEN cart is Cart
+              count cart.total into cart.status
+              sum cart.status into cart.total
+              append "bad" to cart.total
+            """
+        )
+
+        self.assertIn("count requires a list, got number", messages)
+        self.assertIn("count into cart.status expected text, got number", messages)
+        self.assertIn("sum requires a list, got text", messages)
+        self.assertIn("append to cart.total expected list, got number", messages)
 
     def test_reports_contract_for_unknown_parameter(self):
         messages = check_messages(

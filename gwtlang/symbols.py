@@ -3,8 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .runtime import Action, ForBlock, IfBlock, Line, Program, Scenario, _tokens
 from .errors import GwtError
+from .runtime import (
+    Action,
+    ForBlock,
+    IfBlock,
+    Line,
+    Program,
+    Scenario,
+    _signature_parameters as _runtime_signature_parameters,
+    _tokens,
+)
 
 
 @dataclass(frozen=True)
@@ -142,16 +151,16 @@ def _behavior_detail(action: Action) -> str:
 
 
 def _signature_parameters(action: Action) -> list[str]:
-    parameters: list[str] = []
-    for index, token in enumerate(action.signature):
-        if index != 0 and token not in {"from", "into", "to", "with", "by", "for", "using", "as"}:
-            parameters.append(token)
-    return parameters
+    return _runtime_signature_parameters(action.signature)
 
 
 def _action_token_range(action: Action, token: str) -> SourceRange:
     signature_text = action.signature_text or " ".join(action.signature)
-    index = signature_text.find(token)
+    explicit_index = signature_text.find(f"<{token}>")
+    if explicit_index >= 0:
+        index = explicit_index + 1
+    else:
+        index = signature_text.find(token)
     column = action.column + index if index >= 0 else action.column
     return SourceRange(action.filename, action.line, column, len(token))
 

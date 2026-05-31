@@ -11,8 +11,9 @@ shipping details.
 
 The rules declare a host-facing interface with `REQUEST order`,
 `REQUEST inventory`, `REQUEST fulfillment`, and `OUTPUT fulfillment` /
-`OUTPUT inventory`. JSON/API runs return only the declared outputs while the
-full state remains available to tests and debuggers.
+`OUTPUT inventory`. JSON/API runs return a stable envelope whose `result`
+contains only the declared outputs while the full `state` remains available to
+tests and debuggers.
 
 The order lines use a GWT data table:
 

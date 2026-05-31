@@ -32,7 +32,7 @@ GIVEN rows are RowDto
   | field | count |
   | "a"   | 1     |
 
-WHEN behavior parameter from target
+WHEN behavior <parameter> from <target>
   GIVEN parameter is DtoName
   THEN returns number
   LET name be expression
@@ -42,7 +42,7 @@ WHEN behavior parameter from target
     statement
   ELSE
     statement
-  FOR name in expression
+  FOR name in expression WHERE condition
     statement
   RETURN expression
   statement
@@ -164,8 +164,9 @@ Contracts use the same type syntax as DTO fields and behavior contracts,
 including `list<DtoName>`. `REQUEST` contracts are validated after all `GIVEN`
 setup has run and before any `WHEN` execution. `OUTPUT` contracts are validated
 after `WHEN` execution. When a program has one or more `OUTPUT` declarations,
-JSON/API payloads return only those declared output paths; `state` still keeps
-the full final runtime state for debugging and tests.
+JSON/API payloads use a stable envelope. The top-level `result` value contains
+only declared output paths when `OUTPUT` contracts are present; `state` still
+keeps the full final runtime state for debugging and tests.
 
 Declared DTO, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
@@ -231,7 +232,8 @@ Request files can use DTOs declared by the program file.
 
 If the program declares `REQUEST` contracts, request files must provide those
 paths through `GIVEN` setup before execution. If the program declares `OUTPUT`
-contracts, CLI JSON and API payloads contain only the declared output paths.
+contracts, the `result` field in CLI JSON and API payloads contains only the
+declared output paths.
 
 ## Embedding API
 
@@ -250,7 +252,10 @@ if check.ok:
 `check_file` returns a structured result with `ok`, `diagnostics`, and
 `as_payload()`. `run_file` returns an execution result with `state`, `output`,
 `scenarios`, and `as_payload()`. `state` is the full final runtime state.
-`as_payload()` uses declared `OUTPUT` contracts when present.
+`as_payload()` always returns an envelope with `ok`, `file`, `request_file`,
+`scenario_count`, `scenarios`, `state`, `result`, and `output`. The top-level
+`state`, `result`, and `output` values are populated for single-scenario runs;
+multi-scenario details are always available under `scenarios`.
 
 ## Static Checking
 
@@ -274,6 +279,8 @@ The current checker reports:
 - unknown behavior contract types
 - unknown `REQUEST` / `OUTPUT` contract types
 - typed table row shape/type mismatches
+- statically obvious `set`, `add`, `subtract`, `append`, `count`, `sum`, and
+  `find` type mismatches on known DTO/contract fields
 - statically known behavior argument and return type mismatches
 
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
@@ -447,6 +454,10 @@ Scenario `EXAMPLES` placeholders can be used inside table cells.
 set path to value
 add value to path
 subtract value from path
+append value to path
+count list into path
+sum list into path
+find name in list where condition into path
 print value
 ```
 
@@ -457,12 +468,20 @@ set account.status to "closed"
 add 5 to count
 subtract amount from account.balance
 subtract amount + fee from account.balance
+append item.name to invoice.names
+count invoice.items into invoice.count
+sum invoice.quantities into invoice.total_quantity
+find item in invoice.items where item.name == "mouse" into invoice.found
 print account.balance
 ```
 
 `value` can be an expression. If the target path has a known type from a DTO,
 program contract, typed table, or behavior contract, mutations are checked
 against that type immediately.
+
+Collection helpers operate on lists. `append` adds one value to a list target,
+`count` stores the list length, `sum` stores the total of a numeric list, and
+`find` stores the first item matching its condition or fails if none matches.
 
 ## Local Bindings
 
@@ -510,6 +529,13 @@ GIVEN cart.total is 0
 WHEN total cart
   FOR item in cart.items
     add item.price to cart.total
+```
+
+`FOR` can filter iterations with `WHERE`:
+
+```gwt
+FOR item in invoice.items WHERE item.quantity > 1
+  append item.name to invoice.names
 ```
 
 `FOR` loop variables are local to each iteration. Returning from inside a loop
@@ -561,16 +587,29 @@ Behavior is defined with block-form `WHEN` and executed with single-line
 `WHEN`.
 
 ```gwt
-WHEN deposit amount into account
+WHEN deposit <amount> into <account>
   add amount to account.balance
 
 WHEN deposit 30 into account
 ```
 
-The first word after `WHEN` is the behavior name. Other lowercase words in the
-signature are parameters when they receive a concrete argument in a single-line
-`WHEN`. Connector words such as `from`, `into`, `to`, `with`, `by`, and `for`
-are matched literally.
+The first word after `WHEN` is the behavior name. In the preferred explicit
+form, parameters are written as `<name>` in the signature and are referenced by
+bare `name` inside the behavior body. Any unmarked word is matched literally:
+
+```gwt
+WHEN add line <item> to <invoice>
+  GIVEN item is LineItem
+  AND invoice is Invoice
+  add item.quantity to invoice.count
+
+WHEN add line widget to invoice
+```
+
+Older implicit signatures are still accepted for compatibility: when a
+signature has no `<name>` parameters, non-connector words after the behavior
+name are treated as parameters, while connector words such as `from`, `into`,
+`to`, `with`, `by`, and `for` are matched literally.
 
 ## Requirements
 
