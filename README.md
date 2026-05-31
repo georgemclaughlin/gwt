@@ -145,6 +145,20 @@ future editor tooling.
 publishes diagnostics and supports document symbols, hover, go-to-definition for
 behavior calls, and completions for known language symbols.
 
+VS Code support lives in [`vscode-gwt`](vscode-gwt). For local development:
+
+```sh
+cd /home/g/code/gwt
+python -m pip install -e .
+
+cd vscode-gwt
+npm install
+code .
+```
+
+Press `F5` in VS Code to launch an Extension Development Host, then open a
+`.gwt` file such as `examples/typed_contracts.gwt`.
+
 The same analysis layer is available from Python:
 
 ```python
