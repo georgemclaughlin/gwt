@@ -1,0 +1,24 @@
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  line_amounts: [42, 18, 225, 12]
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description    | amount | category    | reimbursable |
+  | "airport taxi" | 42     | "transport" | true         |
+  | "team lunch"   | 18     | "meals"     | true         |
+  | "monitor"      | 225    | "equipment" | true         |
+  | "gift card"    | 12     | "gift"      | false        |
+
+GIVEN decision is ExpenseDecision
+  line_count: 0
+  submitted_total: 0
+  approved_total: 0
+  approved_descriptions: []
+  violation_description: ""
+  violation_amount: 0
+  status: "new"
+  reason: "new"
+
+WHEN review report into decision

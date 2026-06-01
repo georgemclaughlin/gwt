@@ -6,6 +6,26 @@ from gwtlang.service import analyze_file
 
 
 class ExampleProgramTests(unittest.TestCase):
+    def test_v01_language_tour_example_runs_scenario_and_request(self):
+        program = Path("examples/v01_language_tour/rules.gwt")
+        request = Path("examples/v01_language_tour/request.gwt")
+
+        analysis = analyze_file(program)
+        self.assertEqual(analysis.diagnostics, [])
+
+        result = run_source(program.read_text(), filename=str(program))
+        self.assertEqual(result.state["decision"]["status"], "needs_review")
+        self.assertEqual(result.state["decision"]["approved_total"], 60)
+
+        request_result = run_request(
+            program.read_text(),
+            request.read_text(),
+            filename=str(program),
+            request_filename=str(request),
+        )
+        self.assertEqual(request_result.state["decision"]["line_count"], 4)
+        self.assertEqual(request_result.state["decision"]["violation_description"], "monitor")
+
     def test_loan_underwriting_example_runs_scenarios_and_request(self):
         program = Path("examples/loan_underwriting/rules.gwt")
         request = Path("examples/loan_underwriting/request.gwt")
