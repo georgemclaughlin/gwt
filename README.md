@@ -3,6 +3,26 @@
 GWT is a small experimental programming language built around executable
 `GIVEN / WHEN / THEN` programs.
 
+Hello world:
+
+```gwt
+PROGRAM hello
+
+GIVEN greeting is "hello world"
+
+WHEN print greeting
+
+THEN greeting == "hello world"
+```
+
+Run it:
+
+```sh
+python -m gwtlang run examples/hello.gwt --json
+```
+
+A tiny workflow:
+
 ```gwt
 PROGRAM bank
 
@@ -53,7 +73,7 @@ In this first version:
   `THEN returns`.
 - `gwt format` applies the canonical v0.1 source layout.
 
-Run an example:
+Run the bank example:
 
 ```sh
 python -m gwtlang run examples/bank.gwt
@@ -123,6 +143,13 @@ Run the typed table example:
 
 ```sh
 python -m gwtlang test examples/typed_tables.gwt
+```
+
+Run the v0.1 language tour:
+
+```sh
+python -m gwtlang test examples/v01_language_tour/rules.gwt
+python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
 ```
 
 Run a reusable workflow with a GWT-shaped request file:

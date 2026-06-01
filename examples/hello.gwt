@@ -1,0 +1,7 @@
+PROGRAM hello
+
+GIVEN greeting is "hello world"
+
+WHEN print greeting
+
+THEN greeting == "hello world"

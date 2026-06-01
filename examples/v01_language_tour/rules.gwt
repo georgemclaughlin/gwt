@@ -1,0 +1,83 @@
+PROGRAM v0.1 language tour
+
+DTO ExpenseLine
+  description: text
+  amount: number
+  category: text
+  reimbursable: boolean
+
+DTO ExpenseReport
+  employee: text
+  policy_limit: number
+  line_amounts: list<number>
+  lines: list<ExpenseLine>
+
+DTO ExpenseDecision
+  line_count: number
+  submitted_total: number
+  approved_total: number
+  approved_descriptions: list<text>
+  violation_description: text
+  violation_amount: number
+  status: text
+  reason: text
+
+REQUEST report is ExpenseReport
+AND decision is ExpenseDecision
+
+OUTPUT decision is ExpenseDecision
+
+WHEN review <report> into <decision>
+  GIVEN report is ExpenseReport
+  AND decision is ExpenseDecision
+  count report.lines into decision.line_count
+  sum report.line_amounts into decision.submitted_total
+  set decision.approved_total to 0
+  set decision.approved_descriptions to []
+  FOR line in report.lines WHERE line.reimbursable == true and line.amount <= report.policy_limit
+    add line.amount to decision.approved_total
+    append line.description to decision.approved_descriptions
+  find line in report.lines WHERE line.amount > report.policy_limit into policy_violation
+  set decision.violation_description to policy_violation.description
+  set decision.violation_amount to policy_violation.amount
+  IF decision.violation_amount > report.policy_limit
+    set decision.status to "needs_review"
+    set decision.reason to "line_over_policy_limit"
+  ELSE
+    set decision.status to "approved"
+    set decision.reason to "within_policy"
+
+SCENARIO expense report with one policy violation
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  line_amounts: [42, 18, 225, 12]
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description    | amount | category    | reimbursable |
+  | "airport taxi" | 42     | "transport" | true         |
+  | "team lunch"   | 18     | "meals"     | true         |
+  | "monitor"      | 225    | "equipment" | true         |
+  | "gift card"    | 12     | "gift"      | false        |
+
+GIVEN decision is ExpenseDecision
+  line_count: 0
+  submitted_total: 0
+  approved_total: 0
+  approved_descriptions: []
+  violation_description: ""
+  violation_amount: 0
+  status: "new"
+  reason: "new"
+
+WHEN review report into decision
+
+THEN decision.line_count == 4
+AND decision.submitted_total == 297
+AND decision.approved_total == 60
+AND decision.approved_descriptions == ["airport taxi", "team lunch"]
+AND decision.violation_description == "monitor"
+AND decision.violation_amount == 225
+AND decision.status == "needs_review"
+AND decision.reason == "line_over_policy_limit"
