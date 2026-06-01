@@ -268,7 +268,7 @@ The current checker reports:
 
 - unmatched behavior calls and signature/arity mismatches
 - duplicate behavior signatures within the same source file
-- reserved behavior names that conflict with built-ins
+- reserved behavior names that conflict with built-ins or behavior-body keywords
 - duplicate or invalid behavior parameters
 - invalid built-in statement shapes
 - `LET` and `RETURN` outside behavior bodies

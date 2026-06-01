@@ -73,6 +73,15 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.output, ["3"])
 
+    def test_rejects_reserved_behavior_name(self):
+        with self.assertRaisesRegex(GwtError, "behavior name is reserved: count"):
+            run_source(
+                """
+                WHEN count items
+                  RETURN 0
+                """
+            )
+
     def test_arithmetic_expressions_in_statements(self):
         result = run_source(
             """
@@ -758,11 +767,11 @@ class RuntimeTests(unittest.TestCase):
 
             GIVEN fulfillment.requested_units is 0
 
-            WHEN count items
+            WHEN count_items
               FOR item in order.items
                 add item.quantity to fulfillment.requested_units
 
-            WHEN count items
+            WHEN count_items
 
             THEN fulfillment.requested_units == 5
             '''
@@ -791,11 +800,11 @@ class RuntimeTests(unittest.TestCase):
               | sku      | quantity |
               | "widget" | 2        |
 
-            WHEN count items
+            WHEN count_items
               FOR item in order.items
                 set last_sku to item.sku
 
-            WHEN count items
+            WHEN count_items
 
             THEN last_sku == "widget"
             '''
@@ -842,11 +851,11 @@ class RuntimeTests(unittest.TestCase):
 
             GIVEN total is 0
 
-            WHEN count items
+            WHEN count_items
               FOR item in order.items
                 add item.quantity to total
 
-            WHEN count items
+            WHEN count_items
 
             THEN total == <total>
 

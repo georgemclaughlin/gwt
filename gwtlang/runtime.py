@@ -14,6 +14,22 @@ CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 DTO_TYPES = {"number", "text", "boolean", "list", "any"}
 LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
 SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
+RESERVED_BEHAVIOR_NAMES = {
+    "set",
+    "add",
+    "subtract",
+    "append",
+    "count",
+    "sum",
+    "find",
+    "print",
+    "LET",
+    "REQUIRE",
+    "RETURN",
+    "IF",
+    "ELSE",
+    "FOR",
+}
 
 
 @dataclass(frozen=True)
@@ -295,6 +311,7 @@ def parse_program(
             if not program.name:
                 raise GwtError(f"{filename}:{line.number}: PROGRAM requires a name")
             index += 1
+            last_top_keyword = None
         elif text.startswith("REQUEST "):
             binding = _parse_contract_binding("REQUEST", text, filename, line)
             if binding.path in program.inputs:
@@ -342,6 +359,8 @@ def parse_program(
                 signature = _tokens(signature_text, filename, line.number)
                 if not signature:
                     raise GwtError(f"{filename}:{line.number}: WHEN requires a behavior signature")
+                if signature[0] in RESERVED_BEHAVIOR_NAMES:
+                    raise GwtError(f"{filename}:{line.number}: behavior name is reserved: {signature[0]}")
                 body, index, contract = _parse_action_block(lines, index, filename)
                 if not body:
                     raise GwtError(f"{filename}:{line.number}: behavior '{signature[0]}' has no body")

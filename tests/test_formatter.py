@@ -19,8 +19,8 @@ class FormatterTests(unittest.TestCase):
               | "mouse" | 10 |  # keeps comments
 
             WHEN total items
-              FOR item in order.items
-                add item.quantity to total
+              FOR  item in order.items
+                add  item.quantity to total
         """
 
         formatted = format_text(source)

@@ -26,6 +26,7 @@ class _FormattedLine:
 KEYWORD_PATTERN = re.compile(
     r"^(PROGRAM|USE|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|RETURN)\b(.*)$"
 )
+BUILTIN_PATTERN = re.compile(r"^(set|add|subtract|append|count|sum|find|print)\b(.*)$")
 FIELD_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:(.*)$")
 
 
@@ -102,7 +103,13 @@ def _normalize_statement(statement: str) -> str:
     if keyword_match is not None:
         keyword, rest = keyword_match.groups()
         rest = rest.strip()
+        if keyword == "WHEN":
+            rest = _normalize_builtin_start(rest)
         return keyword if not rest else f"{keyword} {rest}"
+
+    builtin = _normalize_builtin_start(statement)
+    if builtin != statement:
+        return builtin
 
     field_match = FIELD_PATTERN.match(statement)
     if field_match is not None:
@@ -111,6 +118,15 @@ def _normalize_statement(statement: str) -> str:
         return f"{field}:" if not value_type else f"{field}: {value_type}"
 
     return statement.strip()
+
+
+def _normalize_builtin_start(statement: str) -> str:
+    builtin_match = BUILTIN_PATTERN.match(statement)
+    if builtin_match is None:
+        return statement
+    builtin, rest = builtin_match.groups()
+    rest = rest.strip()
+    return builtin if not rest else f"{builtin} {rest}"
 
 
 def _is_table_row(statement: str) -> bool:
