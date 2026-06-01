@@ -9,7 +9,7 @@ blocks such as `IF`, `FOR`, and `ELSE`.
 program        = top_level* ;
 top_level      = program_header
                | use
-               | dto
+               | record
                | program_contract
                | behavior
                | background
@@ -18,12 +18,13 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
-dto            = "DTO" name, dto_block ;
-dto_block      = dto_field+ ;
-dto_field      = name ":" type | name ":", dto_block ;
-type           = primitive_type | name | "list<", type_name, ">" ;
+record         = ("RECORD" | "DTO") name, record_block ;
+record_block   = record_field+ ;
+record_field   = name ":" type | name ":", record_block ;
+type           = primitive_type | name | "list<", type_name, ">" | literal_union ;
 primitive_type = "number" | "text" | "boolean" | "list" | "any" ;
 type_name      = primitive_type | name ;
+literal_union  = literal, "|", literal, ("|", literal)* ;
 program_contract
                = request_contract
                | output_contract ;
@@ -72,14 +73,16 @@ if_block       = "IF" condition, behavior_block, ("ELSE", behavior_block)? ;
 for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
 
-builtin        = set | add | subtract | append | count | sum | find | print ;
+builtin        = set | add | subtract | append | count | sum | find | exists | print ;
 set            = "set" path "to" expression ;
 add            = "add" expression "to" path ;
 subtract       = "subtract" expression "from" path ;
 append         = "append" expression "to" path ;
 count          = "count" expression "into" path ;
-sum            = "sum" expression "into" path ;
-find           = "find" name "in" expression "where" condition "into" path ;
+sum            = "sum" expression "into" path
+               | "sum" path "in" expression "into" path ;
+find           = "find", ["optional"], name, "in", expression, "where", condition, "into", path ;
+exists         = "exists" name "in" expression "where" condition "into" path ;
 print          = "print" expression ;
 
 assignment_or_record
@@ -111,6 +114,7 @@ factor         = unary, (("*" | "/"), unary)* ;
 unary          = ("-" | "not"), unary | primary ;
 primary        = number | string | boolean | path | list | "(", expression, ")" ;
 list           = "[", (expression, (",", expression)*)?, "]" ;
+literal        = number | string | boolean ;
 ```
 
 Indentation is significant:

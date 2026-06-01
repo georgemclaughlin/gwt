@@ -3,12 +3,12 @@ PROGRAM bank
 GIVEN account.balance is 100
 AND account.status is "open"
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.status is "open"
   AND account.balance is at least amount
   subtract amount from account.balance
 
-WHEN deposit amount into account
+WHEN deposit <amount> into <account>
   REQUIRE account.status is "open"
   add amount to account.balance
 

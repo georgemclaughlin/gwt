@@ -63,7 +63,7 @@ class PublicApiTests(unittest.TestCase):
     def test_output_contract_filters_execution_payload(self):
         result = run_text(
             """
-            DTO Cart
+            RECORD Cart
               subtotal: number
               shipping: number
               total: number

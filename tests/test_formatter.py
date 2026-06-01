@@ -75,7 +75,17 @@ WHEN total items
         self.assertTrue(result.changed)
         self.assertEqual(result.formatted, "GIVEN count is 1\nTHEN count == 1\n")
 
-    def test_formatter_accepts_request_file_with_external_dtos(self):
+    def test_formatter_canonicalizes_legacy_dto_keyword(self):
+        formatted = format_text(
+            """
+            DTO Account
+              balance: number
+            """
+        )
+
+        self.assertEqual(formatted, "RECORD Account\n  balance: number\n")
+
+    def test_formatter_accepts_request_file_with_external_records(self):
         formatted = format_text(
             """
             GIVEN application is LoanApplication

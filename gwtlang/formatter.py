@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import textwrap
 
-from .runtime import parse_program
+from .runtime import parse_program, _split_comment_outside_string
 
 
 @dataclass(frozen=True)
@@ -24,9 +24,9 @@ class _FormattedLine:
 
 
 KEYWORD_PATTERN = re.compile(
-    r"^(PROGRAM|USE|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|RETURN)\b(.*)$"
+    r"^(PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|RETURN)\b(.*)$"
 )
-BUILTIN_PATTERN = re.compile(r"^(set|add|subtract|append|count|sum|find|print)\b(.*)$")
+BUILTIN_PATTERN = re.compile(r"^(set|add|subtract|append|count|sum|find|exists|print)\b(.*)$")
 FIELD_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:(.*)$")
 
 
@@ -83,9 +83,9 @@ def _line_parts(raw: str) -> _FormattedLine:
 
 
 def _split_comment(raw: str) -> tuple[str, str | None]:
-    if "#" not in raw:
+    code, comment = _split_comment_outside_string(raw)
+    if comment is None:
         return raw.rstrip(), None
-    code, comment = raw.split("#", 1)
     comment_text = comment.strip()
     return code.rstrip(), "#" if not comment_text else f"# {comment_text}"
 
@@ -102,6 +102,8 @@ def _normalize_statement(statement: str) -> str:
     keyword_match = KEYWORD_PATTERN.match(statement)
     if keyword_match is not None:
         keyword, rest = keyword_match.groups()
+        if keyword == "DTO":
+            keyword = "RECORD"
         rest = rest.strip()
         if keyword == "WHEN":
             rest = _normalize_builtin_start(rest)

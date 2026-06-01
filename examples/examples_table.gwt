@@ -1,6 +1,6 @@
 PROGRAM examples table
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.balance >= amount
   subtract amount from account.balance
 

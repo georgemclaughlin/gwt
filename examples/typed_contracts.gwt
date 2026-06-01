@@ -1,15 +1,15 @@
 PROGRAM typed contracts
 
-DTO Cart
+RECORD Cart
   items: list
   total: number
 
-WHEN cart total for cart
+WHEN cart total for <cart>
   GIVEN cart is Cart
   THEN returns number
   RETURN cart.total
 
-WHEN mark cart
+WHEN mark <cart>
   GIVEN cart is Cart
   LET total be cart total for cart
   set cart.total to total + 1

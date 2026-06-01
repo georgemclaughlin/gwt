@@ -1,6 +1,6 @@
 PROGRAM records
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.status == "open"
   AND account.balance >= amount
   subtract amount from account.balance

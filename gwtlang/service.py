@@ -154,7 +154,7 @@ def _range_contains(source_range: SourceRange, line: int, character: int) -> boo
 
 
 def _hover_text(symbol: Symbol) -> str:
-    label = symbol.kind.replace("_", " ")
+    label = "record" if symbol.kind == "dto" else symbol.kind.replace("_", " ")
     parts = [f"{label}: {symbol.name}"]
     if symbol.detail:
         parts.append(symbol.detail)

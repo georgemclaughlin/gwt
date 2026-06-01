@@ -3,10 +3,10 @@ import unittest
 from gwtlang.service import analyze_source, completion_items, definition_at, hover_at
 
 
-SOURCE = """DTO Cart
+SOURCE = """RECORD Cart
   total: number
 
-WHEN total cart
+WHEN total <cart>
   GIVEN cart is Cart
   THEN returns number
   RETURN cart.total
@@ -24,7 +24,7 @@ class ServiceTests(unittest.TestCase):
 
         self.assertIsNotNone(analysis.program)
         self.assertEqual(analysis.diagnostics, [])
-        self.assertTrue(any(symbol.kind == "behavior" and symbol.name == "total cart" for symbol in analysis.symbols.symbols))
+        self.assertTrue(any(symbol.kind == "behavior" and symbol.name == "total <cart>" for symbol in analysis.symbols.symbols))
 
     def test_analyze_source_returns_parser_diagnostic(self):
         analysis = analyze_source("AND count is 1\n", "bad.gwt")
@@ -36,10 +36,10 @@ class ServiceTests(unittest.TestCase):
     def test_hover_finds_symbols_by_position(self):
         analysis = analyze_source(SOURCE, "example.gwt")
 
-        hover = hover_at(analysis, 0, 5)
+        hover = hover_at(analysis, 0, 8)
 
         self.assertIsNotNone(hover)
-        self.assertIn("dto: Cart", hover.contents)
+        self.assertIn("record: Cart", hover.contents)
 
     def test_definition_finds_behavior_call_target(self):
         analysis = analyze_source(SOURCE, "example.gwt")
@@ -55,7 +55,7 @@ class ServiceTests(unittest.TestCase):
         labels = {item["label"] for item in completion_items(analysis)}
 
         self.assertIn("Cart", labels)
-        self.assertIn("total cart", labels)
+        self.assertIn("total <cart>", labels)
 
 
 if __name__ == "__main__":

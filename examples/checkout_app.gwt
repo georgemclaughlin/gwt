@@ -1,19 +1,19 @@
 PROGRAM checkout app
 
-DTO Customer
+RECORD Customer
   member: boolean
 
-DTO Cart
+RECORD Cart
   items: list
   subtotal: number
   shipping: number
   discount: number
   total: number
 
-DTO Order
-  status: text
+RECORD Order
+  status: "new" | "priced"
 
-WHEN subtotal cart
+WHEN subtotal <cart>
   GIVEN cart is Cart
   THEN returns number
   set cart.subtotal to 0
@@ -21,7 +21,7 @@ WHEN subtotal cart
     add item to cart.subtotal
   RETURN cart.subtotal
 
-WHEN shipping for subtotal
+WHEN shipping for <subtotal>
   GIVEN subtotal is number
   THEN returns number
   IF subtotal >= 100
@@ -29,7 +29,7 @@ WHEN shipping for subtotal
   ELSE
     RETURN 8
 
-WHEN member discount for subtotal
+WHEN member discount for <subtotal>
   GIVEN subtotal is number
   THEN returns number
   IF customer.member
@@ -37,7 +37,7 @@ WHEN member discount for subtotal
   ELSE
     RETURN 0
 
-WHEN checkout cart
+WHEN checkout <cart>
   GIVEN cart is Cart
   LET subtotal be subtotal cart
   LET shipping be shipping for subtotal

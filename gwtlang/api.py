@@ -19,7 +19,7 @@ class CheckResult:
 
     @property
     def ok(self) -> bool:
-        return not self.analysis.diagnostics
+        return not any(diagnostic.severity == "error" for diagnostic in self.analysis.diagnostics)
 
     @property
     def diagnostics(self) -> list[Diagnostic]:

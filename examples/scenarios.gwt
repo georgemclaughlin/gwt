@@ -1,6 +1,6 @@
 PROGRAM bank scenarios
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.status == "open"
   AND account.balance >= amount + fee
   subtract amount + fee from account.balance

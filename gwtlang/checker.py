@@ -21,13 +21,20 @@ from .runtime import (
     _is_local_name,
     _is_type_syntax,
     _is_builtin_statement,
+    _literal_union_base_type,
+    _literal_union_values,
     _list_item_type,
+    _parse_exists_statement,
+    _parse_find_statement,
+    _parse_sum_projection,
     _signature_matches as _runtime_signature_matches,
+    _signature_has_explicit_parameters,
     _signature_parameter_name,
     _signature_parameters as _runtime_signature_parameters,
     _signature_shape as _runtime_signature_shape,
     _split_required,
     _tokens,
+    _value_matches_literal,
 )
 from .symbols import SourceRange
 
@@ -96,7 +103,7 @@ class Checker:
                 if not self._is_known_type(value_type):
                     self._add_line(
                         dto.field_lines[field],
-                        f"unknown DTO field type: {value_type}",
+                        f"unknown record field type: {value_type}",
                         "GWT014",
                     )
 
@@ -145,6 +152,17 @@ class Checker:
                         action.column,
                         action.length,
                     )
+
+            if parameters and not _signature_has_explicit_parameters(action.signature):
+                self._add(
+                    action.filename,
+                    action.line,
+                    "implicit behavior parameters are deprecated; write parameters as <name>",
+                    "GWT018",
+                    action.column,
+                    action.length,
+                    severity="warning",
+                )
 
             key = (action.filename, _signature_shape(action.signature))
             previous = seen.get(key)
@@ -298,7 +316,7 @@ class Checker:
     def _check_given(self, statement: Any) -> None:
         if isinstance(statement, DtoValidation):
             if statement.dto_name not in self.program.dtos:
-                self._add_line(statement.line, f"unknown DTO: {statement.dto_name}", "GWT014")
+                self._add_line(statement.line, f"unknown record: {statement.dto_name}", "GWT014")
             return
         if isinstance(statement, TableAssignment):
             self._check_path(statement.path, statement.line)
@@ -326,7 +344,7 @@ class Checker:
             return
         dto = self.program.dtos.get(statement.item_type)
         if dto is None:
-            self._add_line(statement.line, f"unknown DTO: {statement.item_type}", "GWT014")
+            self._add_line(statement.line, f"unknown record: {statement.item_type}", "GWT014")
             return
         if not statement.rows:
             return
@@ -347,6 +365,15 @@ class Checker:
                     continue
                 expression = self._check_expression(value, statement.line)
                 actual_type = _infer_expression_type(expression, Scope(set())) if expression is not None else None
+                literal_values = _literal_union_values(expected_type)
+                if literal_values is not None and isinstance(expression, Literal):
+                    if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
+                        self._add_line(
+                            statement.line,
+                            f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
+                            "GWT016",
+                        )
+                    continue
                 if actual_type is not None and not _assignable(actual_type, expected_type):
                     self._add_line(
                         statement.line,
@@ -437,7 +464,7 @@ class Checker:
             expression = line.text.split(" to ", 1)[1].strip() if " to " in line.text else ""
             parsed = self._check_expression(expression, line)
             actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
-            self._check_assignment_type("set", path, actual_type, line, scope)
+            self._check_assignment_type("set", path, actual_type, line, scope, parsed)
             return
 
         if command == "add":
@@ -510,6 +537,10 @@ class Checker:
             if len(tokens) < 4 or "into" not in tokens:
                 self._add_line(line, "expected 'sum list into path'", "GWT006")
                 return
+            projection = _parse_sum_projection(line.text)
+            if projection is not None:
+                self._check_sum_projection(projection, line, scope)
+                return
             try:
                 value, path = _split_required(line.text.removeprefix("sum").strip(), " into ", line.number)
             except GwtError as exc:
@@ -530,6 +561,10 @@ class Checker:
             self._check_find(line, scope)
             return
 
+        if command == "exists":
+            self._check_exists(line, scope)
+            return
+
         if command == "print":
             expression = line.text.removeprefix("print").strip()
             if not expression:
@@ -537,9 +572,22 @@ class Checker:
                 return
             self._check_expression(expression, line)
 
-    def _check_assignment_type(self, command: str, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
+    def _check_assignment_type(
+        self,
+        command: str,
+        path: str,
+        actual_type: str | None,
+        line: Line,
+        scope: Scope,
+        expression: Expr | None = None,
+    ) -> None:
         expected_type = scope.types.get(path)
         if expected_type is None or actual_type is None:
+            return
+        literal_values = _literal_union_values(expected_type)
+        if literal_values is not None and isinstance(expression, Literal):
+            if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
+                self._add_line(line, f"{command} {path} expected {expected_type}, got {actual_type}", "GWT016")
             return
         if not _assignable(actual_type, expected_type):
             self._add_line(line, f"{command} {path} expected {expected_type}, got {actual_type}", "GWT016")
@@ -576,16 +624,39 @@ class Checker:
             return
         self._add_line(line, f"sum requires a list of numbers, got {value_type}", "GWT016")
 
+    def _check_sum_projection(
+        self,
+        projection: tuple[str, str, str, str],
+        line: Line,
+        scope: Scope,
+    ) -> None:
+        projection_text, name, iterable_text, path = projection
+        expression = self._check_expression(iterable_text.strip(), line)
+        iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
+        if iterable_type is not None and not _is_collection_type(iterable_type):
+            self._add_line(line, f"sum requires a list, got {iterable_type}", "GWT016")
+
+        projection_scope = scope.copy()
+        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        if item_type is not None:
+            self._add_typed_name(projection_scope, name, item_type)
+        else:
+            projection_scope.names.add(name)
+            projection_scope.types[name] = "any"
+
+        projected = self._check_expression(projection_text, line)
+        projected_type = _infer_expression_type(projected, projection_scope) if projected is not None else None
+        if projected_type is not None and projected_type not in {"number", "any"}:
+            self._add_line(line, f"sum projection expected number, got {projected_type}", "GWT016")
+        self._check_path(path, line)
+        self._check_assignment_type("sum into", path, "number", line, scope)
+
     def _check_find(self, line: Line, scope: Scope) -> None:
-        match = re.match(
-            r"^find ([A-Za-z_][A-Za-z0-9_]*) in (.+) where (.+) into ([A-Za-z_][A-Za-z0-9_.]*)$",
-            line.text,
-            re.IGNORECASE,
-        )
-        if match is None:
-            self._add_line(line, "expected 'find name in list where condition into path'", "GWT006")
+        parsed = _parse_find_statement(line.text)
+        if parsed is None:
+            self._add_line(line, "expected 'find [optional] name in list where condition into path'", "GWT006")
             return
-        name, iterable_text, condition, path = match.groups()
+        _optional, name, iterable_text, condition, path = parsed
         expression = self._check_expression(iterable_text.strip(), line)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if iterable_type is not None and not _is_collection_type(iterable_type):
@@ -602,6 +673,28 @@ class Checker:
         self._check_path(path, line)
         if item_type is not None:
             self._check_assignment_type("find into", path, item_type, line, scope)
+
+    def _check_exists(self, line: Line, scope: Scope) -> None:
+        parsed = _parse_exists_statement(line.text)
+        if parsed is None:
+            self._add_line(line, "expected 'exists name in list where condition into path'", "GWT006")
+            return
+        name, iterable_text, condition, path = parsed
+        expression = self._check_expression(iterable_text.strip(), line)
+        iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
+        if iterable_type is not None and not _is_collection_type(iterable_type):
+            self._add_line(line, f"exists requires a list, got {iterable_type}", "GWT016")
+
+        exists_scope = scope.copy()
+        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        if item_type is not None:
+            self._add_typed_name(exists_scope, name, item_type)
+        else:
+            exists_scope.names.add(name)
+            exists_scope.types[name] = "any"
+        self._check_condition_with_scope(Line(line.number, condition.strip(), line.filename, line.column, len(condition.strip())), exists_scope)
+        self._check_path(path, line)
+        self._check_assignment_type("exists into", path, "boolean", line, scope)
 
     def _check_condition(self, line: Line) -> None:
         self._check_condition_with_scope(line, Scope(set()))
@@ -708,7 +801,7 @@ class Checker:
     def _is_known_type(self, value_type: str) -> bool:
         if not _is_type_syntax(value_type):
             return False
-        if value_type in DTO_TYPES or value_type in self.program.dtos:
+        if value_type in DTO_TYPES or value_type in self.program.dtos or _literal_union_values(value_type) is not None:
             return True
         item_type = _list_item_type(value_type)
         if item_type is None:
@@ -754,8 +847,9 @@ class Checker:
         code: str = "GWT000",
         column: int = 1,
         length: int = 1,
+        severity: str = "error",
     ) -> None:
-        self.diagnostics.append(Diagnostic(filename, line, message, code, "error", column, max(1, length)))
+        self.diagnostics.append(Diagnostic(filename, line, message, code, severity, column, max(1, length)))
 
     def _add_line(self, line: Line, message: str, code: str = "GWT000") -> None:
         self._add(line.filename, line.number, message, code, line.column, line.length)
@@ -847,6 +941,12 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
 def _assignable(actual_type: str, expected_type: str) -> bool:
     if expected_type == "any" or actual_type == "any" or actual_type == expected_type:
         return True
+    expected_literal_base = _literal_union_base_type(expected_type)
+    if expected_literal_base is not None:
+        return actual_type == expected_literal_base
+    actual_literal_base = _literal_union_base_type(actual_type)
+    if actual_literal_base is not None:
+        return actual_literal_base == expected_type
     actual_item = _list_item_type(actual_type)
     expected_item = _list_item_type(expected_type)
     if expected_type == "list" and actual_item is not None:

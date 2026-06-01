@@ -158,14 +158,15 @@ def check_command(args: argparse.Namespace) -> int:
     analysis = analyze_file(args.file)
     source = analysis.source
     payload = analysis.as_payload()
-    if analysis.diagnostics:
+    errors = [diagnostic for diagnostic in analysis.diagnostics if diagnostic.severity == "error"]
+    if errors:
         if args.json:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
             print(
                 "\n\n".join(
                     format_diagnostic(diagnostic, source, str(args.file))
-                    for diagnostic in analysis.diagnostics
+                    for diagnostic in errors
                 ),
                 file=sys.stderr,
             )
@@ -174,9 +175,17 @@ def check_command(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
+        if analysis.diagnostics:
+            print(
+                "\n\n".join(
+                    format_diagnostic(diagnostic, source, str(args.file))
+                    for diagnostic in analysis.diagnostics
+                ),
+                file=sys.stderr,
+            )
         print(
             f"OK {args.file} "
-            f"({payload['dtos']} DTOs, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
+            f"({payload['dtos']} records, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
 

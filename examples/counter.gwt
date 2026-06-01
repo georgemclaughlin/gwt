@@ -2,8 +2,8 @@ PROGRAM counter
 
 GIVEN count is 0
 
-WHEN increment count
-  add 1 to count
+WHEN increment <counter>
+  add 1 to counter
 
 WHEN increment count
 WHEN increment count

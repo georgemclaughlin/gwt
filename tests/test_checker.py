@@ -45,6 +45,18 @@ class CheckerTests(unittest.TestCase):
 
         self.assertTrue(any(message.startswith("duplicate behavior signature: touch _") for message in messages))
 
+    def test_warns_for_implicit_behavior_parameters(self):
+        diagnostics = check_program(
+            parse_program(
+                """
+                WHEN touch count
+                  add 1 to count
+                """
+            )
+        )
+
+        self.assertTrue(any(diagnostic.code == "GWT018" and diagnostic.severity == "warning" for diagnostic in diagnostics))
+
     def test_accepts_explicit_signature_parameters(self):
         messages = check_messages(
             """
@@ -116,7 +128,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_set_type_mismatch_for_known_dto_field(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             GIVEN cart is Cart
@@ -131,7 +143,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_add_type_mismatch_for_known_dto_field(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             REQUEST cart is Cart
@@ -145,7 +157,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_subtract_type_mismatch_for_known_dto_field(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               status: text
 
             REQUEST cart is Cart
@@ -159,7 +171,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_set_type_mismatch_inside_behavior_contract(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             WHEN break cart
@@ -198,18 +210,18 @@ class CheckerTests(unittest.TestCase):
 
     def test_accepts_reusable_request_style_program(self):
         source = """
-        DTO Cart
+        RECORD Cart
           items: list
           subtotal: number
           total: number
 
-        WHEN subtotal cart
+        WHEN subtotal <cart>
           set cart.subtotal to 0
           FOR item in cart.items
             add item to cart.subtotal
           RETURN cart.subtotal
 
-        WHEN checkout cart
+        WHEN checkout <cart>
           LET subtotal be subtotal cart
           set cart.total to subtotal
         """
@@ -219,11 +231,11 @@ class CheckerTests(unittest.TestCase):
     def test_accepts_typed_behavior_contracts(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               items: list
               total: number
 
-            WHEN cart total for cart
+            WHEN cart total for <cart>
               GIVEN cart is Cart
               THEN returns number
               RETURN cart.total
@@ -241,13 +253,13 @@ class CheckerTests(unittest.TestCase):
     def test_and_continues_contract_given(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
-            DTO Customer
+            RECORD Customer
               member: boolean
 
-            WHEN checkout cart for customer
+            WHEN checkout <cart> for <customer>
               GIVEN cart is Cart
               AND customer is Customer
               set cart.total to 1
@@ -277,13 +289,13 @@ class CheckerTests(unittest.TestCase):
     def test_accepts_request_and_output_contracts(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             REQUEST cart is Cart
             OUTPUT cart is Cart
 
-            WHEN checkout cart
+            WHEN checkout <cart>
               GIVEN cart is Cart
               set cart.total to 1
             """
@@ -305,21 +317,21 @@ class CheckerTests(unittest.TestCase):
     def test_reports_unknown_dto_field_type(self):
         messages = check_messages(
             """
-            DTO Order
+            RECORD Order
               items: list<MissingItem>
             """
         )
 
-        self.assertIn("unknown DTO field type: list<MissingItem>", messages)
+        self.assertIn("unknown record field type: list<MissingItem>", messages)
 
     def test_accepts_typed_dto_collection_and_table(self):
         messages = check_messages(
             """
-            DTO OrderItem
+            RECORD OrderItem
               sku: text
               quantity: number
 
-            DTO Order
+            RECORD Order
               items: list<OrderItem>
               total: number
 
@@ -345,7 +357,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_typed_table_row_mismatch(self):
         messages = check_messages(
             """
-            DTO OrderItem
+            RECORD OrderItem
               sku: text
               quantity: number
 
@@ -360,9 +372,13 @@ class CheckerTests(unittest.TestCase):
     def test_accepts_collection_helpers_and_for_where(self):
         messages = check_messages(
             """
-            DTO LineItem
+            RECORD LineItem
               name: text
               quantity: number
+
+            RECORD Invoice
+              items: list<LineItem>
+              total: number
 
             GIVEN invoice.items are LineItem
               | name       | quantity |
@@ -373,12 +389,14 @@ class CheckerTests(unittest.TestCase):
             AND invoice.count is 0
             AND invoice.total_quantity is 0
 
-            WHEN summarize invoice
+            WHEN summarize <invoice>
               count invoice.items into invoice.count
               sum invoice.quantities into invoice.total_quantity
+              sum item.quantity in invoice.items into invoice.total_quantity
               FOR item in invoice.items WHERE item.quantity > 1
                 append item.name to invoice.names
               find item in invoice.items WHERE item.name == "keyboard" into invoice.found
+              exists item in invoice.items WHERE item.name == "keyboard" into invoice.has_keyboard
 
             WHEN summarize invoice
             """
@@ -389,7 +407,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_collection_helper_type_mismatches(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
               status: text
               tags: list<text>
@@ -411,10 +429,53 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("sum requires a list of numbers, got list<text>", messages)
         self.assertIn("append to cart.total expected list, got number", messages)
 
+    def test_reports_projected_sum_type_mismatch(self):
+        messages = check_messages(
+            """
+            RECORD LineItem
+              name: text
+              quantity: number
+
+            RECORD Invoice
+              items: list<LineItem>
+              total: number
+
+            GIVEN invoice.items are LineItem
+              | name       | quantity |
+              | "keyboard" | 2        |
+
+            GIVEN invoice.total is 0
+
+            WHEN summarize <invoice>
+              GIVEN invoice is Invoice
+              sum item.name in invoice.items into invoice.total
+
+            WHEN summarize invoice
+            """
+        )
+
+        self.assertIn("sum projection expected number, got text", messages)
+
+    def test_reports_literal_union_assignment_mismatch(self):
+        messages = check_messages(
+            '''
+            RECORD Decision
+              status: "new" | "approved"
+
+            REQUEST decision is Decision
+
+            WHEN break <decision>
+              GIVEN decision is Decision
+              set decision.status to "oops"
+            '''
+        )
+
+        self.assertIn('set decision.status expected "new" | "approved", got text', messages)
+
     def test_reports_contract_for_unknown_parameter(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             WHEN total cart
@@ -428,7 +489,7 @@ class CheckerTests(unittest.TestCase):
     def test_reports_behavior_argument_type_mismatch(self):
         messages = check_messages(
             """
-            DTO Cart
+            RECORD Cart
               total: number
 
             WHEN checkout cart

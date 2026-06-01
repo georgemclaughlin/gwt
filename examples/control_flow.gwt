@@ -6,7 +6,7 @@ GIVEN account is
   last_transaction: "none"
 AND fee is 3
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET total be amount + fee
   IF account.status != "open"
     set account.last_transaction to "declined"

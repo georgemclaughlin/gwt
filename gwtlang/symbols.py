@@ -77,7 +77,7 @@ def build_symbol_table(program: Program) -> SymbolTable:
                 dto.name,
                 "dto",
                 SourceRange(dto.filename, dto.line, dto.column, dto.length),
-                detail=f"DTO {dto.name}",
+                detail=f"RECORD {dto.name}",
             )
         )
         for field_name, field_type in dto.fields.items():

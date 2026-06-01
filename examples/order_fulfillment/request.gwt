@@ -31,6 +31,7 @@ GIVEN fulfillment is FulfillmentState
   widget_backordered: 0
   gadget_backordered: 0
   cable_backordered: 0
+  unknown_sku_count: 0
   package_count: 0
   shipping_fee: 0
   status: "new"

@@ -57,7 +57,7 @@
       "patterns": [
         {
           "name": "keyword.control.gwt",
-          "match": "\\b(?:PROGRAM|USE|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|RETURN)\\b"
+          "match": "\\b(?:PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|RETURN)\\b"
         }
       ]
     },
@@ -80,10 +80,10 @@
           "match": "\\b(?:number|text|boolean|list|any)\\b"
         },
         {
-          "match": "\\bDTO\\s+([A-Z][A-Za-z0-9_]*)",
+          "match": "\\b(?:RECORD|DTO)\\s+([A-Z][A-Za-z0-9_]*)",
           "captures": {
             "1": {
-              "name": "entity.name.type.dto.gwt"
+              "name": "entity.name.type.record.gwt"
             }
           }
         }

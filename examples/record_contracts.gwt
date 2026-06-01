@@ -1,6 +1,6 @@
-PROGRAM dto contracts
+PROGRAM record contracts
 
-DTO Account
+RECORD Account
   balance: number
   status: text
   owner:

@@ -1,13 +1,12 @@
 PROGRAM typed tables
 
-DTO LineItem
+RECORD LineItem
   name: text
   quantity: number
   unit_price: number
 
-DTO Invoice
+RECORD Invoice
   items: list<LineItem>
-  quantities: list<number>
   subtotal: number
   discount: number
   total: number
@@ -15,7 +14,7 @@ DTO Invoice
   total_quantity: number
   expensive_names: list<text>
   featured_name: text
-  status: text
+  status: "draft" | "ready"
 
 REQUEST invoice is Invoice
 OUTPUT invoice is Invoice
@@ -23,7 +22,7 @@ OUTPUT invoice is Invoice
 WHEN calculate <invoice>
   GIVEN invoice is Invoice
   count invoice.items into invoice.item_count
-  sum invoice.quantities into invoice.total_quantity
+  sum item.quantity in invoice.items into invoice.total_quantity
   set invoice.subtotal to 0
   FOR item in invoice.items WHERE item.quantity > 0
     add item.quantity * item.unit_price to invoice.subtotal
@@ -42,7 +41,6 @@ WHEN calculate <invoice>
 SCENARIO invoice totals typed rows
 GIVEN invoice is Invoice
   items: []
-  quantities: [2, 1]
   subtotal: 0
   discount: 0
   total: 0
