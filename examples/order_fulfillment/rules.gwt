@@ -1,17 +1,17 @@
 PROGRAM order fulfillment
 
-DTO OrderItem
+RECORD OrderItem
   sku: text
   quantity: number
 
-DTO OrderRequest
+RECORD OrderRequest
   order_id: text
-  payment_status: text
+  payment_status: "paid" | "declined"
   fraud_score: number
   expedited: boolean
   items: list<OrderItem>
 
-DTO InventoryState
+RECORD InventoryState
   widget_available: number
   gadget_available: number
   cable_available: number
@@ -19,7 +19,7 @@ DTO InventoryState
   gadget_reserved: number
   cable_reserved: number
 
-DTO FulfillmentState
+RECORD FulfillmentState
   requested_units: number
   reserved_units: number
   backordered_units: number
@@ -29,10 +29,11 @@ DTO FulfillmentState
   widget_backordered: number
   gadget_backordered: number
   cable_backordered: number
+  unknown_sku_count: number
   package_count: number
   shipping_fee: number
-  status: text
-  reason: text
+  status: "new" | "held" | "authorized" | "backordered" | "partial" | "ready"
+  reason: "new" | "payment_required" | "fraud_review" | "authorized" | "no_inventory" | "partial_inventory" | "ready_to_ship" | "unknown_sku"
 
 REQUEST order is OrderRequest
 AND inventory is InventoryState
@@ -41,7 +42,7 @@ AND fulfillment is FulfillmentState
 OUTPUT fulfillment is FulfillmentState
 AND inventory is InventoryState
 
-WHEN reset_fulfillment fulfillment
+WHEN reset_fulfillment <fulfillment>
   GIVEN fulfillment is FulfillmentState
   set fulfillment.requested_units to 0
   set fulfillment.reserved_units to 0
@@ -52,18 +53,19 @@ WHEN reset_fulfillment fulfillment
   set fulfillment.widget_backordered to 0
   set fulfillment.gadget_backordered to 0
   set fulfillment.cable_backordered to 0
+  set fulfillment.unknown_sku_count to 0
   set fulfillment.package_count to 0
   set fulfillment.shipping_fee to 0
   set fulfillment.status to "new"
   set fulfillment.reason to "new"
 
-WHEN count_units order into fulfillment
+WHEN count_units <order> into <fulfillment>
   GIVEN order is OrderRequest
   AND fulfillment is FulfillmentState
   FOR item in order.items
     add item.quantity to fulfillment.requested_units
 
-WHEN authorize order into fulfillment
+WHEN authorize <order> into <fulfillment>
   GIVEN order is OrderRequest
   AND fulfillment is FulfillmentState
   IF order.payment_status != "paid"
@@ -77,7 +79,7 @@ WHEN authorize order into fulfillment
       set fulfillment.status to "authorized"
       set fulfillment.reason to "authorized"
 
-WHEN reserve_widget quantity from inventory into fulfillment
+WHEN reserve_widget <quantity> from <inventory> into <fulfillment>
   GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -91,7 +93,7 @@ WHEN reserve_widget quantity from inventory into fulfillment
     set inventory.widget_available to 0
   add fulfillment.widget_reserved to inventory.widget_reserved
 
-WHEN reserve_gadget quantity from inventory into fulfillment
+WHEN reserve_gadget <quantity> from <inventory> into <fulfillment>
   GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -105,7 +107,7 @@ WHEN reserve_gadget quantity from inventory into fulfillment
     set inventory.gadget_available to 0
   add fulfillment.gadget_reserved to inventory.gadget_reserved
 
-WHEN reserve_cable quantity from inventory into fulfillment
+WHEN reserve_cable <quantity> from <inventory> into <fulfillment>
   GIVEN quantity is number
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -119,7 +121,7 @@ WHEN reserve_cable quantity from inventory into fulfillment
     set inventory.cable_available to 0
   add fulfillment.cable_reserved to inventory.cable_reserved
 
-WHEN reserve item from inventory into fulfillment
+WHEN reserve <item> from <inventory> into <fulfillment>
   GIVEN item is OrderItem
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -131,8 +133,10 @@ WHEN reserve item from inventory into fulfillment
     ELSE
       IF item.sku == "cable"
         reserve_cable item.quantity from inventory into fulfillment
+      ELSE
+        add 1 to fulfillment.unknown_sku_count
 
-WHEN allocate order from inventory into fulfillment
+WHEN allocate <order> from <inventory> into <fulfillment>
   GIVEN order is OrderRequest
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -141,7 +145,7 @@ WHEN allocate order from inventory into fulfillment
   set fulfillment.reserved_units to fulfillment.widget_reserved + fulfillment.gadget_reserved + fulfillment.cable_reserved
   set fulfillment.backordered_units to fulfillment.widget_backordered + fulfillment.gadget_backordered + fulfillment.cable_backordered
 
-WHEN packages_for units
+WHEN packages_for <units>
   GIVEN units is number
   THEN returns number
   IF units <= 0
@@ -155,7 +159,7 @@ WHEN packages_for units
       ELSE
         RETURN 3
 
-WHEN shipping order with units
+WHEN shipping <order> with <units>
   GIVEN order is OrderRequest
   AND units is number
   THEN returns number
@@ -170,7 +174,7 @@ WHEN shipping order with units
       ELSE
         RETURN 6 + units
 
-WHEN classify_inventory fulfillment
+WHEN classify_inventory <fulfillment>
   GIVEN fulfillment is FulfillmentState
   IF fulfillment.reserved_units == 0
     set fulfillment.status to "backordered"
@@ -183,7 +187,7 @@ WHEN classify_inventory fulfillment
       set fulfillment.status to "ready"
       set fulfillment.reason to "ready_to_ship"
 
-WHEN plan_shipping order into fulfillment
+WHEN plan_shipping <order> into <fulfillment>
   GIVEN order is OrderRequest
   AND fulfillment is FulfillmentState
   LET packages be packages_for fulfillment.reserved_units
@@ -191,7 +195,7 @@ WHEN plan_shipping order into fulfillment
   set fulfillment.package_count to packages
   set fulfillment.shipping_fee to fee
 
-WHEN fulfill order from inventory into fulfillment
+WHEN fulfill <order> from <inventory> into <fulfillment>
   GIVEN order is OrderRequest
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
@@ -200,8 +204,12 @@ WHEN fulfill order from inventory into fulfillment
   authorize order into fulfillment
   IF fulfillment.status == "authorized"
     allocate order from inventory into fulfillment
-    classify_inventory fulfillment
-    plan_shipping order into fulfillment
+    IF fulfillment.unknown_sku_count > 0
+      set fulfillment.status to "held"
+      set fulfillment.reason to "unknown_sku"
+    ELSE
+      classify_inventory fulfillment
+      plan_shipping order into fulfillment
 
 SCENARIO fulfillment outcomes
 GIVEN order is OrderRequest
@@ -235,6 +243,7 @@ GIVEN fulfillment is FulfillmentState
   widget_backordered: 0
   gadget_backordered: 0
   cable_backordered: 0
+  unknown_sku_count: 0
   package_count: 0
   shipping_fee: 0
   status: "new"

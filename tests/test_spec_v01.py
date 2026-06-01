@@ -5,10 +5,10 @@ from gwtlang import GwtError, check_text, format_text, run_text
 
 class SpecV01Tests(unittest.TestCase):
     def test_request_contract_validates_after_givens_before_whens(self):
-        with self.assertRaisesRegex(GwtError, "DTO Account missing field: account.status"):
+        with self.assertRaisesRegex(GwtError, "record Account missing field: account.status"):
             run_text(
                 """
-                DTO Account
+                RECORD Account
                   balance: number
                   status: text
 
@@ -34,7 +34,7 @@ class SpecV01Tests(unittest.TestCase):
     def test_sum_typed_collection_mismatch_is_static(self):
         result = check_text(
             """
-            DTO Cart
+            RECORD Cart
               tags: list<text>
               total: number
 
@@ -72,6 +72,38 @@ class SpecV01Tests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("AND has no previous", result.diagnostics[0].message)
+
+    def test_strings_can_contain_hash_and_is(self):
+        result = run_text(
+            '''
+            GIVEN message is "this is # ok"
+            THEN message == "this is # ok"
+            '''
+        )
+
+        self.assertEqual(result.state["message"], "this is # ok")
+
+    def test_formatter_keeps_hash_inside_string(self):
+        formatted = format_text(
+            '''
+            GIVEN message is "a # b" # trailing
+            THEN message == "a # b"
+            '''
+        )
+
+        self.assertIn('GIVEN message is "a # b"  # trailing', formatted)
+
+    def test_literal_union_contract_rejects_unknown_value(self):
+        with self.assertRaisesRegex(GwtError, 'expected decision.status to be one of "new", "approved", got "oops"'):
+            run_text(
+                '''
+                RECORD Decision
+                  status: "new" | "approved"
+
+                GIVEN decision is Decision
+                  status: "oops"
+                '''
+            )
 
 
 if __name__ == "__main__":

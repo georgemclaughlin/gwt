@@ -8,7 +8,7 @@ from gwtlang.lsp import LspServer, filename_to_uri, lsp_definition, lsp_diagnost
 from gwtlang.service import analyze_source
 
 
-SOURCE = """DTO Cart
+SOURCE = """RECORD Cart
   total: number
 
 WHEN total cart
@@ -28,7 +28,7 @@ class LspTests(unittest.TestCase):
         analysis = analyze_source(SOURCE, "example.gwt")
 
         self.assertTrue(any(symbol["name"] == "total cart" for symbol in lsp_document_symbols(analysis)))
-        self.assertEqual(lsp_hover(analysis, 0, 5)["contents"]["kind"], "markdown")
+        self.assertEqual(lsp_hover(analysis, 0, 8)["contents"]["kind"], "markdown")
         self.assertEqual(lsp_definition(analysis, 11, 6)["range"]["start"]["line"], 3)
 
     def test_lsp_diagnostics_include_codes(self):

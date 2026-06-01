@@ -5,7 +5,7 @@ GIVEN account is
   status: "open"
 AND fee is 3
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET total be amount + fee
   REQUIRE account.status == "open"
   AND account.balance >= total

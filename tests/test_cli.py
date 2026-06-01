@@ -104,7 +104,7 @@ class CliDiagnosticsTests(unittest.TestCase):
             program_path = Path(temp_dir) / "workflow.gwt"
             program_path.write_text(
                 """
-                WHEN touch count
+                WHEN touch <count>
                   add 1 to count
 
                 GIVEN count is 1
@@ -119,7 +119,7 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertIn("OK", stdout.getvalue())
-        self.assertIn("0 DTOs", stdout.getvalue())
+        self.assertIn("0 records", stdout.getvalue())
         self.assertIn("1 behaviors", stdout.getvalue())
         self.assertIn("1 scenarios", stdout.getvalue())
 
@@ -128,7 +128,7 @@ class CliDiagnosticsTests(unittest.TestCase):
             program_path = Path(temp_dir) / "workflow.gwt"
             program_path.write_text(
                 """
-                WHEN touch count
+                WHEN touch <count>
                   add 1 to count
                 """
             )

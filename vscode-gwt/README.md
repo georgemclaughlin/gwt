@@ -34,7 +34,7 @@ Expected behavior:
 
 - `.gwt` files use GWT syntax highlighting.
 - diagnostics appear for `gwt check` errors.
-- hover shows DTO, behavior, parameter, local, and field information.
+- hover shows record, behavior, parameter, local, and field information.
 - go-to-definition works for behavior calls.
 - completion offers known GWT symbols.
 - pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter.

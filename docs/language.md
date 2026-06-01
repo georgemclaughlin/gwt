@@ -13,7 +13,7 @@ PROGRAM name
 
 USE "./module.gwt"
 
-DTO Account
+RECORD Account
   balance: number
   status: text
 
@@ -24,17 +24,17 @@ BACKGROUND
 GIVEN state.path is value
 AND other.path is value
 
-GIVEN record is DtoName
+GIVEN record is RecordName
   field: value
   nested:
     field: value
 
-GIVEN rows are RowDto
+GIVEN rows are RowRecord
   | field | count |
   | "a"   | 1     |
 
 WHEN behavior <parameter> from <target>
-  GIVEN parameter is DtoName
+  GIVEN parameter is RecordName
   THEN returns number
   LET name be expression
   REQUIRE condition
@@ -71,9 +71,11 @@ EXAMPLES
 multiple explicit `SCENARIO` blocks. Execution order for each scenario is:
 
 1. Register all block-form `WHEN` behavior definitions.
-2. Run `BACKGROUND` `GIVEN` and `WHEN` statements.
-3. Run the scenario's `GIVEN` and single-line `WHEN` statements.
-4. Evaluate `BACKGROUND` and scenario `THEN` assertions.
+2. Run `BACKGROUND` and scenario `GIVEN` setup.
+3. Validate `REQUEST` contracts.
+4. Run `BACKGROUND` and scenario single-line `WHEN` statements.
+5. Validate `OUTPUT` contracts.
+6. Evaluate `BACKGROUND` and scenario `THEN` assertions.
 
 `AND` repeats the previous top-level keyword. Inside a behavior block, `AND`
 repeats the previous body keyword, which is most useful for chained `REQUIRE`
@@ -104,16 +106,16 @@ cannot define block-form `WHEN` behavior.
 Program-level block-form `WHEN` behavior can appear before scenarios and is
 available to every scenario in the file.
 
-## DTO Contracts
+## RECORD Contracts
 
-`DTO` declares the expected shape of input/state records:
+`RECORD` declares the expected shape of input/state records:
 
 ```gwt
-DTO CartItem
+RECORD CartItem
   sku: text
   price: number
 
-DTO Cart
+RECORD Cart
   items: list<CartItem>
   subtotal: number
   shipping: number
@@ -121,7 +123,7 @@ DTO Cart
   total: number
 ```
 
-`GIVEN name is DtoName` creates a record and validates it against the contract:
+`GIVEN name is RecordName` creates a record and validates it against the contract:
 
 ```gwt
 GIVEN cart is Cart
@@ -132,19 +134,22 @@ GIVEN cart is Cart
   total: 0
 ```
 
-DTO validation requires all declared fields, rejects unknown fields, and checks
-primitive value types. Supported DTO field types are `number`, `text`,
-`boolean`, `list`, `any`, declared DTO names, and typed collections such as
-`list<CartItem>`. Nested fields are declared with nested blocks:
+Record validation requires all declared fields, rejects unknown fields, and checks
+primitive value types. Supported record field types are `number`, `text`,
+`boolean`, `list`, `any`, declared record names, typed collections such as
+`list<CartItem>`, and literal unions such as `"new" | "approved" | "denied"`.
+Nested fields are declared with nested blocks:
 
 ```gwt
-DTO Account
+RECORD Account
   balance: number
   owner:
     name: text
 ```
 
-DTOs are contracts only; they do not define behavior or methods.
+Records are contracts only; they do not define behavior or methods. `DTO` is
+accepted as a legacy alias for `RECORD`; `gwt format` emits the canonical
+`RECORD` spelling.
 
 ## Program Contracts
 
@@ -152,7 +157,7 @@ DTOs are contracts only; they do not define behavior or methods.
 `OUTPUT` declares state the program promises to return after execution:
 
 ```gwt
-DTO CheckoutRequest
+RECORD CheckoutRequest
   subtotal: number
   shipping: number
   total: number
@@ -161,15 +166,16 @@ REQUEST cart is CheckoutRequest
 OUTPUT cart is CheckoutRequest
 ```
 
-Contracts use the same type syntax as DTO fields and behavior contracts,
-including `list<DtoName>`. `REQUEST` contracts are validated after all `GIVEN`
-setup has run and before any `WHEN` execution. `OUTPUT` contracts are validated
-after `WHEN` execution. When a program has one or more `OUTPUT` declarations,
+Contracts use the same type syntax as record fields and behavior contracts,
+including `list<RecordName>` and literal unions. `REQUEST` contracts are validated
+after all `GIVEN` setup has run and before any `WHEN` execution. `OUTPUT`
+contracts are validated after `WHEN` execution. When a program has one or more
+`OUTPUT` declarations,
 JSON/API payloads use a stable envelope. The top-level `result` value contains
 only declared output paths when `OUTPUT` contracts are present; `state` still
 keeps the full final runtime state for debugging and tests.
 
-Declared DTO, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
+Declared record, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
 change a known `number` field to `text`, or replace a `list<OrderItem>` with a
 non-list value, fails at the mutation line.
@@ -180,7 +186,7 @@ Block-form `WHEN` behaviors can declare parameter and return contracts before
 their executable body:
 
 ```gwt
-WHEN cart total for cart
+WHEN cart total for <cart>
   GIVEN cart is Cart
   THEN returns number
   RETURN cart.total
@@ -188,13 +194,13 @@ WHEN cart total for cart
 
 Contract `GIVEN` lines describe behavior parameters, not global state. They are
 metadata for `gwt check`, future editor tooling, and documentation. Contract
-types can use DTO field types (`number`, `text`, `boolean`, `list`, `any`,
-declared DTO names, or `list<DtoName>`).
+types can use record field types (`number`, `text`, `boolean`, `list`, `any`,
+declared record names, `list<RecordName>`, or literal unions).
 
 `AND` can continue contract `GIVEN` lines:
 
 ```gwt
-WHEN checkout cart for customer
+WHEN checkout <cart> for <customer>
   GIVEN cart is Cart
   AND customer is Customer
   set cart.total to 1
@@ -229,7 +235,7 @@ provides the request as ordinary `GIVEN`, single-line `WHEN`, and optional
 `THEN` steps. This makes GWT usable as a deterministic workflow runner while
 keeping inputs in the same language shape.
 
-Request files can use DTOs declared by the program file.
+Request files can use records declared by the program file.
 
 If the program declares `REQUEST` contracts, request files must provide those
 paths through `GIVEN` setup before execution. If the program declares `OUTPUT`
@@ -280,12 +286,13 @@ The current checker reports:
 - unknown behavior contract types
 - unknown `REQUEST` / `OUTPUT` contract types
 - typed table row shape/type mismatches
-- statically obvious `set`, `add`, `subtract`, `append`, `count`, `sum`, and
-  `find` type mismatches on known DTO/contract fields
+- statically obvious `set`, `add`, `subtract`, `append`, `count`, `sum`,
+  `find`, and `exists` type mismatches on known record/contract fields
 - statically known behavior argument and return type mismatches
+- implicit behavior parameters as deprecation warnings
 
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
-source ranges, and a symbol list for DTOs, DTO fields, behavior signatures,
+source ranges, and a symbol list for records, record fields, behavior signatures,
 parameters, local names, program contracts, and scenarios.
 
 `gwt format file.gwt` rewrites a valid GWT file using the canonical v0.1 source
@@ -309,7 +316,7 @@ currently supports:
 
 - publish diagnostics on document open/change
 - document symbols
-- hover for known DTOs, fields, behaviors, parameters, and locals
+- hover for known records, fields, behaviors, parameters, and locals
 - go-to-definition for behavior calls
 - completions for known language symbols
 
@@ -418,15 +425,15 @@ GIVEN order.items are
   | "gadget" | 1        |
 ```
 
-Typed tables validate every row against a DTO and give the checker a typed
+Typed tables validate every row against a record and give the checker a typed
 collection:
 
 ```gwt
-DTO OrderItem
+RECORD OrderItem
   sku: text
   quantity: number
 
-DTO Order
+RECORD Order
   items: list<OrderItem>
 
 GIVEN order.items are OrderItem
@@ -450,8 +457,8 @@ This creates:
 
 Table headers become record field names. Cell values use the normal GWT value
 and expression syntax, so quote strings and leave numbers/booleans unquoted.
-When a table names a DTO, each row must include all DTO fields, cannot include
-unknown fields, and must match the DTO field types.
+When a table names a record, each row must include all record fields, cannot include
+unknown fields, and must match the record field types.
 Scenario `EXAMPLES` placeholders can be used inside table cells.
 
 ## Statements
@@ -463,7 +470,10 @@ subtract value from path
 append value to path
 count list into path
 sum list into path
+sum item.amount in list into path
 find name in list where condition into path
+find optional name in list where condition into path
+exists name in list where condition into path
 print value
 ```
 
@@ -476,25 +486,30 @@ subtract amount from account.balance
 subtract amount + fee from account.balance
 append item.name to invoice.names
 count invoice.items into invoice.count
-sum invoice.quantities into invoice.total_quantity
+sum item.quantity in invoice.items into invoice.total_quantity
 find item in invoice.items where item.name == "mouse" into invoice.found
+find optional item in invoice.items where item.name == "trackpad" into invoice.found
+exists item in invoice.items where item.name == "keyboard" into invoice.has_keyboard
 print account.balance
 ```
 
-`value` can be an expression. If the target path has a known type from a DTO,
+`value` can be an expression. If the target path has a known type from a record,
 program contract, typed table, or behavior contract, mutations are checked
 against that type immediately.
 
 Collection helpers operate on lists. `append` adds one value to a list target,
 `count` stores the list length, `sum` stores the total of a numeric list, and
-`find` stores the first item matching its condition or fails if none matches.
+projected `sum` totals a numeric field from each item. `find` stores the first
+item matching its condition or fails if none matches. `find optional` leaves
+the target unchanged when no item matches. `exists` stores whether any item
+matches.
 
 ## Local Bindings
 
 Behavior blocks can bind local names:
 
 ```gwt
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET total be amount + fee
   REQUIRE account.balance >= total
   subtract total from account.balance
@@ -509,7 +524,7 @@ or state paths.
 Behavior blocks can branch with `IF` and optional `ELSE`:
 
 ```gwt
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET total be amount + fee
   IF account.balance < total
     set account.last_transaction to "declined"
@@ -532,7 +547,7 @@ GIVEN cart.items are
 
 GIVEN cart.total is 0
 
-WHEN total cart
+WHEN total <cart>
   FOR item in cart.items
     add item.price to cart.total
 ```
@@ -553,14 +568,14 @@ read with dot paths such as `item.price`.
 Behavior can return a value:
 
 ```gwt
-WHEN calculate fee for amount
+WHEN calculate fee for <amount>
   RETURN amount * 0.1
 ```
 
 Returned behavior calls can be bound with `LET`:
 
 ```gwt
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET fee be calculate fee for amount
   LET total be amount + fee
   subtract total from account.balance
@@ -612,10 +627,12 @@ WHEN add line <item> to <invoice>
 WHEN add line widget to invoice
 ```
 
-Older implicit signatures are still accepted for compatibility: when a
+Older implicit signatures are still executable for compatibility: when a
 signature has no `<name>` parameters, non-connector words after the behavior
 name are treated as parameters, while connector words such as `from`, `into`,
-`to`, `with`, `by`, and `for` are matched literally.
+`to`, `with`, `by`, and `for` are matched literally. `gwt check` emits a
+deprecation warning for implicit parameters, and new code should use explicit
+`<name>` parameters.
 
 ## Requirements
 
@@ -662,7 +679,7 @@ In version 1, `WHEN` has two forms.
 Block-form `WHEN` defines behavior:
 
 ```gwt
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.balance >= amount
   subtract amount from account.balance
 ```

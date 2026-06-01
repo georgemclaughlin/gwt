@@ -9,6 +9,10 @@ This folder shows GWT as a small embeddable rules/workflow engine.
 - `request_with_assertions.gwt` is the same request with `THEN` assertions,
   useful when a caller wants runtime validation.
 
+Decision status and reason fields use literal-union contracts so the workflow
+can only produce declared states such as `"approved"`, `"manual_review"`, and
+`"denied"`.
+
 ## Commands
 
 Static check only:

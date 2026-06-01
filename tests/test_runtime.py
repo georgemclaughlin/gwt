@@ -786,11 +786,11 @@ class RuntimeTests(unittest.TestCase):
     def test_given_typed_table_validates_dto_rows(self):
         result = run_source(
             '''
-            DTO OrderItem
+            RECORD OrderItem
               sku: text
               quantity: number
 
-            DTO Order
+            RECORD Order
               items: list<OrderItem>
 
             GIVEN order is Order
@@ -813,10 +813,10 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["order"]["items"], [{"sku": "widget", "quantity": 2}])
 
     def test_given_typed_table_rejects_missing_dto_field(self):
-        with self.assertRaisesRegex(GwtError, "DTO OrderItem missing field: order.items\\[1\\].quantity"):
+        with self.assertRaisesRegex(GwtError, "record OrderItem missing field: order.items\\[1\\].quantity"):
             run_source(
                 '''
-                DTO OrderItem
+                RECORD OrderItem
                   sku: text
                   quantity: number
 
@@ -830,7 +830,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected order.items\\[1\\].quantity to be number, got text"):
             run_source(
                 '''
-                DTO OrderItem
+                RECORD OrderItem
                   sku: text
                   quantity: number
 
@@ -894,7 +894,7 @@ class RuntimeTests(unittest.TestCase):
     def test_collection_helpers_and_for_where(self):
         result = run_source(
             '''
-            DTO LineItem
+            RECORD LineItem
               name: text
               quantity: number
 
@@ -927,6 +927,40 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["invoice"]["count"], 2)
         self.assertEqual(result.state["invoice"]["names"], ["keyboard"])
         self.assertEqual(result.state["invoice"]["found"]["name"], "mouse")
+
+    def test_exists_optional_find_and_projected_sum(self):
+        result = run_source(
+            '''
+            RECORD LineItem
+              name: text
+              amount: number
+
+            GIVEN invoice.items are LineItem
+              | name       | amount |
+              | "keyboard" | 40     |
+              | "mouse"    | 20     |
+
+            GIVEN invoice.total is 0
+            AND invoice.has_large is false
+            AND invoice.missing.name is "none"
+            AND invoice.missing.amount is 0
+
+            WHEN summarize <invoice>
+              sum item.amount in invoice.items into invoice.total
+              exists item in invoice.items WHERE item.amount > 100 into invoice.has_large
+              find optional item in invoice.items WHERE item.amount > 100 into invoice.missing
+
+            WHEN summarize invoice
+
+            THEN invoice.total == 60
+            AND invoice.has_large == false
+            AND invoice.missing.name == "none"
+            '''
+        )
+
+        self.assertEqual(result.state["invoice"]["total"], 60)
+        self.assertFalse(result.state["invoice"]["has_large"])
+        self.assertEqual(result.state["invoice"]["missing"]["name"], "none")
 
     def test_find_requires_match(self):
         with self.assertRaisesRegex(GwtError, "find found no matching item"):
@@ -1035,7 +1069,7 @@ class RuntimeTests(unittest.TestCase):
     def test_dto_validates_typed_given_record(self):
         result = run_source(
             '''
-            DTO Account
+            RECORD Account
               balance: number
               status: text
               owner:
@@ -1058,7 +1092,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "missing field: account.status"):
             run_source(
                 '''
-                DTO Account
+                RECORD Account
                   balance: number
                   status: text
 
@@ -1071,7 +1105,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "unknown field: account.extra"):
             run_source(
                 '''
-                DTO Account
+                RECORD Account
                   balance: number
 
                 GIVEN account is Account
@@ -1084,7 +1118,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected account.balance to be number, got text"):
             run_source(
                 '''
-                DTO Account
+                RECORD Account
                   balance: number
 
                 GIVEN account is Account
@@ -1094,7 +1128,7 @@ class RuntimeTests(unittest.TestCase):
 
     def test_request_can_use_program_dto(self):
         program = '''
-        DTO Cart
+        RECORD Cart
           subtotal: number
           total: number
 
@@ -1119,7 +1153,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
             run_source(
                 '''
-                DTO Cart
+                RECORD Cart
                   total: number
 
                 REQUEST cart is Cart
@@ -1130,7 +1164,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
             run_source(
                 '''
-                DTO Cart
+                RECORD Cart
                   total: number
 
                 REQUEST cart is Cart
@@ -1147,7 +1181,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
             run_source(
                 '''
-                DTO Cart
+                RECORD Cart
                   total: number
 
                 REQUEST cart is Cart
@@ -1163,7 +1197,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "cannot add text to number"):
             run_source(
                 '''
-                DTO Cart
+                RECORD Cart
                   total: number
 
                 REQUEST cart is Cart
@@ -1179,7 +1213,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
             run_source(
                 '''
-                DTO Cart
+                RECORD Cart
                   total: number
 
                 WHEN break cart
@@ -1196,7 +1230,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "expected invoice.items to be list<LineItem>, got text"):
             run_source(
                 '''
-                DTO LineItem
+                RECORD LineItem
                   name: text
                   quantity: number
 
@@ -1211,7 +1245,7 @@ class RuntimeTests(unittest.TestCase):
     def test_behavior_contracts_are_metadata_not_runtime_steps(self):
         result = run_source(
             '''
-            DTO Cart
+            RECORD Cart
               items: list
               total: number
 
@@ -1242,7 +1276,7 @@ class RuntimeTests(unittest.TestCase):
             module_path = Path(temp_dir) / "types.gwt"
             module_path.write_text(
                 '''
-                DTO Account
+                RECORD Account
                   balance: number
                 '''
             )

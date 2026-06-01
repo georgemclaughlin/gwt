@@ -110,7 +110,7 @@ THEN count == 3
             program = Path(temp_dir) / "checkout.gwt"
             program.write_text(
                 """
-DTO Cart
+RECORD Cart
   total: number
 
 WHEN total items into cart

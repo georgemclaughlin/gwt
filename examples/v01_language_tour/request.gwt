@@ -1,7 +1,6 @@
 GIVEN report is ExpenseReport
   employee: "Ada"
   policy_limit: 100
-  line_amounts: [42, 18, 225, 12]
   lines: []
 
 GIVEN report.lines are ExpenseLine
@@ -16,6 +15,7 @@ GIVEN decision is ExpenseDecision
   submitted_total: 0
   approved_total: 0
   approved_descriptions: []
+  has_violation: false
   violation_description: ""
   violation_amount: 0
   status: "new"

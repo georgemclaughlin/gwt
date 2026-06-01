@@ -59,7 +59,7 @@ AND account.status is "open"
 Explicit signature parameters use `<name>`. Inside the behavior body, use the
 bare name, such as `amount` or `account`.
 
-## Records, DTOs, And Contracts
+## Records And Contracts
 
 Records group related state:
 
@@ -73,12 +73,12 @@ THEN account is
   status: "open"
 ```
 
-DTOs declare expected state shape:
+`RECORD` declares expected state shape:
 
 ```gwt
-DTO Account
+RECORD Account
   balance: number
-  status: text
+  status: "open" | "closed"
 
 GIVEN account is Account
   balance: 100
@@ -117,10 +117,11 @@ WHEN review <report> into <decision>
   GIVEN report is ExpenseReport
   AND decision is ExpenseDecision
   count report.lines into decision.line_count
-  sum report.line_amounts into decision.submitted_total
+  sum line.amount in report.lines into decision.submitted_total
   FOR line in report.lines WHERE line.reimbursable == true
     append line.description to decision.approved_descriptions
-  find line in report.lines WHERE line.amount > report.policy_limit into policy_violation
+  exists line in report.lines WHERE line.amount > report.policy_limit into decision.has_violation
+  find optional line in report.lines WHERE line.amount > report.policy_limit into policy_violation
 ```
 
 The fuller version lives in
@@ -149,6 +150,7 @@ The JSON result is a stable envelope:
       "line_count": 4,
       "submitted_total": 297,
       "approved_total": 60,
+      "has_violation": true,
       "status": "needs_review"
     }
   }
@@ -195,8 +197,9 @@ gwt debug-lines examples/checkout_scenarios.gwt --json
 `gwt check` parses a program and runs semantic checks without executing
 scenarios. It reports problems such as unmatched behavior calls, duplicate
 behavior signatures, invalid built-in statement shapes, type mismatches, and
-`LET`/`RETURN` misuse. JSON output includes diagnostic codes, source ranges,
-and symbols for editor tooling.
+`LET`/`RETURN` misuse. It also warns about deprecated implicit behavior
+parameters. JSON output includes diagnostic codes, source ranges, and symbols
+for editor tooling.
 
 `gwt format file.gwt` rewrites valid source to the canonical v0.1 layout.
 `gwt format file.gwt --check` is intended for CI.
@@ -222,7 +225,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/examples_table.gwt`](examples/examples_table.gwt) | Scenario examples tables |
 | [`examples/use_import.gwt`](examples/use_import.gwt) | `USE` imports |
 | [`examples/collections.gwt`](examples/collections.gwt) | List iteration |
-| [`examples/dto_contracts.gwt`](examples/dto_contracts.gwt) | DTO validation |
+| [`examples/record_contracts.gwt`](examples/record_contracts.gwt) | Record validation |
 | [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
 | [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of v0.1 |

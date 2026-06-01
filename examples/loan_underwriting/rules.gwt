@@ -1,6 +1,6 @@
 PROGRAM loan underwriting
 
-DTO LoanApplication
+RECORD LoanApplication
   credit_score: number
   annual_income: number
   monthly_debt: number
@@ -12,17 +12,17 @@ DTO LoanApplication
   bankruptcies: number
   employment_years: number
 
-DTO LoanDecision
+RECORD LoanDecision
   principal: number
   dti: number
   ltv: number
   reserve_months: number
   risk_points: number
   interest_rate: number
-  status: text
-  reason: text
+  status: "new" | "approved" | "manual_review" | "denied"
+  reason: "new" | "strong_application" | "compensating_factors" | "recent_bankruptcy" | "risk_too_high"
 
-WHEN ratios application into decision
+WHEN ratios <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
   LET monthly_income be application.annual_income / 12
@@ -33,7 +33,7 @@ WHEN ratios application into decision
   set decision.ltv to principal / application.home_price
   set decision.reserve_months to (application.available_cash - application.down_payment) / payment
 
-WHEN credit score
+WHEN credit <score>
   GIVEN score is number
   THEN returns number
   IF score >= 760
@@ -47,7 +47,7 @@ WHEN credit score
       ELSE
         RETURN 5
 
-WHEN dti ratio
+WHEN dti <ratio>
   GIVEN ratio is number
   THEN returns number
   IF ratio <= 0.36
@@ -61,7 +61,7 @@ WHEN dti ratio
       ELSE
         RETURN 6
 
-WHEN ltv ratio
+WHEN ltv <ratio>
   GIVEN ratio is number
   THEN returns number
   IF ratio <= 0.80
@@ -75,7 +75,7 @@ WHEN ltv ratio
       ELSE
         RETURN 5
 
-WHEN bankruptcy count
+WHEN bankruptcy <count>
   GIVEN count is number
   THEN returns number
   IF count > 0
@@ -83,7 +83,7 @@ WHEN bankruptcy count
   ELSE
     RETURN 0
 
-WHEN employment years
+WHEN employment <years>
   GIVEN years is number
   THEN returns number
   IF years >= 2
@@ -91,7 +91,7 @@ WHEN employment years
   ELSE
     RETURN 2
 
-WHEN risks application into decision
+WHEN risks <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
   LET credit_points be credit application.credit_score
@@ -105,7 +105,7 @@ WHEN risks application into decision
   add bankruptcy_points to decision.risk_points
   add employment_points to decision.risk_points
 
-WHEN history application into decision
+WHEN history <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
   FOR point in application.late_payments
@@ -113,7 +113,7 @@ WHEN history application into decision
   FOR point in application.collections
     add point to decision.risk_points
 
-WHEN classify application into decision
+WHEN classify <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
   IF application.bankruptcies > 0 and application.credit_score < 700
@@ -131,7 +131,7 @@ WHEN classify application into decision
         set decision.status to "denied"
         set decision.reason to "risk_too_high"
 
-WHEN price decision
+WHEN price <decision>
   GIVEN decision is LoanDecision
   IF decision.status == "approved"
     IF decision.risk_points <= 2
@@ -144,7 +144,7 @@ WHEN price decision
     ELSE
       set decision.interest_rate to 0
 
-WHEN underwrite application into decision
+WHEN underwrite <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
   set decision.principal to 0

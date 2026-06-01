@@ -8,7 +8,7 @@ import textwrap
 from typing import Any
 
 from .errors import GwtError
-from .expressions import evaluate_expression
+from .expressions import Literal, evaluate_expression, parse_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 DTO_TYPES = {"number", "text", "boolean", "list", "any"}
@@ -22,6 +22,7 @@ RESERVED_BEHAVIOR_NAMES = {
     "count",
     "sum",
     "find",
+    "exists",
     "print",
     "LET",
     "REQUIRE",
@@ -285,10 +286,10 @@ def parse_program(
             index += 1
             continue
 
-        if text.startswith("DTO "):
+        if text == "RECORD" or text.startswith("RECORD ") or text == "DTO" or text.startswith("DTO "):
             dto, index = _parse_dto(lines, index, filename)
             if dto.name in program.dtos:
-                raise GwtError(f"{filename}:{line.number}: DTO already defined: {dto.name}")
+                raise GwtError(f"{filename}:{line.number}: record already defined: {dto.name}")
             program.dtos[dto.name] = dto
             last_top_keyword = None
             continue
@@ -501,7 +502,7 @@ class Runtime:
     def _validate_dto(self, validation: DtoValidation) -> None:
         dto = self.program.dtos.get(validation.dto_name)
         if dto is None:
-            raise GwtError(f"line {validation.line.number}: unknown DTO: {validation.dto_name}")
+            raise GwtError(f"line {validation.line.number}: unknown record: {validation.dto_name}")
         try:
             value = self._get_path(validation.path, {})
             if not isinstance(value, dict):
@@ -518,11 +519,11 @@ class Runtime:
 
         missing = sorted(expected_fields - actual_fields)
         if missing:
-            raise GwtError(f"DTO {dto.name} missing field: {base_path}.{missing[0]}")
+            raise GwtError(f"record {dto.name} missing field: {base_path}.{missing[0]}")
 
         extra = sorted(actual_fields - expected_fields)
         if extra:
-            raise GwtError(f"DTO {dto.name} unknown field: {base_path}.{extra[0]}")
+            raise GwtError(f"record {dto.name} unknown field: {base_path}.{extra[0]}")
 
         for field, expected_type in dto.fields.items():
             field_value = flat_value[field]
@@ -530,6 +531,14 @@ class Runtime:
 
     def _validate_value_type(self, path: str, value: Any, expected_type: str, line: Line) -> None:
         if expected_type == "any":
+            return
+        literal_values = _literal_union_values(expected_type)
+        if literal_values is not None:
+            if not any(_value_matches_literal(value, literal) for literal in literal_values):
+                raise GwtError(
+                    f"expected {path} to be one of {_format_literal_values(literal_values)}, "
+                    f"got {_literal_value_text(value)}"
+                )
             return
         if expected_type in DTO_TYPES:
             if not _value_matches_primitive_type(value, expected_type):
@@ -548,7 +557,7 @@ class Runtime:
 
         dto = self.program.dtos.get(expected_type)
         if dto is None:
-            raise GwtError(f"unknown DTO type: {expected_type}")
+            raise GwtError(f"unknown record type: {expected_type}")
         if not isinstance(value, dict):
             raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
         self._validate_dto_fields(path, value, dto, line)
@@ -591,7 +600,7 @@ class Runtime:
             if table.item_type is not None:
                 dto = self.program.dtos.get(table.item_type)
                 if dto is None:
-                    raise GwtError(f"unknown DTO: {table.item_type}")
+                    raise GwtError(f"unknown record: {table.item_type}")
                 for index, row in enumerate(rows, start=1):
                     self._validate_dto_fields(f"{table.path}[{index}]", row, dto, table.line)
                 self._register_path_type(table.path, f"list<{table.item_type}>")
@@ -700,6 +709,22 @@ class Runtime:
         elif tokens[0] == "sum":
             if len(tokens) < 4 or "into" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'sum list into path'")
+            projection = _parse_sum_projection(line.text)
+            if projection is not None:
+                projection_text, name, iterable_text, path = projection
+                values = self._eval_expression(iterable_text.strip(), env)
+                if not isinstance(values, list):
+                    raise GwtError(f"line {line.number}: sum requires a list")
+                total = 0
+                for value in values:
+                    sum_env = dict(env)
+                    sum_env[name] = value
+                    item = self._eval_expression(projection_text, sum_env)
+                    if not isinstance(item, (int, float)) or isinstance(item, bool):
+                        raise GwtError(f"line {line.number}: sum requires numeric projected values")
+                    total += item
+                self._set_path(path, total, env, line)
+                return
             value_text, path = _split_required(line.text.removeprefix("sum ").strip(), " into ", line.number)
             values = self._eval_expression(value_text, env)
             if not isinstance(values, list):
@@ -712,19 +737,17 @@ class Runtime:
             self._set_path(path, total, env, line)
         elif tokens[0] == "find":
             self._run_find(line, env)
+        elif tokens[0] == "exists":
+            self._run_exists(line, env)
         elif tokens[0] == "print":
             value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
             self.output.append(str(value))
 
     def _run_find(self, line: Line, env: dict[str, Any]) -> None:
-        match = re.match(
-            r"^find ([A-Za-z_][A-Za-z0-9_]*) in (.+) where (.+) into ([A-Za-z_][A-Za-z0-9_.]*)$",
-            line.text,
-            re.IGNORECASE,
-        )
-        if match is None:
-            raise GwtError(f"line {line.number}: expected 'find name in list where condition into path'")
-        name, iterable_text, condition, path = match.groups()
+        parsed = _parse_find_statement(line.text)
+        if parsed is None:
+            raise GwtError(f"line {line.number}: expected 'find [optional] name in list where condition into path'")
+        optional, name, iterable_text, condition, path = parsed
         values = self._eval_expression(iterable_text.strip(), env)
         if not isinstance(values, list):
             raise GwtError(f"line {line.number}: find requires a list")
@@ -734,7 +757,26 @@ class Runtime:
             if self._evaluate_condition(condition.strip(), find_env):
                 self._set_path(path, value, env, line)
                 return
+        if optional:
+            return
         raise GwtError(f"line {line.number}: find found no matching item")
+
+    def _run_exists(self, line: Line, env: dict[str, Any]) -> None:
+        parsed = _parse_exists_statement(line.text)
+        if parsed is None:
+            raise GwtError(f"line {line.number}: expected 'exists name in list where condition into path'")
+        name, iterable_text, condition, path = parsed
+        values = self._eval_expression(iterable_text.strip(), env)
+        if not isinstance(values, list):
+            raise GwtError(f"line {line.number}: exists requires a list")
+        found = False
+        for value in values:
+            exists_env = dict(env)
+            exists_env[name] = value
+            if self._evaluate_condition(condition.strip(), exists_env):
+                found = True
+                break
+        self._set_path(path, found, env, line)
 
     def _call_action(self, call: list[str], line: Line, caller_env: dict[str, Any]) -> BehaviorReturn | None:
         candidates = self.actions.get(call[0], [])
@@ -933,7 +975,8 @@ class ExpressionScope:
 def _logical_lines(source: str, filename: str) -> list[Line]:
     lines: list[Line] = []
     for number, raw in enumerate(source.splitlines(), start=1):
-        without_comment = raw.split("#", 1)[0].rstrip()
+        code, _comment = _split_comment_outside_string(raw)
+        without_comment = code.rstrip()
         if without_comment.strip():
             column = len(without_comment) - len(without_comment.lstrip(" ")) + 1
             lines.append(Line(number, without_comment, filename, column, len(without_comment.strip())))
@@ -1092,19 +1135,30 @@ def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinit
     header = lines[index]
     tokens = _tokens(header.text, filename, header.number)
     if len(tokens) != 2:
-        raise GwtError(f"{filename}:{header.number}: DTO expects one name")
+        raise GwtError(f"{filename}:{header.number}: RECORD expects one name")
+    keyword = tokens[0]
+    if keyword not in {"RECORD", "DTO"}:
+        raise GwtError(f"{filename}:{header.number}: RECORD expects one name")
     name = tokens[1]
     if not _is_dto_name(name):
-        raise GwtError(f"{filename}:{header.number}: DTO name must start with an uppercase letter")
+        raise GwtError(f"{filename}:{header.number}: RECORD name must start with an uppercase letter")
     fields, field_lines, index = _parse_dto_fields(lines, index + 1, filename, header.number)
-    return DtoDefinition(name, fields, header.number, header.filename, header.column + len("DTO "), len(name), field_lines), index
+    return DtoDefinition(
+        name,
+        fields,
+        header.number,
+        header.filename,
+        header.column + len(keyword) + 1,
+        len(name),
+        field_lines,
+    ), index
 
 
 def _parse_dto_fields(
     lines: list[Line], index: int, filename: str, dto_line: int
 ) -> tuple[dict[str, str], dict[str, Line], int]:
     if index >= len(lines) or not lines[index].text.startswith("  "):
-        raise GwtError(f"{filename}:{dto_line}: DTO requires fields")
+        raise GwtError(f"{filename}:{dto_line}: RECORD requires fields")
 
     fields: dict[str, str] = {}
     field_lines: dict[str, Line] = {}
@@ -1114,22 +1168,22 @@ def _parse_dto_fields(
         line = lines[index]
         indent = _indent_width(line.text)
         if indent % 2 != 0:
-            raise GwtError(f"{filename}:{line.number}: DTO indentation must use two spaces")
+            raise GwtError(f"{filename}:{line.number}: RECORD indentation must use two spaces")
 
         depth = indent // 2 - 1
         if depth < 0:
             break
         if depth > len(parents):
-            raise GwtError(f"{filename}:{line.number}: DTO field is indented too far")
+            raise GwtError(f"{filename}:{line.number}: RECORD field is indented too far")
 
         field_text = line.text.strip()
         if ":" not in field_text:
-            raise GwtError(f"{filename}:{line.number}: DTO field must use 'name: type'")
+            raise GwtError(f"{filename}:{line.number}: RECORD field must use 'name: type'")
         field, value_type = field_text.split(":", 1)
         field = field.strip()
         value_type = value_type.strip()
         if not field:
-            raise GwtError(f"{filename}:{line.number}: DTO field requires a name")
+            raise GwtError(f"{filename}:{line.number}: RECORD field requires a name")
 
         parent = "" if depth == 0 else parents[depth - 1]
         path = field if parent == "" else f"{parent}.{field}"
@@ -1138,17 +1192,17 @@ def _parse_dto_fields(
 
         if value_type:
             if not _is_type_syntax(value_type):
-                raise GwtError(f"{filename}:{line.number}: invalid DTO field type: {value_type}")
+                raise GwtError(f"{filename}:{line.number}: invalid RECORD field type: {value_type}")
             if path in fields:
-                raise GwtError(f"{filename}:{line.number}: DTO field already defined: {path}")
+                raise GwtError(f"{filename}:{line.number}: RECORD field already defined: {path}")
             fields[path] = value_type
             field_lines[path] = _derived_line(line, field, 0)
         elif index + 1 >= len(lines) or _indent_width(lines[index + 1].text) <= indent:
-            raise GwtError(f"{filename}:{line.number}: nested DTO field requires fields")
+            raise GwtError(f"{filename}:{line.number}: nested RECORD field requires fields")
         index += 1
 
     if not fields:
-        raise GwtError(f"{filename}:{dto_line}: DTO requires typed fields")
+        raise GwtError(f"{filename}:{dto_line}: RECORD requires typed fields")
     return fields, field_lines, index
 
 
@@ -1257,10 +1311,10 @@ def _parse_table_header(header: str, filename: str, line_number: int) -> tuple[s
         header,
     )
     if match is None:
-        raise GwtError(f"{filename}:{line_number}: table assignment expects 'path are' or 'path are RowDto'")
+        raise GwtError(f"{filename}:{line_number}: table assignment expects 'path are' or 'path are RecordName'")
     item_type = match.group("item_type")
     if item_type is not None and not _is_dto_name(item_type):
-        raise GwtError(f"{filename}:{line_number}: GIVEN table type must be a DTO name")
+        raise GwtError(f"{filename}:{line_number}: GIVEN table type must be a record name")
     return match.group("path"), item_type
 
 
@@ -1378,7 +1432,7 @@ def _expand_typed_record_block(
     path = path.strip()
     dto_name = dto_name.strip()
     if dto_name not in dtos and not allow_unknown_dtos:
-        raise GwtError(f"{filename}:{header_line.number}: unknown DTO: {dto_name}")
+        raise GwtError(f"{filename}:{header_line.number}: unknown record: {dto_name}")
     expanded, index = _expand_record_block(f"{path} is", lines, index, filename)
     return expanded, index, DtoValidation(path, dto_name, header_line)
 
@@ -1453,6 +1507,8 @@ def _is_dto_name(text: str) -> bool:
 def _is_type_syntax(value_type: str) -> bool:
     if value_type in DTO_TYPES or _is_dto_name(value_type):
         return True
+    if _literal_union_values(value_type) is not None:
+        return True
     item_type = _list_item_type(value_type)
     if item_type is None:
         return False
@@ -1479,12 +1535,14 @@ def _is_builtin_statement(tokens: list[str], text: str) -> bool:
     if command == "find":
         return (
             re.match(
-                r"^find [A-Za-z_][A-Za-z0-9_]* in .+ where .+ into [A-Za-z_][A-Za-z0-9_.]*$",
+                r"^find (optional )?[A-Za-z_][A-Za-z0-9_]* in .+ where .+ into [A-Za-z_][A-Za-z0-9_.]*$",
                 text,
                 re.IGNORECASE,
             )
             is not None
         )
+    if command == "exists":
+        return _parse_exists_statement(text) is not None
     return False
 
 
@@ -1604,10 +1662,18 @@ def _after_keyword(text: str, separator: str) -> str:
 
 
 def _condition_to_expression(text: str) -> str:
-    if " is " not in text:
+    try:
+        parse_expression(text)
+        return text
+    except GwtError:
+        pass
+
+    is_index = _find_word_outside_string(text, "is")
+    if is_index is None:
         return text
 
-    left, right_text = text.split(" is ", 1)
+    left = text[:is_index]
+    right_text = text[is_index + len("is") :]
     right_text = right_text.strip()
 
     if right_text.startswith("not "):
@@ -1632,3 +1698,178 @@ def _condition_to_expression(text: str) -> str:
     if not left.strip() or not right:
         raise GwtError(f"invalid condition: {text}")
     return f"{left.strip()} {operator} {right}"
+
+
+def _split_comment_outside_string(raw: str) -> tuple[str, str | None]:
+    in_string = False
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if in_string and char == "\\":
+            escaped = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if char == "#" and not in_string:
+            return raw[:index], raw[index + 1 :]
+    return raw, None
+
+
+def _find_word_outside_string(text: str, word: str) -> int | None:
+    in_string = False
+    escaped = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if in_string and char == "\\":
+            escaped = True
+            index += 1
+            continue
+        if char == '"':
+            in_string = not in_string
+            index += 1
+            continue
+        if not in_string and text.startswith(word, index):
+            before = text[index - 1] if index > 0 else ""
+            after_index = index + len(word)
+            after = text[after_index] if after_index < len(text) else ""
+            if not _is_identifier_char(before) and not _is_identifier_char(after):
+                return index
+        index += 1
+    return None
+
+
+def _is_identifier_char(char: str) -> bool:
+    return bool(char) and (char.isalnum() or char in "_.")
+
+
+def _split_pipes_outside_string(text: str) -> list[str]:
+    parts: list[str] = []
+    start = 0
+    in_string = False
+    escaped = False
+    for index, char in enumerate(text):
+        if escaped:
+            escaped = False
+            continue
+        if in_string and char == "\\":
+            escaped = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if char == "|" and not in_string:
+            parts.append(text[start:index].strip())
+            start = index + 1
+    parts.append(text[start:].strip())
+    return parts
+
+
+def _literal_union_values(value_type: str) -> tuple[Any, ...] | None:
+    if "|" not in value_type:
+        return None
+    parts = _split_pipes_outside_string(value_type)
+    if len(parts) < 2 or any(not part for part in parts):
+        return None
+
+    values: list[Any] = []
+    base_type: str | None = None
+    for part in parts:
+        try:
+            expression = parse_expression(part)
+        except GwtError:
+            return None
+        if not isinstance(expression, Literal):
+            return None
+        value = expression.value
+        if isinstance(value, list):
+            return None
+        value_type_name = _value_type_name(value)
+        if value_type_name not in {"text", "number", "boolean"}:
+            return None
+        if base_type is None:
+            base_type = value_type_name
+        elif value_type_name != base_type:
+            return None
+        values.append(value)
+    return tuple(values)
+
+
+def _literal_union_base_type(value_type: str) -> str | None:
+    values = _literal_union_values(value_type)
+    if not values:
+        return None
+    return _value_type_name(values[0])
+
+
+def _value_matches_literal(value: Any, literal: Any) -> bool:
+    if isinstance(literal, bool):
+        return isinstance(value, bool) and value == literal
+    if isinstance(literal, (int, float)):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and value == literal
+    return type(value) is type(literal) and value == literal
+
+
+def _format_literal_values(values: tuple[Any, ...]) -> str:
+    return ", ".join(_literal_value_text(value) for value in values)
+
+
+def _literal_value_text(value: Any) -> str:
+    if isinstance(value, str):
+        return f'"{value}"'
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def _parse_find_statement(text: str) -> tuple[bool, str, str, str, str] | None:
+    match = re.match(
+        r"^find (?P<optional>optional )?(?P<name>[A-Za-z_][A-Za-z0-9_]*) "
+        r"in (?P<iterable>.+) where (?P<condition>.+) "
+        r"into (?P<path>[A-Za-z_][A-Za-z0-9_.]*)$",
+        text,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return (
+        match.group("optional") is not None,
+        match.group("name"),
+        match.group("iterable"),
+        match.group("condition"),
+        match.group("path"),
+    )
+
+
+def _parse_exists_statement(text: str) -> tuple[str, str, str, str] | None:
+    match = re.match(
+        r"^exists (?P<name>[A-Za-z_][A-Za-z0-9_]*) "
+        r"in (?P<iterable>.+) where (?P<condition>.+) "
+        r"into (?P<path>[A-Za-z_][A-Za-z0-9_.]*)$",
+        text,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return match.group("name"), match.group("iterable"), match.group("condition"), match.group("path")
+
+
+def _parse_sum_projection(text: str) -> tuple[str, str, str, str] | None:
+    match = re.match(
+        r"^sum (?P<projection>[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+) "
+        r"in (?P<iterable>.+) into (?P<path>[A-Za-z_][A-Za-z0-9_.]*)$",
+        text,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    projection = match.group("projection")
+    name = projection.split(".", 1)[0]
+    return projection, name, match.group("iterable"), match.group("path")

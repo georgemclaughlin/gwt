@@ -1,9 +1,9 @@
 PROGRAM banking module
 
-WHEN calculate fee for amount
+WHEN calculate fee for <amount>
   RETURN 3
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   LET fee be calculate fee for amount
   LET total be amount + fee
   REQUIRE account.status == "open"
