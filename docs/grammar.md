@@ -6,7 +6,16 @@ hand-written, but behavior bodies are parsed into structured statement nodes for
 blocks such as `IF`, `FOR`, and `ELSE`.
 
 ```ebnf
-program        = program_header?, use*, dto*, program_contract*, behavior*, background?, scenario* ;
+program        = top_level* ;
+top_level      = program_header
+               | use
+               | dto
+               | program_contract
+               | behavior
+               | background
+               | scenario
+               | step
+               | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
 dto            = "DTO" name, dto_block ;
@@ -114,3 +123,7 @@ Indentation is significant:
 CLI request mode runs two parsed programs together: the main program contributes
 behavior definitions and optional background setup, while the request program
 contributes the scenarios/request steps to execute.
+
+`BACKGROUND` must appear before explicit `SCENARIO` blocks. `EXAMPLES` attaches
+to the current scenario. Behavior names cannot use reserved built-in or
+behavior-body keywords.

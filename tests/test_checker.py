@@ -323,7 +323,7 @@ class CheckerTests(unittest.TestCase):
               items: list<OrderItem>
               total: number
 
-            WHEN count order
+            WHEN count_order <order>
               GIVEN order is Order
               FOR item in order.items
                 add item.quantity to order.total
@@ -336,7 +336,7 @@ class CheckerTests(unittest.TestCase):
               | sku      | quantity |
               | "widget" | 2        |
 
-            WHEN count order
+            WHEN count_order order
             """
         )
 
@@ -392,6 +392,7 @@ class CheckerTests(unittest.TestCase):
             DTO Cart
               total: number
               status: text
+              tags: list<text>
 
             REQUEST cart is Cart
 
@@ -399,6 +400,7 @@ class CheckerTests(unittest.TestCase):
               GIVEN cart is Cart
               count cart.total into cart.status
               sum cart.status into cart.total
+              sum cart.tags into cart.total
               append "bad" to cart.total
             """
         )
@@ -406,6 +408,7 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("count requires a list, got number", messages)
         self.assertIn("count into cart.status expected text, got number", messages)
         self.assertIn("sum requires a list, got text", messages)
+        self.assertIn("sum requires a list of numbers, got list<text>", messages)
         self.assertIn("append to cart.total expected list, got number", messages)
 
     def test_reports_contract_for_unknown_parameter(self):

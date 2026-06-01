@@ -14,6 +14,7 @@ from .runtime import (
     IfBlock,
     Line,
     Program,
+    RESERVED_BEHAVIOR_NAMES,
     Scenario,
     TableAssignment,
     _condition_to_expression,
@@ -30,8 +31,6 @@ from .runtime import (
 )
 from .symbols import SourceRange
 
-
-RESERVED_BEHAVIOR_NAMES = {"set", "add", "subtract", "print", "LET", "REQUIRE", "RETURN"}
 PLACEHOLDER_PATTERN = re.compile(r"<([A-Za-z_][A-Za-z0-9_]*)>")
 PATH_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 
@@ -521,6 +520,8 @@ class Checker:
             value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             if value_type is not None and not _is_collection_type(value_type):
                 self._add_line(line, f"sum requires a list, got {value_type}", "GWT016")
+            elif value_type is not None:
+                self._check_sum_item_type(value_type, line)
             self._check_path(path, line)
             self._check_assignment_type("sum into", path, "number", line, scope)
             return
@@ -568,6 +569,12 @@ class Checker:
             return
         if actual_type is not None and actual_type != "number" and actual_type != "any":
             self._add_line(line, f"subtract value expected number, got {actual_type}", "GWT016")
+
+    def _check_sum_item_type(self, value_type: str, line: Line) -> None:
+        item_type = _list_item_type(value_type)
+        if item_type is None or item_type in {"number", "any"}:
+            return
+        self._add_line(line, f"sum requires a list of numbers, got {value_type}", "GWT016")
 
     def _check_find(self, line: Line, scope: Scope) -> None:
         match = re.match(
