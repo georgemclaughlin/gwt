@@ -1,9 +1,26 @@
 # GWT
 
 GWT is a small experimental programming language built around executable
-`GIVEN / WHEN / THEN` programs.
+`GIVEN / WHEN / THEN` programs. It is meant for deterministic workflows,
+rules, examples, and request/response style programs that should read close to
+their behavior specification.
 
-Hello world:
+## Quick Start
+
+Run the hello world example:
+
+```sh
+python -m gwtlang run examples/hello.gwt --json
+```
+
+Install a local `gwt` command while developing:
+
+```sh
+python -m pip install -e .
+gwt run examples/hello.gwt --json
+```
+
+## Hello World
 
 ```gwt
 PROGRAM hello
@@ -15,13 +32,12 @@ WHEN print greeting
 THEN greeting == "hello world"
 ```
 
-Run it:
+`GIVEN` creates state, `WHEN` does something, and `THEN` checks the result.
 
-```sh
-python -m gwtlang run examples/hello.gwt --json
-```
+## Reusable Behavior
 
-A tiny workflow:
+Block-form `WHEN` defines behavior. Single-line `WHEN` executes behavior or a
+built-in statement.
 
 ```gwt
 PROGRAM bank
@@ -29,18 +45,23 @@ PROGRAM bank
 GIVEN account.balance is 100
 AND account.status is "open"
 
-WHEN withdraw amount from account
+WHEN withdraw <amount> from <account>
   REQUIRE account.status is "open"
   AND account.balance is at least amount
   subtract amount from account.balance
 
 WHEN withdraw 30 from account
 
-THEN account.balance is 70
+THEN account.balance == 70
 AND account.status is "open"
 ```
 
-Records can group related state:
+Explicit signature parameters use `<name>`. Inside the behavior body, use the
+bare name, such as `amount` or `account`.
+
+## Records, DTOs, And Contracts
+
+Records group related state:
 
 ```gwt
 GIVEN account is
@@ -52,136 +73,117 @@ THEN account is
   status: "open"
 ```
 
-In this first version:
+DTOs declare expected state shape:
 
-- `GIVEN` initializes program state.
-- `AND` continues the previous `GIVEN`, `WHEN`, `THEN`, or behavior statement.
-- Block-form `WHEN` defines reusable behavior.
-- Single-line `WHEN` executes behavior or statements.
-- `THEN` asserts the final observable state.
-- `REQUIRE` guards behavior execution.
-- `LET`, `RETURN`, `IF`/`ELSE`, and `FOR` make behavior programmable.
-- `SCENARIO`, `BACKGROUND`, and `EXAMPLES` support BDD-style runs.
-- `USE` imports reusable behavior from another GWT file.
-- `DTO` declares header-like contracts for request/state records.
-- `list<DtoName>` and `GIVEN path are DtoName` model typed collections.
-- `REQUEST` and `OUTPUT` declare the host-facing program interface.
-- `set`, `add`, and `subtract` enforce known DTO/contract field types.
-- `<name>` marks explicit behavior parameters in new behavior signatures.
-- `append`, `count`, `sum`, `find`, and `FOR ... WHERE` cover common list work.
-- Behavior contracts type parameters and return values with `GIVEN` and
-  `THEN returns`.
-- `gwt format` applies the canonical v0.1 source layout.
+```gwt
+DTO Account
+  balance: number
+  status: text
 
-Run the bank example:
-
-```sh
-python -m gwtlang run examples/bank.gwt
+GIVEN account is Account
+  balance: 100
+  status: "open"
 ```
 
-Run multiple scenarios:
+Program contracts define the host-facing interface:
 
-```sh
-python -m gwtlang test examples/scenarios.gwt
+```gwt
+REQUEST report is ExpenseReport
+AND decision is ExpenseDecision
+
+OUTPUT decision is ExpenseDecision
 ```
 
-Run the record example:
+`REQUEST` contracts are validated after setup and before execution. `OUTPUT`
+contracts are validated after execution. When outputs are declared, JSON/API
+payloads put only those paths under `result`; the full final state stays under
+`state`.
 
-```sh
-python -m gwtlang run examples/records.gwt --json
+## Collections And Tables
+
+Typed tables create lists of records:
+
+```gwt
+GIVEN report.lines are ExpenseLine
+  | description    | amount | category    | reimbursable |
+  | "airport taxi" | 42     | "transport" | true         |
+  | "monitor"      | 225    | "equipment" | true         |
 ```
 
-Run the local binding example:
+Collection helpers cover common list work:
 
-```sh
-python -m gwtlang run examples/let.gwt --json
+```gwt
+WHEN review <report> into <decision>
+  GIVEN report is ExpenseReport
+  AND decision is ExpenseDecision
+  count report.lines into decision.line_count
+  sum report.line_amounts into decision.submitted_total
+  FOR line in report.lines WHERE line.reimbursable == true
+    append line.description to decision.approved_descriptions
+  find line in report.lines WHERE line.amount > report.policy_limit into policy_violation
 ```
 
-Run the control-flow example:
+The fuller version lives in
+[`examples/v01_language_tour`](examples/v01_language_tour).
 
-```sh
-python -m gwtlang run examples/control_flow.gwt --json
-```
-
-Run the return-value example:
-
-```sh
-python -m gwtlang run examples/return_values.gwt --json
-```
-
-Run the examples-table scenario:
-
-```sh
-python -m gwtlang test examples/examples_table.gwt
-```
-
-Run an imported module example:
-
-```sh
-python -m gwtlang run examples/use_import.gwt --json
-```
-
-Run the collections example:
-
-```sh
-python -m gwtlang run examples/collections.gwt --json
-```
-
-Run the DTO contract example:
-
-```sh
-python -m gwtlang run examples/dto_contracts.gwt --json
-```
-
-Run the typed behavior contract example:
-
-```sh
-python -m gwtlang run examples/typed_contracts.gwt --json
-```
-
-Run the typed table example:
-
-```sh
-python -m gwtlang test examples/typed_tables.gwt
-```
-
-Run the v0.1 language tour:
+Run it as embedded regression coverage:
 
 ```sh
 python -m gwtlang test examples/v01_language_tour/rules.gwt
+```
+
+Run it like an app would, with a separate request file:
+
+```sh
 python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
 ```
 
-Run a reusable workflow with a GWT-shaped request file:
+The JSON result is a stable envelope:
 
-```sh
-python -m gwtlang run examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
+```json
+{
+  "ok": true,
+  "scenario_count": 1,
+  "result": {
+    "decision": {
+      "line_count": 4,
+      "submitted_total": 297,
+      "approved_total": 60,
+      "status": "needs_review"
+    }
+  }
+}
 ```
 
-Run checkout regression scenarios:
+## Scenarios And Examples
 
-```sh
-python -m gwtlang test examples/checkout_scenarios.gwt
+Multiple `SCENARIO` blocks run independently. `EXAMPLES` turns one scenario
+into multiple runs:
+
+```gwt
+SCENARIO withdrawal examples
+GIVEN account.balance is <start>
+WHEN withdraw <amount> from account
+THEN account.balance == <end>
+
+EXAMPLES
+  | start | amount | end |
+  | 100   | 30     | 70  |
+  | 50    | 10     | 40  |
 ```
 
-Run a larger underwriting workflow sample:
+Run scenario files with:
 
 ```sh
-python -m gwtlang test examples/loan_underwriting/rules.gwt
-python -m gwtlang run examples/loan_underwriting/rules.gwt --input examples/loan_underwriting/request.gwt --json
+python -m gwtlang test examples/scenarios.gwt
+python -m gwtlang test examples/examples_table.gwt
 ```
 
-Run an order fulfillment workflow sample:
+## Tooling
+
+The CLI currently supports:
 
 ```sh
-python -m gwtlang test examples/order_fulfillment/rules.gwt
-python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/order_fulfillment/request.gwt --json
-```
-
-Install a local `gwt` command:
-
-```sh
-python -m pip install -e .
 gwt run examples/bank.gwt
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
@@ -192,15 +194,45 @@ gwt debug-lines examples/checkout_scenarios.gwt --json
 
 `gwt check` parses a program and runs semantic checks without executing
 scenarios. It reports problems such as unmatched behavior calls, duplicate
-behavior signatures, invalid built-in statement shapes, and `LET`/`RETURN`
-misuse. JSON output includes diagnostic codes, source ranges, and symbols for
-future editor tooling.
+behavior signatures, invalid built-in statement shapes, type mismatches, and
+`LET`/`RETURN` misuse. JSON output includes diagnostic codes, source ranges,
+and symbols for editor tooling.
 
-The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
-`gwt format file.gwt` rewrites valid source to that spec's canonical layout;
+`gwt format file.gwt` rewrites valid source to the canonical v0.1 layout.
 `gwt format file.gwt --check` is intended for CI.
 
-Embed GWT from Python:
+`gwt lsp` starts a minimal Language Server Protocol server over stdio. It
+publishes diagnostics and supports document symbols, hover, go-to-definition for
+behavior calls, and completions for known language symbols.
+
+`gwt debug` powers the VS Code debug adapter. Line breakpoints pause before
+matching executable GWT lines, and the Call Stack and Variables panels show
+active behavior calls, frame locals, and current state while paused.
+
+## Example Programs
+
+| Example | What it shows |
+| --- | --- |
+| [`examples/hello.gwt`](examples/hello.gwt) | Smallest runnable program |
+| [`examples/bank.gwt`](examples/bank.gwt) | Reusable behavior, guards, mutation |
+| [`examples/records.gwt`](examples/records.gwt) | Record-shaped state |
+| [`examples/let.gwt`](examples/let.gwt) | Local bindings |
+| [`examples/control_flow.gwt`](examples/control_flow.gwt) | `IF` / `ELSE` |
+| [`examples/return_values.gwt`](examples/return_values.gwt) | Returning values from behavior |
+| [`examples/examples_table.gwt`](examples/examples_table.gwt) | Scenario examples tables |
+| [`examples/use_import.gwt`](examples/use_import.gwt) | `USE` imports |
+| [`examples/collections.gwt`](examples/collections.gwt) | List iteration |
+| [`examples/dto_contracts.gwt`](examples/dto_contracts.gwt) | DTO validation |
+| [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
+| [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
+| [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of v0.1 |
+| [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
+| [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
+
+## Python API
+
+Host applications can call GWT through the Python package instead of shelling
+out to the CLI:
 
 ```python
 from gwtlang import check_file, run_file
@@ -214,12 +246,20 @@ execution = run_file(
     request_file="examples/order_fulfillment/request.gwt",
 )
 print(execution.state["fulfillment"]["status"])
-print(execution.as_payload()["result"])  # declared OUTPUT paths only, when present
+print(execution.as_payload()["result"])
 ```
 
-`gwt lsp` starts a minimal Language Server Protocol server over stdio. It
-publishes diagnostics and supports document symbols, hover, go-to-definition for
-behavior calls, and completions for known language symbols.
+The same analysis layer is available from Python:
+
+```python
+from gwtlang import analyze_source
+
+analysis = analyze_source(source, "example.gwt")
+print(analysis.diagnostics)
+print(analysis.symbols)
+```
+
+## VS Code
 
 VS Code support lives in [`vscode-gwt`](vscode-gwt). For local development:
 
@@ -233,44 +273,16 @@ npm install
 
 Open `/home/g/code/gwt` in VS Code, choose **Run GWT VS Code Extension** in the
 Run and Debug panel, then press `F5`. In the Extension Development Host window,
-open a `.gwt` file such as `/home/g/code/gwt/examples/typed_contracts.gwt`.
-Pressing `F5` on a `.gwt` file in that host window runs it through the GWT
-debug adapter. Line breakpoints pause before matching executable GWT lines, and
-the Call Stack and Variables panels show active behavior calls, frame locals,
-and current state while paused. Breakpoints on non-executable lines are shown as
-unverified, while blank/comment lines move to the next executable line when one
-is available.
+open a `.gwt` file such as `/home/g/code/gwt/examples/v01_language_tour/rules.gwt`.
 
-The same analysis layer is available from Python:
+## Specs And Tests
 
-```python
-from gwtlang import analyze_source
-
-analysis = analyze_source(source, "example.gwt")
-print(analysis.diagnostics)
-print(analysis.symbols)
-```
-
-Expression example:
-
-```gwt
-GIVEN account.balance is 100
-AND fee is 3
-
-WHEN withdraw amount from account
-  LET total be amount + fee
-  REQUIRE account.balance >= total
-  subtract total from account.balance
-
-WHEN withdraw 30 from account
-
-THEN account.balance == 67
-```
+The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
+The longer language guide is [`docs/language.md`](docs/language.md), and the
+EBNF grammar is [`docs/grammar.md`](docs/grammar.md).
 
 Run tests:
 
 ```sh
 python -m unittest discover
 ```
-
-See [docs/language.md](docs/language.md) for the language draft.
