@@ -59,6 +59,76 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(stdout.getvalue())["result"]["cart"]["total"], 92)
 
+    def test_cli_runs_program_with_json_input_file_and_entry(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            request_path = Path(temp_dir) / "request.json"
+            program_path.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
+                  set cart.total to cart.subtotal + cart.shipping
+                  set audit.status to "priced"
+                """
+            )
+            request_path.write_text(
+                json.dumps({"cart": {"subtotal": 84, "shipping": 8, "total": 0}})
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        str(request_path),
+                        "--entry",
+                        "checkout cart",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["request_file"], str(request_path))
+        self.assertEqual(payload["result"]["cart"]["total"], 92)
+        self.assertEqual(payload["state"]["audit"]["status"], "priced")
+
+    def test_cli_json_input_requires_entry(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            request_path = Path(temp_dir) / "request.json"
+            program_path.write_text("WHEN checkout <cart>\n  print cart\n")
+            request_path.write_text("{}")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["run", str(program_path), "--json-input", str(request_path)])
+
+        self.assertEqual(status, 2)
+        self.assertIn("--entry is required", stderr.getvalue())
+
+    def test_cli_entry_requires_json_input(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            program_path.write_text("WHEN checkout <cart>\n  print cart\n")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["run", str(program_path), "--entry", "checkout cart"])
+
+        self.assertEqual(status, 2)
+        self.assertIn("--entry requires --json-input", stderr.getvalue())
+
     def test_legacy_cli_invocation_still_runs(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "counter.gwt"

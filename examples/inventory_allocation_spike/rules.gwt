@@ -1,0 +1,297 @@
+PROGRAM inventory allocation spike
+
+RECORD OrderItem
+  sku: text
+  quantity: number
+
+RECORD OrderRequest
+  order_id: text
+  payment_status: "paid" | "declined"
+  fraud_score: number
+  expedited: boolean
+  items: list<OrderItem>
+
+RECORD InventoryItem
+  sku: text
+  available: number
+  reserved: number
+
+RECORD InventoryState
+  items: list<InventoryItem>
+
+RECORD FulfillmentState
+  requested_units: number
+  reserved_units: number
+  backordered_units: number
+  unknown_sku_count: number
+  package_count: number
+  shipping_fee: number
+  status: "new" | "held" | "authorized" | "backordered" | "partial" | "ready"
+  reason: "new" | "payment_required" | "fraud_review" | "authorized" | "no_inventory" | "partial_inventory" | "ready_to_ship" | "unknown_sku"
+
+REQUEST order is OrderRequest
+AND inventory is InventoryState
+AND fulfillment is FulfillmentState
+
+OUTPUT fulfillment is FulfillmentState
+AND inventory is InventoryState
+
+WHEN reset_fulfillment <fulfillment>
+  GIVEN fulfillment is FulfillmentState
+  set fulfillment.requested_units to 0
+  set fulfillment.reserved_units to 0
+  set fulfillment.backordered_units to 0
+  set fulfillment.unknown_sku_count to 0
+  set fulfillment.package_count to 0
+  set fulfillment.shipping_fee to 0
+  set fulfillment.status to "new"
+  set fulfillment.reason to "new"
+
+WHEN count_units <order> into <fulfillment>
+  GIVEN order is OrderRequest
+  AND fulfillment is FulfillmentState
+  sum item.quantity in order.items into fulfillment.requested_units
+
+WHEN authorize <order> into <fulfillment>
+  GIVEN order is OrderRequest
+  AND fulfillment is FulfillmentState
+  IF order.payment_status != "paid"
+    set fulfillment.status to "held"
+    set fulfillment.reason to "payment_required"
+  ELSE
+    IF order.fraud_score >= 80
+      set fulfillment.status to "held"
+      set fulfillment.reason to "fraud_review"
+    ELSE
+      set fulfillment.status to "authorized"
+      set fulfillment.reason to "authorized"
+
+WHEN reserve_known_item <order_item> using <inventory_item> into <fulfillment>
+  GIVEN order_item is OrderItem
+  AND inventory_item is InventoryItem
+  AND fulfillment is FulfillmentState
+  IF inventory_item.available >= order_item.quantity
+    subtract order_item.quantity from inventory_item.available
+    add order_item.quantity to inventory_item.reserved
+    add order_item.quantity to fulfillment.reserved_units
+  ELSE
+    add inventory_item.available to fulfillment.reserved_units
+    add order_item.quantity - inventory_item.available to fulfillment.backordered_units
+    add inventory_item.available to inventory_item.reserved
+    set inventory_item.available to 0
+
+WHEN reserve <order_item> from <inventory> into <fulfillment>
+  GIVEN order_item is OrderItem
+  AND inventory is InventoryState
+  AND fulfillment is FulfillmentState
+  exists inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into inventory_match_found
+  IF inventory_match_found
+    find inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into selected_inventory_item
+    reserve_known_item order_item using selected_inventory_item into fulfillment
+  ELSE
+    add 1 to fulfillment.unknown_sku_count
+
+WHEN allocate <order> from <inventory> into <fulfillment>
+  GIVEN order is OrderRequest
+  AND inventory is InventoryState
+  AND fulfillment is FulfillmentState
+  FOR order_item in order.items
+    reserve order_item from inventory into fulfillment
+
+WHEN packages_for <units>
+  GIVEN units is number
+  THEN returns number
+  IF units <= 0
+    RETURN 0
+  ELSE
+    IF units <= 3
+      RETURN 1
+    ELSE
+      IF units <= 6
+        RETURN 2
+      ELSE
+        RETURN 3
+
+WHEN shipping <order> with <units>
+  GIVEN order is OrderRequest
+  AND units is number
+  THEN returns number
+  IF units <= 0
+    RETURN 0
+  ELSE
+    IF order.expedited
+      RETURN 15 + units * 1.5
+    ELSE
+      IF units >= 5
+        RETURN 0
+      ELSE
+        RETURN 6 + units
+
+WHEN classify_inventory <fulfillment>
+  GIVEN fulfillment is FulfillmentState
+  IF fulfillment.reserved_units == 0
+    set fulfillment.status to "backordered"
+    set fulfillment.reason to "no_inventory"
+  ELSE
+    IF fulfillment.backordered_units > 0
+      set fulfillment.status to "partial"
+      set fulfillment.reason to "partial_inventory"
+    ELSE
+      set fulfillment.status to "ready"
+      set fulfillment.reason to "ready_to_ship"
+
+WHEN plan_shipping <order> into <fulfillment>
+  GIVEN order is OrderRequest
+  AND fulfillment is FulfillmentState
+  LET packages be packages_for fulfillment.reserved_units
+  LET fee be shipping order with fulfillment.reserved_units
+  set fulfillment.package_count to packages
+  set fulfillment.shipping_fee to fee
+
+WHEN fulfill <order> from <inventory> into <fulfillment>
+  GIVEN order is OrderRequest
+  AND inventory is InventoryState
+  AND fulfillment is FulfillmentState
+  reset_fulfillment fulfillment
+  count_units order into fulfillment
+  authorize order into fulfillment
+  IF fulfillment.status == "authorized"
+    allocate order from inventory into fulfillment
+    IF fulfillment.unknown_sku_count > 0
+      set fulfillment.status to "held"
+      set fulfillment.reason to "unknown_sku"
+    ELSE
+      classify_inventory fulfillment
+      plan_shipping order into fulfillment
+
+SCENARIO partial allocation mutates list inventory
+GIVEN order is OrderRequest
+  order_id: "LIST-100"
+  payment_status: "paid"
+  fraud_score: 12
+  expedited: true
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku      | quantity |
+  | "widget" | 1        |
+  | "gadget" | 2        |
+  | "cable"  | 1        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 5         | 0        |
+  | "gadget" | 1         | 0        |
+  | "cable"  | 5         | 0        |
+
+GIVEN fulfillment is FulfillmentState
+  requested_units: 0
+  reserved_units: 0
+  backordered_units: 0
+  unknown_sku_count: 0
+  package_count: 0
+  shipping_fee: 0
+  status: "new"
+  reason: "new"
+
+WHEN fulfill order from inventory into fulfillment
+WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
+WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "gadget" into gadget_inventory
+WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "cable" into cable_inventory
+
+THEN fulfillment.status == "partial"
+AND fulfillment.reason == "partial_inventory"
+AND fulfillment.requested_units == 4
+AND fulfillment.reserved_units == 3
+AND fulfillment.backordered_units == 1
+AND fulfillment.package_count == 1
+AND fulfillment.shipping_fee == 19.5
+AND widget_inventory.available == 4
+AND widget_inventory.reserved == 1
+AND gadget_inventory.available == 0
+AND gadget_inventory.reserved == 1
+AND cable_inventory.available == 4
+AND cable_inventory.reserved == 1
+
+SCENARIO duplicate sku consumes updated availability
+GIVEN order is OrderRequest
+  order_id: "LIST-101"
+  payment_status: "paid"
+  fraud_score: 20
+  expedited: false
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku      | quantity |
+  | "widget" | 2        |
+  | "widget" | 2        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 3         | 0        |
+
+GIVEN fulfillment is FulfillmentState
+  requested_units: 0
+  reserved_units: 0
+  backordered_units: 0
+  unknown_sku_count: 0
+  package_count: 0
+  shipping_fee: 0
+  status: "new"
+  reason: "new"
+
+WHEN fulfill order from inventory into fulfillment
+WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
+
+THEN fulfillment.status == "partial"
+AND fulfillment.reason == "partial_inventory"
+AND fulfillment.requested_units == 4
+AND fulfillment.reserved_units == 3
+AND fulfillment.backordered_units == 1
+AND widget_inventory.available == 0
+AND widget_inventory.reserved == 3
+
+SCENARIO unknown sku holds fulfillment
+GIVEN order is OrderRequest
+  order_id: "LIST-102"
+  payment_status: "paid"
+  fraud_score: 10
+  expedited: false
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku       | quantity |
+  | "mystery" | 1        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 5         | 0        |
+
+GIVEN fulfillment is FulfillmentState
+  requested_units: 0
+  reserved_units: 0
+  backordered_units: 0
+  unknown_sku_count: 0
+  package_count: 0
+  shipping_fee: 0
+  status: "new"
+  reason: "new"
+
+WHEN fulfill order from inventory into fulfillment
+WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
+
+THEN fulfillment.status == "held"
+AND fulfillment.reason == "unknown_sku"
+AND fulfillment.unknown_sku_count == 1
+AND fulfillment.reserved_units == 0
+AND widget_inventory.available == 5
+AND widget_inventory.reserved == 0

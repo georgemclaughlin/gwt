@@ -242,17 +242,54 @@ paths through `GIVEN` setup before execution. If the program declares `OUTPUT`
 contracts, the `result` field in CLI JSON and API payloads contains only the
 declared output paths.
 
+For production-style embedding, callers can provide initial state as JSON and
+name the entry behavior to execute:
+
+```sh
+python -m gwtlang run examples/order_fulfillment/rules.gwt \
+  --json-input examples/order_fulfillment/request.json \
+  --entry "fulfill order from inventory into fulfillment" \
+  --json
+```
+
+The JSON file must contain an object whose keys are GWT state paths. Nested
+JSON objects are ordinary record values:
+
+```json
+{
+  "order": {
+    "order_id": "A200",
+    "payment_status": "paid",
+    "fraud_score": 12,
+    "expedited": true,
+    "items": [
+      { "sku": "widget", "quantity": 1 },
+      { "sku": "gadget", "quantity": 2 }
+    ]
+  }
+}
+```
+
+The runtime loads program `BACKGROUND` setup first, then JSON state, then
+validates `REQUEST` contracts, runs the entry behavior, validates `OUTPUT`
+contracts, and returns the same stable execution envelope used by `.gwt`
+request files.
+
 ## Embedding API
 
 Host applications can call GWT through the Python package instead of shelling
 out to the CLI:
 
 ```python
-from gwtlang import check_file, run_file
+from gwtlang import check_file, run_json_file
 
 check = check_file("rules.gwt")
 if check.ok:
-    execution = run_file("rules.gwt", request_file="request.gwt")
+    execution = run_json_file(
+        "rules.gwt",
+        request_state,
+        entry="review report into decision",
+    )
     state = execution.state
 ```
 

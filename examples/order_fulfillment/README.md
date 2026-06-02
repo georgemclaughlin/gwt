@@ -8,6 +8,8 @@ shipping details.
   scenarios.
 - `request.gwt` is a production-style request with no inline assertions.
 - `request_with_assertions.gwt` is the same request with `THEN` assertions.
+- `request.json` is the same production request as JSON state for host
+  integrations.
 
 The rules declare a host-facing interface with `REQUEST order`,
 `REQUEST inventory`, `REQUEST fulfillment`, and `OUTPUT fulfillment` /
@@ -52,6 +54,15 @@ Run like an application would:
 
 ```sh
 python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/order_fulfillment/request.gwt --json
+```
+
+Run like a JSON-speaking host application would:
+
+```sh
+python -m gwtlang run examples/order_fulfillment/rules.gwt \
+  --json-input examples/order_fulfillment/request.json \
+  --entry "fulfill order from inventory into fulfillment" \
+  --json
 ```
 
 Run the request and assert expected output:
