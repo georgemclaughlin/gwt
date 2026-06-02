@@ -928,6 +928,54 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["invoice"]["names"], ["keyboard"])
         self.assertEqual(result.state["invoice"]["found"]["name"], "mouse")
 
+    def test_find_block_mutates_matched_record_and_runs_else_when_missing(self):
+        result = run_source(
+            '''
+            RECORD InventoryItem
+              sku: text
+              available: number
+              reserved: number
+
+            RECORD Inventory
+              items: list<InventoryItem>
+
+            RECORD Result
+              reserved: number
+              missing: number
+
+            GIVEN inventory is Inventory
+              items: []
+
+            GIVEN inventory.items are InventoryItem
+              | sku      | available | reserved |
+              | "widget" | 5         | 0        |
+
+            GIVEN result is Result
+              reserved: 0
+              missing: 0
+
+            WHEN reserve <sku> quantity <quantity> from <inventory> into <result>
+              GIVEN sku is text
+              AND quantity is number
+              AND inventory is Inventory
+              AND result is Result
+              FIND item in inventory.items WHERE item.sku == sku
+                subtract quantity from item.available
+                add quantity to item.reserved
+                add quantity to result.reserved
+              ELSE
+                add 1 to result.missing
+
+            WHEN reserve widget quantity 2 from inventory into result
+            WHEN reserve mystery quantity 1 from inventory into result
+            '''
+        )
+
+        self.assertEqual(result.state["inventory"]["items"][0]["available"], 3)
+        self.assertEqual(result.state["inventory"]["items"][0]["reserved"], 2)
+        self.assertEqual(result.state["result"]["reserved"], 2)
+        self.assertEqual(result.state["result"]["missing"], 1)
+
     def test_exists_optional_find_and_projected_sum(self):
         result = run_source(
             '''
@@ -961,6 +1009,36 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["invoice"]["total"], 60)
         self.assertFalse(result.state["invoice"]["has_large"])
         self.assertEqual(result.state["invoice"]["missing"]["name"], "none")
+
+    def test_find_block_requires_else(self):
+        with self.assertRaisesRegex(GwtError, "FIND requires an ELSE block"):
+            run_source(
+                """
+                GIVEN items is [1]
+
+                WHEN choose
+                  FIND item in items WHERE item == 1
+                    print item
+
+                WHEN choose
+                """
+            )
+
+    def test_find_block_requires_list(self):
+        with self.assertRaisesRegex(GwtError, "FIND requires a list"):
+            run_source(
+                """
+                GIVEN count is 1
+
+                WHEN choose
+                  FIND item in count WHERE item == 1
+                    print item
+                  ELSE
+                    print "missing"
+
+                WHEN choose
+                """
+            )
 
     def test_find_requires_match(self):
         with self.assertRaisesRegex(GwtError, "find found no matching item"):

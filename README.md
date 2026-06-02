@@ -128,6 +128,10 @@ WHEN review <report> into <decision>
     append line.description to decision.approved_descriptions
   exists line in report.lines WHERE line.amount > report.policy_limit into decision.has_violation
   find optional line in report.lines WHERE line.amount > report.policy_limit into policy_violation
+  FIND line in report.lines WHERE line.amount > report.policy_limit
+    set decision.status to "needs_review"
+  ELSE
+    set decision.status to "approved"
 ```
 
 The fuller version lives in

@@ -84,10 +84,8 @@ WHEN reserve <order_item> from <inventory> into <fulfillment>
   GIVEN order_item is OrderItem
   AND inventory is InventoryState
   AND fulfillment is FulfillmentState
-  exists inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into inventory_match_found
-  IF inventory_match_found
-    find inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into selected_inventory_item
-    reserve_known_item order_item using selected_inventory_item into fulfillment
+  FIND inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku
+    reserve_known_item order_item using inventory_item into fulfillment
   ELSE
     add 1 to fulfillment.unknown_sku_count
 

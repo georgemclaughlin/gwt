@@ -3,7 +3,7 @@
 This grammar describes the implemented v0.1 surface. The normative v0.1
 language notes live in [spec/v0.1.md](spec/v0.1.md). The parser is currently
 hand-written, but behavior bodies are parsed into structured statement nodes for
-blocks such as `IF`, `FOR`, and `ELSE`.
+blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 
 ```ebnf
 program        = top_level* ;
@@ -62,6 +62,7 @@ behavior_statement
               | require
               | if_block
               | for_block
+              | find_block
               | return
               | builtin
               | behavior_call
@@ -71,6 +72,8 @@ let            = "LET" name "be" expression_or_behavior_call ;
 require        = "REQUIRE" condition ;
 if_block       = "IF" condition, behavior_block, ("ELSE", behavior_block)? ;
 for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_block ;
+find_block     = "FIND" name "in" expression "WHERE" condition,
+                 behavior_block, "ELSE", behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
 
 builtin        = set | add | subtract | append | count | sum | find | exists | print ;
@@ -121,7 +124,7 @@ Indentation is significant:
 
 - Top-level forms start at column 1.
 - Behavior block statements are indented by two spaces.
-- Nested `IF`, `ELSE`, and `FOR` bodies add two spaces per level.
+- Nested `IF`, `ELSE`, `FOR`, and `FIND` bodies add two spaces per level.
 - Record blocks also add two spaces per level.
 
 CLI request mode runs two parsed programs together: the main program contributes

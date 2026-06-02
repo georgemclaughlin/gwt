@@ -323,11 +323,12 @@ The current checker reports:
 - invalid expression syntax in statically checkable expressions
 - missing `EXAMPLES` placeholders
 - obvious `FOR` use over a scalar literal
+- obvious `FIND` use over a scalar literal
 - unknown behavior contract types
 - unknown `REQUEST` / `OUTPUT` contract types
 - typed table row shape/type mismatches
 - statically obvious `set`, `add`, `subtract`, `append`, `count`, `sum`,
-  `find`, and `exists` type mismatches on known record/contract fields
+  `find`, `exists`, and `FIND` type mismatches on known record/contract fields
 - statically known behavior argument and return type mismatches
 - implicit behavior parameters as deprecation warnings
 
@@ -544,6 +545,21 @@ item matching its condition or fails if none matches. `find optional` leaves
 the target unchanged when no item matches. `exists` stores whether any item
 matches.
 
+For workflows that need to immediately act on one matched record, use the
+uppercase `FIND` behavior block:
+
+```gwt
+FIND item in inventory.items WHERE item.sku == order_item.sku
+  reserve_known_item order_item using item into fulfillment
+ELSE
+  add 1 to fulfillment.unknown_sku_count
+```
+
+`FIND` binds the first matching item as a local name for its body. The `ELSE`
+body is required so the missing case is explicit. If the matched item is a
+record from a list, mutations such as `subtract quantity from item.available`
+update that record in the original list.
+
 ## Local Bindings
 
 Behavior blocks can bind local names:
@@ -602,6 +618,18 @@ FOR item in invoice.items WHERE item.quantity > 1
 `FOR` loop variables are local to each iteration. Returning from inside a loop
 exits the current behavior. When a loop item is a record, its fields can be
 read with dot paths such as `item.price`.
+
+`FIND` uses the same list and condition shape as `FOR ... WHERE`, but executes
+only the first matching item and requires an `ELSE` block:
+
+```gwt
+FIND line in invoice.items WHERE line.sku == requested_sku
+  set line.status to "reserved"
+ELSE
+  set invoice.status to "missing_item"
+```
+
+The matched name exists only in the match body, not in the `ELSE` body.
 
 ## Return Values
 

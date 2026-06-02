@@ -115,7 +115,7 @@ that name a domain object and immediately describe what happens with it.
 
 For example, the pressure-test example in
 [`examples/inventory_allocation_spike`](../examples/inventory_allocation_spike)
-currently needs this awkward current-language pattern:
+originally exposed this awkward pattern:
 
 ```gwt
 exists inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into inventory_match_found
@@ -126,8 +126,8 @@ ELSE
   add 1 to fulfillment.unknown_sku_count
 ```
 
-That is evidence for a first-class matched-record behavior, not evidence for
-SQL. A future design should try to preserve the step-like shape:
+That was evidence for a first-class matched-record behavior, not evidence for
+SQL. The current step-like form is:
 
 ```gwt
 FIND inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku
@@ -136,9 +136,8 @@ ELSE
   add 1 to fulfillment.unknown_sku_count
 ```
 
-This sketch is intentionally not current syntax. It captures the design goal:
-bind one matched record as an obvious local name, run behavior against it, and
-make the missing case explicit.
+This binds one matched record as an obvious local name, runs behavior against
+it, and makes the missing case explicit.
 
 ## Design Checklist
 

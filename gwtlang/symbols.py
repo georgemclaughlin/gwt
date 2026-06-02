@@ -6,6 +6,7 @@ from typing import Any
 from .errors import GwtError
 from .runtime import (
     Action,
+    FindBlock,
     ForBlock,
     IfBlock,
     Line,
@@ -185,6 +186,18 @@ def _collect_body_symbols(symbols: list[Symbol], body: list[Any], container: str
                 )
             )
             _collect_body_symbols(symbols, statement.body, container)
+        elif isinstance(statement, FindBlock):
+            symbols.append(
+                Symbol(
+                    statement.name,
+                    "local",
+                    _line_range(statement.name_line or statement.iterable),
+                    detail="matched item",
+                    container=container,
+                )
+            )
+            _collect_body_symbols(symbols, statement.body, container)
+            _collect_body_symbols(symbols, statement.else_body, container)
         elif isinstance(statement, IfBlock):
             _collect_body_symbols(symbols, statement.then_body, container)
             _collect_body_symbols(symbols, statement.else_body, container)

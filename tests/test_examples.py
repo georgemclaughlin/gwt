@@ -201,8 +201,8 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(request_result.state["fulfillment"]["status"], "partial")
         self.assertEqual(request_result.state["inventory"]["items"][1]["available"], 0)
         self.assertEqual(request_result.scenarios[0].returned_state["inventory"]["items"][1]["reserved"], 1)
-        self.assertIn("selected_inventory_item", request_result.state)
-        self.assertNotIn("selected_inventory_item", request_result.scenarios[0].returned_state)
+        self.assertNotIn("selected_inventory_item", request_result.state)
+        self.assertNotIn("inventory_match_found", request_result.state)
 
     def test_output_contract_failure_is_reported(self):
         with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for decision"):

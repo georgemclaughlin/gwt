@@ -57,7 +57,7 @@
       "patterns": [
         {
           "name": "keyword.control.gwt",
-          "match": "\\b(?:PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|RETURN)\\b"
+          "match": "\\b(?:PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|EXAMPLES|GIVEN|WHEN|THEN|AND|REQUIRE|LET|IF|ELSE|FOR|FIND|RETURN)\\b"
         }
       ]
     },
@@ -65,7 +65,7 @@
       "patterns": [
         {
           "name": "support.function.builtin.gwt",
-          "match": "\\b(?:set|add|subtract|append|count|sum|find|print)\\b"
+          "match": "\\b(?:set|add|subtract|append|count|sum|find|exists|print)\\b"
         },
         {
           "name": "keyword.operator.word.gwt",
