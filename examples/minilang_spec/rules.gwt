@@ -81,7 +81,7 @@ WHEN expect <tokens> has token <lexeme> into <front_end>
   AND lexeme is text
   AND front_end is MiniFrontEnd
   FIND token in tokens WHERE token.lexeme == lexeme
-    set front_end.token_count to front_end.token_count
+    PASS
   ELSE
     append "missing_token_" + lexeme to front_end.errors
 
@@ -89,7 +89,7 @@ WHEN expect <front_end> has statement <kind>
   GIVEN front_end is MiniFrontEnd
   AND kind is text
   FIND statement in front_end.statements WHERE statement.kind == kind
-    set front_end.statement_count to front_end.statement_count
+    PASS
   ELSE
     append "missing_" + kind to front_end.errors
 

@@ -28,6 +28,7 @@ RESERVED_BEHAVIOR_NAMES = {
     "LET",
     "REQUIRE",
     "RETURN",
+    "PASS",
     "IF",
     "ELSE",
     "FOR",
@@ -705,6 +706,12 @@ class Runtime:
             if not expression:
                 raise GwtError(f"line {line.number}: RETURN requires a value")
             return BehaviorReturn(self._eval_expression_or_returning_action(expression, line, env))
+        if command == "PASS":
+            if not allow_let:
+                raise GwtError(f"line {line.number}: PASS is only allowed inside behavior")
+            if len(tokens) != 1:
+                raise GwtError(f"line {line.number}: PASS does not take arguments")
+            return
         if command == "LET":
             if not allow_let:
                 raise GwtError(f"line {line.number}: LET is only allowed inside behavior")

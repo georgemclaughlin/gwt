@@ -64,6 +64,7 @@ behavior_statement
               | for_block
               | find_block
               | return
+              | pass
               | builtin
               | behavior_call
               | and ;
@@ -75,6 +76,7 @@ for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_bloc
 find_block     = "FIND" name "in" expression "WHERE" condition,
                  behavior_block, "ELSE", behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
+pass           = "PASS" ;
 
 builtin        = set | add | subtract | append | count | sum | find | exists | print ;
 set            = "set" path "to" expression ;

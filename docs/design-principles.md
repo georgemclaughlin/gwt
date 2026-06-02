@@ -139,6 +139,18 @@ ELSE
 This binds one matched record as an obvious local name, runs behavior against
 it, and makes the missing case explicit.
 
+## Variant-Shaped Data
+
+When an example needs tagged domain cases, prefer a record-like design that
+keeps cases explicit without forcing placeholder fields. MiniLang currently
+shows the problem with an AST statement record that has one `kind` field and
+many fields that only apply to some cases.
+
+The candidate design is documented in
+[`variant-match-design.md`](variant-match-design.md). The important guardrail
+is that matching should remain a behavior-body step over domain state, not a
+general-purpose pattern matching expression system.
+
 ## Design Checklist
 
 Before adding syntax, answer these questions:

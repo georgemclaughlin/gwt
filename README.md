@@ -321,7 +321,9 @@ The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
 The longer language guide is [`docs/language.md`](docs/language.md), and the
 EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
 language-shape guardrails live in
-[`docs/design-principles.md`](docs/design-principles.md).
+[`docs/design-principles.md`](docs/design-principles.md). The current
+variant/match design pressure from MiniLang is captured in
+[`docs/variant-match-design.md`](docs/variant-match-design.md).
 
 Run tests:
 

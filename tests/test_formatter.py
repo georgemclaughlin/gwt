@@ -75,6 +75,16 @@ WHEN total items
 
         self.assertIn("  FIND item in order.items WHERE item.sku == \"widget\"\n", formatted)
 
+    def test_format_text_normalizes_pass_keyword_spacing(self):
+        formatted = format_text(
+            """
+            WHEN keep going
+              PASS
+            """
+        )
+
+        self.assertEqual(formatted, "WHEN keep going\n  PASS\n")
+
     def test_format_file_reports_changed_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "counter.gwt"
