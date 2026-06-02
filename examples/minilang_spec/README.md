@@ -33,9 +33,9 @@ let nums = [1, 2, 3, 4]
 print(map(nums, fn(n) { return n * 2 }))
 ```
 
-`rules.gwt` models tokens, AST statements, list literals, runtime bindings,
-outputs, and errors as records. The evaluator handles the sample's specific
-node kinds, mutates bindings, and produces:
+`rules.gwt` models tokens, one-of AST statements, list literals, runtime
+bindings, outputs, and errors as records. The evaluator handles the sample's
+specific statement kinds, mutates bindings, and produces:
 
 ```txt
 runtime.outputs == ["large"]
@@ -77,14 +77,13 @@ python -m gwtlang run examples/minilang_spec/rules.gwt \
 ## What This Stresses
 
 - records as token, AST, runtime, and diagnostic models
-- literal-union fields as lightweight tagged variants
+- one-of records for lightweight tagged statement data
 - keyed lookup and mutation with `FIND`
 - explicit no-op success branches with `PASS`
 - ordered evaluation over AST records
 - explicit front-end and runtime errors
 - JSON host input and output contracts
-- current awkwardness around true AST variants and record construction
 - current lack of source-text string scanning inside GWT itself
 
-The variant-shaped AST pressure is captured in
+The one-of statement shape is captured in
 [`../../docs/variant-match-design.md`](../../docs/variant-match-design.md).

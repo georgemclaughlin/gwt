@@ -10,6 +10,7 @@ from .runtime import (
     ForBlock,
     IfBlock,
     Line,
+    MatchBlock,
     Program,
     Scenario,
     _signature_parameters as _runtime_signature_parameters,
@@ -94,6 +95,39 @@ def build_symbol_table(program: Program) -> SymbolTable:
                     container=dto.name,
                 )
             )
+
+    for variant in program.variants.values():
+        symbols.append(
+            Symbol(
+                variant.name,
+                "dto",
+                SourceRange(variant.filename, variant.line, variant.column, variant.length),
+                detail=f"RECORD {variant.name} is one of",
+            )
+        )
+        for case in variant.cases.values():
+            symbols.append(
+                Symbol(
+                    case.name,
+                    "dto_field",
+                    SourceRange(case.filename, case.line, case.column, case.length),
+                    detail="kind",
+                    container=variant.name,
+                )
+            )
+            for field_name, field_type in case.fields.items():
+                field_line = case.field_lines.get(field_name)
+                if field_line is None:
+                    continue
+                symbols.append(
+                    Symbol(
+                        field_name,
+                        "dto_field",
+                        _line_range(field_line),
+                        detail=field_type,
+                        container=f"{variant.name}.{case.name}",
+                    )
+                )
 
     for binding in [*program.inputs.values(), *program.outputs.values()]:
         symbols.append(
@@ -200,6 +234,10 @@ def _collect_body_symbols(symbols: list[Symbol], body: list[Any], container: str
             _collect_body_symbols(symbols, statement.else_body, container)
         elif isinstance(statement, IfBlock):
             _collect_body_symbols(symbols, statement.then_body, container)
+            _collect_body_symbols(symbols, statement.else_body, container)
+        elif isinstance(statement, MatchBlock):
+            for case in statement.cases:
+                _collect_body_symbols(symbols, case.body, container)
             _collect_body_symbols(symbols, statement.else_body, container)
 
 

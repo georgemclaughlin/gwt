@@ -24,7 +24,7 @@ class _FormattedLine:
 
 
 KEYWORD_PATTERN = re.compile(
-    r"^(PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|FIND|RETURN|PASS)\b(.*)$"
+    r"^(PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|FIND|DEPENDING|RETURN|PASS)\b(.*)$"
 )
 BUILTIN_PATTERN = re.compile(r"^(set|add|subtract|append|count|sum|find|exists|print)\b(.*)$")
 FIELD_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:(.*)$")
@@ -107,6 +107,8 @@ def _normalize_statement(statement: str) -> str:
         rest = rest.strip()
         if keyword == "WHEN":
             rest = _normalize_builtin_start(rest)
+        elif keyword == "DEPENDING":
+            rest = re.sub(r"^ON\s+", "ON ", rest)
         return keyword if not rest else f"{keyword} {rest}"
 
     builtin = _normalize_builtin_start(statement)
