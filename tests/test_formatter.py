@@ -85,6 +85,39 @@ WHEN total items
 
         self.assertEqual(formatted, "WHEN keep going\n  PASS\n")
 
+    def test_format_text_normalizes_one_of_and_depending_on(self):
+        formatted = format_text(
+            """
+            RECORD  Statement is one of
+              let_number:
+                value:   number
+
+            GIVEN program.statements contains a Statement of kind let_number
+              value:  2
+
+            WHEN handle <statement>
+              DEPENDING ON  statement
+                WHEN the kind is let_number
+                  print  statement.value
+            """
+        )
+
+        self.assertEqual(
+            formatted,
+            """RECORD Statement is one of
+  let_number:
+    value: number
+
+GIVEN program.statements contains a Statement of kind let_number
+  value: 2
+
+WHEN handle <statement>
+  DEPENDING ON statement
+    WHEN the kind is let_number
+      print statement.value
+""",
+        )
+
     def test_format_file_reports_changed_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "counter.gwt"

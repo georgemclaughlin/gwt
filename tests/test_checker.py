@@ -387,6 +387,69 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("GIVEN table field 'quantity' expected number, got text", messages)
 
+    def test_accepts_one_of_record_setup_and_depending_on(self):
+        messages = check_messages(
+            """
+            RECORD Statement is one of
+              let_number:
+                name: text
+                value: number
+              print_text:
+                text: text
+
+            GIVEN program.statements contains a Statement of kind let_number
+              name: "x"
+              value: 2
+
+            WHEN handle <statement>
+              GIVEN statement is Statement
+              DEPENDING ON statement
+                WHEN the kind is let_number
+                  set statement.value to 3
+                WHEN the kind is print_text
+                  print statement.text
+            """
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_one_of_record_setup_type_mismatch(self):
+        messages = check_messages(
+            """
+            RECORD Statement is one of
+              let_number:
+                name: text
+                value: number
+
+            GIVEN program.statements contains a Statement of kind let_number
+              name: "x"
+              value: "bad"
+            """
+        )
+
+        self.assertIn("GIVEN Statement field 'value' expected number, got text", messages)
+
+    def test_reports_depending_on_branch_type_mismatch_and_missing_else(self):
+        messages = check_messages(
+            """
+            RECORD Statement is one of
+              let_number:
+                name: text
+                value: number
+              print_text:
+                text: text
+
+            WHEN handle <statement>
+              GIVEN statement is Statement
+              DEPENDING ON statement
+                WHEN the kind is let_number
+                  set statement.value to "bad"
+            """
+        )
+
+        self.assertIn("set statement.value expected number, got text", messages)
+        self.assertIn("DEPENDING ON requires ELSE unless all kinds are covered; missing print_text", messages)
+
     def test_accepts_collection_helpers_and_for_where(self):
         messages = check_messages(
             """

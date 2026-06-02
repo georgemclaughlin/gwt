@@ -84,72 +84,36 @@
         "index": 1,
         "kind": "let_number",
         "name": "x",
-        "left_name": "",
-        "right_name": "",
-        "number_value": 10,
-        "threshold": 0,
-        "then_text": "",
-        "else_text": "",
-        "list_name": ""
+        "number_value": 10
       },
       {
         "index": 2,
         "kind": "let_number",
         "name": "y",
-        "left_name": "",
-        "right_name": "",
-        "number_value": 20,
-        "threshold": 0,
-        "then_text": "",
-        "else_text": "",
-        "list_name": ""
+        "number_value": 20
       },
       {
         "index": 3,
         "kind": "fn_add",
-        "name": "add",
-        "left_name": "a",
-        "right_name": "b",
-        "number_value": 0,
-        "threshold": 0,
-        "then_text": "",
-        "else_text": "",
-        "list_name": ""
+        "name": "add"
       },
       {
         "index": 4,
         "kind": "if_add_gt_print",
-        "name": "",
         "left_name": "x",
         "right_name": "y",
-        "number_value": 0,
         "threshold": 25,
         "then_text": "large",
-        "else_text": "small",
-        "list_name": ""
+        "else_text": "small"
       },
       {
         "index": 5,
         "kind": "let_number_list",
-        "name": "nums",
-        "left_name": "",
-        "right_name": "",
-        "number_value": 0,
-        "threshold": 0,
-        "then_text": "",
-        "else_text": "",
-        "list_name": ""
+        "name": "nums"
       },
       {
         "index": 6,
         "kind": "print_map_double",
-        "name": "",
-        "left_name": "",
-        "right_name": "",
-        "number_value": 0,
-        "threshold": 0,
-        "then_text": "",
-        "else_text": "",
         "list_name": "nums"
       }
     ],

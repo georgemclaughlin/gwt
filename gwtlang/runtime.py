@@ -33,6 +33,7 @@ RESERVED_BEHAVIOR_NAMES = {
     "ELSE",
     "FOR",
     "FIND",
+    "DEPENDING",
 }
 _MISSING = object()
 
@@ -100,6 +101,22 @@ class FindBlock:
     header_line: Line | None = None
 
 
+@dataclass
+class MatchCase:
+    name: str
+    body: list[Any]
+    line: Line
+
+
+@dataclass
+class MatchBlock:
+    expression: Line
+    cases: list[MatchCase]
+    else_body: list[Any]
+    header_line: Line | None = None
+    else_line: Line | None = None
+
+
 @dataclass(frozen=True)
 class DtoDefinition:
     name: str
@@ -109,6 +126,27 @@ class DtoDefinition:
     column: int = 1
     length: int = 1
     field_lines: dict[str, Line] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class VariantCaseDefinition:
+    name: str
+    fields: dict[str, str]
+    line: int
+    filename: str | None = None
+    column: int = 1
+    length: int = 1
+    field_lines: dict[str, Line] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class VariantDefinition:
+    name: str
+    cases: dict[str, VariantCaseDefinition]
+    line: int
+    filename: str | None = None
+    column: int = 1
+    length: int = 1
 
 
 @dataclass(frozen=True)
@@ -132,6 +170,16 @@ class TableAssignment:
     rows: list[dict[str, str]]
     line: Line
     item_type: str | None = None
+
+
+@dataclass(frozen=True)
+class VariantAssignment:
+    path: str
+    variant_name: str
+    case_name: str
+    fields: dict[str, str]
+    line: Line
+    field_lines: dict[str, Line] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -159,6 +207,7 @@ class Program:
     inputs: dict[str, ContractBinding] = field(default_factory=dict)
     outputs: dict[str, ContractBinding] = field(default_factory=dict)
     dtos: dict[str, DtoDefinition] = field(default_factory=dict)
+    variants: dict[str, VariantDefinition] = field(default_factory=dict)
     actions: list[Action] = field(default_factory=list)
     scenarios: list[Scenario] = field(default_factory=list)
 
@@ -216,7 +265,12 @@ def run_request(
     request_filename: str = "<request>",
 ) -> RunResult:
     program = parse_program(program_source, filename)
-    request = parse_program(request_source, request_filename, initial_dtos=program.dtos)
+    request = parse_program(
+        request_source,
+        request_filename,
+        initial_dtos=program.dtos,
+        initial_variants=program.variants,
+    )
     combined = Program(
         name=program.name,
         background=Scenario(
@@ -232,6 +286,7 @@ def run_request(
         inputs={**program.inputs, **request.inputs},
         outputs={**program.outputs, **request.outputs},
         dtos={**program.dtos, **request.dtos},
+        variants={**program.variants, **request.variants},
         actions=[*program.actions, *request.actions],
         scenarios=request.scenarios,
     )
@@ -257,12 +312,15 @@ def parse_program(
     filename: str = "<source>",
     importing: set[Path] | None = None,
     initial_dtos: dict[str, DtoDefinition] | None = None,
+    initial_variants: dict[str, VariantDefinition] | None = None,
     allow_unknown_dtos: bool = False,
 ) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
     if initial_dtos:
         program.dtos.update(initial_dtos)
+    if initial_variants:
+        program.variants.update(initial_variants)
     importing = set() if importing is None else importing
     current = Scenario("Main", 0)
     in_background = False
@@ -310,15 +368,22 @@ def parse_program(
         if text.startswith("USE "):
             imported = _parse_import(text, line, filename, importing)
             program.dtos.update(imported.dtos)
+            program.variants.update(imported.variants)
             program.actions.extend(imported.actions)
             index += 1
             continue
 
         if text == "RECORD" or text.startswith("RECORD ") or text == "DTO" or text.startswith("DTO "):
-            dto, index = _parse_dto(lines, index, filename)
-            if dto.name in program.dtos:
-                raise GwtError(f"{filename}:{line.number}: record already defined: {dto.name}")
-            program.dtos[dto.name] = dto
+            if _is_record_one_of_header(text):
+                variant, index = _parse_variant(lines, index, filename)
+                if variant.name in program.dtos or variant.name in program.variants:
+                    raise GwtError(f"{filename}:{line.number}: type already defined: {variant.name}")
+                program.variants[variant.name] = variant
+            else:
+                dto, index = _parse_dto(lines, index, filename)
+                if dto.name in program.dtos or dto.name in program.variants:
+                    raise GwtError(f"{filename}:{line.number}: type already defined: {dto.name}")
+                program.dtos[dto.name] = dto
             last_top_keyword = None
             continue
 
@@ -361,6 +426,10 @@ def parse_program(
                 index += 1
                 table, index = _parse_table_assignment(statement, lines, index, filename, line)
                 current.givens.append(table)
+            elif _is_variant_assignment_header(statement):
+                index += 1
+                assignment, index = _parse_variant_assignment(statement, lines, index, filename, line)
+                current.givens.append(assignment)
             elif _is_typed_record_header(statement):
                 index += 1
                 expanded, index, validation = _expand_typed_record_block(
@@ -470,6 +539,8 @@ class Runtime:
                 self._validate_dto(line)
             elif isinstance(line, TableAssignment):
                 self._run_table_assignment(line)
+            elif isinstance(line, VariantAssignment):
+                self._run_variant_assignment(line)
             else:
                 self._run_given(line)
 
@@ -516,6 +587,8 @@ class Runtime:
                 self._validate_dto(line)
             elif isinstance(line, TableAssignment):
                 self._run_table_assignment(line)
+            elif isinstance(line, VariantAssignment):
+                self._run_variant_assignment(line)
             else:
                 self._run_given(line)
         self._validate_contract_bindings(self.program.inputs, "REQUEST")
@@ -549,12 +622,16 @@ class Runtime:
         target[path] = value_type
 
         dto = self.program.dtos.get(value_type)
-        if dto is None:
+        if dto is not None:
+            for field, field_type in dto.fields.items():
+                target[f"{path}.{field}"] = field_type
+                if field_type in self.program.dtos or field_type in self.program.variants:
+                    self._register_path_type(f"{path}.{field}", field_type, target)
             return
-        for field, field_type in dto.fields.items():
-            target[f"{path}.{field}"] = field_type
-            if field_type in self.program.dtos:
-                self._register_path_type(f"{path}.{field}", field_type, target)
+
+        variant = self.program.variants.get(value_type)
+        if variant is not None:
+            target[f"{path}.kind"] = _variant_kind_type(variant)
 
     def _apply_action_contract(self, action: Action, env: dict[str, Any], line: Line) -> None:
         for name, value_type in action.contract.inputs.items():
@@ -577,12 +654,18 @@ class Runtime:
 
     def _validate_dto(self, validation: DtoValidation) -> None:
         dto = self.program.dtos.get(validation.dto_name)
-        if dto is None:
+        variant = self.program.variants.get(validation.dto_name)
+        if dto is None and variant is None:
             raise GwtError(f"line {validation.line.number}: unknown record: {validation.dto_name}")
         try:
             value = self._get_path(validation.path, {})
+            if variant is not None:
+                self._validate_variant_value(validation.path, value, variant, validation.line)
+                self._register_path_type(validation.path, validation.dto_name)
+                return
             if not isinstance(value, dict):
                 raise GwtError(f"expected {validation.path} to be a record")
+            assert dto is not None
             self._validate_dto_fields(validation.path, value, dto, validation.line)
             self._register_path_type(validation.path, validation.dto_name)
         except GwtError as exc:
@@ -632,11 +715,43 @@ class Runtime:
             return
 
         dto = self.program.dtos.get(expected_type)
-        if dto is None:
-            raise GwtError(f"unknown record type: {expected_type}")
+        if dto is not None:
+            if not isinstance(value, dict):
+                raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
+            self._validate_dto_fields(path, value, dto, line)
+            return
+
+        variant = self.program.variants.get(expected_type)
+        if variant is not None:
+            self._validate_variant_value(path, value, variant, line)
+            return
+
+        raise GwtError(f"unknown record type: {expected_type}")
+
+    def _validate_variant_value(self, path: str, value: Any, variant: VariantDefinition, line: Line) -> None:
         if not isinstance(value, dict):
-            raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
-        self._validate_dto_fields(path, value, dto, line)
+            raise GwtError(f"expected {path} to be {variant.name}, got {_value_type_name(value)}")
+        kind = value.get("kind")
+        if not isinstance(kind, str):
+            raise GwtError(f"record {variant.name} missing field: {path}.kind")
+        case = variant.cases.get(kind)
+        if case is None:
+            raise GwtError(f"record {variant.name} has unknown kind: {kind}")
+
+        flat_value = _flatten_record(value)
+        expected_fields = {"kind", *case.fields}
+        actual_fields = set(flat_value)
+
+        missing = sorted(expected_fields - actual_fields)
+        if missing:
+            raise GwtError(f"record {variant.name} missing field: {path}.{missing[0]}")
+
+        extra = sorted(actual_fields - expected_fields)
+        if extra:
+            raise GwtError(f"record {variant.name} unknown field for kind {kind}: {path}.{extra[0]}")
+
+        for field, expected_type in case.fields.items():
+            self._validate_value_type(f"{path}.{field}", flat_value[field], expected_type, line)
 
     def _validate_contract_bindings(self, bindings: dict[str, ContractBinding], label: str) -> None:
         for binding in bindings.values():
@@ -676,6 +791,8 @@ class Runtime:
             if table.item_type is not None:
                 dto = self.program.dtos.get(table.item_type)
                 if dto is None:
+                    if table.item_type in self.program.variants:
+                        raise GwtError(f"GIVEN table cannot construct one-of record: {table.item_type}")
                     raise GwtError(f"unknown record: {table.item_type}")
                 for index, row in enumerate(rows, start=1):
                     self._validate_dto_fields(f"{table.path}[{index}]", row, dto, table.line)
@@ -683,6 +800,33 @@ class Runtime:
             self._set_path(table.path, rows, {}, table.line)
         except GwtError as exc:
             raise _with_line_context(table.line, exc) from exc
+
+    def _run_variant_assignment(self, assignment: VariantAssignment) -> None:
+        self._before_line(assignment.line, {})
+        try:
+            variant = self.program.variants.get(assignment.variant_name)
+            if variant is None:
+                raise GwtError(f"unknown one-of record: {assignment.variant_name}")
+            if assignment.case_name not in variant.cases:
+                raise GwtError(f"unknown kind for {assignment.variant_name}: {assignment.case_name}")
+            row = {
+                "kind": assignment.case_name,
+                **{
+                    field: self._eval_expression(value, {})
+                    for field, value in assignment.fields.items()
+                },
+            }
+            try:
+                current = self._get_path(assignment.path, {})
+            except GwtError:
+                current = []
+            if not isinstance(current, list):
+                raise GwtError(f"expected {assignment.path} to be a list")
+            self._validate_variant_value(f"{assignment.path}[{len(current) + 1}]", row, variant, assignment.line)
+            self._register_path_type(assignment.path, f"list<{assignment.variant_name}>")
+            self._set_path(assignment.path, [*current, row], {}, assignment.line)
+        except GwtError as exc:
+            raise _with_line_context(assignment.line, exc) from exc
 
     def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
         self._before_line(line, env)
@@ -894,6 +1038,9 @@ class Runtime:
             elif isinstance(statement, FindBlock):
                 self._before_line(statement.header_line or statement.name_line or statement.iterable, env)
                 result = self._run_find_block(statement, env)
+            elif isinstance(statement, MatchBlock):
+                self._before_line(statement.header_line or statement.expression, env)
+                result = self._run_match_block(statement, env)
             else:
                 result = self._run_command_or_action(statement, env, allow_let=True)
             if isinstance(result, BehaviorReturn):
@@ -954,6 +1101,23 @@ class Runtime:
                     return result
                 return None
         return self._run_body(statement.else_body, env)
+
+    def _run_match_block(self, statement: MatchBlock, env: dict[str, Any]) -> BehaviorReturn | None:
+        try:
+            value = self._eval_expression(statement.expression.text, env)
+        except GwtError as exc:
+            raise _with_line_context(statement.expression, exc) from exc
+        if not isinstance(value, dict):
+            raise GwtError(f"line {statement.expression.number}: DEPENDING ON requires a record value")
+        kind = value.get("kind")
+        if not isinstance(kind, str):
+            raise GwtError(f"line {statement.expression.number}: DEPENDING ON record has no kind")
+        for case in statement.cases:
+            if case.name == kind:
+                return self._run_body(case.body, env)
+        if statement.else_body:
+            return self._run_body(statement.else_body, env)
+        raise GwtError(f"line {statement.expression.number}: DEPENDING ON has no branch for kind: {kind}")
 
     def _match_action(self, action: Action, call: list[str], caller_env: dict[str, Any]) -> dict[str, Any] | None:
         if len(action.signature) != len(call):
@@ -1200,6 +1364,8 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             break
         if text.startswith("ELSE "):
             raise GwtError(f"{filename}:{line.number}: ELSE does not take a condition")
+        if text.startswith("WHEN the kind is "):
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind is can only appear inside DEPENDING ON")
         if text.startswith("GIVEN ") or text.startswith("THEN returns "):
             raise GwtError(f"{filename}:{line.number}: behavior contracts must appear before executable statements")
 
@@ -1276,6 +1442,26 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             last_body_keyword = None
             continue
 
+        if text.startswith("DEPENDING ON "):
+            expression = text.removeprefix("DEPENDING ON ").strip()
+            if not expression:
+                raise GwtError(f"{filename}:{line.number}: DEPENDING ON requires a value")
+            index += 1
+            cases, else_body, else_line, index = _parse_depending_block(lines, index, filename, indent + 2)
+            if not cases:
+                raise GwtError(f"{filename}:{line.number}: DEPENDING ON requires WHEN the kind is branches")
+            body.append(
+                MatchBlock(
+                    _derived_line(line, expression, len("DEPENDING ON ")),
+                    cases,
+                    else_body,
+                    _derived_line(line, text, 0),
+                    else_line,
+                )
+            )
+            last_body_keyword = None
+            continue
+
         tokens = _tokens(text, filename, line.number)
         if tokens:
             last_body_keyword = tokens[0]
@@ -1283,6 +1469,58 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
         index += 1
 
     return body, index
+
+
+def _parse_depending_block(
+    lines: list[Line], index: int, filename: str, indent: int
+) -> tuple[list[MatchCase], list[Any], Line | None, int]:
+    cases: list[MatchCase] = []
+    else_body: list[Any] = []
+    else_line: Line | None = None
+    seen_else = False
+
+    while index < len(lines):
+        line = lines[index]
+        line_indent = _indent_width(line.text)
+        text = line.text.strip()
+        if line_indent < indent:
+            break
+        if line_indent > indent:
+            raise GwtError(f"{filename}:{line.number}: DEPENDING ON branch is indented too far")
+
+        if text == "ELSE":
+            if seen_else:
+                raise GwtError(f"{filename}:{line.number}: DEPENDING ON already has ELSE")
+            seen_else = True
+            else_line = _derived_line(line, text, 0)
+            index += 1
+            else_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not else_body:
+                raise GwtError(f"{filename}:{line.number}: ELSE requires a body")
+            continue
+
+        case_name = _parse_depending_case_header(text, filename, line.number)
+        if case_name is None:
+            raise GwtError(f"{filename}:{line.number}: DEPENDING ON expects 'WHEN the kind is name' or ELSE")
+        if seen_else:
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind is cannot follow ELSE")
+        index += 1
+        case_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+        if not case_body:
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind is requires a body")
+        cases.append(MatchCase(case_name, case_body, _derived_line(line, case_name, text.find(case_name))))
+
+    return cases, else_body, else_line, index
+
+
+def _parse_depending_case_header(text: str, filename: str, line_number: int) -> str | None:
+    match = re.match(r"^WHEN the kind is ([A-Za-z_][A-Za-z0-9_]*)$", text)
+    if match is None:
+        return None
+    case_name = match.group(1)
+    if not _is_local_name(case_name):
+        raise GwtError(f"{filename}:{line_number}: WHEN the kind is requires a simple name")
+    return case_name
 
 
 def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinition, int]:
@@ -1306,6 +1544,99 @@ def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinit
         len(name),
         field_lines,
     ), index
+
+
+def _parse_variant(lines: list[Line], index: int, filename: str) -> tuple[VariantDefinition, int]:
+    header = lines[index]
+    match = re.match(r"^RECORD\s+([A-Z][A-Za-z0-9_]*)\s+is\s+one\s+of$", header.text)
+    if match is None:
+        raise GwtError(f"{filename}:{header.number}: RECORD one-of expects 'RECORD Name is one of'")
+    name = match.group(1)
+    if index + 1 >= len(lines) or _indent_width(lines[index + 1].text) != 2:
+        raise GwtError(f"{filename}:{header.number}: RECORD one-of requires kinds")
+
+    cases: dict[str, VariantCaseDefinition] = {}
+    index += 1
+    while index < len(lines):
+        line = lines[index]
+        indent = _indent_width(line.text)
+        if indent < 2:
+            break
+        if indent != 2:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of kind is indented too far")
+
+        case_text = line.text.strip()
+        if not case_text.endswith(":") or case_text == ":":
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of kind must use 'kind:'")
+        case_name = case_text[:-1].strip()
+        if not _is_local_name(case_name):
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of kind must be a simple name")
+        if case_name in cases:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of kind already defined: {case_name}")
+
+        fields, field_lines, index = _parse_variant_case_fields(lines, index + 1, filename, line.number)
+        cases[case_name] = VariantCaseDefinition(
+            case_name,
+            fields,
+            line.number,
+            line.filename,
+            line.column,
+            len(case_name),
+            field_lines,
+        )
+
+    if not cases:
+        raise GwtError(f"{filename}:{header.number}: RECORD one-of requires kinds")
+    return VariantDefinition(
+        name,
+        cases,
+        header.number,
+        header.filename,
+        header.column + len("RECORD "),
+        len(name),
+    ), index
+
+
+def _parse_variant_case_fields(
+    lines: list[Line], index: int, filename: str, case_line: int
+) -> tuple[dict[str, str], dict[str, Line], int]:
+    if index >= len(lines) or _indent_width(lines[index].text) != 4:
+        raise GwtError(f"{filename}:{case_line}: RECORD one-of kind requires fields")
+
+    fields: dict[str, str] = {}
+    field_lines: dict[str, Line] = {}
+    while index < len(lines):
+        line = lines[index]
+        indent = _indent_width(line.text)
+        if indent < 4:
+            break
+        if indent > 4:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field is indented too far")
+        field_text = line.text.strip()
+        if ":" not in field_text:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field must use 'name: type'")
+        field, value_type = field_text.split(":", 1)
+        field = field.strip()
+        value_type = value_type.strip()
+        if not field:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field requires a name")
+        if field == "kind":
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field 'kind' is automatic")
+        if not _is_local_name(field):
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field must be a simple name")
+        if not value_type:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field requires a type")
+        if not _is_type_syntax(value_type):
+            raise GwtError(f"{filename}:{line.number}: invalid RECORD one-of field type: {value_type}")
+        if field in fields:
+            raise GwtError(f"{filename}:{line.number}: RECORD one-of field already defined: {field}")
+        fields[field] = value_type
+        field_lines[field] = _derived_line(line, field, 0)
+        index += 1
+
+    if not fields:
+        raise GwtError(f"{filename}:{case_line}: RECORD one-of kind requires typed fields")
+    return fields, field_lines, index
 
 
 def _parse_dto_fields(
@@ -1539,6 +1870,20 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
                     line.item_type,
                 )
             )
+        elif isinstance(line, VariantAssignment):
+            substituted.append(
+                VariantAssignment(
+                    line.path,
+                    line.variant_name,
+                    line.case_name,
+                    {
+                        field: _substitute_placeholders(value, values, line.line.number)
+                        for field, value in line.fields.items()
+                    },
+                    line.line,
+                    line.field_lines,
+                )
+            )
         else:
             substituted.append(
                 Line(
@@ -1587,8 +1932,80 @@ def _is_table_header(text: str) -> bool:
     return re.match(r"^[A-Za-z_][A-Za-z0-9_.]* are(?: [A-Za-z_][A-Za-z0-9_]*)?$", text) is not None
 
 
+def _is_record_one_of_header(text: str) -> bool:
+    return re.match(r"^RECORD\s+[A-Z][A-Za-z0-9_]*\s+is\s+one\s+of$", text) is not None
+
+
+def _is_variant_assignment_header(text: str) -> bool:
+    return (
+        re.match(
+            r"^[A-Za-z_][A-Za-z0-9_.]* contains an? [A-Z][A-Za-z0-9_]* of kind [A-Za-z_][A-Za-z0-9_]*$",
+            text,
+        )
+        is not None
+    )
+
+
 def _is_typed_record_header(text: str) -> bool:
     return re.match(r"^[A-Za-z_][A-Za-z0-9_.]* is [A-Z][A-Za-z0-9_]*$", text) is not None
+
+
+def _parse_variant_assignment(
+    header: str,
+    lines: list[Line],
+    index: int,
+    filename: str,
+    header_line: Line,
+) -> tuple[VariantAssignment, int]:
+    match = re.match(
+        r"^(?P<path>[A-Za-z_][A-Za-z0-9_.]*) contains an? (?P<variant>[A-Z][A-Za-z0-9_]*) "
+        r"of kind (?P<case>[A-Za-z_][A-Za-z0-9_]*)$",
+        header,
+    )
+    if match is None:
+        raise GwtError(
+            f"{filename}:{header_line.number}: one-of setup expects 'path contains a RecordName of kind name'"
+        )
+    if index >= len(lines) or not lines[index].text.startswith("  "):
+        raise GwtError(f"{filename}:{header_line.number}: one-of setup requires fields")
+
+    fields: dict[str, str] = {}
+    field_lines: dict[str, Line] = {}
+    while index < len(lines) and lines[index].text.startswith("  "):
+        line = lines[index]
+        if _indent_width(line.text) != 2:
+            raise GwtError(f"{filename}:{line.number}: one-of setup fields must use two spaces")
+        field_text = line.text.strip()
+        if ":" not in field_text:
+            raise GwtError(f"{filename}:{line.number}: one-of setup field must use 'name: value'")
+        field, value = field_text.split(":", 1)
+        field = field.strip()
+        value = value.strip()
+        if not field:
+            raise GwtError(f"{filename}:{line.number}: one-of setup field requires a name")
+        if field == "kind":
+            raise GwtError(f"{filename}:{line.number}: one-of setup field 'kind' is automatic")
+        if not _is_local_name(field):
+            raise GwtError(f"{filename}:{line.number}: one-of setup field must be a simple name")
+        if not value:
+            raise GwtError(f"{filename}:{line.number}: one-of setup field requires a value")
+        if field in fields:
+            raise GwtError(f"{filename}:{line.number}: one-of setup field already defined: {field}")
+        fields[field] = value
+        field_lines[field] = _derived_line(line, field, 0)
+        index += 1
+
+    return (
+        VariantAssignment(
+            match.group("path"),
+            match.group("variant"),
+            match.group("case"),
+            fields,
+            _derived_line(header_line, header, len("GIVEN ")),
+            field_lines,
+        ),
+        index,
+    )
 
 
 def _expand_typed_record_block(
@@ -1980,6 +2397,10 @@ def _literal_union_base_type(value_type: str) -> str | None:
     if not values:
         return None
     return _value_type_name(values[0])
+
+
+def _variant_kind_type(variant: VariantDefinition) -> str:
+    return " | ".join(f'"{name}"' for name in variant.cases)
 
 
 def _value_matches_literal(value: Any, literal: Any) -> bool:

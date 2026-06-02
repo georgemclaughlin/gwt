@@ -14,10 +14,13 @@ from .runtime import (
     ForBlock,
     IfBlock,
     Line,
+    MatchBlock,
     Program,
     RESERVED_BEHAVIOR_NAMES,
     Scenario,
     TableAssignment,
+    VariantAssignment,
+    VariantDefinition,
     _condition_to_expression,
     _is_local_name,
     _is_type_syntax,
@@ -36,6 +39,7 @@ from .runtime import (
     _split_required,
     _tokens,
     _value_matches_literal,
+    _variant_kind_type,
 )
 from .symbols import SourceRange
 
@@ -107,6 +111,15 @@ class Checker:
                         f"unknown record field type: {value_type}",
                         "GWT014",
                     )
+        for variant in self.program.variants.values():
+            for case in variant.cases.values():
+                for field, value_type in case.fields.items():
+                    if not self._is_known_type(value_type):
+                        self._add_line(
+                            case.field_lines[field],
+                            f"unknown record field type: {value_type}",
+                            "GWT014",
+                        )
 
     def _check_program_contracts(self) -> None:
         for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
@@ -214,6 +227,8 @@ class Checker:
         for line in background_lines:
             if isinstance(line, TableAssignment):
                 self._check_table_placeholders(line, set())
+            elif isinstance(line, VariantAssignment):
+                self._check_variant_placeholders(line, set())
             elif isinstance(line, Line):
                 self._check_placeholders(line, set())
 
@@ -230,6 +245,8 @@ class Checker:
         for line in scenario.givens:
             if isinstance(line, TableAssignment):
                 self._check_table_placeholders(line, example_headers)
+            elif isinstance(line, VariantAssignment):
+                self._check_variant_placeholders(line, example_headers)
             elif isinstance(line, Line):
                 self._check_placeholders(line, example_headers)
         for line in scenario.whens:
@@ -253,6 +270,9 @@ class Checker:
             elif isinstance(given, TableAssignment):
                 scope.names.add(given.path)
                 scope.types[given.path] = f"list<{given.item_type}>" if given.item_type is not None else "list"
+            elif isinstance(given, VariantAssignment):
+                scope.names.add(given.path)
+                scope.types[given.path] = f"list<{given.variant_name}>"
             elif isinstance(given, Line) and " is " in given.text:
                 path, expression = given.text.split(" is ", 1)
                 path = path.strip()
@@ -280,6 +300,10 @@ class Checker:
         if dto is not None:
             for field_name, field_type in dto.fields.items():
                 scope.types[f"{name}.{field_name}"] = field_type
+            return
+        variant = self.program.variants.get(value_type)
+        if variant is not None:
+            scope.types[f"{name}.kind"] = _variant_kind_type(variant)
 
     def _check_body(self, body: list[Any], scope: Scope, expected_return: str | None = None) -> None:
         for statement in body:
@@ -291,6 +315,8 @@ class Checker:
                 self._check_for(statement, scope, expected_return)
             elif isinstance(statement, FindBlock):
                 self._check_find_block(statement, scope, expected_return)
+            elif isinstance(statement, MatchBlock):
+                self._check_match_block(statement, scope, expected_return)
             else:
                 self._check_command_or_action(statement, scope, allow_let=True, expected_return=expected_return)
 
@@ -338,9 +364,51 @@ class Checker:
         self._check_body(statement.body, find_scope, expected_return)
         self._check_body(statement.else_body, scope.copy(), expected_return)
 
+    def _check_match_block(self, statement: MatchBlock, scope: Scope, expected_return: str | None = None) -> None:
+        expression = self._check_expression(statement.expression.text, statement.expression)
+        expression_type = _infer_expression_type(expression, scope) if expression is not None else None
+        variant = self.program.variants.get(expression_type) if expression_type is not None else None
+        if expression_type is not None and variant is None and expression_type != "any":
+            self._add_line(statement.expression, f"DEPENDING ON expected one-of record, got {expression_type}", "GWT016")
+
+        seen: set[str] = set()
+        for case in statement.cases:
+            if case.name in seen:
+                self._add_line(case.line, f"duplicate kind branch: {case.name}", "GWT014")
+            seen.add(case.name)
+            if variant is not None and case.name not in variant.cases:
+                self._add_line(case.line, f"unknown kind for {variant.name}: {case.name}", "GWT014")
+
+            branch_scope = scope.copy()
+            if variant is not None and case.name in variant.cases and isinstance(expression, Name):
+                self._add_variant_case_fields(branch_scope, expression.value, variant, case.name)
+            self._check_body(case.body, branch_scope, expected_return)
+
+        if variant is not None:
+            missing = sorted(set(variant.cases) - seen)
+            if missing and not statement.else_body:
+                self._add_line(
+                    statement.expression,
+                    f"DEPENDING ON requires ELSE unless all kinds are covered; missing {missing[0]}",
+                    "GWT014",
+                )
+        elif not statement.else_body:
+            self._add_line(statement.expression, "DEPENDING ON requires ELSE for unknown one-of records", "GWT014")
+
+        self._check_body(statement.else_body, scope.copy(), expected_return)
+
+    def _add_variant_case_fields(
+        self, scope: Scope, name: str, variant: VariantDefinition, case_name: str
+    ) -> None:
+        case = variant.cases[case_name]
+        scope.types[name] = variant.name
+        scope.types[f"{name}.kind"] = f'"{case_name}"'
+        for field, value_type in case.fields.items():
+            scope.types[f"{name}.{field}"] = value_type
+
     def _check_given(self, statement: Any) -> None:
         if isinstance(statement, DtoValidation):
-            if statement.dto_name not in self.program.dtos:
+            if statement.dto_name not in self.program.dtos and statement.dto_name not in self.program.variants:
                 self._add_line(statement.line, f"unknown record: {statement.dto_name}", "GWT014")
             return
         if isinstance(statement, TableAssignment):
@@ -351,6 +419,9 @@ class Checker:
                 for row in statement.rows:
                     for value in row.values():
                         self._check_expression(value, statement.line)
+            return
+        if isinstance(statement, VariantAssignment):
+            self._check_variant_assignment(statement)
             return
         if not isinstance(statement, Line):
             return
@@ -369,6 +440,13 @@ class Checker:
             return
         dto = self.program.dtos.get(statement.item_type)
         if dto is None:
+            if statement.item_type in self.program.variants:
+                self._add_line(
+                    statement.line,
+                    f"GIVEN table cannot construct one-of record: {statement.item_type}",
+                    "GWT014",
+                )
+                return
             self._add_line(statement.line, f"unknown record: {statement.item_type}", "GWT014")
             return
         if not statement.rows:
@@ -405,6 +483,48 @@ class Checker:
                         f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
                         "GWT016",
                     )
+
+    def _check_variant_assignment(self, statement: VariantAssignment) -> None:
+        self._check_path(statement.path, statement.line)
+        variant = self.program.variants.get(statement.variant_name)
+        if variant is None:
+            self._add_line(statement.line, f"unknown one-of record: {statement.variant_name}", "GWT014")
+            return
+        case = variant.cases.get(statement.case_name)
+        if case is None:
+            self._add_line(statement.line, f"unknown kind for {variant.name}: {statement.case_name}", "GWT014")
+            return
+
+        actual_fields = set(statement.fields)
+        expected_fields = set(case.fields)
+        missing = sorted(expected_fields - actual_fields)
+        if missing:
+            self._add_line(statement.line, f"GIVEN {variant.name} kind {case.name} missing field: {missing[0]}", "GWT014")
+        extra = sorted(actual_fields - expected_fields)
+        if extra:
+            self._add_line(statement.line, f"GIVEN {variant.name} kind {case.name} has unknown field: {extra[0]}", "GWT014")
+
+        for field, value in statement.fields.items():
+            expected_type = case.fields.get(field)
+            if expected_type is None or _has_placeholder(value):
+                continue
+            expression = self._check_expression(value, statement.field_lines.get(field, statement.line))
+            actual_type = _infer_expression_type(expression, Scope(set())) if expression is not None else None
+            literal_values = _literal_union_values(expected_type)
+            if literal_values is not None and isinstance(expression, Literal):
+                if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
+                    self._add_line(
+                        statement.field_lines.get(field, statement.line),
+                        f"GIVEN {variant.name} field '{field}' expected {expected_type}, got {actual_type}",
+                        "GWT016",
+                    )
+                continue
+            if actual_type is not None and not _assignable(actual_type, expected_type):
+                self._add_line(
+                    statement.field_lines.get(field, statement.line),
+                    f"GIVEN {variant.name} field '{field}' expected {expected_type}, got {actual_type}",
+                    "GWT016",
+                )
 
     def _check_command_or_action(
         self,
@@ -834,12 +954,17 @@ class Checker:
     def _is_known_type(self, value_type: str) -> bool:
         if not _is_type_syntax(value_type):
             return False
-        if value_type in DTO_TYPES or value_type in self.program.dtos or _literal_union_values(value_type) is not None:
+        if (
+            value_type in DTO_TYPES
+            or value_type in self.program.dtos
+            or value_type in self.program.variants
+            or _literal_union_values(value_type) is not None
+        ):
             return True
         item_type = _list_item_type(value_type)
         if item_type is None:
             return False
-        return item_type in DTO_TYPES or item_type in self.program.dtos
+        return item_type in DTO_TYPES or item_type in self.program.dtos or item_type in self.program.variants
 
     def _check_expression(self, text: str, line: Line) -> Expr | None:
         if _has_placeholder(text):
@@ -865,6 +990,12 @@ class Checker:
                 for placeholder in PLACEHOLDER_PATTERN.findall(value):
                     if placeholder not in example_headers:
                         self._add_line(table.line, f"EXAMPLES has no value for <{placeholder}>", "GWT012")
+
+    def _check_variant_placeholders(self, assignment: VariantAssignment, example_headers: set[str]) -> None:
+        for value in assignment.fields.values():
+            for placeholder in PLACEHOLDER_PATTERN.findall(value):
+                if placeholder not in example_headers:
+                    self._add_line(assignment.line, f"EXAMPLES has no value for <{placeholder}>", "GWT012")
 
     def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
         indexed: dict[str, list[Action]] = {}
@@ -929,6 +1060,9 @@ def _body_has_return(body: list[Any]) -> bool:
             return True
         elif isinstance(statement, FindBlock):
             if _body_has_return(statement.body) or _body_has_return(statement.else_body):
+                return True
+        elif isinstance(statement, MatchBlock):
+            if any(_body_has_return(case.body) for case in statement.cases) or _body_has_return(statement.else_body):
                 return True
     return False
 

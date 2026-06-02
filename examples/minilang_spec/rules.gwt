@@ -9,17 +9,27 @@ RECORD MiniToken
   kind: "keyword" | "identifier" | "number" | "symbol" | "string"
   lexeme: text
 
-RECORD MiniStatement
-  index: number
-  kind: "let_number" | "fn_add" | "if_add_gt_print" | "let_number_list" | "print_map_double"
-  name: text
-  left_name: text
-  right_name: text
-  number_value: number
-  threshold: number
-  then_text: text
-  else_text: text
-  list_name: text
+RECORD MiniStatement is one of
+  let_number:
+    index: number
+    name: text
+    number_value: number
+  fn_add:
+    index: number
+    name: text
+  if_add_gt_print:
+    index: number
+    left_name: text
+    right_name: text
+    threshold: number
+    then_text: text
+    else_text: text
+  let_number_list:
+    index: number
+    name: text
+  print_map_double:
+    index: number
+    list_name: text
 
 RECORD MiniNumberList
   name: text
@@ -135,16 +145,17 @@ WHEN evaluate_statement <statement> using <front_end> into <runtime>
   GIVEN statement is MiniStatement
   AND front_end is MiniFrontEnd
   AND runtime is MiniRuntime
-  IF statement.kind == "let_number"
-    store_number statement into runtime
-  IF statement.kind == "fn_add"
-    set runtime.add_defined to true
-  IF statement.kind == "if_add_gt_print"
-    evaluate_add_threshold statement into runtime
-  IF statement.kind == "let_number_list"
-    store_number_list statement using front_end into runtime
-  IF statement.kind == "print_map_double"
-    evaluate_map_double statement into runtime
+  DEPENDING ON statement
+    WHEN the kind is let_number
+      store_number statement into runtime
+    WHEN the kind is fn_add
+      set runtime.add_defined to true
+    WHEN the kind is if_add_gt_print
+      evaluate_add_threshold statement into runtime
+    WHEN the kind is let_number_list
+      store_number_list statement using front_end into runtime
+    WHEN the kind is print_map_double
+      evaluate_map_double statement into runtime
 
 WHEN store_number <statement> into <runtime>
   GIVEN statement is MiniStatement
@@ -321,14 +332,35 @@ GIVEN front_end.tokens are MiniToken
   | 72    | "symbol"     | ")"      |
   | 73    | "symbol"     | ")"      |
 
-GIVEN front_end.statements are MiniStatement
-  | index | kind               | name   | left_name | right_name | number_value | threshold | then_text | else_text | list_name |
-  | 1     | "let_number"       | "x"    | ""        | ""         | 10           | 0         | ""        | ""        | ""        |
-  | 2     | "let_number"       | "y"    | ""        | ""         | 20           | 0         | ""        | ""        | ""        |
-  | 3     | "fn_add"           | "add"  | "a"       | "b"        | 0            | 0         | ""        | ""        | ""        |
-  | 4     | "if_add_gt_print"  | ""     | "x"       | "y"        | 0            | 25        | "large"   | "small"   | ""        |
-  | 5     | "let_number_list"  | "nums" | ""        | ""         | 0            | 0         | ""        | ""        | ""        |
-  | 6     | "print_map_double" | ""     | ""        | ""         | 0            | 0         | ""        | ""        | "nums"    |
+GIVEN front_end.statements contains a MiniStatement of kind let_number
+  index: 1
+  name: "x"
+  number_value: 10
+
+GIVEN front_end.statements contains a MiniStatement of kind let_number
+  index: 2
+  name: "y"
+  number_value: 20
+
+GIVEN front_end.statements contains a MiniStatement of kind fn_add
+  index: 3
+  name: "add"
+
+GIVEN front_end.statements contains a MiniStatement of kind if_add_gt_print
+  index: 4
+  left_name: "x"
+  right_name: "y"
+  threshold: 25
+  then_text: "large"
+  else_text: "small"
+
+GIVEN front_end.statements contains a MiniStatement of kind let_number_list
+  index: 5
+  name: "nums"
+
+GIVEN front_end.statements contains a MiniStatement of kind print_map_double
+  index: 6
+  list_name: "nums"
 
 GIVEN front_end.lists are MiniNumberList
   | name   | values       |
@@ -451,13 +483,31 @@ GIVEN front_end.tokens are MiniToken
   | 72    | "symbol"     | ")"      |
   | 73    | "symbol"     | ")"      |
 
-GIVEN front_end.statements are MiniStatement
-  | index | kind              | name   | left_name | right_name | number_value | threshold | then_text | else_text | list_name |
-  | 1     | "let_number"      | "x"    | ""        | ""         | 10           | 0         | ""        | ""        | ""        |
-  | 2     | "let_number"      | "y"    | ""        | ""         | 20           | 0         | ""        | ""        | ""        |
-  | 3     | "fn_add"          | "add"  | "a"       | "b"        | 0            | 0         | ""        | ""        | ""        |
-  | 4     | "if_add_gt_print" | ""     | "x"       | "y"        | 0            | 25        | "large"   | "small"   | ""        |
-  | 5     | "let_number_list" | "nums" | ""        | ""         | 0            | 0         | ""        | ""        | ""        |
+GIVEN front_end.statements contains a MiniStatement of kind let_number
+  index: 1
+  name: "x"
+  number_value: 10
+
+GIVEN front_end.statements contains a MiniStatement of kind let_number
+  index: 2
+  name: "y"
+  number_value: 20
+
+GIVEN front_end.statements contains a MiniStatement of kind fn_add
+  index: 3
+  name: "add"
+
+GIVEN front_end.statements contains a MiniStatement of kind if_add_gt_print
+  index: 4
+  left_name: "x"
+  right_name: "y"
+  threshold: 25
+  then_text: "large"
+  else_text: "small"
+
+GIVEN front_end.statements contains a MiniStatement of kind let_number_list
+  index: 5
+  name: "nums"
 
 GIVEN front_end.lists are MiniNumberList
   | name   | values       |

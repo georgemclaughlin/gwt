@@ -13,11 +13,13 @@ from .runtime import (
     ForBlock,
     IfBlock,
     Line,
+    MatchBlock,
     PathRef,
     Program,
     Runtime,
     StackFrame,
     TableAssignment,
+    VariantAssignment,
     parse_program,
 )
 
@@ -170,6 +172,8 @@ def executable_lines(program: Program) -> list[DebugLine]:
             add(statement.line)
         elif isinstance(statement, TableAssignment):
             add(statement.line)
+        elif isinstance(statement, VariantAssignment):
+            add(statement.line)
         elif isinstance(statement, Line):
             add(statement)
         elif isinstance(statement, IfBlock):
@@ -182,6 +186,11 @@ def executable_lines(program: Program) -> list[DebugLine]:
         elif isinstance(statement, FindBlock):
             add(statement.header_line or statement.name_line or statement.iterable)
             collect_body(statement.body)
+            collect_body(statement.else_body)
+        elif isinstance(statement, MatchBlock):
+            add(statement.header_line or statement.expression)
+            for case in statement.cases:
+                collect_body(case.body)
             collect_body(statement.else_body)
 
     def collect_body(body: list[Any]) -> None:

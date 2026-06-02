@@ -108,6 +108,75 @@ class RuntimeTests(unittest.TestCase):
                 """
             )
 
+    def test_one_of_record_setup_and_depending_on_branch(self):
+        result = run_source(
+            """
+            RECORD Statement is one of
+              let_number:
+                name: text
+                value: number
+              print_text:
+                text: text
+
+            GIVEN program.statements is []
+            GIVEN program.statements contains a Statement of kind let_number
+              name: "x"
+              value: 2
+            GIVEN program.statements contains a Statement of kind print_text
+              text: "done"
+            GIVEN result.total is 0
+            GIVEN result.output is []
+
+            WHEN handle <statement> into <result>
+              GIVEN statement is Statement
+              GIVEN result is any
+              DEPENDING ON statement
+                WHEN the kind is let_number
+                  add statement.value to result.total
+                WHEN the kind is print_text
+                  append statement.text to result.output
+
+            WHEN run <program> into <result>
+              GIVEN program is any
+              GIVEN result is any
+              FOR statement in program.statements
+                handle statement into result
+
+            WHEN run program into result
+
+            THEN result.total == 2
+            AND result.output == ["done"]
+            """
+        )
+
+        self.assertEqual(
+            result.state["program"]["statements"],
+            [
+                {"kind": "let_number", "name": "x", "value": 2},
+                {"kind": "print_text", "text": "done"},
+            ],
+        )
+        self.assertEqual(result.state["result"]["total"], 2)
+        self.assertEqual(result.state["result"]["output"], ["done"])
+
+    def test_one_of_record_rejects_fields_from_other_kind(self):
+        with self.assertRaisesRegex(GwtError, "unknown field for kind let_number"):
+            run_source(
+                """
+                RECORD Statement is one of
+                  let_number:
+                    name: text
+                    value: number
+                  print_text:
+                    text: text
+
+                GIVEN program.statements contains a Statement of kind let_number
+                  name: "x"
+                  value: 2
+                  text: "wrong"
+                """
+            )
+
     def test_rejects_reserved_behavior_name(self):
         with self.assertRaisesRegex(GwtError, "behavior name is reserved: count"):
             run_source(

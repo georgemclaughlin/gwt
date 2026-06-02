@@ -10,6 +10,7 @@ program        = top_level* ;
 top_level      = program_header
                | use
                | record
+               | one_of_record
                | program_contract
                | behavior
                | background
@@ -21,6 +22,9 @@ use            = "USE" string ;
 record         = ("RECORD" | "DTO") name, record_block ;
 record_block   = record_field+ ;
 record_field   = name ":" type | name ":", record_block ;
+one_of_record  = "RECORD" name "is one of", one_of_kind+ ;
+one_of_kind    = name ":", one_of_field+ ;
+one_of_field   = name ":" type ;
 type           = primitive_type | name | "list<", type_name, ">" | literal_union ;
 primitive_type = "number" | "text" | "boolean" | "list" | "any" ;
 type_name      = primitive_type | name ;
@@ -63,6 +67,7 @@ behavior_statement
               | if_block
               | for_block
               | find_block
+              | depending_block
               | return
               | pass
               | builtin
@@ -75,6 +80,9 @@ if_block       = "IF" condition, behavior_block, ("ELSE", behavior_block)? ;
 for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_block ;
 find_block     = "FIND" name "in" expression "WHERE" condition,
                  behavior_block, "ELSE", behavior_block ;
+depending_block
+              = "DEPENDING ON" expression, kind_branch+, ("ELSE", behavior_block)? ;
+kind_branch    = "WHEN the kind is" name, behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
 pass           = "PASS" ;
 
@@ -94,6 +102,7 @@ assignment_or_record
               = path "is" expression
               | path "is", record_block
               | path "is" name, record_block
+              | path "contains" ("a" | "an") name "of kind" name, record_block
               | path "are", table
               | path "are" name, table ;
 
@@ -128,6 +137,7 @@ Indentation is significant:
 - Behavior block statements are indented by two spaces.
 - Nested `IF`, `ELSE`, `FOR`, and `FIND` bodies add two spaces per level.
 - Record blocks also add two spaces per level.
+- `DEPENDING ON` branches use `WHEN the kind is name` at the branch indent.
 
 CLI request mode runs two parsed programs together: the main program contributes
 behavior definitions and optional background setup, while the request program

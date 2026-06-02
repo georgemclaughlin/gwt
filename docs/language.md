@@ -155,6 +155,33 @@ Records are contracts only; they do not define behavior or methods. `DTO` is
 accepted as a legacy alias for `RECORD`; `gwt format` emits the canonical
 `RECORD` spelling.
 
+Records can also describe values that are one of several named kinds:
+
+```gwt
+RECORD Statement is one of
+  let_number:
+    name: text
+    value: number
+  print_text:
+    text: text
+```
+
+A one-of value contains an automatic `kind` field plus only the fields for its
+active kind. Setup adds one concrete kind to a list:
+
+```gwt
+GIVEN program.statements is []
+
+GIVEN program.statements contains a Statement of kind let_number
+  name: "x"
+  value: 2
+```
+
+This produces `{ "kind": "let_number", "name": "x", "value": 2 }`. Validation
+rejects fields that do not belong to the active kind. In GWT setup, `kind` is
+added automatically. In JSON input, include the same `kind` field shown in the
+stored record.
+
 ## Program Contracts
 
 `REQUEST` declares state a host or request file must provide before execution.
@@ -211,7 +238,7 @@ WHEN checkout <cart> for <customer>
 ```
 
 `THEN returns Type` declares the behavior's return type. If a behavior declares
-a return type, `gwt check` verifies that the body has a `RETURN` statement and
+a return type, `gwt check` verifies that the body contains a `RETURN` statement and
 that statically known return values match the declared type.
 
 ## Imports
@@ -545,7 +572,7 @@ exists item in invoice.items where item.name == "keyboard" into invoice.has_keyb
 print account.balance
 ```
 
-`value` can be an expression. If the target path has a known type from a record,
+`value` can be an expression. If the target path contains a known type from a record,
 program contract, typed table, or behavior contract, mutations are checked
 against that type immediately.
 
@@ -641,6 +668,23 @@ ELSE
 ```
 
 The matched name exists only in the match body, not in the `ELSE` body.
+
+Behavior blocks can branch on one-of record kinds with `DEPENDING ON`:
+
+```gwt
+DEPENDING ON statement
+  WHEN the kind is let_number
+    add statement.value to result.total
+  WHEN the kind is print_text
+    append statement.text to result.output
+  ELSE
+    append "unknown_statement" to result.errors
+```
+
+`ELSE` is required unless every declared kind is covered. Inside
+`DEPENDING ON statement`, `WHEN the kind is let_number` means `statement.kind`
+is `let_number`. GWT can then check ordinary paths such as `statement.value`
+and `statement.text` for the active kind.
 
 ## Return Values
 
