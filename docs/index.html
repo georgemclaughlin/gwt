@@ -12,16 +12,6 @@
     <link rel="stylesheet" href="assets/site.css">
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="GWT home">GWT</a>
-      <nav class="nav" aria-label="Main navigation">
-        <a href="#fundamentals">Fundamentals</a>
-        <a href="#workflow">Workflow Demo</a>
-        <a href="#stress">Stress Test</a>
-        <a href="#run">Run It</a>
-      </nav>
-    </header>
-
     <main id="top">
       <section class="hero">
         <div class="hero-copy">
@@ -56,19 +46,20 @@
   },
   <span class="tok-key">"amount"</span>: <span class="tok-number">30</span>
 }</code></pre>
-            <pre data-title="rules.gwt"><code><span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span>
-  <span class="tok-key">balance</span>: <span class="tok-number">100</span>
-  <span class="tok-key">status</span>: <span class="tok-string">"open"</span>
-<span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-number">30</span>
-<span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">any</span>
+            <pre data-title="rules.gwt"><code><span class="tok-kw">RECORD</span> <span class="tok-type">Account</span>
+  <span class="tok-key">balance</span>: <span class="tok-type">number</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
+<span class="tok-kw">REQUEST</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
+<span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-type">number</span>
+<span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
 <span class="tok-kw">WHEN</span> withdraw <span class="tok-param">&lt;amount&gt;</span> from <span class="tok-param">&lt;account&gt;</span>
+  <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
   <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
   <span class="tok-kw">AND</span> account.balance <span class="tok-word">is at least</span> amount
   <span class="tok-action">subtract</span> amount from account.balance
 <span class="tok-kw">WHEN</span> withdraw amount from account
-<span class="tok-kw">THEN</span> account <span class="tok-word">is</span>
-  <span class="tok-key">balance</span>: <span class="tok-number">70</span>
-  <span class="tok-key">status</span>: <span class="tok-string">"open"</span></code></pre>
+<span class="tok-kw">THEN</span> account.balance <span class="tok-word">is</span> <span class="tok-number">70</span>
+<span class="tok-kw">AND</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span></code></pre>
             <pre data-title="result.json"><code>{
   <span class="tok-key">"ok"</span>: <span class="tok-bool">true</span>,
   <span class="tok-key">"result"</span>: {
