@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .checker import Diagnostic
-from .runtime import RunResult, ScenarioResult, run_request, run_source
+from .runtime import RunResult, ScenarioResult, run_json_request, run_request, run_source
 from .service import Analysis, analyze_file, analyze_source
 
 
@@ -112,6 +112,27 @@ def run_file(path: str | Path, *, request_file: str | Path | None = None) -> Exe
     return ExecutionResult(result, str(program_path), str(request_path))
 
 
+def run_json_file(
+    path: str | Path,
+    json_state: dict[str, Any],
+    *,
+    entry: str,
+    json_file: str | Path | None = None,
+) -> ExecutionResult:
+    program_path = Path(path)
+    result = run_json_request(
+        program_path.read_text(),
+        json_state,
+        entry=entry,
+        filename=str(program_path),
+    )
+    return ExecutionResult(
+        result,
+        str(program_path),
+        str(json_file) if json_file is not None else None,
+    )
+
+
 def run_text(
     source: str,
     *,
@@ -125,4 +146,18 @@ def run_text(
         run_request(source, request_source, filename=filename, request_filename=request_filename),
         filename,
         request_filename,
+    )
+
+
+def run_json_text(
+    source: str,
+    json_state: dict[str, Any],
+    *,
+    entry: str,
+    filename: str = "<source>",
+    entry_filename: str = "<entry>",
+) -> ExecutionResult:
+    return ExecutionResult(
+        run_json_request(source, json_state, entry=entry, filename=filename, entry_filename=entry_filename),
+        filename,
     )

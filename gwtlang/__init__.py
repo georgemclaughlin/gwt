@@ -6,12 +6,14 @@ from .api import (
     check_file,
     check_text,
     run_file,
+    run_json_file,
+    run_json_text,
     run_result_payload,
     run_text,
 )
 from .checker import check_program
 from .formatter import FormatResult, format_file, format_text, is_formatted
-from .runtime import GwtError, parse_program, run_request, run_source
+from .runtime import GwtError, parse_program, run_json_request, run_request, run_source
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
 
@@ -31,6 +33,9 @@ __all__ = [
     "is_formatted",
     "parse_program",
     "run_file",
+    "run_json_file",
+    "run_json_request",
+    "run_json_text",
     "run_result_payload",
     "run_request",
     "run_source",

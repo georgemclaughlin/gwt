@@ -2,7 +2,15 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from gwtlang import check_file, check_text, run_file, run_text
+from gwtlang import (
+    GwtError,
+    check_file,
+    check_text,
+    run_file,
+    run_json_file,
+    run_json_text,
+    run_text,
+)
 
 
 class PublicApiTests(unittest.TestCase):
@@ -89,6 +97,71 @@ class PublicApiTests(unittest.TestCase):
         payload = result.as_payload()
         self.assertEqual(payload["result"], {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
+
+    def test_run_json_text_runs_entry_with_request_contracts(self):
+        result = run_json_text(
+            """
+            RECORD Cart
+              subtotal: number
+              shipping: number
+              total: number
+
+            REQUEST cart is Cart
+            OUTPUT cart is Cart
+
+            WHEN checkout <cart>
+              GIVEN cart is Cart
+              set cart.total to cart.subtotal + cart.shipping
+              set audit.status to "priced"
+            """,
+            {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
+            entry="checkout cart",
+        )
+
+        self.assertEqual(result.state["cart"]["total"], 92)
+        self.assertEqual(result.state["audit"]["status"], "priced")
+        self.assertEqual(
+            result.as_payload()["result"],
+            {"cart": {"subtotal": 84, "shipping": 8, "total": 92}},
+        )
+
+    def test_run_json_text_validates_missing_request_contract(self):
+        with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
+            run_json_text(
+                """
+                RECORD Cart
+                  subtotal: number
+
+                REQUEST cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
+                  print cart.subtotal
+                """,
+                {},
+                entry="checkout cart",
+            )
+
+    def test_run_json_file_sets_json_file_metadata(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            payload = Path(temp_dir) / "request.json"
+            program.write_text(
+                """
+                WHEN checkout <cart>
+                  set cart.total to cart.subtotal + cart.shipping
+                """
+            )
+
+            result = run_json_file(
+                program,
+                {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
+                entry="checkout cart",
+                json_file=payload,
+            )
+
+        self.assertEqual(result.request_file, str(payload))
+        self.assertEqual(result.state["cart"]["total"], 92)
 
     def test_run_text_returns_execution_result(self):
         result = run_text(

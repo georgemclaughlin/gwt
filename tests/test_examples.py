@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 import unittest
 
 from gwtlang import GwtError
-from gwtlang.runtime import run_request, run_source
+from gwtlang.runtime import run_json_request, run_request, run_source
 from gwtlang.service import analyze_file
 
 
@@ -175,6 +176,33 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(result.state["fulfillment"]["status"], "held")
         self.assertEqual(result.state["fulfillment"]["reason"], "unknown_sku")
         self.assertEqual(result.state["fulfillment"]["unknown_sku_count"], 1)
+
+    def test_inventory_allocation_spike_runs_scenarios_and_json_request(self):
+        program = Path("examples/inventory_allocation_spike/rules.gwt")
+        request = Path("examples/inventory_allocation_spike/request.json")
+
+        analysis = analyze_file(program)
+        self.assertEqual(analysis.diagnostics, [])
+
+        result = run_source(program.read_text(), filename=str(program))
+        self.assertEqual(
+            [scenario.state["fulfillment"]["status"] for scenario in result.scenarios],
+            ["partial", "partial", "held"],
+        )
+        self.assertEqual(result.scenarios[1].state["widget_inventory"]["reserved"], 3)
+
+        request_result = run_json_request(
+            program.read_text(),
+            json.loads(request.read_text()),
+            entry="fulfill order from inventory into fulfillment",
+            filename=str(program),
+            entry_filename=str(request),
+        )
+        self.assertEqual(request_result.state["fulfillment"]["status"], "partial")
+        self.assertEqual(request_result.state["inventory"]["items"][1]["available"], 0)
+        self.assertEqual(request_result.scenarios[0].returned_state["inventory"]["items"][1]["reserved"], 1)
+        self.assertIn("selected_inventory_item", request_result.state)
+        self.assertNotIn("selected_inventory_item", request_result.scenarios[0].returned_state)
 
     def test_output_contract_failure_is_reported(self):
         with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for decision"):

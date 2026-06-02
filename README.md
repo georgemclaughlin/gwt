@@ -139,6 +139,15 @@ Run it like an app would, with a separate request file:
 python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
 ```
 
+Production callers can also provide JSON state and an explicit entry behavior:
+
+```sh
+python -m gwtlang run examples/order_fulfillment/rules.gwt \
+  --json-input examples/order_fulfillment/request.json \
+  --entry "fulfill order from inventory into fulfillment" \
+  --json
+```
+
 The JSON result is a stable envelope:
 
 ```json
@@ -187,6 +196,7 @@ The CLI currently supports:
 
 ```sh
 gwt run examples/bank.gwt
+gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --entry "fulfill order from inventory into fulfillment" --json
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
 gwt format examples/bank.gwt --check
@@ -231,6 +241,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of v0.1 |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
+| [`examples/inventory_allocation_spike`](examples/inventory_allocation_spike) | List-shaped inventory pressure test |
 
 ## Python API
 
@@ -238,18 +249,33 @@ Host applications can call GWT through the Python package instead of shelling
 out to the CLI:
 
 ```python
-from gwtlang import check_file, run_file
+import json
+
+from gwtlang import check_file, run_json_file
 
 check = check_file("examples/order_fulfillment/rules.gwt")
 if not check.ok:
     raise SystemExit(check.as_payload())
 
-execution = run_file(
+request = json.loads(open("examples/order_fulfillment/request.json").read())
+execution = run_json_file(
     "examples/order_fulfillment/rules.gwt",
-    request_file="examples/order_fulfillment/request.gwt",
+    request,
+    entry="fulfill order from inventory into fulfillment",
 )
 print(execution.state["fulfillment"]["status"])
 print(execution.as_payload()["result"])
+```
+
+`.gwt` request files remain useful for examples and assertion-heavy tests:
+
+```python
+from gwtlang import run_file
+
+execution = run_file(
+    "examples/order_fulfillment/rules.gwt",
+    request_file="examples/order_fulfillment/request_with_assertions.gwt",
+)
 ```
 
 The same analysis layer is available from Python:

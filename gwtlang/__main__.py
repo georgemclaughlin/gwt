@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-from .api import run_file, run_result_payload
+from .api import run_file, run_json_file, run_result_payload
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
@@ -45,10 +45,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_parser = subparsers.add_parser("run", help="Run a GWT program or request.")
     add_file_arguments(run_parser)
-    run_parser.add_argument(
+    input_group = run_parser.add_mutually_exclusive_group()
+    input_group.add_argument(
         "--input",
         type=Path,
         help="Path to a GWT request file containing GIVEN/WHEN/THEN steps.",
+    )
+    input_group.add_argument(
+        "--json-input",
+        type=Path,
+        help="Path to a JSON object containing initial state for REQUEST contracts.",
+    )
+    run_parser.add_argument(
+        "--entry",
+        help="Behavior call to execute after loading --json-input state.",
     )
     run_parser.add_argument(
         "--json",
@@ -123,12 +133,31 @@ def add_file_arguments(parser: argparse.ArgumentParser) -> None:
 def run_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     request_source = args.input.read_text() if args.input else None
+    if args.json_input is not None and not args.entry:
+        print("gwt: --entry is required with --json-input", file=sys.stderr)
+        return 2
+    if args.entry and args.json_input is None:
+        print("gwt: --entry requires --json-input", file=sys.stderr)
+        return 2
+
     try:
-        execution = run_file(args.file, request_file=args.input)
+        if args.json_input is not None:
+            json_state = _load_json_input(args.json_input)
+            execution = run_json_file(
+                args.file,
+                json_state,
+                entry=args.entry,
+                json_file=args.json_input,
+            )
+        else:
+            execution = run_file(args.file, request_file=args.input)
     except GwtError as exc:
-        diagnostic_source = request_source if request_source is not None else source
-        diagnostic_file = str(args.input) if args.input else str(args.file)
-        print(format_error(exc, diagnostic_source or "", diagnostic_file), file=sys.stderr)
+        if args.json_input is not None and str(exc).startswith("<entry>:"):
+            print(format_error(exc, f"{args.entry}\n", "<entry>"), file=sys.stderr)
+        else:
+            diagnostic_source = request_source if request_source is not None else source
+            diagnostic_file = str(args.input) if args.input else str(args.file)
+            print(format_error(exc, diagnostic_source or "", diagnostic_file), file=sys.stderr)
         return 1
 
     if args.json:
@@ -136,6 +165,16 @@ def run_command(args: argparse.Namespace) -> int:
     else:
         print_run_result(execution.result)
     return 0
+
+
+def _load_json_input(path: Path) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise GwtError(f"{path}:{exc.lineno}:{exc.colno}: invalid JSON: {exc.msg}") from exc
+    if not isinstance(payload, dict):
+        raise GwtError(f"{path}: JSON input must be an object")
+    return payload
 
 
 def test_command(args: argparse.Namespace) -> int:

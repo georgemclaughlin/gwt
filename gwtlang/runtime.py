@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
@@ -224,6 +225,19 @@ def run_request(
     return runtime.run()
 
 
+def run_json_request(
+    program_source: str,
+    state: dict[str, Any],
+    *,
+    entry: str,
+    filename: str = "<program>",
+    entry_filename: str = "<entry>",
+) -> RunResult:
+    program = parse_program(program_source, filename)
+    runtime = Runtime(program)
+    return runtime.run_json(state, entry, entry_filename=entry_filename)
+
+
 def parse_program(
     source: str,
     filename: str = "<source>",
@@ -424,6 +438,54 @@ class Runtime:
             else:
                 results.append(self._run_scenario(scenario))
         return RunResult(results)
+
+    def run_json(self, state: dict[str, Any], entry: str, *, entry_filename: str = "<entry>") -> RunResult:
+        if not isinstance(state, dict):
+            raise GwtError("JSON input must be an object")
+        entry = entry.strip()
+        if not entry:
+            raise GwtError("entry behavior is required for JSON input")
+
+        self.state = {}
+        self.output = []
+        self.path_types = dict(self.base_path_types)
+
+        for line in self.program.background.givens:
+            if isinstance(line, DtoValidation):
+                self._before_line(line.line, {})
+                self._validate_dto(line)
+            elif isinstance(line, TableAssignment):
+                self._run_table_assignment(line)
+            else:
+                self._run_given(line)
+
+        json_line = Line(1, "<json-input>", entry_filename, 1, len("<json-input>"))
+        try:
+            for path, value in state.items():
+                if not isinstance(path, str) or not _is_path(path):
+                    raise GwtError(f"JSON input key must be a state path: {path}")
+                self._set_path(path, deepcopy(value), {}, json_line)
+        except GwtError as exc:
+            raise _with_line_context(json_line, exc) from exc
+
+        self._validate_contract_bindings(self.program.inputs, "REQUEST")
+        for line in self.program.background.whens:
+            self._run_command_or_action(line, {})
+
+        entry_line = Line(1, entry, entry_filename, 1, max(1, len(entry)))
+        self._run_command_or_action(entry_line, {})
+
+        self._validate_contract_bindings(self.program.outputs, "OUTPUT")
+        for line in self.program.background.thens:
+            self._before_line(line, {})
+            try:
+                assertion_passed = self._evaluate_condition(line.text, {})
+            except GwtError as exc:
+                raise _with_line_context(line, exc) from exc
+            if not assertion_passed:
+                raise GwtError(f"Main: line {line.number}: assertion failed: {line.text}")
+
+        return RunResult([ScenarioResult("Main", self.state, self.output, self._declared_output_state())])
 
     def _run_scenario(
         self, scenario: Scenario, example: dict[str, str] | None = None, result_name: str | None = None

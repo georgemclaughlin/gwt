@@ -1,0 +1,51 @@
+{
+  "fulfillment": {
+    "backordered_units": 0,
+    "package_count": 0,
+    "reason": "new",
+    "requested_units": 0,
+    "reserved_units": 0,
+    "shipping_fee": 0,
+    "status": "new",
+    "unknown_sku_count": 0
+  },
+  "inventory": {
+    "items": [
+      {
+        "available": 5,
+        "reserved": 0,
+        "sku": "widget"
+      },
+      {
+        "available": 1,
+        "reserved": 0,
+        "sku": "gadget"
+      },
+      {
+        "available": 5,
+        "reserved": 0,
+        "sku": "cable"
+      }
+    ]
+  },
+  "order": {
+    "expedited": true,
+    "fraud_score": 12,
+    "items": [
+      {
+        "quantity": 1,
+        "sku": "widget"
+      },
+      {
+        "quantity": 2,
+        "sku": "gadget"
+      },
+      {
+        "quantity": 1,
+        "sku": "cable"
+      }
+    ],
+    "order_id": "LIST-200",
+    "payment_status": "paid"
+  }
+}
