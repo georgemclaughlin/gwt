@@ -395,6 +395,10 @@ class CheckerTests(unittest.TestCase):
               sum item.quantity in invoice.items into invoice.total_quantity
               FOR item in invoice.items WHERE item.quantity > 1
                 append item.name to invoice.names
+              FIND item in invoice.items WHERE item.name == "keyboard"
+                append item.name to invoice.names
+              ELSE
+                append "missing" to invoice.names
               find item in invoice.items WHERE item.name == "keyboard" into invoice.found
               exists item in invoice.items WHERE item.name == "keyboard" into invoice.has_keyboard
 
@@ -420,6 +424,10 @@ class CheckerTests(unittest.TestCase):
               sum cart.status into cart.total
               sum cart.tags into cart.total
               append "bad" to cart.total
+              FIND tag in cart.total WHERE tag == "sale"
+                append tag to cart.tags
+              ELSE
+                append "missing" to cart.tags
             """
         )
 
@@ -428,6 +436,30 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("sum requires a list, got text", messages)
         self.assertIn("sum requires a list of numbers, got list<text>", messages)
         self.assertIn("append to cart.total expected list, got number", messages)
+        self.assertIn("FIND requires a list", messages)
+
+    def test_reports_find_block_body_type_mismatch(self):
+        messages = check_messages(
+            """
+            RECORD LineItem
+              name: text
+              quantity: number
+
+            RECORD Invoice
+              items: list<LineItem>
+
+            REQUEST invoice is Invoice
+
+            WHEN mark <invoice>
+              GIVEN invoice is Invoice
+              FIND item in invoice.items WHERE item.name == "keyboard"
+                set item.quantity to "many"
+              ELSE
+                print "missing"
+            """
+        )
+
+        self.assertIn("set item.quantity expected number, got text", messages)
 
     def test_reports_projected_sum_type_mismatch(self):
         messages = check_messages(

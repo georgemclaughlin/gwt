@@ -16,25 +16,19 @@ Instead of one field per SKU, inventory is modeled as a list:
 }
 ```
 
-The example is intentionally written with the current language only. It shows
-that the runtime can express keyed allocation, but the expression is awkward:
+The example uses the first-class matched-record block that came out of this
+pressure test:
 
 ```gwt
-exists inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into inventory_match_found
-IF inventory_match_found
-  find inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku into selected_inventory_item
-  reserve_known_item order_item using selected_inventory_item into fulfillment
+FIND inventory_item in inventory.items WHERE inventory_item.sku == order_item.sku
+  reserve_known_item order_item using inventory_item into fulfillment
+ELSE
+  add 1 to fulfillment.unknown_sku_count
 ```
 
-`selected_inventory_item` is a scratch state path that aliases the matched list
-record. Mutating `selected_inventory_item.available` updates the record inside
-`inventory.items`, which is useful but not obvious from the syntax. The scratch
-paths also remain in full debug state, though `OUTPUT` keeps them out of the
-stable `result` payload.
-
-This makes the next language-design pressure point concrete: GWT likely needs a
-first-class keyed collection update form, rather than relying on `exists`,
-`find`, and alias mutation.
+`inventory_item` is a local binding for the first matching list record. Mutating
+`inventory_item.available` updates the record inside `inventory.items`, and the
+required `ELSE` block keeps the unknown-SKU path explicit.
 
 ## Commands
 
@@ -65,5 +59,5 @@ python -m gwtlang run examples/inventory_allocation_spike/rules.gwt \
 - mutation of a matched list record
 - duplicate order lines for the same SKU
 - unknown-SKU handling
-- scratch state created by current lookup/update idioms
+- explicit missing-case behavior
 - JSON host input using realistic nested records and lists

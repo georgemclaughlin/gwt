@@ -60,6 +60,21 @@ WHEN total items
 
         self.assertEqual(result.state["cart"]["total"], 60)
 
+    def test_format_text_normalizes_find_block_keyword_spacing(self):
+        formatted = format_text(
+            """
+            GIVEN order.items is []
+
+            WHEN reserve order
+              FIND  item in order.items WHERE item.sku == "widget"
+                print item.sku
+              ELSE
+                print "missing"
+            """
+        )
+
+        self.assertIn("  FIND item in order.items WHERE item.sku == \"widget\"\n", formatted)
+
     def test_format_file_reports_changed_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "counter.gwt"

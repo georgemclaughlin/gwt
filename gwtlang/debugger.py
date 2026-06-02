@@ -9,6 +9,7 @@ from typing import Any, TextIO
 from .errors import GwtError
 from .runtime import (
     DtoValidation,
+    FindBlock,
     ForBlock,
     IfBlock,
     Line,
@@ -178,6 +179,10 @@ def executable_lines(program: Program) -> list[DebugLine]:
         elif isinstance(statement, ForBlock):
             add(statement.header_line or statement.name_line or statement.iterable)
             collect_body(statement.body)
+        elif isinstance(statement, FindBlock):
+            add(statement.header_line or statement.name_line or statement.iterable)
+            collect_body(statement.body)
+            collect_body(statement.else_body)
 
     def collect_body(body: list[Any]) -> None:
         for statement in body:

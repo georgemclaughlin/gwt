@@ -10,6 +10,7 @@ from .runtime import (
     Action,
     DtoValidation,
     DTO_TYPES,
+    FindBlock,
     ForBlock,
     IfBlock,
     Line,
@@ -288,6 +289,8 @@ class Checker:
                 self._check_body(statement.else_body, scope.copy(), expected_return)
             elif isinstance(statement, ForBlock):
                 self._check_for(statement, scope, expected_return)
+            elif isinstance(statement, FindBlock):
+                self._check_find_block(statement, scope, expected_return)
             else:
                 self._check_command_or_action(statement, scope, allow_let=True, expected_return=expected_return)
 
@@ -312,6 +315,28 @@ class Checker:
         if statement.where is not None:
             self._check_condition_with_scope(statement.where, loop_scope)
         self._check_body(statement.body, loop_scope, expected_return)
+
+    def _check_find_block(self, statement: FindBlock, scope: Scope, expected_return: str | None = None) -> None:
+        if statement.name in scope.names:
+            self._add_line(statement.name_line or statement.iterable, f"FIND cannot overwrite: {statement.name}", "GWT008")
+
+        expression = self._check_expression(statement.iterable.text, statement.iterable)
+        iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
+        if isinstance(expression, Literal) and not isinstance(expression.value, list):
+            self._add_line(statement.iterable, "FIND requires a list", "GWT013")
+        elif iterable_type is not None and not _is_collection_type(iterable_type):
+            self._add_line(statement.iterable, "FIND requires a list", "GWT013")
+
+        find_scope = scope.copy()
+        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        if item_type is not None:
+            self._add_typed_name(find_scope, statement.name, item_type)
+        else:
+            find_scope.names.add(statement.name)
+            find_scope.types[statement.name] = "any"
+        self._check_condition_with_scope(statement.condition, find_scope)
+        self._check_body(statement.body, find_scope, expected_return)
+        self._check_body(statement.else_body, scope.copy(), expected_return)
 
     def _check_given(self, statement: Any) -> None:
         if isinstance(statement, DtoValidation):
@@ -894,6 +919,9 @@ def _body_has_return(body: list[Any]) -> bool:
                 return True
         elif isinstance(statement, ForBlock) and _body_has_return(statement.body):
             return True
+        elif isinstance(statement, FindBlock):
+            if _body_has_return(statement.body) or _body_has_return(statement.else_body):
+                return True
     return False
 
 

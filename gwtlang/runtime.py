@@ -31,7 +31,9 @@ RESERVED_BEHAVIOR_NAMES = {
     "IF",
     "ELSE",
     "FOR",
+    "FIND",
 }
+_MISSING = object()
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,17 @@ class ForBlock:
     name_line: Line | None = None
     header_line: Line | None = None
     where: Line | None = None
+
+
+@dataclass
+class FindBlock:
+    name: str
+    iterable: Line
+    condition: Line
+    body: list[Any]
+    else_body: list[Any]
+    name_line: Line | None = None
+    header_line: Line | None = None
 
 
 @dataclass(frozen=True)
@@ -871,6 +884,9 @@ class Runtime:
             elif isinstance(statement, ForBlock):
                 self._before_line(statement.header_line or statement.name_line or statement.iterable, env)
                 result = self._run_for(statement, env)
+            elif isinstance(statement, FindBlock):
+                self._before_line(statement.header_line or statement.name_line or statement.iterable, env)
+                result = self._run_find_block(statement, env)
             else:
                 result = self._run_command_or_action(statement, env, allow_let=True)
             if isinstance(result, BehaviorReturn):
@@ -911,6 +927,26 @@ class Runtime:
             if isinstance(result, BehaviorReturn):
                 return result
         return None
+
+    def _run_find_block(self, statement: FindBlock, env: dict[str, Any]) -> BehaviorReturn | None:
+        if statement.name in env or self._path_exists(statement.name):
+            raise GwtError(f"line {statement.iterable.number}: FIND cannot overwrite an existing name")
+        try:
+            values = self._eval_expression(statement.iterable.text, env)
+        except GwtError as exc:
+            raise _with_line_context(statement.iterable, exc) from exc
+        if not isinstance(values, list):
+            raise GwtError(f"line {statement.iterable.number}: FIND requires a list")
+
+        for value in values:
+            find_env = dict(env)
+            find_env[statement.name] = value
+            if self._evaluate_condition(statement.condition.text, find_env):
+                result = self._run_body(statement.body, find_env)
+                if isinstance(result, BehaviorReturn):
+                    return result
+                return None
+        return self._run_body(statement.else_body, env)
 
     def _match_action(self, action: Action, call: list[str], caller_env: dict[str, Any]) -> dict[str, Any] | None:
         if len(action.signature) != len(call):
@@ -967,7 +1003,7 @@ class Runtime:
             return value
         if "." in name:
             env_value = self._get_env_path(name, env)
-            if env_value is not None:
+            if env_value is not _MISSING:
                 return env_value
         if self._path_exists(self._resolve_path(name, env)):
             return self._get_path(name, env)
@@ -980,6 +1016,9 @@ class Runtime:
         return ".".join(parts)
 
     def _get_path(self, path: str, env: dict[str, Any]) -> Any:
+        env_value = self._get_env_path(path, env)
+        if env_value is not _MISSING:
+            return env_value
         resolved = self._resolve_path(path, env)
         current: Any = self.state
         for part in resolved.split("."):
@@ -993,6 +1032,25 @@ class Runtime:
         parts = resolved.split(".")
         if not all(parts):
             raise GwtError(f"invalid path: {path}")
+
+        if parts[0] in env and not isinstance(env[parts[0]], PathRef):
+            self._validate_assignment(resolved, value, line)
+            if len(parts) == 1:
+                env[parts[0]] = value
+                return
+            current = env[parts[0]]
+            for part in parts[1:-1]:
+                if not isinstance(current, dict):
+                    raise GwtError(f"cannot create nested path under scalar: {part}")
+                next_value = current.setdefault(part, {})
+                if not isinstance(next_value, dict):
+                    raise GwtError(f"cannot create nested path under scalar: {part}")
+                current = next_value
+            if not isinstance(current, dict):
+                raise GwtError(f"cannot create nested path under scalar: {parts[-2]}")
+            current[parts[-1]] = value
+            return
+
         self._validate_assignment(resolved, value, line)
 
         current = self.state
@@ -1014,13 +1072,13 @@ class Runtime:
     def _get_env_path(self, path: str, env: dict[str, Any]) -> Any:
         parts = path.split(".")
         if not parts or parts[0] not in env:
-            return None
+            return _MISSING
         current = env[parts[0]]
         if isinstance(current, PathRef):
-            current = self._get_path(current.path, {})
+            return _MISSING
         for part in parts[1:]:
             if not isinstance(current, dict) or part not in current:
-                return None
+                return _MISSING
             current = current[part]
         return current
 
@@ -1184,6 +1242,33 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             last_body_keyword = None
             continue
 
+        if text.startswith("FIND "):
+            name, expression, condition = _parse_find_block_header(text, filename, line.number)
+            index += 1
+            find_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not find_body:
+                raise GwtError(f"{filename}:{line.number}: FIND requires a body")
+            if index >= len(lines) or _indent_width(lines[index].text) != indent or lines[index].text.strip() != "ELSE":
+                raise GwtError(f"{filename}:{line.number}: FIND requires an ELSE block")
+            else_line = lines[index]
+            index += 1
+            else_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not else_body:
+                raise GwtError(f"{filename}:{else_line.number}: ELSE requires a body")
+            body.append(
+                FindBlock(
+                    name,
+                    _derived_line(line, expression, text.find(expression)),
+                    _derived_line(line, condition, text.find(condition)),
+                    find_body,
+                    else_body,
+                    _derived_line(line, name, len("FIND ")),
+                    _derived_line(line, text, 0),
+                )
+            )
+            last_body_keyword = None
+            continue
+
         tokens = _tokens(text, filename, line.number)
         if tokens:
             last_body_keyword = tokens[0]
@@ -1284,6 +1369,25 @@ def _parse_for_header(text: str, filename: str, line_number: int) -> tuple[str, 
     if not expression:
         raise GwtError(f"{filename}:{line_number}: FOR requires an iterable expression")
     return name, expression, where
+
+
+def _parse_find_block_header(text: str, filename: str, line_number: int) -> tuple[str, str, str]:
+    header = text.removeprefix("FIND ").strip()
+    if " in " not in header:
+        raise GwtError(f"{filename}:{line_number}: FIND expects 'name in expression WHERE condition'")
+    name, expression = header.split(" in ", 1)
+    name = name.strip()
+    expression = expression.strip()
+    expression, condition = _split_where_clause(expression)
+    if condition is None:
+        raise GwtError(f"{filename}:{line_number}: FIND requires a WHERE condition")
+    if not condition:
+        raise GwtError(f"{filename}:{line_number}: FIND WHERE requires a condition")
+    if not _is_local_name(name):
+        raise GwtError(f"{filename}:{line_number}: FIND requires a simple local name")
+    if not expression:
+        raise GwtError(f"{filename}:{line_number}: FIND requires an iterable expression")
+    return name, expression, condition
 
 
 def _split_where_clause(expression: str) -> tuple[str, str | None]:
