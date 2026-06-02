@@ -49,6 +49,7 @@ WHEN behavior <parameter> from <target>
   FOR name in expression WHERE condition
     statement
   RETURN expression
+  PASS
   statement
 
 WHEN concrete event from target
@@ -317,7 +318,7 @@ The current checker reports:
 - reserved behavior names that conflict with built-ins or behavior-body keywords
 - duplicate or invalid behavior parameters
 - invalid built-in statement shapes
-- `LET` and `RETURN` outside behavior bodies
+- `LET`, `RETURN`, and `PASS` outside behavior bodies
 - `LET` names that overwrite parameters or earlier local names
 - `LET` bindings to behavior calls that do not return a value
 - invalid expression syntax in statically checkable expressions
@@ -516,6 +517,16 @@ find name in list where condition into path
 find optional name in list where condition into path
 exists name in list where condition into path
 print value
+```
+
+Behavior branches can use `PASS` when the branch is intentionally successful
+and does not need to mutate state:
+
+```gwt
+FIND token in tokens WHERE token.lexeme == "let"
+  PASS
+ELSE
+  append "missing_let" to errors
 ```
 
 Examples:

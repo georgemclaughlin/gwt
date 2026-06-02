@@ -115,6 +115,24 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("RETURN is only allowed inside behavior", messages)
 
+    def test_reports_pass_misuse(self):
+        outside_messages = check_messages(
+            """
+            WHEN PASS
+            """
+        )
+        argument_messages = check_messages(
+            """
+            WHEN keep going
+              PASS now
+
+            WHEN keep going
+            """
+        )
+
+        self.assertIn("PASS is only allowed inside behavior", outside_messages)
+        self.assertIn("PASS does not take arguments", argument_messages)
+
     def test_reports_bad_builtin_shape(self):
         messages = check_messages(
             """

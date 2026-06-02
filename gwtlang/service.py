@@ -206,6 +206,8 @@ def _call_text_at(source: str, line: int) -> str | None:
         return text.split(" be ", 1)[1].strip()
     if text.startswith("RETURN "):
         return text.removeprefix("RETURN ").strip()
+    if text == "PASS":
+        return None
     if text.startswith(("REQUIRE ", "IF ", "FOR ", "FIND ", "GIVEN ", "THEN ", "REQUEST ", "OUTPUT ")):
         return None
     if _is_builtin_statement(_tokens(text), text):

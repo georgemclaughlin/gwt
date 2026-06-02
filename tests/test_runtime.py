@@ -73,6 +73,41 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.output, ["3"])
 
+    def test_pass_is_behavior_noop(self):
+        result = run_source(
+            """
+            GIVEN count is 1
+
+            WHEN keep count
+              PASS
+
+            WHEN keep count
+
+            THEN count == 1
+            """
+        )
+
+        self.assertEqual(result.state["count"], 1)
+
+    def test_pass_is_only_allowed_inside_behavior(self):
+        with self.assertRaisesRegex(GwtError, "PASS is only allowed inside behavior"):
+            run_source(
+                """
+                WHEN PASS
+                """
+            )
+
+    def test_pass_rejects_arguments(self):
+        with self.assertRaisesRegex(GwtError, "PASS does not take arguments"):
+            run_source(
+                """
+                WHEN keep count
+                  PASS now
+
+                WHEN keep count
+                """
+            )
+
     def test_rejects_reserved_behavior_name(self):
         with self.assertRaisesRegex(GwtError, "behavior name is reserved: count"):
             run_source(

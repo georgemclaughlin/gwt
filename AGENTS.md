@@ -70,7 +70,8 @@ plus `git diff --check`.
   general query pipelines, or implicit set-based mutation unless the design
   principles are intentionally revised first.
 - Behavior names cannot use built-ins or behavior-body keywords such as `set`,
-  `count`, `sum`, `find`, `exists`, `LET`, `RETURN`, `IF`, `FOR`, or `FIND`.
+  `count`, `sum`, `find`, `exists`, `LET`, `RETURN`, `PASS`, `IF`, `FOR`, or
+  `FIND`.
 - `REQUEST` contracts validate after `GIVEN` setup and before `WHEN`
   execution. `OUTPUT` contracts validate after execution.
 - Stable run payloads use the envelope returned by `ExecutionResult.as_payload`;

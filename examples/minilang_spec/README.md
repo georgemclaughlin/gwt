@@ -79,8 +79,12 @@ python -m gwtlang run examples/minilang_spec/rules.gwt \
 - records as token, AST, runtime, and diagnostic models
 - literal-union fields as lightweight tagged variants
 - keyed lookup and mutation with `FIND`
+- explicit no-op success branches with `PASS`
 - ordered evaluation over AST records
 - explicit front-end and runtime errors
 - JSON host input and output contracts
 - current awkwardness around true AST variants and record construction
 - current lack of source-text string scanning inside GWT itself
+
+The variant-shaped AST pressure is captured in
+[`../../docs/variant-match-design.md`](../../docs/variant-match-design.md).

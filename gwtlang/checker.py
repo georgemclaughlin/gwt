@@ -436,6 +436,14 @@ class Checker:
                 self._add_line(line, f"RETURN expected {expected_return}, got {actual_type}", "GWT016")
             return
 
+        if command == "PASS":
+            if not allow_let:
+                self._add_line(line, "PASS is only allowed inside behavior", "GWT007")
+                return
+            if len(tokens) != 1:
+                self._add_line(line, "PASS does not take arguments", "GWT006")
+            return
+
         if command == "LET":
             if not allow_let:
                 self._add_line(line, "LET is only allowed inside behavior", "GWT007")
