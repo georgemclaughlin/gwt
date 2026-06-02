@@ -3,7 +3,13 @@
 GWT is a small experimental programming language built around executable
 `GIVEN / WHEN / THEN` programs. It is meant for deterministic workflows,
 rules, examples, and request/response style programs that should read close to
-their behavior specification.
+their behavior specification. OpenSpec's persistent-spec idea was an original
+inspiration, though GWT does not use or depend on OpenSpec: GWT takes the
+spec-driven collaboration point and makes the spec itself executable, rather
+than treating the spec as a prompt or handoff document for separate code. The
+language is also shaped by Cucumber,
+SpecFlow/Reqnroll, and BDD examples; new features should stay behavior-oriented
+and should not drift toward SQL-like query syntax.
 
 ## Quick Start
 
@@ -308,7 +314,9 @@ open a `.gwt` file such as `/home/g/code/gwt/examples/v01_language_tour/rules.gw
 
 The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
 The longer language guide is [`docs/language.md`](docs/language.md), and the
-EBNF grammar is [`docs/grammar.md`](docs/grammar.md).
+EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
+language-shape guardrails live in
+[`docs/design-principles.md`](docs/design-principles.md).
 
 Run tests:
 

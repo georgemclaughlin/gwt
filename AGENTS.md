@@ -13,6 +13,8 @@ GWT is an experimental programming language built around executable
 - The current versioned spec is `docs/spec/v0.1.md`.
 - The EBNF grammar is `docs/grammar.md`.
 - The longer language guide is `docs/language.md`.
+- Design principles and language-shape guardrails are in
+  `docs/design-principles.md`.
 
 ## Core Commands
 
@@ -47,6 +49,13 @@ plus `git diff --check`.
 
 ## Language Design Rules
 
+- Preserve the language's spec-as-code shape. OpenSpec's persistent-spec idea
+  was an original inspiration, but GWT does not use or depend on OpenSpec. GWT
+  takes the collaboration artifact further by making the spec executable rather
+  than treating it as a prompt or handoff document for separate code. Cucumber,
+  SpecFlow/Reqnroll, and BDD examples also shape the language. New features
+  should read like executable behavior steps over state, not like SQL or a
+  general query language.
 - Prefer explicit behavior signatures: `WHEN review <report> into <decision>`.
 - Keep parser/runtime/checker behavior aligned. If one changes, look for tests
   in `tests/test_runtime.py`, `tests/test_checker.py`, and
@@ -56,6 +65,10 @@ plus `git diff --check`.
   `docs/language.md`, and often `README.md`.
 - Do not add new syntax without at least one runtime test, checker coverage
   when applicable, and an example or spec note.
+- For collection features, prefer narrow step-like operations with explicit
+  missing/failure cases. Avoid `SELECT` / `UPDATE` / `JOIN` style vocabulary,
+  general query pipelines, or implicit set-based mutation unless the design
+  principles are intentionally revised first.
 - Behavior names cannot use built-ins or behavior-body keywords such as `set`,
   `count`, `sum`, `find`, `LET`, `RETURN`, `IF`, or `FOR`.
 - `REQUEST` contracts validate after `GIVEN` setup and before `WHEN`
