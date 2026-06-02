@@ -2218,6 +2218,8 @@ def _value_matches_primitive_type(value: Any, expected_type: str) -> bool:
 
 
 def _value_type_name(value: Any) -> str:
+    if value is None:
+        return "null"
     if isinstance(value, bool):
         return "boolean"
     if isinstance(value, (int, float)):

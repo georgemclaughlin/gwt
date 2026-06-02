@@ -206,6 +206,12 @@ JSON/API payloads use a stable envelope. The top-level `result` value contains
 only declared output paths when `OUTPUT` contracts are present; `state` still
 keeps the full final runtime state for debugging and tests.
 
+GWT v0.1 does not have a source-level `null` literal. JSON input can still
+contain `null` at raw integration boundaries, but typed contracts reject it for
+`number`, `text`, `boolean`, `list`, records, typed lists, and literal unions.
+Use `any` for raw input that may contain JSON nulls, then normalize that input
+into explicit domain state such as status fields or one-of records.
+
 Declared record, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
 change a known `number` field to `text`, or replace a `list<OrderItem>` with a
@@ -305,6 +311,11 @@ The runtime loads program `BACKGROUND` setup first, then JSON state, then
 validates `REQUEST` contracts, runs the entry behavior, validates `OUTPUT`
 contracts, and returns the same stable execution envelope used by `.gwt`
 request files.
+
+JSON `null` values are accepted only where the receiving contract is `any`.
+They do not match typed records or primitive fields. Prefer a normalization
+behavior that turns nullable raw payloads into explicit state before the rest of
+the workflow runs.
 
 ## Embedding API
 
@@ -433,6 +444,9 @@ Supported values:
 - booleans: `true`, `false`
 - lists: `[10, 20, 30]`
 - paths: `account.balance`, `count`
+
+There is no `null` source literal in v0.1. Model missing, unknown, or
+not-applicable values explicitly instead of writing null-like placeholders.
 
 ## State
 

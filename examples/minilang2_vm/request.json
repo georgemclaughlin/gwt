@@ -1,0 +1,333 @@
+{
+  "source": {
+    "name": "counter closure vm sample",
+    "text": "import math; fn make_counter(start) { let n = start; return fn() { n = n + 1; return n } }; let counter = make_counter(10); let total = 0; for item in [1, 2, 3, 4] { total = total + item }; print(counter()); print(counter()); print(math.sqrt(total))"
+  },
+  "front_end": {
+    "tokens": [
+      { "index": 1, "kind": "keyword", "lexeme": "import" },
+      { "index": 2, "kind": "identifier", "lexeme": "math" },
+      { "index": 3, "kind": "keyword", "lexeme": "fn" },
+      { "index": 4, "kind": "identifier", "lexeme": "make_counter" },
+      { "index": 5, "kind": "symbol", "lexeme": "(" },
+      { "index": 6, "kind": "identifier", "lexeme": "start" },
+      { "index": 7, "kind": "symbol", "lexeme": ")" },
+      { "index": 8, "kind": "symbol", "lexeme": "{" },
+      { "index": 9, "kind": "keyword", "lexeme": "let" },
+      { "index": 10, "kind": "identifier", "lexeme": "n" },
+      { "index": 11, "kind": "symbol", "lexeme": "=" },
+      { "index": 12, "kind": "identifier", "lexeme": "start" },
+      { "index": 13, "kind": "keyword", "lexeme": "return" },
+      { "index": 14, "kind": "keyword", "lexeme": "fn" },
+      { "index": 15, "kind": "symbol", "lexeme": "(" },
+      { "index": 16, "kind": "symbol", "lexeme": ")" },
+      { "index": 17, "kind": "symbol", "lexeme": "{" },
+      { "index": 18, "kind": "identifier", "lexeme": "n" },
+      { "index": 19, "kind": "symbol", "lexeme": "=" },
+      { "index": 20, "kind": "identifier", "lexeme": "n" },
+      { "index": 21, "kind": "symbol", "lexeme": "+" },
+      { "index": 22, "kind": "number", "lexeme": "1" },
+      { "index": 23, "kind": "keyword", "lexeme": "return" },
+      { "index": 24, "kind": "identifier", "lexeme": "n" },
+      { "index": 25, "kind": "symbol", "lexeme": "}" },
+      { "index": 26, "kind": "symbol", "lexeme": "}" },
+      { "index": 27, "kind": "keyword", "lexeme": "let" },
+      { "index": 28, "kind": "identifier", "lexeme": "counter" },
+      { "index": 29, "kind": "symbol", "lexeme": "=" },
+      { "index": 30, "kind": "identifier", "lexeme": "make_counter" },
+      { "index": 31, "kind": "symbol", "lexeme": "(" },
+      { "index": 32, "kind": "number", "lexeme": "10" },
+      { "index": 33, "kind": "symbol", "lexeme": ")" },
+      { "index": 34, "kind": "keyword", "lexeme": "let" },
+      { "index": 35, "kind": "identifier", "lexeme": "total" },
+      { "index": 36, "kind": "symbol", "lexeme": "=" },
+      { "index": 37, "kind": "number", "lexeme": "0" },
+      { "index": 38, "kind": "keyword", "lexeme": "for" },
+      { "index": 39, "kind": "identifier", "lexeme": "item" },
+      { "index": 40, "kind": "keyword", "lexeme": "in" },
+      { "index": 41, "kind": "symbol", "lexeme": "[" },
+      { "index": 42, "kind": "number", "lexeme": "1" },
+      { "index": 43, "kind": "number", "lexeme": "2" },
+      { "index": 44, "kind": "number", "lexeme": "3" },
+      { "index": 45, "kind": "number", "lexeme": "4" },
+      { "index": 46, "kind": "symbol", "lexeme": "]" },
+      { "index": 47, "kind": "identifier", "lexeme": "total" },
+      { "index": 48, "kind": "symbol", "lexeme": "+" },
+      { "index": 49, "kind": "identifier", "lexeme": "item" },
+      { "index": 50, "kind": "identifier", "lexeme": "print" },
+      { "index": 51, "kind": "identifier", "lexeme": "counter" },
+      { "index": 52, "kind": "identifier", "lexeme": "sqrt" },
+      { "index": 53, "kind": "identifier", "lexeme": "total" }
+    ],
+    "ast_nodes": [
+      { "kind": "import_module", "index": 1, "module_name": "math" },
+      {
+        "kind": "function_make_counter",
+        "index": 2,
+        "name": "make_counter",
+        "parameter_name": "start",
+        "captured_name": "n"
+      },
+      {
+        "kind": "let_closure",
+        "index": 3,
+        "target_name": "counter",
+        "function_name": "make_counter",
+        "start_value": 10
+      },
+      { "kind": "let_number", "index": 4, "name": "total", "number_value": 0 },
+      { "kind": "for_sum_list", "index": 5, "target_name": "total", "list_name": "items" },
+      { "kind": "print_counter_call", "index": 6, "closure_name": "counter" },
+      { "kind": "print_counter_call", "index": 7, "closure_name": "counter" },
+      {
+        "kind": "print_native_call",
+        "index": 8,
+        "module_name": "math",
+        "function_name": "sqrt",
+        "arg_name": "total"
+      }
+    ],
+    "token_count": 0,
+    "ast_node_count": 0,
+    "lexed": false,
+    "parsed": false,
+    "errors": []
+  },
+  "resolver": {
+    "symbols": [
+      {
+        "name": "math",
+        "scope_name": "global",
+        "kind": "module",
+        "slot": 0,
+        "depth": 0,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "make_counter",
+        "scope_name": "global",
+        "kind": "function",
+        "slot": 1,
+        "depth": 0,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "counter",
+        "scope_name": "global",
+        "kind": "closure",
+        "slot": 2,
+        "depth": 0,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "total",
+        "scope_name": "global",
+        "kind": "number",
+        "slot": 3,
+        "depth": 0,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "start",
+        "scope_name": "make_counter",
+        "kind": "parameter",
+        "slot": 0,
+        "depth": 1,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "n",
+        "scope_name": "make_counter.inner",
+        "kind": "captured_cell",
+        "slot": 0,
+        "depth": 2,
+        "captured": false,
+        "resolved": false
+      },
+      {
+        "name": "item",
+        "scope_name": "for.items",
+        "kind": "local",
+        "slot": 0,
+        "depth": 1,
+        "captured": false,
+        "resolved": false
+      }
+    ],
+    "symbol_count": 0,
+    "capture_count": 0,
+    "resolved": false,
+    "errors": []
+  },
+  "bytecode": {
+    "instructions": [
+      { "kind": "import_module", "index": 1, "line": 1, "module_name": "math" },
+      {
+        "kind": "constant_number",
+        "index": 2,
+        "line": 3,
+        "target_name": "total",
+        "number_value": 0
+      },
+      {
+        "kind": "define_counter_factory",
+        "index": 3,
+        "line": 2,
+        "function_name": "make_counter",
+        "captured_name": "n"
+      },
+      {
+        "kind": "call_counter_factory",
+        "index": 4,
+        "line": 3,
+        "target_name": "counter",
+        "function_name": "make_counter",
+        "start_value": 10
+      },
+      {
+        "kind": "sum_array_global",
+        "index": 5,
+        "line": 5,
+        "target_name": "total",
+        "list_name": "items"
+      },
+      { "kind": "debug_break", "index": 6, "line": 6, "label": "after_loop" },
+      {
+        "kind": "call_closure",
+        "index": 7,
+        "line": 7,
+        "target_name": "last",
+        "closure_name": "counter"
+      },
+      { "kind": "print_register", "index": 8, "line": 7, "target_name": "last" },
+      {
+        "kind": "call_closure",
+        "index": 9,
+        "line": 8,
+        "target_name": "last",
+        "closure_name": "counter"
+      },
+      { "kind": "print_register", "index": 10, "line": 8, "target_name": "last" },
+      {
+        "kind": "call_native",
+        "index": 11,
+        "line": 9,
+        "target_name": "last",
+        "module_name": "math",
+        "function_name": "sqrt",
+        "arg_name": "total"
+      },
+      { "kind": "print_register", "index": 12, "line": 9, "target_name": "last" },
+      { "kind": "halt", "index": 13, "line": 9 }
+    ],
+    "instruction_count": 0,
+    "compiled": false,
+    "errors": []
+  },
+  "vm": {
+    "globals": [
+      {
+        "name": "math",
+        "kind": "unset",
+        "number_value": 0,
+        "module_name": "",
+        "function_name": "",
+        "closure_name": ""
+      },
+      {
+        "name": "make_counter",
+        "kind": "unset",
+        "number_value": 0,
+        "module_name": "",
+        "function_name": "",
+        "closure_name": ""
+      },
+      {
+        "name": "counter",
+        "kind": "unset",
+        "number_value": 0,
+        "module_name": "",
+        "function_name": "",
+        "closure_name": ""
+      },
+      {
+        "name": "total",
+        "kind": "unset",
+        "number_value": 0,
+        "module_name": "",
+        "function_name": "",
+        "closure_name": ""
+      }
+    ],
+    "arrays": [{ "name": "items", "values": [1, 2, 3, 4] }],
+    "modules": [{ "name": "math", "loaded": false, "sqrt_10": 3.162277660168379 }],
+    "closures": [
+      {
+        "name": "counter",
+        "function_name": "",
+        "captured_cell_name": "",
+        "call_count": 0,
+        "defined": false
+      }
+    ],
+    "cells": [{ "name": "counter.n", "number_value": 0, "closed": false }],
+    "value_kinds": [
+      { "name": "number", "covered": false },
+      { "name": "string", "covered": false },
+      { "name": "boolean", "covered": false },
+      { "name": "null", "covered": false },
+      { "name": "array", "covered": false },
+      { "name": "map", "covered": false },
+      { "name": "function", "covered": false },
+      { "name": "closure", "covered": false }
+    ],
+    "stack_trace": [
+      { "slot": 1, "function_name": "", "line": 0, "pc": 0, "active": false },
+      { "slot": 2, "function_name": "", "line": 0, "pc": 0, "active": false }
+    ],
+    "outputs": [],
+    "last_number": 0,
+    "instruction_count": 0,
+    "value_kind_count": 0,
+    "errors": [],
+    "status": "new"
+  },
+  "debugger": {
+    "enabled": true,
+    "snapshots": [
+      {
+        "slot": 1,
+        "label": "",
+        "pc": 0,
+        "function_name": "",
+        "total_value": 0,
+        "captured_n": 0,
+        "active": false
+      },
+      {
+        "slot": 2,
+        "label": "",
+        "pc": 0,
+        "function_name": "",
+        "total_value": 0,
+        "captured_n": 0,
+        "active": false
+      }
+    ],
+    "snapshot_count": 0,
+    "status": "new",
+    "errors": []
+  },
+  "repl": {
+    "input_lines": ["counter()", "total"],
+    "history": [],
+    "outputs": [],
+    "errors": [],
+    "status": "new"
+  }
+}
