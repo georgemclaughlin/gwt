@@ -8,3 +8,8 @@ one implemented language surface.
 
 The formatter targets the current spec's source layout rules. Grammar-only
 changes should update both the versioned spec and [../grammar.md](../grammar.md).
+
+Non-normative design guidance lives in
+[../design-principles.md](../design-principles.md). Use it when evaluating new
+syntax so GWT stays close to BDD-style executable examples instead of drifting
+toward SQL-like query syntax.

@@ -4,7 +4,10 @@ GWT is an executable behavior language. A program describes initial state,
 named behavior, execution, and expected results.
 
 See [spec/v0.1.md](spec/v0.1.md) for the versioned v0.1 specification and
-[grammar.md](grammar.md) for the EBNF grammar.
+[grammar.md](grammar.md) for the EBNF grammar. See
+[design-principles.md](design-principles.md) for non-normative language-shape
+guidance inspired by OpenSpec, GitHub Spec Kit, Cucumber, SpecFlow/Reqnroll,
+and BDD examples.
 
 ## Program Shape
 
