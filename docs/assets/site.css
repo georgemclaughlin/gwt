@@ -87,42 +87,6 @@ pre {
     "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
 }
 
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 66px;
-  padding: 0 32px;
-  border-bottom: 1px solid var(--header-line);
-  background: var(--header-bg);
-  backdrop-filter: blur(12px);
-}
-
-.brand {
-  color: var(--green-strong);
-  font-size: 1.25rem;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 16px;
-  color: var(--muted);
-  font-size: 0.94rem;
-}
-
-.nav a {
-  text-decoration: none;
-}
-
-.nav a:hover,
 .text-link:hover {
   color: var(--green-strong);
 }
@@ -134,7 +98,7 @@ pre {
   gap: 28px;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 48px 32px 50px;
+  padding: 36px 32px 50px;
 }
 
 .hero-copy {
@@ -317,7 +281,7 @@ pre {
 
 .visual-grid code {
   font-size: 0.74rem;
-  line-height: 1.3;
+  line-height: 1.26;
 }
 
 .visual-grid pre + pre {
@@ -559,18 +523,6 @@ pre code {
 }
 
 @media (max-width: 700px) {
-  .site-header {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 12px 20px;
-  }
-
-  .nav {
-    justify-content: flex-start;
-    gap: 8px;
-    font-size: 0.88rem;
-  }
-
   .hero {
     gap: 26px;
     min-height: auto;
