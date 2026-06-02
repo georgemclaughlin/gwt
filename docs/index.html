@@ -57,6 +57,7 @@
   <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
   <span class="tok-kw">AND</span> account.balance <span class="tok-word">is at least</span> amount
   <span class="tok-action">subtract</span> amount from account.balance
+<span class="tok-kw">SCENARIO</span> supplied input
 <span class="tok-kw">WHEN</span> withdraw amount from account
 <span class="tok-kw">THEN</span> account.balance <span class="tok-word">is</span> <span class="tok-number">70</span>
 <span class="tok-kw">AND</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span></code></pre>
