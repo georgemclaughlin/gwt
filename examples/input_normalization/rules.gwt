@@ -1,0 +1,86 @@
+PROGRAM Input normalization example
+
+RECORD ContactProfile
+  name: text
+  email: text
+  middle_name_status: "provided" | "missing" | "not_applicable"
+  middle_name: text
+  errors: list<text>
+  error_count: number
+  status: "new" | "normalized" | "invalid"
+
+REQUEST raw is any
+AND profile is ContactProfile
+
+OUTPUT profile is ContactProfile
+
+WHEN reset profile state <profile>
+  GIVEN profile is ContactProfile
+  set profile.name to ""
+  set profile.email to ""
+  set profile.middle_name_status to "missing"
+  set profile.middle_name to ""
+  set profile.errors to []
+  set profile.error_count to 0
+  set profile.status to "new"
+
+WHEN normalize <raw> into <profile>
+  GIVEN raw is any
+  AND profile is ContactProfile
+  reset profile state profile
+  IF raw.name == ""
+    append "missing_name" to profile.errors
+  ELSE
+    set profile.name to raw.name
+  IF raw.email == ""
+    append "missing_email" to profile.errors
+  ELSE
+    set profile.email to raw.email
+  normalize middle name from raw into profile
+  count profile.errors into profile.error_count
+  IF profile.error_count == 0
+    set profile.status to "normalized"
+  ELSE
+    set profile.status to "invalid"
+
+WHEN normalize middle name from <raw> into <profile>
+  GIVEN raw is any
+  AND profile is ContactProfile
+  IF raw.middle_name_state == "provided"
+    set profile.middle_name_status to "provided"
+    set profile.middle_name to raw.middle_name
+  ELSE
+    IF raw.middle_name_state == "not_applicable"
+      set profile.middle_name_status to "not_applicable"
+      set profile.middle_name to ""
+    ELSE
+      IF raw.middle_name_state == "missing"
+        set profile.middle_name_status to "missing"
+        set profile.middle_name to ""
+      ELSE
+        append "invalid_middle_name_state" to profile.errors
+
+SCENARIO provided middle name normalizes
+GIVEN raw is
+  name: "Ada"
+  email: "ada@example.com"
+  middle_name_state: "provided"
+  middle_name: "Lovelace"
+
+GIVEN profile is ContactProfile
+  name: ""
+  email: ""
+  middle_name_status: "missing"
+  middle_name: ""
+  errors: []
+  error_count: 0
+  status: "new"
+
+WHEN normalize raw into profile
+
+THEN profile.status == "normalized"
+AND profile.name == "Ada"
+AND profile.email == "ada@example.com"
+AND profile.middle_name_status == "provided"
+AND profile.middle_name == "Lovelace"
+AND profile.errors == []

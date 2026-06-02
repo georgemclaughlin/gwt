@@ -1,0 +1,17 @@
+{
+  "raw": {
+    "name": "Grace",
+    "email": "grace@example.com",
+    "middle_name_state": "missing",
+    "middle_name": null
+  },
+  "profile": {
+    "name": "",
+    "email": "",
+    "middle_name_status": "missing",
+    "middle_name": "",
+    "errors": [],
+    "error_count": 0,
+    "status": "new"
+  }
+}

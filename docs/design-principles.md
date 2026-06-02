@@ -151,6 +151,18 @@ The current design is documented in
 is that kind-based branching should remain a behavior-body step over domain
 state, not a general-purpose pattern matching expression system.
 
+## Missing Values
+
+GWT should treat missing, unknown, and not-applicable values as domain states,
+not as silent placeholders. JSON integrations may receive nulls, but durable
+GWT behavior should normalize those boundary values into explicit fields or
+one-of records before typed workflow logic depends on them.
+
+Do not add a nullable type or source-level `null` literal just because host data
+can contain JSON nulls. First look for a domain-shaped representation such as
+`has_middle_name: boolean`, `status: "provided" | "missing"`, or a one-of record
+with `provided`, `missing`, and `not_applicable` cases.
+
 ## Design Checklist
 
 Before adding syntax, answer these questions:

@@ -1,0 +1,1108 @@
+PROGRAM MiniLang2 bytecode VM executable spec
+
+RECORD Mini2Source
+  name: text
+  text: text
+
+RECORD Mini2Token
+  index: number
+  kind: "keyword" | "identifier" | "number" | "symbol"
+  lexeme: text
+
+RECORD Mini2AstNode is one of
+  import_module:
+    index: number
+    module_name: text
+  function_make_counter:
+    index: number
+    name: text
+    parameter_name: text
+    captured_name: text
+  let_number:
+    index: number
+    name: text
+    number_value: number
+  let_closure:
+    index: number
+    target_name: text
+    function_name: text
+    start_value: number
+  for_sum_list:
+    index: number
+    target_name: text
+    list_name: text
+  print_counter_call:
+    index: number
+    closure_name: text
+  print_native_call:
+    index: number
+    module_name: text
+    function_name: text
+    arg_name: text
+
+RECORD Mini2FrontEnd
+  tokens: list<Mini2Token>
+  ast_nodes: list<Mini2AstNode>
+  token_count: number
+  ast_node_count: number
+  lexed: boolean
+  parsed: boolean
+  errors: list<text>
+
+RECORD Mini2Symbol
+  name: text
+  scope_name: text
+  kind: "module" | "function" | "closure" | "number" | "parameter" | "local" | "captured_cell"
+  slot: number
+  depth: number
+  captured: boolean
+  resolved: boolean
+
+RECORD Mini2Resolver
+  symbols: list<Mini2Symbol>
+  symbol_count: number
+  capture_count: number
+  resolved: boolean
+  errors: list<text>
+
+RECORD Mini2Instruction is one of
+  import_module:
+    index: number
+    line: number
+    module_name: text
+  constant_number:
+    index: number
+    line: number
+    target_name: text
+    number_value: number
+  define_counter_factory:
+    index: number
+    line: number
+    function_name: text
+    captured_name: text
+  call_counter_factory:
+    index: number
+    line: number
+    target_name: text
+    function_name: text
+    start_value: number
+  sum_array_global:
+    index: number
+    line: number
+    target_name: text
+    list_name: text
+  debug_break:
+    index: number
+    line: number
+    label: text
+  call_closure:
+    index: number
+    line: number
+    target_name: text
+    closure_name: text
+  call_native:
+    index: number
+    line: number
+    target_name: text
+    module_name: text
+    function_name: text
+    arg_name: text
+  print_register:
+    index: number
+    line: number
+    target_name: text
+  get_global:
+    index: number
+    line: number
+    name: text
+  halt:
+    index: number
+    line: number
+
+RECORD Mini2Bytecode
+  instructions: list<Mini2Instruction>
+  instruction_count: number
+  compiled: boolean
+  errors: list<text>
+
+RECORD Mini2ValueKind
+  name: "number" | "string" | "boolean" | "null" | "array" | "map" | "function" | "closure"
+  covered: boolean
+
+RECORD Mini2Global
+  name: text
+  kind: "unset" | "number" | "module" | "function" | "closure"
+  number_value: number
+  module_name: text
+  function_name: text
+  closure_name: text
+
+RECORD Mini2NumberArray
+  name: text
+  values: list<number>
+
+RECORD Mini2Module
+  name: text
+  loaded: boolean
+  sqrt_10: number
+
+RECORD Mini2Closure
+  name: text
+  function_name: text
+  captured_cell_name: text
+  call_count: number
+  defined: boolean
+
+RECORD Mini2Cell
+  name: text
+  number_value: number
+  closed: boolean
+
+RECORD Mini2StackFrame
+  slot: number
+  function_name: text
+  line: number
+  pc: number
+  active: boolean
+
+RECORD Mini2Runtime
+  globals: list<Mini2Global>
+  arrays: list<Mini2NumberArray>
+  modules: list<Mini2Module>
+  closures: list<Mini2Closure>
+  cells: list<Mini2Cell>
+  value_kinds: list<Mini2ValueKind>
+  stack_trace: list<Mini2StackFrame>
+  outputs: list<number>
+  last_number: number
+  instruction_count: number
+  value_kind_count: number
+  errors: list<text>
+  status: "new" | "running" | "passed" | "failed"
+
+RECORD Mini2DebugSnapshot
+  slot: number
+  label: text
+  pc: number
+  function_name: text
+  total_value: number
+  captured_n: number
+  active: boolean
+
+RECORD Mini2Debugger
+  enabled: boolean
+  snapshots: list<Mini2DebugSnapshot>
+  snapshot_count: number
+  status: "new" | "attached" | "detached"
+  errors: list<text>
+
+RECORD Mini2Repl
+  input_lines: list<text>
+  history: list<text>
+  outputs: list<number>
+  errors: list<text>
+  status: "new" | "ran" | "failed"
+
+REQUEST source is Mini2Source
+AND front_end is Mini2FrontEnd
+AND resolver is Mini2Resolver
+AND bytecode is Mini2Bytecode
+AND vm is Mini2Runtime
+AND debugger is Mini2Debugger
+AND repl is Mini2Repl
+
+OUTPUT front_end is Mini2FrontEnd
+AND resolver is Mini2Resolver
+AND bytecode is Mini2Bytecode
+AND vm is Mini2Runtime
+AND debugger is Mini2Debugger
+AND repl is Mini2Repl
+
+WHEN reset front end <front_end>
+  GIVEN front_end is Mini2FrontEnd
+  set front_end.token_count to 0
+  set front_end.ast_node_count to 0
+  set front_end.lexed to false
+  set front_end.parsed to false
+  set front_end.errors to []
+
+WHEN reset resolver state <resolver>
+  GIVEN resolver is Mini2Resolver
+  set resolver.symbol_count to 0
+  set resolver.capture_count to 0
+  set resolver.resolved to false
+  set resolver.errors to []
+  FOR symbol in resolver.symbols
+    set symbol.resolved to false
+    IF symbol.kind == "captured_cell"
+      set symbol.captured to false
+
+WHEN reset bytecode state <bytecode>
+  GIVEN bytecode is Mini2Bytecode
+  set bytecode.instruction_count to 0
+  set bytecode.compiled to false
+  set bytecode.errors to []
+
+WHEN reset vm state <vm>
+  GIVEN vm is Mini2Runtime
+  set vm.outputs to []
+  set vm.last_number to 0
+  set vm.instruction_count to 0
+  set vm.value_kind_count to 0
+  set vm.errors to []
+  set vm.status to "new"
+  FOR global in vm.globals
+    set global.kind to "unset"
+    set global.number_value to 0
+    set global.module_name to ""
+    set global.function_name to ""
+    set global.closure_name to ""
+  FOR module in vm.modules
+    set module.loaded to false
+  FOR closure in vm.closures
+    set closure.function_name to ""
+    set closure.captured_cell_name to ""
+    set closure.call_count to 0
+    set closure.defined to false
+  FOR cell in vm.cells
+    set cell.number_value to 0
+    set cell.closed to false
+  FOR value_kind in vm.value_kinds
+    set value_kind.covered to false
+  FOR frame in vm.stack_trace
+    set frame.function_name to ""
+    set frame.line to 0
+    set frame.pc to 0
+    set frame.active to false
+
+WHEN reset debugger state <debugger>
+  GIVEN debugger is Mini2Debugger
+  set debugger.snapshot_count to 0
+  set debugger.status to "new"
+  set debugger.errors to []
+  FOR snapshot in debugger.snapshots
+    set snapshot.label to ""
+    set snapshot.pc to 0
+    set snapshot.function_name to ""
+    set snapshot.total_value to 0
+    set snapshot.captured_n to 0
+    set snapshot.active to false
+
+WHEN reset repl state <repl>
+  GIVEN repl is Mini2Repl
+  set repl.history to []
+  set repl.outputs to []
+  set repl.errors to []
+  set repl.status to "new"
+
+WHEN expect <tokens> has token <lexeme> into <front_end>
+  GIVEN tokens is list<Mini2Token>
+  AND lexeme is text
+  AND front_end is Mini2FrontEnd
+  FIND token in tokens WHERE token.lexeme == lexeme
+    PASS
+  ELSE
+    append "missing_token_" + lexeme to front_end.errors
+
+WHEN expect <front_end> has ast kind <kind>
+  GIVEN front_end is Mini2FrontEnd
+  AND kind is text
+  FIND node in front_end.ast_nodes WHERE node.kind == kind
+    PASS
+  ELSE
+    append "missing_ast_" + kind to front_end.errors
+
+WHEN expect <bytecode> has opcode <kind>
+  GIVEN bytecode is Mini2Bytecode
+  AND kind is text
+  FIND instruction in bytecode.instructions WHERE instruction.kind == kind
+    PASS
+  ELSE
+    append "missing_opcode_" + kind to bytecode.errors
+
+WHEN lex <source> into <front_end>
+  GIVEN source is Mini2Source
+  AND front_end is Mini2FrontEnd
+  count front_end.tokens into front_end.token_count
+  IF source.name == "counter closure vm sample"
+    expect front_end.tokens has token "import" into front_end
+    expect front_end.tokens has token "math" into front_end
+    expect front_end.tokens has token "fn" into front_end
+    expect front_end.tokens has token "make_counter" into front_end
+    expect front_end.tokens has token "return" into front_end
+    expect front_end.tokens has token "for" into front_end
+    expect front_end.tokens has token "print" into front_end
+    expect front_end.tokens has token "sqrt" into front_end
+    IF front_end.token_count == 53
+      set front_end.lexed to true
+    ELSE
+      append "unexpected_token_count" to front_end.errors
+  ELSE
+    append "unknown_source" to front_end.errors
+
+WHEN parse <front_end>
+  GIVEN front_end is Mini2FrontEnd
+  count front_end.ast_nodes into front_end.ast_node_count
+  expect front_end has ast kind "import_module"
+  expect front_end has ast kind "function_make_counter"
+  expect front_end has ast kind "let_closure"
+  expect front_end has ast kind "let_number"
+  expect front_end has ast kind "for_sum_list"
+  expect front_end has ast kind "print_counter_call"
+  expect front_end has ast kind "print_native_call"
+  IF front_end.ast_node_count == 8
+    set front_end.parsed to true
+  ELSE
+    append "unexpected_ast_node_count" to front_end.errors
+
+WHEN resolve <front_end> into <resolver>
+  GIVEN front_end is Mini2FrontEnd
+  AND resolver is Mini2Resolver
+  IF front_end.parsed
+    count resolver.symbols into resolver.symbol_count
+    FOR symbol in resolver.symbols
+      set symbol.resolved to true
+      IF symbol.name == "n"
+        set symbol.captured to true
+        add 1 to resolver.capture_count
+    IF resolver.symbol_count == 7 and resolver.capture_count == 1
+      set resolver.resolved to true
+    ELSE
+      append "unexpected_scope_graph" to resolver.errors
+  ELSE
+    append "parse_required_before_resolve" to resolver.errors
+
+WHEN compile <front_end> with <resolver> into <bytecode>
+  GIVEN front_end is Mini2FrontEnd
+  AND resolver is Mini2Resolver
+  AND bytecode is Mini2Bytecode
+  IF front_end.parsed and resolver.resolved
+    count bytecode.instructions into bytecode.instruction_count
+    expect bytecode has opcode "import_module"
+    expect bytecode has opcode "constant_number"
+    expect bytecode has opcode "define_counter_factory"
+    expect bytecode has opcode "call_counter_factory"
+    expect bytecode has opcode "sum_array_global"
+    expect bytecode has opcode "debug_break"
+    expect bytecode has opcode "call_closure"
+    expect bytecode has opcode "call_native"
+    expect bytecode has opcode "print_register"
+    expect bytecode has opcode "halt"
+    IF bytecode.instruction_count == 13
+      set bytecode.compiled to true
+    ELSE
+      append "unexpected_instruction_count" to bytecode.errors
+  ELSE
+    append "resolver_required_before_compile" to bytecode.errors
+
+WHEN validate value model in <vm>
+  GIVEN vm is Mini2Runtime
+  count vm.value_kinds into vm.value_kind_count
+  FOR value_kind in vm.value_kinds
+    set value_kind.covered to true
+  IF vm.value_kind_count != 8
+    append "unexpected_value_kind_count" to vm.errors
+
+WHEN run <bytecode> on <vm> with <debugger>
+  GIVEN bytecode is Mini2Bytecode
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  validate value model in vm
+  IF bytecode.compiled
+    set vm.status to "running"
+    set debugger.status to "attached"
+    count bytecode.instructions into vm.instruction_count
+    FOR instruction in bytecode.instructions
+      IF vm.status == "running"
+        execute instruction on vm with debugger
+    IF vm.status == "running"
+      set vm.status to "passed"
+    IF vm.status == "passed"
+      set debugger.status to "detached"
+  ELSE
+    append "compile_required_before_run" to vm.errors
+    set vm.status to "failed"
+
+WHEN execute <instruction> on <vm> with <debugger>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  DEPENDING ON instruction
+    WHEN the kind is import_module
+      load module instruction.module_name from instruction into vm
+    WHEN the kind is constant_number
+      define number global instruction on vm
+    WHEN the kind is define_counter_factory
+      define counter factory instruction on vm
+    WHEN the kind is call_counter_factory
+      call counter factory instruction on vm
+    WHEN the kind is sum_array_global
+      total array global instruction on vm
+    WHEN the kind is debug_break
+      capture debug instruction on vm with debugger
+    WHEN the kind is call_closure
+      call closure instruction on vm
+    WHEN the kind is call_native
+      call native instruction on vm
+    WHEN the kind is print_register
+      append vm.last_number to vm.outputs
+    WHEN the kind is get_global
+      get global instruction on vm
+    WHEN the kind is halt
+      set vm.status to "passed"
+
+WHEN load module <module_name> from <instruction> into <vm>
+  GIVEN module_name is text
+  AND instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND module in vm.modules WHERE module.name == module_name
+    set module.loaded to true
+    FIND global in vm.globals WHERE global.name == module_name
+      set global.kind to "module"
+      set global.module_name to module_name
+    ELSE
+      record named error missing_global_ module_name at instruction on vm
+  ELSE
+    record named error missing_module_ module_name at instruction on vm
+
+WHEN define number global <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND global in vm.globals WHERE global.name == instruction.target_name
+    set global.kind to "number"
+    set global.number_value to instruction.number_value
+  ELSE
+    record named error missing_global_ instruction.target_name at instruction on vm
+
+WHEN define counter factory <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND global in vm.globals WHERE global.name == instruction.function_name
+    set global.kind to "function"
+    set global.function_name to instruction.function_name
+  ELSE
+    record named error missing_global_ instruction.function_name at instruction on vm
+
+WHEN call counter factory <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND factory in vm.globals WHERE factory.name == instruction.function_name
+    IF factory.kind == "function"
+      FIND cell in vm.cells WHERE cell.name == instruction.target_name + ".n"
+        set cell.number_value to instruction.start_value
+        set cell.closed to true
+        FIND closure in vm.closures WHERE closure.name == instruction.target_name
+          set closure.function_name to instruction.function_name + ".inner"
+          set closure.captured_cell_name to cell.name
+          set closure.defined to true
+          FIND global in vm.globals WHERE global.name == instruction.target_name
+            set global.kind to "closure"
+            set global.closure_name to closure.name
+          ELSE
+            record named error missing_global_ instruction.target_name at instruction on vm
+        ELSE
+          record named error missing_closure_ instruction.target_name at instruction on vm
+      ELSE
+        record named error missing_cell_ instruction.target_name at instruction on vm
+    ELSE
+      record named error factory_not_function_ instruction.function_name at instruction on vm
+  ELSE
+    record named error missing_factory_ instruction.function_name at instruction on vm
+
+WHEN total array global <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND array in vm.arrays WHERE array.name == instruction.list_name
+    sum array.values into vm.last_number
+    FIND global in vm.globals WHERE global.name == instruction.target_name
+      set global.kind to "number"
+      set global.number_value to vm.last_number
+    ELSE
+      record named error missing_global_ instruction.target_name at instruction on vm
+  ELSE
+    record named error missing_array_ instruction.list_name at instruction on vm
+
+WHEN call closure <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND global in vm.globals WHERE global.name == instruction.closure_name
+    IF global.kind == "closure"
+      FIND closure in vm.closures WHERE closure.name == global.closure_name
+        IF closure.defined
+          FIND cell in vm.cells WHERE cell.name == closure.captured_cell_name
+            add 1 to cell.number_value
+            add 1 to closure.call_count
+            set vm.last_number to cell.number_value
+            remember closure frame closure at instruction in vm
+          ELSE
+            record named error missing_cell_for_ closure.name at instruction on vm
+        ELSE
+          record named error closure_not_defined_ closure.name at instruction on vm
+      ELSE
+        record named error missing_closure_ global.closure_name at instruction on vm
+    ELSE
+      record named error global_not_closure_ instruction.closure_name at instruction on vm
+  ELSE
+    record named error missing_global_ instruction.closure_name at instruction on vm
+
+WHEN call native <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND module in vm.modules WHERE module.name == instruction.module_name
+    IF module.loaded
+      IF instruction.function_name == "sqrt"
+        FIND global in vm.globals WHERE global.name == instruction.arg_name
+          IF global.kind == "number"
+            IF global.number_value == 10
+              set vm.last_number to module.sqrt_10
+              remember native frame instruction in vm
+            ELSE
+              record error "sqrt_fixture_expected_10" at instruction on vm
+          ELSE
+            record named error native_expected_number_ instruction.arg_name at instruction on vm
+        ELSE
+          record named error missing_global_ instruction.arg_name at instruction on vm
+      ELSE
+        record named error missing_native_ instruction.function_name at instruction on vm
+    ELSE
+      record named error module_not_loaded_ instruction.module_name at instruction on vm
+  ELSE
+    record named error missing_module_ instruction.module_name at instruction on vm
+
+WHEN get global <instruction> on <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND global in vm.globals WHERE global.name == instruction.name
+    set vm.last_number to global.number_value
+  ELSE
+    record named error undefined_global_ instruction.name at instruction on vm
+
+WHEN remember frame <function_name> at <instruction> in <vm>
+  GIVEN function_name is text
+  AND instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  FIND frame in vm.stack_trace WHERE frame.slot == 1
+    set frame.function_name to function_name
+    set frame.line to instruction.line
+    set frame.pc to instruction.index
+    set frame.active to true
+  ELSE
+    append "missing_stack_frame_slot_1" to vm.errors
+
+WHEN remember closure frame <closure> at <instruction> in <vm>
+  GIVEN closure is Mini2Closure
+  AND instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  remember frame closure.function_name at instruction in vm
+
+WHEN remember native frame <instruction> in <vm>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  LET function_name be instruction.module_name + "." + instruction.function_name
+  remember frame function_name at instruction in vm
+
+WHEN record error <message> at <instruction> on <vm>
+  GIVEN message is text
+  AND instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  append message to vm.errors
+  set vm.status to "failed"
+  FIND script_frame in vm.stack_trace WHERE script_frame.slot == 1
+    set script_frame.function_name to "script"
+    set script_frame.line to instruction.line
+    set script_frame.pc to instruction.index
+    set script_frame.active to true
+  ELSE
+    append "missing_stack_frame_slot_1" to vm.errors
+  FIND vm_frame in vm.stack_trace WHERE vm_frame.slot == 2
+    set vm_frame.function_name to "vm.execute"
+    set vm_frame.line to 0
+    set vm_frame.pc to instruction.index
+    set vm_frame.active to true
+  ELSE
+    append "missing_stack_frame_slot_2" to vm.errors
+
+WHEN record named error <prefix> <name> at <instruction> on <vm>
+  GIVEN prefix is text
+  AND name is text
+  AND instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  LET message be prefix + name
+  record error message at instruction on vm
+
+WHEN capture debug <instruction> on <vm> with <debugger>
+  GIVEN instruction is Mini2Instruction
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  IF debugger.enabled
+    FIND snapshot in debugger.snapshots WHERE snapshot.active == false
+      set snapshot.label to instruction.label
+      set snapshot.pc to instruction.index
+      set snapshot.function_name to "script"
+      FIND total in vm.globals WHERE total.name == "total"
+        set snapshot.total_value to total.number_value
+      ELSE
+        append "debug_missing_total" to debugger.errors
+      FIND cell in vm.cells WHERE cell.name == "counter.n"
+        set snapshot.captured_n to cell.number_value
+      ELSE
+        append "debug_missing_counter_cell" to debugger.errors
+      set snapshot.active to true
+      add 1 to debugger.snapshot_count
+    ELSE
+      append "debug_snapshot_full" to debugger.errors
+
+WHEN apply repl <repl> against <vm>
+  GIVEN repl is Mini2Repl
+  AND vm is Mini2Runtime
+  FOR line in repl.input_lines
+    append line to repl.history
+    IF line == "counter()"
+      call global closure counter on vm
+      append vm.last_number to repl.outputs
+    ELSE
+      IF line == "total"
+        FIND global in vm.globals WHERE global.name == "total"
+          append global.number_value to repl.outputs
+        ELSE
+          append "repl_missing_total" to repl.errors
+      ELSE
+        append "unknown_repl_input_" + line to repl.errors
+  IF repl.errors == []
+    set repl.status to "ran"
+  ELSE
+    set repl.status to "failed"
+
+WHEN call global closure <name> on <vm>
+  GIVEN name is text
+  AND vm is Mini2Runtime
+  FIND global in vm.globals WHERE global.name == name
+    IF global.kind == "closure"
+      FIND closure in vm.closures WHERE closure.name == global.closure_name
+        FIND cell in vm.cells WHERE cell.name == closure.captured_cell_name
+          add 1 to cell.number_value
+          add 1 to closure.call_count
+          set vm.last_number to cell.number_value
+        ELSE
+          append "repl_missing_cell_" + closure.name to vm.errors
+      ELSE
+        append "repl_missing_closure_" + global.closure_name to vm.errors
+    ELSE
+      append "repl_global_not_closure_" + name to vm.errors
+  ELSE
+    append "repl_missing_global_" + name to vm.errors
+
+WHEN execute program <source> through <front_end> with <resolver> and <bytecode> on <vm> under <debugger> using <repl>
+  GIVEN source is Mini2Source
+  AND front_end is Mini2FrontEnd
+  AND resolver is Mini2Resolver
+  AND bytecode is Mini2Bytecode
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  AND repl is Mini2Repl
+  reset front end front_end
+  reset resolver state resolver
+  reset bytecode state bytecode
+  reset vm state vm
+  reset debugger state debugger
+  reset repl state repl
+  lex source into front_end
+  parse front_end
+  resolve front_end into resolver
+  compile front_end with resolver into bytecode
+  run bytecode on vm with debugger
+  IF vm.status == "passed"
+    apply repl repl against vm
+
+SCENARIO MiniLang2 closure bytecode VM executes
+GIVEN source is Mini2Source
+  name: "counter closure vm sample"
+  text: "import math; fn make_counter(start) { let n = start; return fn() { n = n + 1; return n } }; let counter = make_counter(10); let total = 0; for item in [1, 2, 3, 4] { total = total + item }; print(counter()); print(counter()); print(math.sqrt(total))"
+
+GIVEN front_end is Mini2FrontEnd
+  tokens: []
+  ast_nodes: []
+  token_count: 0
+  ast_node_count: 0
+  lexed: false
+  parsed: false
+  errors: []
+
+GIVEN front_end.tokens are Mini2Token
+  | index | kind         | lexeme         |
+  | 1     | "keyword"    | "import"       |
+  | 2     | "identifier" | "math"         |
+  | 3     | "keyword"    | "fn"           |
+  | 4     | "identifier" | "make_counter" |
+  | 5     | "symbol"     | "("            |
+  | 6     | "identifier" | "start"        |
+  | 7     | "symbol"     | ")"            |
+  | 8     | "symbol"     | "{"            |
+  | 9     | "keyword"    | "let"          |
+  | 10    | "identifier" | "n"            |
+  | 11    | "symbol"     | "="            |
+  | 12    | "identifier" | "start"        |
+  | 13    | "keyword"    | "return"       |
+  | 14    | "keyword"    | "fn"           |
+  | 15    | "symbol"     | "("            |
+  | 16    | "symbol"     | ")"            |
+  | 17    | "symbol"     | "{"            |
+  | 18    | "identifier" | "n"            |
+  | 19    | "symbol"     | "="            |
+  | 20    | "identifier" | "n"            |
+  | 21    | "symbol"     | "+"            |
+  | 22    | "number"     | "1"            |
+  | 23    | "keyword"    | "return"       |
+  | 24    | "identifier" | "n"            |
+  | 25    | "symbol"     | "}"            |
+  | 26    | "symbol"     | "}"            |
+  | 27    | "keyword"    | "let"          |
+  | 28    | "identifier" | "counter"      |
+  | 29    | "symbol"     | "="            |
+  | 30    | "identifier" | "make_counter" |
+  | 31    | "symbol"     | "("            |
+  | 32    | "number"     | "10"           |
+  | 33    | "symbol"     | ")"            |
+  | 34    | "keyword"    | "let"          |
+  | 35    | "identifier" | "total"        |
+  | 36    | "symbol"     | "="            |
+  | 37    | "number"     | "0"            |
+  | 38    | "keyword"    | "for"          |
+  | 39    | "identifier" | "item"         |
+  | 40    | "keyword"    | "in"           |
+  | 41    | "symbol"     | "["            |
+  | 42    | "number"     | "1"            |
+  | 43    | "number"     | "2"            |
+  | 44    | "number"     | "3"            |
+  | 45    | "number"     | "4"            |
+  | 46    | "symbol"     | "]"            |
+  | 47    | "identifier" | "total"        |
+  | 48    | "symbol"     | "+"            |
+  | 49    | "identifier" | "item"         |
+  | 50    | "identifier" | "print"        |
+  | 51    | "identifier" | "counter"      |
+  | 52    | "identifier" | "sqrt"         |
+  | 53    | "identifier" | "total"        |
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind import_module
+  index: 1
+  module_name: "math"
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind function_make_counter
+  index: 2
+  name: "make_counter"
+  parameter_name: "start"
+  captured_name: "n"
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind let_closure
+  index: 3
+  target_name: "counter"
+  function_name: "make_counter"
+  start_value: 10
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind let_number
+  index: 4
+  name: "total"
+  number_value: 0
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind for_sum_list
+  index: 5
+  target_name: "total"
+  list_name: "items"
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind print_counter_call
+  index: 6
+  closure_name: "counter"
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind print_counter_call
+  index: 7
+  closure_name: "counter"
+
+GIVEN front_end.ast_nodes contains a Mini2AstNode of kind print_native_call
+  index: 8
+  module_name: "math"
+  function_name: "sqrt"
+  arg_name: "total"
+
+GIVEN resolver is Mini2Resolver
+  symbols: []
+  symbol_count: 0
+  capture_count: 0
+  resolved: false
+  errors: []
+
+GIVEN resolver.symbols are Mini2Symbol
+  | name           | scope_name           | kind            | slot | depth | captured | resolved |
+  | "math"         | "global"             | "module"        | 0    | 0     | false    | false    |
+  | "make_counter" | "global"             | "function"      | 1    | 0     | false    | false    |
+  | "counter"      | "global"             | "closure"       | 2    | 0     | false    | false    |
+  | "total"        | "global"             | "number"        | 3    | 0     | false    | false    |
+  | "start"        | "make_counter"       | "parameter"     | 0    | 1     | false    | false    |
+  | "n"            | "make_counter.inner" | "captured_cell" | 0    | 2     | false    | false    |
+  | "item"         | "for.items"          | "local"         | 0    | 1     | false    | false    |
+
+GIVEN bytecode is Mini2Bytecode
+  instructions: []
+  instruction_count: 0
+  compiled: false
+  errors: []
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind import_module
+  index: 1
+  line: 1
+  module_name: "math"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind constant_number
+  index: 2
+  line: 3
+  target_name: "total"
+  number_value: 0
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind define_counter_factory
+  index: 3
+  line: 2
+  function_name: "make_counter"
+  captured_name: "n"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind call_counter_factory
+  index: 4
+  line: 3
+  target_name: "counter"
+  function_name: "make_counter"
+  start_value: 10
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind sum_array_global
+  index: 5
+  line: 5
+  target_name: "total"
+  list_name: "items"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind debug_break
+  index: 6
+  line: 6
+  label: "after_loop"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind call_closure
+  index: 7
+  line: 7
+  target_name: "last"
+  closure_name: "counter"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind print_register
+  index: 8
+  line: 7
+  target_name: "last"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind call_closure
+  index: 9
+  line: 8
+  target_name: "last"
+  closure_name: "counter"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind print_register
+  index: 10
+  line: 8
+  target_name: "last"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind call_native
+  index: 11
+  line: 9
+  target_name: "last"
+  module_name: "math"
+  function_name: "sqrt"
+  arg_name: "total"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind print_register
+  index: 12
+  line: 9
+  target_name: "last"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind halt
+  index: 13
+  line: 9
+
+GIVEN vm is Mini2Runtime
+  globals: []
+  arrays: []
+  modules: []
+  closures: []
+  cells: []
+  value_kinds: []
+  stack_trace: []
+  outputs: []
+  last_number: 0
+  instruction_count: 0
+  value_kind_count: 0
+  errors: []
+  status: "new"
+
+GIVEN vm.globals are Mini2Global
+  | name           | kind    | number_value | module_name | function_name | closure_name |
+  | "math"         | "unset" | 0            | ""          | ""            | ""           |
+  | "make_counter" | "unset" | 0            | ""          | ""            | ""           |
+  | "counter"      | "unset" | 0            | ""          | ""            | ""           |
+  | "total"        | "unset" | 0            | ""          | ""            | ""           |
+
+GIVEN vm.arrays are Mini2NumberArray
+  | name    | values       |
+  | "items" | [1, 2, 3, 4] |
+
+GIVEN vm.modules are Mini2Module
+  | name   | loaded | sqrt_10           |
+  | "math" | false  | 3.162277660168379 |
+
+GIVEN vm.closures are Mini2Closure
+  | name      | function_name | captured_cell_name | call_count | defined |
+  | "counter" | ""            | ""                 | 0          | false   |
+
+GIVEN vm.cells are Mini2Cell
+  | name        | number_value | closed |
+  | "counter.n" | 0            | false  |
+
+GIVEN vm.value_kinds are Mini2ValueKind
+  | name       | covered |
+  | "number"   | false   |
+  | "string"   | false   |
+  | "boolean"  | false   |
+  | "null"     | false   |
+  | "array"    | false   |
+  | "map"      | false   |
+  | "function" | false   |
+  | "closure"  | false   |
+
+GIVEN vm.stack_trace are Mini2StackFrame
+  | slot | function_name | line | pc | active |
+  | 1    | ""            | 0    | 0  | false  |
+  | 2    | ""            | 0    | 0  | false  |
+
+GIVEN debugger is Mini2Debugger
+  enabled: true
+  snapshots: []
+  snapshot_count: 0
+  status: "new"
+  errors: []
+
+GIVEN debugger.snapshots are Mini2DebugSnapshot
+  | slot | label | pc | function_name | total_value | captured_n | active |
+  | 1    | ""    | 0  | ""            | 0           | 0          | false  |
+  | 2    | ""    | 0  | ""            | 0           | 0          | false  |
+
+GIVEN repl is Mini2Repl
+  input_lines: ["counter()", "total"]
+  history: []
+  outputs: []
+  errors: []
+  status: "new"
+
+WHEN execute program source through front_end with resolver and bytecode on vm under debugger using repl
+
+THEN front_end.lexed == true
+AND front_end.parsed == true
+AND front_end.errors == []
+AND resolver.resolved == true
+AND resolver.capture_count == 1
+AND resolver.errors == []
+AND bytecode.compiled == true
+AND bytecode.instruction_count == 13
+AND bytecode.errors == []
+AND vm.status == "passed"
+AND vm.outputs == [11, 12, 3.162277660168379]
+AND vm.last_number == 13
+AND vm.value_kind_count == 8
+AND vm.errors == []
+AND debugger.snapshot_count == 1
+AND debugger.status == "detached"
+AND debugger.errors == []
+AND repl.status == "ran"
+AND repl.history == ["counter()", "total"]
+AND repl.outputs == [13, 10]
+AND repl.errors == []
+
+SCENARIO MiniLang2 VM records stack trace for missing global
+GIVEN source is Mini2Source
+  name: "counter closure vm sample"
+  text: "print(missing)"
+
+GIVEN front_end is Mini2FrontEnd
+  tokens: []
+  ast_nodes: []
+  token_count: 0
+  ast_node_count: 0
+  lexed: false
+  parsed: false
+  errors: []
+
+GIVEN resolver is Mini2Resolver
+  symbols: []
+  symbol_count: 0
+  capture_count: 0
+  resolved: false
+  errors: []
+
+GIVEN bytecode is Mini2Bytecode
+  instructions: []
+  instruction_count: 0
+  compiled: true
+  errors: []
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind get_global
+  index: 1
+  line: 1
+  name: "missing"
+
+GIVEN bytecode.instructions contains a Mini2Instruction of kind halt
+  index: 2
+  line: 1
+
+GIVEN vm is Mini2Runtime
+  globals: []
+  arrays: []
+  modules: []
+  closures: []
+  cells: []
+  value_kinds: []
+  stack_trace: []
+  outputs: []
+  last_number: 0
+  instruction_count: 0
+  value_kind_count: 0
+  errors: []
+  status: "new"
+
+GIVEN vm.value_kinds are Mini2ValueKind
+  | name       | covered |
+  | "number"   | false   |
+  | "string"   | false   |
+  | "boolean"  | false   |
+  | "null"     | false   |
+  | "array"    | false   |
+  | "map"      | false   |
+  | "function" | false   |
+  | "closure"  | false   |
+
+GIVEN vm.stack_trace are Mini2StackFrame
+  | slot | function_name | line | pc | active |
+  | 1    | ""            | 0    | 0  | false  |
+  | 2    | ""            | 0    | 0  | false  |
+
+GIVEN debugger is Mini2Debugger
+  enabled: true
+  snapshots: []
+  snapshot_count: 0
+  status: "new"
+  errors: []
+
+GIVEN repl is Mini2Repl
+  input_lines: []
+  history: []
+  outputs: []
+  errors: []
+  status: "new"
+
+WHEN run bytecode on vm with debugger
+
+THEN vm.status == "failed"
+AND vm.errors == ["undefined_global_missing"]
+AND vm.instruction_count == 2
+AND vm.value_kind_count == 8
+AND vm.outputs == []

@@ -142,6 +142,45 @@ class PublicApiTests(unittest.TestCase):
                 entry="checkout cart",
             )
 
+    def test_run_json_text_reports_null_for_typed_contract_mismatch(self):
+        program = """
+        RECORD Profile
+          name: text
+          score: number
+
+        REQUEST profile is Profile
+
+        WHEN accept <profile>
+          GIVEN profile is Profile
+          PASS
+        """
+
+        cases = [
+            ("name", {"name": None, "score": 1}, "expected profile.name to be text, got null"),
+            ("score", {"name": "Ada", "score": None}, "expected profile.score to be number, got null"),
+        ]
+        for field, profile, message in cases:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(GwtError, message):
+                    run_json_text(program, {"profile": profile}, entry="accept profile")
+
+    def test_run_json_text_allows_null_for_any_contract(self):
+        result = run_json_text(
+            """
+            REQUEST raw is any
+            OUTPUT raw is any
+
+            WHEN accept <raw>
+              GIVEN raw is any
+              PASS
+            """,
+            {"raw": None},
+            entry="accept raw",
+        )
+
+        self.assertIsNone(result.state["raw"])
+        self.assertIsNone(result.as_payload()["result"]["raw"])
+
     def test_run_json_file_sets_json_file_metadata(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
