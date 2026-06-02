@@ -7,7 +7,9 @@ See [spec/v0.1.md](spec/v0.1.md) for the versioned v0.1 specification and
 [grammar.md](grammar.md) for the EBNF grammar. See
 [design-principles.md](design-principles.md) for non-normative language-shape
 guidance inspired by OpenSpec, GitHub Spec Kit, Cucumber, SpecFlow/Reqnroll,
-and BDD examples.
+and BDD examples. See [spec-is-code.md](spec-is-code.md) for the product thesis
+behind making behavior specs executable instead of agent-interpreted handoff
+documents.
 
 ## Program Shape
 
