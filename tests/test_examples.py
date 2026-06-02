@@ -204,6 +204,33 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertNotIn("selected_inventory_item", request_result.state)
         self.assertNotIn("inventory_match_found", request_result.state)
 
+    def test_minilang_spec_runs_scenarios_and_json_request(self):
+        program = Path("examples/minilang_spec/rules.gwt")
+        request = Path("examples/minilang_spec/request.json")
+
+        analysis = analyze_file(program)
+        self.assertEqual(analysis.diagnostics, [])
+
+        result = run_source(program.read_text(), filename=str(program))
+        self.assertEqual([scenario.state["runtime"]["status"] for scenario in result.scenarios], ["passed", "failed"])
+        self.assertEqual(result.scenarios[0].state["runtime"]["outputs"], ["large"])
+        self.assertEqual(result.scenarios[0].state["runtime"]["mapped_numbers"], [2, 4, 6, 8])
+        self.assertEqual(
+            result.scenarios[1].state["front_end"]["errors"],
+            ["missing_print_map_double", "unexpected_statement_count"],
+        )
+
+        request_result = run_json_request(
+            program.read_text(),
+            json.loads(request.read_text()),
+            entry="run source through front_end into runtime",
+            filename=str(program),
+            entry_filename=str(request),
+        )
+        self.assertEqual(request_result.scenarios[0].returned_state["runtime"]["status"], "passed")
+        self.assertEqual(request_result.scenarios[0].returned_state["runtime"]["outputs"], ["large"])
+        self.assertEqual(request_result.scenarios[0].returned_state["runtime"]["mapped_numbers"], [2, 4, 6, 8])
+
     def test_output_contract_failure_is_reported(self):
         with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for decision"):
             run_source(

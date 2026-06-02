@@ -1,0 +1,487 @@
+PROGRAM MiniLang executable spec
+
+RECORD MiniSource
+  name: text
+  text: text
+
+RECORD MiniToken
+  index: number
+  kind: "keyword" | "identifier" | "number" | "symbol" | "string"
+  lexeme: text
+
+RECORD MiniStatement
+  index: number
+  kind: "let_number" | "fn_add" | "if_add_gt_print" | "let_number_list" | "print_map_double"
+  name: text
+  left_name: text
+  right_name: text
+  number_value: number
+  threshold: number
+  then_text: text
+  else_text: text
+  list_name: text
+
+RECORD MiniNumberList
+  name: text
+  values: list<number>
+
+RECORD MiniFrontEnd
+  tokens: list<MiniToken>
+  statements: list<MiniStatement>
+  lists: list<MiniNumberList>
+  token_count: number
+  statement_count: number
+  lexed: boolean
+  parsed: boolean
+  errors: list<text>
+
+RECORD MiniBinding
+  name: text
+  kind: "unset" | "number" | "number_list"
+  number_value: number
+  list_values: list<number>
+
+RECORD MiniRuntime
+  bindings: list<MiniBinding>
+  add_defined: boolean
+  outputs: list<text>
+  mapped_numbers: list<number>
+  errors: list<text>
+  status: "new" | "passed" | "failed"
+
+REQUEST source is MiniSource
+AND front_end is MiniFrontEnd
+AND runtime is MiniRuntime
+
+OUTPUT front_end is MiniFrontEnd
+AND runtime is MiniRuntime
+
+WHEN reset <front_end>
+  GIVEN front_end is MiniFrontEnd
+  set front_end.token_count to 0
+  set front_end.statement_count to 0
+  set front_end.lexed to false
+  set front_end.parsed to false
+  set front_end.errors to []
+
+WHEN reset_runtime <runtime>
+  GIVEN runtime is MiniRuntime
+  set runtime.add_defined to false
+  set runtime.outputs to []
+  set runtime.mapped_numbers to []
+  set runtime.errors to []
+  set runtime.status to "new"
+  FOR binding in runtime.bindings
+    set binding.kind to "unset"
+    set binding.number_value to 0
+    set binding.list_values to []
+
+WHEN expect <tokens> has token <lexeme> into <front_end>
+  GIVEN tokens is list<MiniToken>
+  AND lexeme is text
+  AND front_end is MiniFrontEnd
+  FIND token in tokens WHERE token.lexeme == lexeme
+    set front_end.token_count to front_end.token_count
+  ELSE
+    append "missing_token_" + lexeme to front_end.errors
+
+WHEN expect <front_end> has statement <kind>
+  GIVEN front_end is MiniFrontEnd
+  AND kind is text
+  FIND statement in front_end.statements WHERE statement.kind == kind
+    set front_end.statement_count to front_end.statement_count
+  ELSE
+    append "missing_" + kind to front_end.errors
+
+WHEN lex <source> into <front_end>
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  count front_end.tokens into front_end.token_count
+  IF source.name == "map sample"
+    expect front_end.tokens has token "let" into front_end
+    expect front_end.tokens has token "fn" into front_end
+    expect front_end.tokens has token "return" into front_end
+    expect front_end.tokens has token "if" into front_end
+    expect front_end.tokens has token "else" into front_end
+    expect front_end.tokens has token "map" into front_end
+    IF front_end.token_count == 73
+      set front_end.lexed to true
+    ELSE
+      append "unexpected_token_count" to front_end.errors
+  ELSE
+    append "unknown_source" to front_end.errors
+
+WHEN parse <raw_front_end> into <checked_front_end>
+  GIVEN raw_front_end is MiniFrontEnd
+  AND checked_front_end is MiniFrontEnd
+  count raw_front_end.statements into checked_front_end.statement_count
+  expect checked_front_end has statement "let_number"
+  expect checked_front_end has statement "fn_add"
+  expect checked_front_end has statement "if_add_gt_print"
+  expect checked_front_end has statement "let_number_list"
+  expect checked_front_end has statement "print_map_double"
+  IF checked_front_end.statement_count == 6
+    set checked_front_end.parsed to true
+  ELSE
+    append "unexpected_statement_count" to checked_front_end.errors
+
+WHEN evaluate <front_end> into <runtime>
+  GIVEN front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  FOR statement in front_end.statements
+    evaluate_statement statement using front_end into runtime
+
+WHEN evaluate_statement <statement> using <front_end> into <runtime>
+  GIVEN statement is MiniStatement
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  IF statement.kind == "let_number"
+    store_number statement into runtime
+  IF statement.kind == "fn_add"
+    set runtime.add_defined to true
+  IF statement.kind == "if_add_gt_print"
+    evaluate_add_threshold statement into runtime
+  IF statement.kind == "let_number_list"
+    store_number_list statement using front_end into runtime
+  IF statement.kind == "print_map_double"
+    evaluate_map_double statement into runtime
+
+WHEN store_number <statement> into <runtime>
+  GIVEN statement is MiniStatement
+  AND runtime is MiniRuntime
+  FIND binding in runtime.bindings WHERE binding.name == statement.name
+    set binding.kind to "number"
+    set binding.number_value to statement.number_value
+  ELSE
+    append "missing_binding_" + statement.name to runtime.errors
+
+WHEN store_number_list <statement> using <front_end> into <runtime>
+  GIVEN statement is MiniStatement
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  FIND literal in front_end.lists WHERE literal.name == statement.name
+    FIND binding in runtime.bindings WHERE binding.name == statement.name
+      set binding.kind to "number_list"
+      set binding.list_values to literal.values
+    ELSE
+      append "missing_binding_" + statement.name to runtime.errors
+  ELSE
+    append "missing_list_literal_" + statement.name to runtime.errors
+
+WHEN evaluate_add_threshold <statement> into <runtime>
+  GIVEN statement is MiniStatement
+  AND runtime is MiniRuntime
+  IF runtime.add_defined
+    FIND left in runtime.bindings WHERE left.name == statement.left_name
+      FIND right in runtime.bindings WHERE right.name == statement.right_name
+        IF left.kind != "number" or right.kind != "number"
+          append "add_expected_numbers" to runtime.errors
+        ELSE
+          IF left.number_value + right.number_value > statement.threshold
+            append statement.then_text to runtime.outputs
+          ELSE
+            append statement.else_text to runtime.outputs
+      ELSE
+        append "missing_binding_" + statement.right_name to runtime.errors
+    ELSE
+      append "missing_binding_" + statement.left_name to runtime.errors
+  ELSE
+    append "missing_function_add" to runtime.errors
+
+WHEN evaluate_map_double <statement> into <runtime>
+  GIVEN statement is MiniStatement
+  AND runtime is MiniRuntime
+  FIND binding in runtime.bindings WHERE binding.name == statement.list_name
+    IF binding.kind == "number_list"
+      set runtime.mapped_numbers to []
+      FOR value in binding.list_values
+        append value * 2 to runtime.mapped_numbers
+    ELSE
+      append "map_expected_number_list" to runtime.errors
+  ELSE
+    append "missing_binding_" + statement.list_name to runtime.errors
+
+WHEN classify <front_end> and <runtime>
+  GIVEN front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  LET front_error_count be 0
+  LET runtime_error_count be 0
+  count front_end.errors into front_error_count
+  count runtime.errors into runtime_error_count
+  IF front_error_count > 0
+    set runtime.status to "failed"
+  ELSE
+    IF runtime_error_count > 0
+      set runtime.status to "failed"
+    ELSE
+      set runtime.status to "passed"
+
+WHEN run <source> through <front_end> into <runtime>
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  reset front_end
+  reset_runtime runtime
+  lex source into front_end
+  parse front_end into front_end
+  IF front_end.parsed
+    evaluate front_end into runtime
+  ELSE
+    append "parse_failed" to runtime.errors
+  classify front_end and runtime
+
+SCENARIO MiniLang map sample executes
+GIVEN source is MiniSource
+  name: "map sample"
+  text: "let x = 10; let y = 20; fn add; if add(x,y) > 25; let nums = [1,2,3,4]; print map double"
+
+GIVEN front_end is MiniFrontEnd
+  tokens: []
+  statements: []
+  lists: []
+  token_count: 0
+  statement_count: 0
+  lexed: false
+  parsed: false
+  errors: []
+
+GIVEN front_end.tokens are MiniToken
+  | index | kind         | lexeme   |
+  | 1     | "keyword"    | "let"    |
+  | 2     | "identifier" | "x"      |
+  | 3     | "symbol"     | "="      |
+  | 4     | "number"     | "10"     |
+  | 5     | "keyword"    | "let"    |
+  | 6     | "identifier" | "y"      |
+  | 7     | "symbol"     | "="      |
+  | 8     | "number"     | "20"     |
+  | 9     | "keyword"    | "fn"     |
+  | 10    | "identifier" | "add"    |
+  | 11    | "symbol"     | "("      |
+  | 12    | "identifier" | "a"      |
+  | 13    | "symbol"     | ","      |
+  | 14    | "identifier" | "b"      |
+  | 15    | "symbol"     | ")"      |
+  | 16    | "symbol"     | "{"      |
+  | 17    | "keyword"    | "return" |
+  | 18    | "identifier" | "a"      |
+  | 19    | "symbol"     | "+"      |
+  | 20    | "identifier" | "b"      |
+  | 21    | "symbol"     | "}"      |
+  | 22    | "keyword"    | "if"     |
+  | 23    | "identifier" | "add"    |
+  | 24    | "symbol"     | "("      |
+  | 25    | "identifier" | "x"      |
+  | 26    | "symbol"     | ","      |
+  | 27    | "identifier" | "y"      |
+  | 28    | "symbol"     | ")"      |
+  | 29    | "symbol"     | ">"      |
+  | 30    | "number"     | "25"     |
+  | 31    | "symbol"     | "{"      |
+  | 32    | "identifier" | "print"  |
+  | 33    | "symbol"     | "("      |
+  | 34    | "string"     | "large"  |
+  | 35    | "symbol"     | ")"      |
+  | 36    | "symbol"     | "}"      |
+  | 37    | "keyword"    | "else"   |
+  | 38    | "symbol"     | "{"      |
+  | 39    | "identifier" | "print"  |
+  | 40    | "symbol"     | "("      |
+  | 41    | "string"     | "small"  |
+  | 42    | "symbol"     | ")"      |
+  | 43    | "symbol"     | "}"      |
+  | 44    | "keyword"    | "let"    |
+  | 45    | "identifier" | "nums"   |
+  | 46    | "symbol"     | "="      |
+  | 47    | "symbol"     | "["      |
+  | 48    | "number"     | "1"      |
+  | 49    | "symbol"     | ","      |
+  | 50    | "number"     | "2"      |
+  | 51    | "symbol"     | ","      |
+  | 52    | "number"     | "3"      |
+  | 53    | "symbol"     | ","      |
+  | 54    | "number"     | "4"      |
+  | 55    | "symbol"     | "]"      |
+  | 56    | "identifier" | "print"  |
+  | 57    | "symbol"     | "("      |
+  | 58    | "identifier" | "map"    |
+  | 59    | "symbol"     | "("      |
+  | 60    | "identifier" | "nums"   |
+  | 61    | "symbol"     | ","      |
+  | 62    | "keyword"    | "fn"     |
+  | 63    | "symbol"     | "("      |
+  | 64    | "identifier" | "n"      |
+  | 65    | "symbol"     | ")"      |
+  | 66    | "symbol"     | "{"      |
+  | 67    | "keyword"    | "return" |
+  | 68    | "identifier" | "n"      |
+  | 69    | "symbol"     | "*"      |
+  | 70    | "number"     | "2"      |
+  | 71    | "symbol"     | "}"      |
+  | 72    | "symbol"     | ")"      |
+  | 73    | "symbol"     | ")"      |
+
+GIVEN front_end.statements are MiniStatement
+  | index | kind               | name   | left_name | right_name | number_value | threshold | then_text | else_text | list_name |
+  | 1     | "let_number"       | "x"    | ""        | ""         | 10           | 0         | ""        | ""        | ""        |
+  | 2     | "let_number"       | "y"    | ""        | ""         | 20           | 0         | ""        | ""        | ""        |
+  | 3     | "fn_add"           | "add"  | "a"       | "b"        | 0            | 0         | ""        | ""        | ""        |
+  | 4     | "if_add_gt_print"  | ""     | "x"       | "y"        | 0            | 25        | "large"   | "small"   | ""        |
+  | 5     | "let_number_list"  | "nums" | ""        | ""         | 0            | 0         | ""        | ""        | ""        |
+  | 6     | "print_map_double" | ""     | ""        | ""         | 0            | 0         | ""        | ""        | "nums"    |
+
+GIVEN front_end.lists are MiniNumberList
+  | name   | values       |
+  | "nums" | [1, 2, 3, 4] |
+
+GIVEN runtime is MiniRuntime
+  bindings: []
+  add_defined: false
+  outputs: []
+  mapped_numbers: []
+  errors: []
+  status: "new"
+
+GIVEN runtime.bindings are MiniBinding
+  | name   | kind    | number_value | list_values |
+  | "x"    | "unset" | 0            | []          |
+  | "y"    | "unset" | 0            | []          |
+  | "nums" | "unset" | 0            | []          |
+
+WHEN run source through front_end into runtime
+
+THEN front_end.lexed == true
+AND front_end.parsed == true
+AND front_end.token_count == 73
+AND front_end.statement_count == 6
+AND front_end.errors == []
+AND runtime.status == "passed"
+AND runtime.outputs == ["large"]
+AND runtime.mapped_numbers == [2, 4, 6, 8]
+AND runtime.errors == []
+
+SCENARIO MiniLang parser reports missing map node
+GIVEN source is MiniSource
+  name: "map sample"
+  text: "let x = 10; let y = 20; fn add; if add(x,y) > 25; let nums = [1,2,3,4]; print map double"
+
+GIVEN front_end is MiniFrontEnd
+  tokens: []
+  statements: []
+  lists: []
+  token_count: 0
+  statement_count: 0
+  lexed: false
+  parsed: false
+  errors: []
+
+GIVEN front_end.tokens are MiniToken
+  | index | kind         | lexeme   |
+  | 1     | "keyword"    | "let"    |
+  | 2     | "identifier" | "x"      |
+  | 3     | "symbol"     | "="      |
+  | 4     | "number"     | "10"     |
+  | 5     | "keyword"    | "let"    |
+  | 6     | "identifier" | "y"      |
+  | 7     | "symbol"     | "="      |
+  | 8     | "number"     | "20"     |
+  | 9     | "keyword"    | "fn"     |
+  | 10    | "identifier" | "add"    |
+  | 11    | "symbol"     | "("      |
+  | 12    | "identifier" | "a"      |
+  | 13    | "symbol"     | ","      |
+  | 14    | "identifier" | "b"      |
+  | 15    | "symbol"     | ")"      |
+  | 16    | "symbol"     | "{"      |
+  | 17    | "keyword"    | "return" |
+  | 18    | "identifier" | "a"      |
+  | 19    | "symbol"     | "+"      |
+  | 20    | "identifier" | "b"      |
+  | 21    | "symbol"     | "}"      |
+  | 22    | "keyword"    | "if"     |
+  | 23    | "identifier" | "add"    |
+  | 24    | "symbol"     | "("      |
+  | 25    | "identifier" | "x"      |
+  | 26    | "symbol"     | ","      |
+  | 27    | "identifier" | "y"      |
+  | 28    | "symbol"     | ")"      |
+  | 29    | "symbol"     | ">"      |
+  | 30    | "number"     | "25"     |
+  | 31    | "symbol"     | "{"      |
+  | 32    | "identifier" | "print"  |
+  | 33    | "symbol"     | "("      |
+  | 34    | "string"     | "large"  |
+  | 35    | "symbol"     | ")"      |
+  | 36    | "symbol"     | "}"      |
+  | 37    | "keyword"    | "else"   |
+  | 38    | "symbol"     | "{"      |
+  | 39    | "identifier" | "print"  |
+  | 40    | "symbol"     | "("      |
+  | 41    | "string"     | "small"  |
+  | 42    | "symbol"     | ")"      |
+  | 43    | "symbol"     | "}"      |
+  | 44    | "keyword"    | "let"    |
+  | 45    | "identifier" | "nums"   |
+  | 46    | "symbol"     | "="      |
+  | 47    | "symbol"     | "["      |
+  | 48    | "number"     | "1"      |
+  | 49    | "symbol"     | ","      |
+  | 50    | "number"     | "2"      |
+  | 51    | "symbol"     | ","      |
+  | 52    | "number"     | "3"      |
+  | 53    | "symbol"     | ","      |
+  | 54    | "number"     | "4"      |
+  | 55    | "symbol"     | "]"      |
+  | 56    | "identifier" | "print"  |
+  | 57    | "symbol"     | "("      |
+  | 58    | "identifier" | "map"    |
+  | 59    | "symbol"     | "("      |
+  | 60    | "identifier" | "nums"   |
+  | 61    | "symbol"     | ","      |
+  | 62    | "keyword"    | "fn"     |
+  | 63    | "symbol"     | "("      |
+  | 64    | "identifier" | "n"      |
+  | 65    | "symbol"     | ")"      |
+  | 66    | "symbol"     | "{"      |
+  | 67    | "keyword"    | "return" |
+  | 68    | "identifier" | "n"      |
+  | 69    | "symbol"     | "*"      |
+  | 70    | "number"     | "2"      |
+  | 71    | "symbol"     | "}"      |
+  | 72    | "symbol"     | ")"      |
+  | 73    | "symbol"     | ")"      |
+
+GIVEN front_end.statements are MiniStatement
+  | index | kind              | name   | left_name | right_name | number_value | threshold | then_text | else_text | list_name |
+  | 1     | "let_number"      | "x"    | ""        | ""         | 10           | 0         | ""        | ""        | ""        |
+  | 2     | "let_number"      | "y"    | ""        | ""         | 20           | 0         | ""        | ""        | ""        |
+  | 3     | "fn_add"          | "add"  | "a"       | "b"        | 0            | 0         | ""        | ""        | ""        |
+  | 4     | "if_add_gt_print" | ""     | "x"       | "y"        | 0            | 25        | "large"   | "small"   | ""        |
+  | 5     | "let_number_list" | "nums" | ""        | ""         | 0            | 0         | ""        | ""        | ""        |
+
+GIVEN front_end.lists are MiniNumberList
+  | name   | values       |
+  | "nums" | [1, 2, 3, 4] |
+
+GIVEN runtime is MiniRuntime
+  bindings: []
+  add_defined: false
+  outputs: []
+  mapped_numbers: []
+  errors: []
+  status: "new"
+
+GIVEN runtime.bindings are MiniBinding
+  | name   | kind    | number_value | list_values |
+  | "x"    | "unset" | 0            | []          |
+  | "y"    | "unset" | 0            | []          |
+  | "nums" | "unset" | 0            | []          |
+
+WHEN run source through front_end into runtime
+
+THEN front_end.lexed == true
+AND front_end.parsed == false
+AND front_end.statement_count == 5
+AND front_end.errors == ["missing_print_map_double", "unexpected_statement_count"]
+AND runtime.status == "failed"
+AND runtime.errors == ["parse_failed"]
