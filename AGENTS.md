@@ -94,6 +94,8 @@ Use examples to teach new language features:
 - `examples/v01_language_tour/`: compact current-language tour.
 - `examples/order_fulfillment/`: larger state-transition workflow.
 - `examples/loan_underwriting/`: larger rules/workflow sample.
+- `examples/minilang_spec/`: executable spec pressure test for tokens, AST
+  records, evaluator state, errors, and JSON host input.
 
 When adding a substantial feature, prefer a focused example over expanding
 large examples unless the feature specifically belongs there.

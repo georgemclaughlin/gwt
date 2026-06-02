@@ -252,6 +252,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
 | [`examples/inventory_allocation_spike`](examples/inventory_allocation_spike) | List-shaped inventory pressure test |
+| [`examples/minilang_spec`](examples/minilang_spec) | Executable spec for a tiny interpreter pipeline |
 
 ## Python API
 
