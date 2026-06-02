@@ -1,0 +1,262 @@
+PROGRAM vendor onboarding
+
+RECORD VendorDocument
+  name: text
+  status: "provided" | "missing" | "expired"
+
+RECORD VendorRiskSignal
+  name: text
+  severity: "low" | "medium" | "high"
+  points: number
+
+RECORD VendorRequest
+  vendor_name: text
+  country: text
+  annual_spend: number
+  handles_customer_data: boolean
+  stores_payment_data: boolean
+  documents: list<VendorDocument>
+  risk_signals: list<VendorRiskSignal>
+
+RECORD VendorDecision
+  required_document_count: number
+  missing_document_count: number
+  expired_document_count: number
+  high_signal_count: number
+  risk_points: number
+  missing_requirements: list<text>
+  reasons: list<text>
+  data_review_required: boolean
+  tier: "new" | "standard" | "critical"
+  status: "new" | "approved" | "needs_review" | "rejected"
+  reason: "new" | "ready_to_onboard" | "manual_review_required" | "high_risk_signal" | "risk_too_high"
+
+REQUEST vendor is VendorRequest
+AND decision is VendorDecision
+
+OUTPUT decision is VendorDecision
+
+WHEN reset <decision>
+  GIVEN decision is VendorDecision
+  set decision.required_document_count to 0
+  set decision.missing_document_count to 0
+  set decision.expired_document_count to 0
+  set decision.high_signal_count to 0
+  set decision.risk_points to 0
+  set decision.missing_requirements to []
+  set decision.reasons to []
+  set decision.data_review_required to false
+  set decision.tier to "standard"
+  set decision.status to "new"
+  set decision.reason to "new"
+
+WHEN require document <document_name> from <vendor> into <decision>
+  GIVEN document_name is text
+  AND vendor is VendorRequest
+  AND decision is VendorDecision
+  add 1 to decision.required_document_count
+  FIND document in vendor.documents WHERE document.name == document_name
+    IF document.status == "provided"
+      PASS
+    ELSE
+      IF document.status == "expired"
+        append document_name + "_expired" to decision.missing_requirements
+        add 1 to decision.expired_document_count
+        add 1 to decision.risk_points
+      ELSE
+        append document_name to decision.missing_requirements
+        add 1 to decision.missing_document_count
+        add 2 to decision.risk_points
+  ELSE
+    append document_name to decision.missing_requirements
+    add 1 to decision.missing_document_count
+    add 2 to decision.risk_points
+
+WHEN collect requirements from <vendor> into <decision>
+  GIVEN vendor is VendorRequest
+  AND decision is VendorDecision
+  require document tax_form from vendor into decision
+  require document insurance from vendor into decision
+  IF vendor.handles_customer_data
+    require document security_questionnaire from vendor into decision
+  IF vendor.stores_payment_data
+    require document pci_attestation from vendor into decision
+
+WHEN score inherent risk from <vendor> into <decision>
+  GIVEN vendor is VendorRequest
+  AND decision is VendorDecision
+  IF vendor.annual_spend >= 100000
+    add 2 to decision.risk_points
+    set decision.tier to "critical"
+    append "high_annual_spend" to decision.reasons
+  IF vendor.handles_customer_data
+    add 2 to decision.risk_points
+    set decision.data_review_required to true
+    append "handles_customer_data" to decision.reasons
+  IF vendor.stores_payment_data
+    add 5 to decision.risk_points
+    set decision.data_review_required to true
+    set decision.tier to "critical"
+    append "stores_payment_data" to decision.reasons
+
+WHEN score risk signals from <vendor> into <decision>
+  GIVEN vendor is VendorRequest
+  AND decision is VendorDecision
+  FOR signal in vendor.risk_signals
+    add signal.points to decision.risk_points
+    append "signal_" + signal.name to decision.reasons
+    IF signal.severity == "high"
+      add 1 to decision.high_signal_count
+
+WHEN classify <decision>
+  GIVEN decision is VendorDecision
+  IF decision.high_signal_count > 0
+    set decision.status to "rejected"
+    set decision.reason to "high_risk_signal"
+  ELSE
+    IF decision.risk_points >= 12
+      set decision.status to "rejected"
+      set decision.reason to "risk_too_high"
+    ELSE
+      IF decision.missing_document_count > 0 or decision.expired_document_count > 0 or decision.risk_points >= 6
+        set decision.status to "needs_review"
+        set decision.reason to "manual_review_required"
+      ELSE
+        set decision.status to "approved"
+        set decision.reason to "ready_to_onboard"
+
+WHEN review <vendor> into <decision>
+  GIVEN vendor is VendorRequest
+  AND decision is VendorDecision
+  reset decision
+  collect requirements from vendor into decision
+  score inherent risk from vendor into decision
+  score risk signals from vendor into decision
+  classify decision
+
+SCENARIO approve low risk vendor
+GIVEN vendor is VendorRequest
+  vendor_name: "Northwind Office Supplies"
+  country: "US"
+  annual_spend: 25000
+  handles_customer_data: false
+  stores_payment_data: false
+  documents: []
+  risk_signals: []
+
+GIVEN vendor.documents are VendorDocument
+  | name        | status     |
+  | "tax_form"  | "provided" |
+  | "insurance" | "provided" |
+
+GIVEN decision is VendorDecision
+  required_document_count: 0
+  missing_document_count: 0
+  expired_document_count: 0
+  high_signal_count: 0
+  risk_points: 0
+  missing_requirements: []
+  reasons: []
+  data_review_required: false
+  tier: "new"
+  status: "new"
+  reason: "new"
+
+WHEN review vendor into decision
+
+THEN decision.status == "approved"
+AND decision.reason == "ready_to_onboard"
+AND decision.tier == "standard"
+AND decision.required_document_count == 2
+AND decision.risk_points == 0
+AND decision.missing_requirements == []
+
+SCENARIO review critical vendor with missing security work
+GIVEN vendor is VendorRequest
+  vendor_name: "Cloud Ledger"
+  country: "US"
+  annual_spend: 125000
+  handles_customer_data: true
+  stores_payment_data: false
+  documents: []
+  risk_signals: []
+
+GIVEN vendor.documents are VendorDocument
+  | name                     | status     |
+  | "tax_form"               | "provided" |
+  | "insurance"              | "expired"  |
+  | "security_questionnaire" | "missing"  |
+
+GIVEN vendor.risk_signals are VendorRiskSignal
+  | name          | severity | points |
+  | "new_vendor"  | "low"    | 1      |
+  | "data_region" | "medium" | 2      |
+
+GIVEN decision is VendorDecision
+  required_document_count: 0
+  missing_document_count: 0
+  expired_document_count: 0
+  high_signal_count: 0
+  risk_points: 0
+  missing_requirements: []
+  reasons: []
+  data_review_required: false
+  tier: "new"
+  status: "new"
+  reason: "new"
+
+WHEN review vendor into decision
+
+THEN decision.status == "needs_review"
+AND decision.reason == "manual_review_required"
+AND decision.tier == "critical"
+AND decision.required_document_count == 3
+AND decision.missing_document_count == 1
+AND decision.expired_document_count == 1
+AND decision.risk_points == 10
+AND decision.data_review_required == true
+AND decision.missing_requirements == ["insurance_expired", "security_questionnaire"]
+
+SCENARIO reject vendor with sanctions signal
+GIVEN vendor is VendorRequest
+  vendor_name: "Contoso Payments"
+  country: "US"
+  annual_spend: 80000
+  handles_customer_data: true
+  stores_payment_data: true
+  documents: []
+  risk_signals: []
+
+GIVEN vendor.documents are VendorDocument
+  | name                     | status     |
+  | "tax_form"               | "provided" |
+  | "insurance"              | "provided" |
+  | "security_questionnaire" | "provided" |
+  | "pci_attestation"        | "provided" |
+
+GIVEN vendor.risk_signals are VendorRiskSignal
+  | name              | severity | points |
+  | "sanctions_match" | "high"   | 10     |
+
+GIVEN decision is VendorDecision
+  required_document_count: 0
+  missing_document_count: 0
+  expired_document_count: 0
+  high_signal_count: 0
+  risk_points: 0
+  missing_requirements: []
+  reasons: []
+  data_review_required: false
+  tier: "new"
+  status: "new"
+  reason: "new"
+
+WHEN review vendor into decision
+
+THEN decision.status == "rejected"
+AND decision.reason == "high_risk_signal"
+AND decision.tier == "critical"
+AND decision.required_document_count == 4
+AND decision.high_signal_count == 1
+AND decision.risk_points == 17
+AND decision.missing_requirements == []

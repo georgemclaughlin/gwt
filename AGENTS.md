@@ -101,6 +101,11 @@ Use examples to teach new language features:
 When adding a substantial feature, prefer a focused example over expanding
 large examples unless the feature specifically belongs there.
 
+Substantial public examples should include embedded `SCENARIO` blocks with
+top-level `THEN` assertions. JSON request files are useful for host-facing
+execution, but they do not replace executable scenario coverage. Reusable
+modules and request-only files may be exceptions.
+
 ## Git Hygiene
 
 - Do not revert unrelated user changes.

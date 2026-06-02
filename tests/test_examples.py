@@ -7,7 +7,26 @@ from gwtlang.runtime import run_json_request, run_request, run_source
 from gwtlang.service import analyze_file
 
 
+PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
+    Path("examples/v01_language_tour/rules.gwt"),
+    Path("examples/order_fulfillment/rules.gwt"),
+    Path("examples/loan_underwriting/rules.gwt"),
+    Path("examples/inventory_allocation_spike/rules.gwt"),
+    Path("examples/minilang_spec/rules.gwt"),
+    Path("examples/minilang2_vm/rules.gwt"),
+    Path("examples/input_normalization/rules.gwt"),
+    Path("examples/vendor_onboarding/rules.gwt"),
+]
+
+
 class ExampleProgramTests(unittest.TestCase):
+    def test_public_examples_include_embedded_scenarios_with_assertions(self):
+        for program in PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS:
+            with self.subTest(program=str(program)):
+                source = program.read_text()
+                self.assertRegex(source, r"(?m)^SCENARIO ")
+                self.assertRegex(source, r"(?m)^THEN ")
+
     def test_v01_language_tour_example_runs_scenario_and_request(self):
         program = Path("examples/v01_language_tour/rules.gwt")
         request = Path("examples/v01_language_tour/request.gwt")
@@ -287,6 +306,38 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(profile["middle_name_status"], "missing")
         self.assertEqual(profile["middle_name"], "")
         self.assertEqual(profile["errors"], [])
+
+    def test_vendor_onboarding_runs_scenarios_and_json_request(self):
+        program = Path("examples/vendor_onboarding/rules.gwt")
+        request = Path("examples/vendor_onboarding/request.json")
+
+        analysis = analyze_file(program)
+        self.assertEqual(analysis.diagnostics, [])
+
+        result = run_source(program.read_text(), filename=str(program))
+        self.assertEqual(
+            [scenario.state["decision"]["status"] for scenario in result.scenarios],
+            ["approved", "needs_review", "rejected"],
+        )
+        self.assertEqual([scenario.state["decision"]["risk_points"] for scenario in result.scenarios], [0, 10, 17])
+        self.assertEqual(
+            result.scenarios[1].state["decision"]["missing_requirements"],
+            ["insurance_expired", "security_questionnaire"],
+        )
+
+        request_result = run_json_request(
+            program.read_text(),
+            json.loads(request.read_text()),
+            entry="review vendor into decision",
+            filename=str(program),
+            entry_filename=str(request),
+        )
+        decision = request_result.scenarios[0].returned_state["decision"]
+        self.assertEqual(decision["status"], "needs_review")
+        self.assertEqual(decision["reason"], "manual_review_required")
+        self.assertEqual(decision["risk_points"], 10)
+        self.assertEqual(decision["tier"], "critical")
+        self.assertEqual(decision["missing_requirements"], ["insurance_expired", "security_questionnaire"])
 
     def test_output_contract_failure_is_reported(self):
         with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for decision"):

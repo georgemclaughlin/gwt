@@ -1,15 +1,20 @@
 # GWT
 
 GWT is a small experimental programming language built around executable
-`GIVEN / WHEN / THEN` programs. It is meant for deterministic workflows,
-rules, examples, and request/response style programs that should read close to
-their behavior specification. OpenSpec's persistent-spec idea was an original
-inspiration, though GWT does not use or depend on OpenSpec: GWT takes the
-spec-driven collaboration point and makes the spec itself executable, rather
-than treating the spec as a prompt or handoff document for separate code. The
-language is also shaped by Cucumber,
-SpecFlow/Reqnroll, and BDD examples; new features should stay behavior-oriented
-and should not drift toward SQL-like query syntax.
+`GIVEN / WHEN / THEN` programs. It is for deterministic workflows, rules,
+examples, and typed request/response programs where the spec is also the
+runtime artifact.
+
+GWT is not a policy decision point like OPA, not a SQL-like query language, and
+not a general-purpose replacement for Python, JavaScript, or Go. The goal is
+narrower: make behavior contracts readable enough for stakeholders and precise
+enough to execute, test, check, format, and debug.
+
+OpenSpec's persistent-spec idea was an original inspiration, though GWT does
+not use or depend on OpenSpec. The language is also shaped by Cucumber,
+SpecFlow/Reqnroll, and BDD examples. New features should stay
+behavior-oriented and should not drift toward broad query syntax or invisible
+policy evaluation.
 
 ## Quick Start
 
@@ -19,12 +24,43 @@ Run the hello world example:
 python -m gwtlang run examples/hello.gwt --json
 ```
 
+Run a practical workflow example as executable scenario coverage:
+
+```sh
+python -m gwtlang test examples/vendor_onboarding/rules.gwt
+```
+
+Run the same workflow with a JSON request, as a host application would:
+
+```sh
+python -m gwtlang run examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --entry "review vendor into decision" \
+  --json
+```
+
 Install a local `gwt` command while developing:
 
 ```sh
 python -m pip install -e .
 gwt run examples/hello.gwt --json
 ```
+
+## Project Site
+
+A simple fundamentals site lives at [`docs/index.html`](docs/index.html). It
+is designed to publish through GitHub Pages from the `main` branch and `/docs`
+directory.
+
+## What To Review First
+
+For a quick public review, start with:
+
+| Artifact | Why |
+| --- | --- |
+| [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
+| [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
+| [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
 
 ## Hello World
 
@@ -200,6 +236,11 @@ python -m gwtlang test examples/scenarios.gwt
 python -m gwtlang test examples/examples_table.gwt
 ```
 
+For public examples, scenarios are part of the artifact, not optional
+afterthoughts. A substantial example should include embedded `SCENARIO` blocks
+with top-level `THEN` assertions. JSON requests show host-facing execution, but
+they do not replace executable examples.
+
 ## Tooling
 
 The CLI currently supports:
@@ -253,6 +294,9 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
 | [`examples/inventory_allocation_spike`](examples/inventory_allocation_spike) | List-shaped inventory pressure test |
 | [`examples/minilang_spec`](examples/minilang_spec) | Executable spec for a tiny interpreter pipeline |
+| [`examples/input_normalization`](examples/input_normalization) | JSON boundary normalization and explicit missing/null behavior |
+| [`examples/minilang2_vm`](examples/minilang2_vm) | Bytecode VM pressure test with modules, closures, stack traces, debugger state, and REPL-like execution |
+| [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical typed workflow demo with embedded scenario assertions and JSON request execution |
 
 ## Python API
 
@@ -304,16 +348,16 @@ print(analysis.symbols)
 VS Code support lives in [`vscode-gwt`](vscode-gwt). For local development:
 
 ```sh
-cd /home/g/code/gwt
+cd gwt
 python -m pip install -e .
 
 cd vscode-gwt
 npm install
 ```
 
-Open `/home/g/code/gwt` in VS Code, choose **Run GWT VS Code Extension** in the
+Open the repository root in VS Code, choose **Run GWT VS Code Extension** in the
 Run and Debug panel, then press `F5`. In the Extension Development Host window,
-open a `.gwt` file such as `/home/g/code/gwt/examples/v01_language_tour/rules.gwt`.
+open a `.gwt` file such as `examples/v01_language_tour/rules.gwt`.
 
 ## Specs And Tests
 
