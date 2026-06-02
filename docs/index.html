@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GWT - Specs You Can Run</title>
+    <meta
+      name="description"
+      content="GWT is an experimental language for GIVEN / WHEN / THEN specs you can run."
+    >
+    <meta name="color-scheme" content="dark light">
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="GWT home">GWT</a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#fundamentals">Fundamentals</a>
+        <a href="#workflow">Workflow Demo</a>
+        <a href="#stress">Stress Test</a>
+        <a href="#run">Run It</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Specs you can run</p>
+          <h1>GWT</h1>
+          <p class="lede">
+            In GWT, the spec is the program. Describe the input, run the
+            behavior, and check the result with <strong>GIVEN</strong> /
+            <strong>WHEN</strong> / <strong>THEN</strong>.
+          </p>
+          <p class="value-line">
+            One file can be read as a spec, run as a test, and called with
+            JSON. No separate step files. No magic.
+          </p>
+          <div class="actions" aria-label="Primary links">
+            <a class="button primary" href="#run">Run The Examples</a>
+            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">Read The Guide</a>
+          </div>
+        </div>
+
+        <div class="execution-visual" aria-label="GWT code and JSON result example">
+          <div class="visual-tabs" aria-hidden="true">
+            <span>input.json</span>
+            <span>rules.gwt</span>
+            <span>result.json</span>
+          </div>
+          <div class="visual-grid">
+            <pre data-title="input.json"><code>{
+  <span class="tok-key">"account"</span>: {
+    <span class="tok-key">"balance"</span>: <span class="tok-number">100</span>,
+    <span class="tok-key">"status"</span>: <span class="tok-string">"open"</span>
+  },
+  <span class="tok-key">"amount"</span>: <span class="tok-number">30</span>
+}</code></pre>
+            <pre data-title="rules.gwt"><code><span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span>
+  <span class="tok-key">balance</span>: <span class="tok-number">100</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"open"</span>
+<span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-number">30</span>
+<span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">any</span>
+<span class="tok-kw">WHEN</span> withdraw <span class="tok-param">&lt;amount&gt;</span> from <span class="tok-param">&lt;account&gt;</span>
+  <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
+  <span class="tok-kw">AND</span> account.balance <span class="tok-word">is at least</span> amount
+  <span class="tok-action">subtract</span> amount from account.balance
+<span class="tok-kw">WHEN</span> withdraw amount from account
+<span class="tok-kw">THEN</span> account <span class="tok-word">is</span>
+  <span class="tok-key">balance</span>: <span class="tok-number">70</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"open"</span></code></pre>
+            <pre data-title="result.json"><code>{
+  <span class="tok-key">"ok"</span>: <span class="tok-bool">true</span>,
+  <span class="tok-key">"result"</span>: {
+    <span class="tok-key">"account"</span>: {
+      <span class="tok-key">"balance"</span>: <span class="tok-number">70</span>,
+      <span class="tok-key">"status"</span>: <span class="tok-string">"open"</span>
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="fundamentals" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">How it works</p>
+          <h2>Write It. Run It. Check It.</h2>
+          <p>
+            A GWT file shows the setup, the behavior, the input and output, and
+            the examples that prove it works.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <h3>State Is Visible</h3>
+            <p>
+              Records and tables show the data the behavior reads and writes.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Behavior Has Names</h3>
+            <p>
+              Reusable <code>WHEN</code> blocks read like real workflow steps.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>JSON Has A Shape</h3>
+            <p>
+              <code>REQUEST</code> says what input is required.
+              <code>OUTPUT</code> says what result is returned.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Failure Is Clear</h3>
+            <p>
+              Missing data and bad shapes fail loudly instead of turning into
+              silent defaults.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Examples Prove It</h3>
+            <p>
+              Scenarios live in the same file, so examples can be read and run
+              in CI.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="workflow" class="section split">
+        <div class="section-heading">
+          <p class="eyebrow">Real example</p>
+          <h2>Vendor Onboarding Review</h2>
+          <p>
+            This example reviews one vendor request and returns a clear
+            decision with the reasons that caused it.
+          </p>
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/vendor_onboarding">
+            View vendor onboarding
+          </a>
+        </div>
+        <div class="trace" aria-label="Vendor onboarding trace">
+          <div class="trace-row">
+            <span class="trace-label">Request</span>
+            <span>Cloud Ledger, $125k spend, handles customer data</span>
+          </div>
+          <div class="trace-row warning">
+            <span class="trace-label">Checks</span>
+            <span>Insurance is expired; security questionnaire is missing</span>
+          </div>
+          <div class="trace-row">
+            <span class="trace-label">Reasons</span>
+            <span>high_annual_spend, handles_customer_data, missing documents</span>
+          </div>
+          <div class="trace-row decision">
+            <span class="trace-label">Decision</span>
+            <span>needs_review, 10 risk points, critical tier</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="stress" class="section split reverse">
+        <div class="section-heading">
+          <p class="eyebrow">Stress test</p>
+          <h2>MiniLang 2 VM</h2>
+          <p>
+            The MiniLang 2 example uses GWT to describe a tiny language VM:
+            lexer, parser, bytecode, closures, modules, debugger state, and
+            runtime errors.
+          </p>
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/minilang2_vm">
+            View MiniLang 2
+          </a>
+        </div>
+        <ol class="pipeline" aria-label="MiniLang2 pipeline">
+          <li>source program</li>
+          <li>lexer and parser</li>
+          <li>scope and closures</li>
+          <li>bytecode compiler</li>
+          <li>VM, debugger, and REPL</li>
+        </ol>
+      </section>
+
+      <section id="run" class="section commands">
+        <div class="section-heading">
+          <p class="eyebrow">Try it</p>
+          <h2>Run It Locally</h2>
+        </div>
+        <div class="command-grid">
+          <pre><code>python -m gwtlang test \
+  examples/vendor_onboarding/rules.gwt</code></pre>
+          <pre><code>python -m gwtlang run \
+  examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --entry "review vendor into decision" \
+  --json</code></pre>
+          <pre><code>python -m gwtlang test \
+  examples/minilang2_vm/rules.gwt</code></pre>
+        </div>
+      </section>
+
+      <section class="section principles">
+        <div class="section-heading">
+          <p class="eyebrow">Boundaries</p>
+          <h2>What GWT Is Not</h2>
+          <p>
+            GWT is not SQL, not OPA, and not a replacement for a general-purpose
+            language. It is for workflows where the steps and checks should stay
+            readable and runnable.
+          </p>
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/design-principles.md">Read the principles</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>GWT v0.1</span>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.1.md">Spec</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
+    </footer>
+  </body>
+</html>

@@ -108,6 +108,16 @@ The point is not that GWT can never inspect collections. It already can. The
 constraint is that collection features should read like steps in an executable
 example, not like a database algebra.
 
+GWT should also not be positioned as a policy decision point like Open Policy
+Agent. OPA and Rego are designed for declarative policy evaluation and
+distributed enforcement decisions. GWT is for executable behavior specs and
+deterministic request/response workflows where state transitions, scenarios,
+contracts, and outputs stay visible in one durable artifact.
+
+Avoid describing GWT as an authorization engine, admission controller, or
+general policy engine. A GWT workflow can produce a decision record, but that is
+part of an executable behavior spec, not an OPA-style policy query service.
+
 ## Feature Shape
 
 When a workflow needs collection behavior, prefer narrow, action-oriented forms
@@ -163,6 +173,19 @@ can contain JSON nulls. First look for a domain-shaped representation such as
 `has_middle_name: boolean`, `status: "provided" | "missing"`, or a one-of record
 with `provided`, `missing`, and `not_applicable` cases.
 
+## Scenarios As Evidence
+
+Substantial public examples should include embedded `SCENARIO` blocks with
+top-level `THEN` assertions. JSON request files are important for host-facing
+execution, but they should not be the only proof that an example behaves as
+intended.
+
+This should remain a strong convention, not a hard language requirement.
+Reusable behavior modules, imported helper files, and request-only files can be
+valid without scenarios. A future checker warning can reinforce the convention
+for files that define behavior but provide no scenarios or assertions, as long
+as it avoids those legitimate module/request cases.
+
 ## Design Checklist
 
 Before adding syntax, answer these questions:
@@ -170,6 +193,7 @@ Before adding syntax, answer these questions:
 - Does it make a medium-sized realistic example read more like a behavior spec?
 - Can the feature be explained as a concrete step over state?
 - Is the missing or failure case explicit?
+- Does a public example include executable scenarios with assertions?
 - Does it preserve deterministic execution and debuggable state?
 - Can it be checked, formatted, documented, and covered by examples?
 - Would a Cucumber or SpecFlow user recognize the shape as behavior-oriented?

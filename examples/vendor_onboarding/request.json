@@ -1,0 +1,31 @@
+{
+  "vendor": {
+    "vendor_name": "Cloud Ledger",
+    "country": "US",
+    "annual_spend": 125000,
+    "handles_customer_data": true,
+    "stores_payment_data": false,
+    "documents": [
+      { "name": "tax_form", "status": "provided" },
+      { "name": "insurance", "status": "expired" },
+      { "name": "security_questionnaire", "status": "missing" }
+    ],
+    "risk_signals": [
+      { "name": "new_vendor", "severity": "low", "points": 1 },
+      { "name": "data_region", "severity": "medium", "points": 2 }
+    ]
+  },
+  "decision": {
+    "required_document_count": 0,
+    "missing_document_count": 0,
+    "expired_document_count": 0,
+    "high_signal_count": 0,
+    "risk_points": 0,
+    "missing_requirements": [],
+    "reasons": [],
+    "data_review_required": false,
+    "tier": "new",
+    "status": "new",
+    "reason": "new"
+  }
+}
