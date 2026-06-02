@@ -18,13 +18,13 @@
           <p class="eyebrow">Specs you can run</p>
           <h1>GWT</h1>
           <p class="lede">
-            In GWT, the spec is the program. Describe the input, run the
-            behavior, and check the result with <strong>GIVEN</strong> /
-            <strong>WHEN</strong> / <strong>THEN</strong>.
+            In GWT, the spec is the program. Define the input contract, run
+            named behavior, and return typed results from the same file.
           </p>
           <p class="value-line">
-            One file can be read as a spec, run as a test, and called with
-            JSON. No separate step files. No magic.
+            The same file can also carry <strong>GIVEN</strong> /
+            <strong>WHEN</strong> / <strong>THEN</strong> scenarios for tests.
+            No separate step files. No magic.
           </p>
           <div class="actions" aria-label="Primary links">
             <a class="button primary" href="#run">Run The Examples</a>
@@ -56,11 +56,7 @@
   <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
   <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
   <span class="tok-kw">AND</span> account.balance <span class="tok-word">is at least</span> amount
-  <span class="tok-action">subtract</span> amount from account.balance
-<span class="tok-kw">SCENARIO</span> supplied input
-<span class="tok-kw">WHEN</span> withdraw amount from account
-<span class="tok-kw">THEN</span> account.balance <span class="tok-word">is</span> <span class="tok-number">70</span>
-<span class="tok-kw">AND</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span></code></pre>
+  <span class="tok-action">subtract</span> amount from account.balance</code></pre>
             <pre data-title="result.json"><code>{
   <span class="tok-key">"ok"</span>: <span class="tok-bool">true</span>,
   <span class="tok-key">"result"</span>: {
