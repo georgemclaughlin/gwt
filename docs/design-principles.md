@@ -35,6 +35,12 @@ GWT sits at the intersection of a few related traditions:
 The practical synthesis is: GWT should be a persistent, reviewable, executable
 specification for domain behavior.
 
+The important difference is semantic, not cosmetic. A Markdown spec can guide
+an agent, but the final behavior still depends on a translation step into
+separate code. A GWT program should not require that semantic handoff. Once a
+behavior is expressed in GWT, its meaning is the parser, checker, runtime, and
+observable outputs.
+
 ## Core Intent
 
 GWT programs should stay close to `GIVEN / WHEN / THEN` thinking:
@@ -83,6 +89,30 @@ This has practical consequences:
 This makes GWT different from workflows where a persistent spec is only a
 collaboration artifact. In GWT, the collaboration artifact is also the runtime
 artifact.
+
+## No Semantic Handoff
+
+Agent-assisted workflows are welcome in GWT, but the durable behavior must not
+hide in the agent transcript or in generated host code. Agents may explore,
+draft, critique, refactor, and extend GWT programs. The committed behavior
+change should still land as executable GWT source, executable scenarios, record
+contracts, examples, or docs that explain those runtime artifacts.
+
+This gives GWT a different standard from prompt-centered spec workflows:
+
+- Natural language may describe intent, but executable GWT defines normative
+  behavior.
+- If a requirement cannot yet be expressed as state, behavior, contracts, and
+  assertions, it is still underspecified.
+- Host code can call GWT through JSON/API boundaries, but it should not
+  reimplement durable domain rules that belong in GWT.
+- Tests should exercise the GWT behavior itself, not only a generated host
+  translation of it.
+
+This does not remove every kind of ambiguity. Product goals, UX judgment,
+architecture, naming, and domain modeling can still require human decisions.
+GWT's claim is narrower and stronger: deterministic behavior ambiguity should
+be resolved before the spec is treated as executable.
 
 ## Anti-Goals
 

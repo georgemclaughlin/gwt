@@ -10,11 +10,35 @@ not a general-purpose replacement for Python, JavaScript, or Go. The goal is
 narrower: make behavior contracts readable enough for stakeholders and precise
 enough to execute, test, check, format, and debug.
 
+GWT is also a response to a common failure mode in spec-driven development:
+the spec becomes a better prompt, but the durable behavior still lives in code
+somewhere else. In GWT, natural language can propose intent, but executable
+GWT defines normative behavior. A `.gwt` file is not a handoff document that an
+agent interprets into hidden implementation code; it is the behavior program
+itself.
+
 OpenSpec's persistent-spec idea was an original inspiration, though GWT does
 not use or depend on OpenSpec. The language is also shaped by Cucumber,
 SpecFlow/Reqnroll, and BDD examples. New features should stay
 behavior-oriented and should not drift toward broad query syntax or invisible
 policy evaluation.
+
+## Spec Is Code
+
+BMAD, GitHub Spec Kit, and OpenSpec are useful signs of the same shift: humans
+and agents need durable specs instead of one-off prompts. GWT pushes on a
+different boundary. It treats executable behavior as the source of truth.
+
+Markdown specs can reduce ambiguity, but they still require interpretation.
+GWT removes the semantic handoff for deterministic domain behavior:
+
+- `GIVEN` setup is runtime state, not prose about state.
+- `WHEN` behavior is executable logic, not a step name backed by separate code.
+- `THEN` assertions are regression checks, not suggestions.
+- `REQUEST` and `OUTPUT` contracts are host-facing runtime boundaries.
+
+GWT does not remove all product ambiguity. It forces behavior ambiguity to be
+resolved before the spec becomes executable.
 
 ## Quick Start
 
@@ -59,6 +83,7 @@ For a quick public review, start with:
 | Artifact | Why |
 | --- | --- |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
+| [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
 | [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
 
