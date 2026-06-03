@@ -49,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_parser = subparsers.add_parser("run", help="Run a GWT program or request.")
     add_file_arguments(run_parser)
+    add_import_policy_arguments(run_parser)
     input_group = run_parser.add_mutually_exclusive_group()
     input_group.add_argument(
         "--input",
@@ -72,6 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     test_parser = subparsers.add_parser("test", help="Run GWT scenarios.")
     add_file_arguments(test_parser)
+    add_import_policy_arguments(test_parser)
     test_parser.add_argument(
         "--json",
         action="store_true",
@@ -185,9 +187,16 @@ def run_command(args: argparse.Namespace) -> int:
                 json_state,
                 entry=args.entry,
                 json_file=args.json_input,
+                import_roots=args.import_root,
+                allow_absolute_imports=not args.no_absolute_imports,
             )
         else:
-            execution = run_file(args.file, request_file=args.input)
+            execution = run_file(
+                args.file,
+                request_file=args.input,
+                import_roots=args.import_root,
+                allow_absolute_imports=not args.no_absolute_imports,
+            )
     except GwtError as exc:
         if args.json_input is not None and str(exc).startswith("<entry>:"):
             print(format_error(exc, f"{args.entry}\n", "<entry>"), file=sys.stderr)
@@ -229,7 +238,11 @@ def _load_json_input(path: Path) -> dict[str, object]:
 def test_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
-        result = run_source(source, filename=str(args.file))
+        result = run_source(
+            source,
+            filename=str(args.file),
+            import_policy=import_policy_from_args(args),
+        )
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1

@@ -4,6 +4,9 @@ GWT should be easy to call from ordinary application code. A host application
 should not need to be written in GWT; it should be able to treat GWT as the
 portable executable module for deterministic domain behavior.
 
+For guidance on choosing between host-side executable specs and embedded
+application decisions, see [Adoption Modes](adoption-modes.md).
+
 The intended boundary is:
 
 ```text

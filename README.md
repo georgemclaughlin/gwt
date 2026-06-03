@@ -121,6 +121,7 @@ For a quick public review, start with:
 | --- | --- |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
+| [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
 | [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
@@ -421,6 +422,9 @@ execution = rules.run_json(
     entry="fulfill order from inventory into fulfillment",
 )
 ```
+
+The same `--import-root` and `--no-absolute-imports` flags are available on
+`gwt test` and `gwt run` for executable-spec and runner workflows.
 
 The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
 `run_json_text` functions are also available for callers that do not want a
