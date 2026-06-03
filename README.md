@@ -395,8 +395,27 @@ payload = execution.as_payload()
 print(payload["result"]["fulfillment"]["status"])
 ```
 
+For production-style embedding, compile and check the program once during
+application startup, optionally confining `USE` imports to known rule roots:
+
+```python
+from gwtlang import compile_file
+
+rules = compile_file(
+    "examples/order_fulfillment/rules.gwt",
+    import_roots=["examples/order_fulfillment"],
+    allow_absolute_imports=False,
+)
+
+execution = rules.run_json(
+    request,
+    entry="fulfill order from inventory into fulfillment",
+)
+```
+
 The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
 `run_json_text` functions are also available for callers that do not want a
+client object. `GwtClient.compile()` is the equivalent compile-once API for a
 client object. `GwtClient.typescript_types()` and
 `generate_typescript_file()` generate TypeScript declarations from checked GWT
 contracts.

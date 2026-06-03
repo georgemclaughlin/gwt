@@ -39,6 +39,45 @@ _MISSING = object()
 
 
 @dataclass(frozen=True)
+class ImportPolicy:
+    allowed_roots: tuple[Path, ...] = ()
+    allow_absolute: bool = True
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "allowed_roots",
+            tuple(Path(root).resolve() for root in self.allowed_roots),
+        )
+
+    def validate(
+        self,
+        raw_path: Path,
+        resolved_path: Path,
+        filename: str,
+        line_number: int,
+    ) -> None:
+        if raw_path.is_absolute() and not self.allow_absolute:
+            raise GwtError(
+                f"{filename}:{line_number}: USE absolute import is not allowed: {raw_path}"
+            )
+
+        if not self.allowed_roots:
+            return
+
+        for root in self.allowed_roots:
+            try:
+                resolved_path.relative_to(root)
+            except ValueError:
+                continue
+            return
+
+        raise GwtError(
+            f"{filename}:{line_number}: USE import is outside allowed roots: {resolved_path}"
+        )
+
+
+@dataclass(frozen=True)
 class Line:
     number: int
     text: str
@@ -314,6 +353,7 @@ def parse_program(
     initial_dtos: dict[str, DtoDefinition] | None = None,
     initial_variants: dict[str, VariantDefinition] | None = None,
     allow_unknown_dtos: bool = False,
+    import_policy: ImportPolicy | None = None,
 ) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
@@ -366,7 +406,7 @@ def parse_program(
             continue
 
         if text.startswith("USE "):
-            imported = _parse_import(text, line, filename, importing)
+            imported = _parse_import(text, line, filename, importing, import_policy)
             program.dtos.update(imported.dtos)
             program.variants.update(imported.variants)
             program.actions.extend(imported.actions)
@@ -1735,16 +1775,25 @@ def _split_where_clause(expression: str) -> tuple[str, str | None]:
     return expression[: match.start()].strip(), expression[match.end() :].strip()
 
 
-def _parse_import(text: str, line: Line, filename: str, importing: set[Path]) -> Program:
+def _parse_import(
+    text: str,
+    line: Line,
+    filename: str,
+    importing: set[Path],
+    import_policy: ImportPolicy | None,
+) -> Program:
     tokens = _tokens(text, filename, line.number)
     if len(tokens) != 2:
         raise GwtError(f"{filename}:{line.number}: USE expects one quoted path")
 
     base_dir = Path.cwd() if filename == "<source>" else Path(filename).resolve().parent
-    import_path = Path(tokens[1])
+    raw_import_path = Path(tokens[1])
+    import_path = raw_import_path
     if not import_path.is_absolute():
         import_path = base_dir / import_path
     import_path = import_path.resolve()
+    if import_policy is not None:
+        import_policy.validate(raw_import_path, import_path, filename, line.number)
 
     if import_path in importing:
         raise GwtError(f"{filename}:{line.number}: circular USE import: {import_path}")
@@ -1755,7 +1804,12 @@ def _parse_import(text: str, line: Line, filename: str, importing: set[Path]) ->
 
     importing.add(import_path)
     try:
-        return parse_program(import_path.read_text(), str(import_path), importing)
+        return parse_program(
+            import_path.read_text(),
+            str(import_path),
+            importing,
+            import_policy=import_policy,
+        )
     finally:
         importing.remove(import_path)
 

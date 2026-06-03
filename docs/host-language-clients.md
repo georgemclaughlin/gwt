@@ -38,6 +38,29 @@ execution = client.run_json(
 result = execution.as_payload()["result"]["decision"]
 ```
 
+For long-running Python hosts, use the checked compile-once API during
+application startup:
+
+```python
+from gwtlang import compile_file
+
+rules = compile_file(
+    "rules.gwt",
+    import_roots=["rules"],
+    allow_absolute_imports=False,
+)
+
+execution = rules.run_json(
+    {"vendor": vendor, "decision": decision},
+    entry="review vendor into decision",
+)
+```
+
+The compiled program reuses the parsed and checked rule program while creating a
+fresh runtime state for each execution. `import_roots` and
+`allow_absolute_imports=False` let production hosts confine `USE` imports to
+known rule directories.
+
 Host-language clients should offer the same shape across ecosystems:
 
 ```csharp
