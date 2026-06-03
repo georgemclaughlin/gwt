@@ -151,6 +151,29 @@ class PublicApiTests(unittest.TestCase):
             with self.assertRaisesRegex(GwtError, "USE absolute import is not allowed"):
                 compile_file(program, import_roots=[root], allow_absolute_imports=False)
 
+    def test_check_file_reports_import_policy_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program = root / "main.gwt"
+            outside.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program.write_text('USE "../outside.gwt"\n')
+
+            result = check_file(program, import_roots=[root])
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.diagnostics[0].code, "GWT900")
+        self.assertIn(
+            "USE import is outside allowed roots",
+            result.diagnostics[0].message,
+        )
+
     def test_gwt_client_checks_and_runs_json_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"

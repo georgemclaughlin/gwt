@@ -369,8 +369,17 @@ if check.ok:
     state = execution.state
 ```
 
-For production-style embedding, compile and check a program once during host
-application startup:
+For production-style embedding, use the CLI as the local and CI feedback path:
+
+```sh
+python -m gwtlang check rules.gwt \
+  --import-root rules \
+  --no-absolute-imports
+```
+
+That command parses imports with the same confinement policy the host should use
+in production, so broken rules fail before the app boots. Application startup
+should still compile and check the program once as a final safety gate:
 
 ```python
 from gwtlang import compile_file
@@ -389,8 +398,8 @@ execution = rules.run_json(
 
 The compiled program keeps the parsed and checked program in memory and creates
 a fresh runtime for each execution. `import_roots` confines `USE` imports to
-known directories, and `allow_absolute_imports=False` rejects absolute import
-paths.
+known directories, matching `--import-root`, and
+`allow_absolute_imports=False` matches `--no-absolute-imports`.
 
 `GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
 `run_json_file`, and `compile_file` functions. `check_file` returns a

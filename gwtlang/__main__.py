@@ -11,7 +11,7 @@ from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
 from .lsp import run_stdio_server
-from .runtime import GwtError, run_source
+from .runtime import GwtError, ImportPolicy, run_source
 from .service import analyze_file
 
 
@@ -80,6 +80,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     check_parser = subparsers.add_parser("check", help="Parse and statically check a GWT file.")
     add_file_arguments(check_parser)
+    add_import_policy_arguments(check_parser)
     check_parser.add_argument(
         "--json",
         action="store_true",
@@ -149,6 +150,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 def add_file_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("file", type=Path, help="Path to a .gwt file")
+
+
+def add_import_policy_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--import-root",
+        type=Path,
+        action="append",
+        default=[],
+        help="Allow USE imports only under this root. Can be repeated.",
+    )
+    parser.add_argument(
+        "--no-absolute-imports",
+        action="store_true",
+        help="Reject absolute USE import paths.",
+    )
 
 
 def run_command(args: argparse.Namespace) -> int:
@@ -227,7 +243,7 @@ def test_command(args: argparse.Namespace) -> int:
 
 
 def check_command(args: argparse.Namespace) -> int:
-    analysis = analyze_file(args.file)
+    analysis = analyze_file(args.file, import_policy=import_policy_from_args(args))
     source = analysis.source
     payload = analysis.as_payload()
     errors = [diagnostic for diagnostic in analysis.diagnostics if diagnostic.severity == "error"]
@@ -260,6 +276,13 @@ def check_command(args: argparse.Namespace) -> int:
             f"({payload['dtos']} records, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
+
+
+def import_policy_from_args(args: argparse.Namespace) -> ImportPolicy | None:
+    import_roots = tuple(args.import_root or ())
+    if not import_roots and not args.no_absolute_imports:
+        return None
+    return ImportPolicy(import_roots, allow_absolute=not args.no_absolute_imports)
 
 
 def format_command(args: argparse.Namespace) -> int:
