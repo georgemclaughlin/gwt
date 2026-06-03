@@ -395,8 +395,17 @@ payload = execution.as_payload()
 print(payload["result"]["fulfillment"]["status"])
 ```
 
-For production-style embedding, compile and check the program once during
-application startup, optionally confining `USE` imports to known rule roots:
+For production-style embedding, first make the rule check part of the local and
+CI feedback loop:
+
+```sh
+python -m gwtlang check examples/order_fulfillment/rules.gwt \
+  --import-root examples/order_fulfillment \
+  --no-absolute-imports
+```
+
+Then compile and check the program once during application startup as a final
+safety gate, optionally confining `USE` imports to the same known rule roots:
 
 ```python
 from gwtlang import compile_file

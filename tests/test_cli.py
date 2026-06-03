@@ -336,6 +336,63 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
         self.assertIn("range", payload["diagnostics"][0])
 
+    def test_check_command_rejects_imports_outside_import_root(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program_path = root / "workflow.gwt"
+            outside.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program_path.write_text('USE "../outside.gwt"\n')
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["check", str(program_path), "--import-root", str(root)])
+
+        self.assertEqual(status, 1)
+        self.assertIn("GWT900", stderr.getvalue())
+        self.assertIn("USE import is outside allowed roots", stderr.getvalue())
+
+    def test_check_command_json_rejects_absolute_imports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module_path = root / "types.gwt"
+            program_path = root / "workflow.gwt"
+            module_path.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program_path.write_text(f'USE "{module_path}"\n')
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "check",
+                        str(program_path),
+                        "--import-root",
+                        str(root),
+                        "--no-absolute-imports",
+                        "--json",
+                    ]
+                )
+
+        self.assertEqual(status, 1)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["diagnostics"][0]["code"], "GWT900")
+        self.assertIn(
+            "USE absolute import is not allowed",
+            payload["diagnostics"][0]["message"],
+        )
+
     def test_types_command_prints_typescript_declarations(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"

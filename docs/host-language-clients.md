@@ -38,8 +38,17 @@ execution = client.run_json(
 result = execution.as_payload()["result"]["decision"]
 ```
 
-For long-running Python hosts, use the checked compile-once API during
-application startup:
+For long-running Python hosts, run the production-shaped check in local
+development and CI:
+
+```sh
+python -m gwtlang check rules.gwt \
+  --import-root rules \
+  --no-absolute-imports
+```
+
+Then use the checked compile-once API during application startup as a final
+safety gate:
 
 ```python
 from gwtlang import compile_file
@@ -58,8 +67,8 @@ execution = rules.run_json(
 
 The compiled program reuses the parsed and checked rule program while creating a
 fresh runtime state for each execution. `import_roots` and
-`allow_absolute_imports=False` let production hosts confine `USE` imports to
-known rule directories.
+`allow_absolute_imports=False` should match the CLI `--import-root` and
+`--no-absolute-imports` options used in CI.
 
 Host-language clients should offer the same shape across ecosystems:
 

@@ -185,12 +185,34 @@ def _scenario_payload(scenario: ScenarioResult) -> dict[str, object]:
     }
 
 
-def check_file(path: str | Path) -> CheckResult:
-    return CheckResult(analyze_file(path))
+def check_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> CheckResult:
+    return CheckResult(
+        analyze_file(
+            path,
+            import_policy=_import_policy(import_roots, allow_absolute_imports),
+        )
+    )
 
 
-def check_text(source: str, filename: str = "<source>") -> CheckResult:
-    return CheckResult(analyze_source(source, filename))
+def check_text(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> CheckResult:
+    return CheckResult(
+        analyze_source(
+            source,
+            filename,
+            import_policy=_import_policy(import_roots, allow_absolute_imports),
+        )
+    )
 
 
 def compile_file(

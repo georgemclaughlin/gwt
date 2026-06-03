@@ -8,6 +8,7 @@ from .checker import Diagnostic, check_program
 from .errors import GwtError
 from .runtime import (
     Action,
+    ImportPolicy,
     Program,
     parse_program,
     _is_builtin_statement,
@@ -45,18 +46,37 @@ class Hover:
     source_range: SourceRange
 
 
-def analyze_source(source: str, filename: str = "<source>") -> Analysis:
+def analyze_source(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_policy: ImportPolicy | None = None,
+) -> Analysis:
     try:
-        program = parse_program(source, filename=filename)
+        program = parse_program(source, filename=filename, import_policy=import_policy)
     except GwtError as exc:
-        return Analysis(source, filename, None, [_parse_error_diagnostic(str(exc), source, filename)], SymbolTable([]))
+        return Analysis(
+            source,
+            filename,
+            None,
+            [_parse_error_diagnostic(str(exc), source, filename)],
+            SymbolTable([]),
+        )
 
     return Analysis(source, filename, program, check_program(program), build_symbol_table(program))
 
 
-def analyze_file(path: str | Path) -> Analysis:
+def analyze_file(
+    path: str | Path,
+    *,
+    import_policy: ImportPolicy | None = None,
+) -> Analysis:
     file_path = Path(path)
-    return analyze_source(file_path.read_text(), str(file_path))
+    return analyze_source(
+        file_path.read_text(),
+        str(file_path),
+        import_policy=import_policy,
+    )
 
 
 def symbol_at(analysis: Analysis, line: int, character: int) -> Symbol | None:
