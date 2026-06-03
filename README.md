@@ -40,6 +40,43 @@ GWT removes the semantic handoff for deterministic domain behavior:
 GWT does not remove all product ambiguity. It forces behavior ambiguity to be
 resolved before the spec becomes executable.
 
+## Host Language Clients
+
+GWT is intended to plug into ordinary application stacks through explicit JSON
+boundaries. A host application can own UI, persistence, network calls, and
+deployment while GWT owns deterministic domain behavior.
+
+The current Python package is the reference client API. Other host-language
+clients can wrap the same runtime contract:
+
+```text
+host app -> JSON request object -> GWT entry behavior -> typed result envelope
+```
+
+The CLI also supports a portable runner protocol for early clients in .NET,
+Java, TypeScript, Go, Ruby, or any language that can spawn a process:
+
+```sh
+printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
+  --json-input - \
+  --entry "review vendor into decision" \
+  --json
+```
+
+GWT can also generate TypeScript declaration files from `RECORD`, `REQUEST`, and
+`OUTPUT` contracts:
+
+```sh
+gwt types examples/vendor_onboarding/rules.gwt --language typescript \
+  --output vendor-onboarding.d.ts
+```
+
+See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
+client-library model and boundary rules. The first CLI-backed Node/TypeScript
+client lives in [`clients/typescript`](clients/typescript), with a typed host
+example in
+[`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
+
 ## Quick Start
 
 Run the hello world example:
@@ -84,6 +121,7 @@ For a quick public review, start with:
 | --- | --- |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
+| [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
 | [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
 
@@ -219,19 +257,24 @@ python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --json
 ```
 
-The JSON result is a stable envelope:
+The JSON result uses a stable envelope. For this request, `result` contains the
+declared `OUTPUT` paths:
 
 ```json
 {
   "ok": true,
   "scenario_count": 1,
   "result": {
-    "decision": {
-      "line_count": 4,
-      "submitted_total": 297,
-      "approved_total": 60,
-      "has_violation": true,
-      "status": "needs_review"
+    "fulfillment": {
+      "status": "partial",
+      "reason": "partial_inventory",
+      "reserved_units": 3,
+      "backordered_units": 1
+    },
+    "inventory": {
+      "widget_available": 4,
+      "gadget_available": 0,
+      "cable_available": 4
     }
   }
 }
@@ -273,6 +316,7 @@ The CLI currently supports:
 ```sh
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --entry "fulfill order from inventory into fulfillment" --json
+gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
 gwt format examples/bank.gwt --check
@@ -289,6 +333,10 @@ for editor tooling.
 
 `gwt format file.gwt` rewrites valid source to the canonical v0.1 layout.
 `gwt format file.gwt --check` is intended for CI.
+
+`gwt types file.gwt --language typescript` generates host TypeScript
+declarations from `RECORD`, `REQUEST`, and `OUTPUT` contracts. The generated
+types are integration helpers; the `.gwt` file remains the source of truth.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
@@ -331,21 +379,27 @@ out to the CLI:
 ```python
 import json
 
-from gwtlang import check_file, run_json_file
+from gwtlang import GwtClient
 
-check = check_file("examples/order_fulfillment/rules.gwt")
+client = GwtClient("examples/order_fulfillment/rules.gwt")
+check = client.check()
 if not check.ok:
     raise SystemExit(check.as_payload())
 
 request = json.loads(open("examples/order_fulfillment/request.json").read())
-execution = run_json_file(
-    "examples/order_fulfillment/rules.gwt",
+execution = client.run_json(
     request,
     entry="fulfill order from inventory into fulfillment",
 )
-print(execution.state["fulfillment"]["status"])
-print(execution.as_payload()["result"])
+payload = execution.as_payload()
+print(payload["result"]["fulfillment"]["status"])
 ```
+
+The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
+`run_json_text` functions are also available for callers that do not want a
+client object. `GwtClient.typescript_types()` and
+`generate_typescript_file()` generate TypeScript declarations from checked GWT
+contracts.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 
@@ -357,6 +411,39 @@ execution = run_file(
     request_file="examples/order_fulfillment/request_with_assertions.gwt",
 )
 ```
+
+## TypeScript Client
+
+The CLI-backed TypeScript client lives in [`clients/typescript`](clients/typescript).
+It uses the same JSON runner protocol as the Python API. Before a public npm
+release, use the repository example or a local `file:` dependency.
+
+```ts
+import { GwtClient } from "@gwtlang/client";
+import type { GwtOutput, GwtRequest } from "./rules.js";
+
+const client = new GwtClient("examples/vendor_onboarding/rules.gwt");
+const check = await client.check();
+if (!check.ok) {
+  throw new Error(JSON.stringify(check.diagnostics));
+}
+
+const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
+  entry: "review vendor into decision",
+});
+
+console.log(execution.result.decision.status);
+```
+
+Generate `rules.d.ts` from the GWT source:
+
+```sh
+gwt types examples/vendor_onboarding/rules.gwt --language typescript --output rules.d.ts
+```
+
+With NodeNext-style ESM, import generated declarations through the runtime-style
+`./rules.js` specifier. A complete typed host example lives at
+[`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
 
 The same analysis layer is available from Python:
 

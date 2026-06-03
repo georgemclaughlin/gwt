@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from gwtlang.__main__ import format_error, main
 from gwtlang.errors import GwtError
@@ -102,6 +103,87 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["request_file"], str(request_path))
         self.assertEqual(payload["result"]["cart"]["total"], 92)
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
+
+    def test_cli_runs_program_with_json_input_from_stdin(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            program_path.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
+                  set cart.total to cart.subtotal + cart.shipping
+                """
+            )
+
+            stdin = io.StringIO(json.dumps({"cart": {"subtotal": 84, "shipping": 8, "total": 0}}))
+            stdout = io.StringIO()
+            with patch("sys.stdin", stdin), redirect_stdout(stdout):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        "-",
+                        "--entry",
+                        "checkout cart",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["request_file"], "-")
+        self.assertEqual(payload["result"]["cart"]["total"], 92)
+
+    def test_cli_json_input_from_stdin_must_be_valid_json_object(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            program_path.write_text("WHEN checkout <cart>\n  print cart\n")
+
+            stderr = io.StringIO()
+            with patch("sys.stdin", io.StringIO("[1, 2]")), redirect_stderr(stderr):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        "-",
+                        "--entry",
+                        "checkout cart",
+                    ]
+                )
+
+        self.assertEqual(status, 1)
+        self.assertIn("stdin JSON input must be an object", stderr.getvalue())
+
+    def test_cli_reports_invalid_json_from_stdin(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            program_path.write_text("WHEN checkout <cart>\n  print cart\n")
+
+            stderr = io.StringIO()
+            with patch("sys.stdin", io.StringIO("{")), redirect_stderr(stderr):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        "-",
+                        "--entry",
+                        "checkout cart",
+                    ]
+                )
+
+        self.assertEqual(status, 1)
+        self.assertIn("stdin JSON input is invalid at line 1, column 2", stderr.getvalue())
 
     def test_cli_json_input_requires_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -253,6 +335,64 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["diagnostics"][0]["message"], "no behavior matches: missing count")
         self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
         self.assertIn("range", payload["diagnostics"][0])
+
+    def test_types_command_prints_typescript_declarations(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  status: "new" | "priced"
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["types", str(program_path)])
+
+        self.assertEqual(status, 0)
+        output = stdout.getvalue()
+        self.assertIn("export interface Cart", output)
+        self.assertIn('status: "new" | "priced";', output)
+        self.assertIn("export interface GwtRequest", output)
+        self.assertIn("cart: Cart;", output)
+
+    def test_types_command_writes_output_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            output_path = Path(temp_dir) / "workflow.d.ts"
+            program_path.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+
+                REQUEST cart is Cart
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["types", str(program_path), "--output", str(output_path)])
+
+            self.assertEqual(status, 0)
+            self.assertIn("Wrote", stdout.getvalue())
+            self.assertIn("export interface Cart", output_path.read_text())
+
+    def test_types_command_reports_checker_errors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text("REQUEST cart is Missing\n")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["types", str(program_path)])
+
+        self.assertEqual(status, 1)
+        self.assertIn("unknown REQUEST contract type: Missing", stderr.getvalue())
 
     def test_debug_lines_command_reports_executable_lines(self):
         with tempfile.TemporaryDirectory() as temp_dir:

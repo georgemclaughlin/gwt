@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-from .api import run_file, run_json_file, run_result_payload
+from .api import generate_typescript_file, run_file, run_json_file, run_result_payload
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
@@ -28,6 +28,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_command(args)
     if args.command == "format":
         return format_command(args)
+    if args.command == "types":
+        return types_command(args)
     if args.command == "lsp":
         return lsp_command(args)
     if args.command == "debug":
@@ -40,7 +42,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run, test, check, and serve GWT programs.")
+    parser = argparse.ArgumentParser(
+        description="Run, test, check, format, and generate types for GWT programs."
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser("run", help="Run a GWT program or request.")
@@ -54,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     input_group.add_argument(
         "--json-input",
         type=Path,
-        help="Path to a JSON object containing initial state for REQUEST contracts.",
+        help="Path to a JSON object containing initial state for REQUEST contracts, or '-' for stdin.",
     )
     run_parser.add_argument(
         "--entry",
@@ -93,6 +97,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--stdout",
         action="store_true",
         help="Print formatted source instead of writing the file.",
+    )
+
+    types_parser = subparsers.add_parser(
+        "types",
+        help="Generate host-language types from GWT contracts.",
+    )
+    add_file_arguments(types_parser)
+    types_parser.add_argument(
+        "--language",
+        choices=["typescript"],
+        default="typescript",
+        help="Host language to generate. Currently only TypeScript is supported.",
+    )
+    types_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write generated types to a file instead of stdout.",
     )
 
     subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
@@ -168,6 +189,18 @@ def run_command(args: argparse.Namespace) -> int:
 
 
 def _load_json_input(path: Path) -> dict[str, object]:
+    if path == Path("-"):
+        raw = sys.stdin.read()
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise GwtError(
+                f"stdin JSON input is invalid at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise GwtError("stdin JSON input must be an object")
+        return payload
+
     try:
         payload = json.loads(path.read_text())
     except json.JSONDecodeError as exc:
@@ -257,6 +290,23 @@ def format_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def types_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        result = generate_typescript_file(args.file)
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    if args.output is not None:
+        args.output.write_text(result.source)
+        print(f"Wrote {args.output}")
+        return 0
+
+    print(result.source, end="")
+    return 0
+
+
 def lsp_command(args: argparse.Namespace) -> int:
     return run_stdio_server()
 
@@ -294,7 +344,8 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    if argv[0] in {"run", "test", "check", "format", "lsp", "debug", "debug-lines", "-h", "--help"}:
+    known_commands = {"run", "test", "check", "format", "types", "lsp", "debug", "debug-lines"}
+    if argv[0] in {*known_commands, "-h", "--help"}:
         return argv
     return ["run", *argv]
 
