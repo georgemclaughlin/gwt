@@ -332,6 +332,52 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("unknown REQUEST contract type: MissingCart", messages)
         self.assertIn("unknown OUTPUT contract type: MissingResult", messages)
 
+    def test_reports_overlapping_request_contract_paths(self):
+        messages = check_messages(
+            """
+            REQUEST x is text
+            AND x.y is number
+            """
+        )
+
+        self.assertIn("REQUEST contract path x.y overlaps x; declare x or x.y, not both", messages)
+
+    def test_reports_overlapping_request_contract_paths_when_ancestor_comes_second(self):
+        messages = check_messages(
+            """
+            REQUEST x.y is number
+            AND x is text
+            """
+        )
+
+        self.assertIn("REQUEST contract path x.y overlaps x; declare x or x.y, not both", messages)
+
+    def test_reports_overlapping_output_contract_paths(self):
+        messages = check_messages(
+            """
+            OUTPUT result is text
+            AND result.value is number
+            """
+        )
+
+        self.assertIn(
+            "OUTPUT contract path result.value overlaps result; declare result or result.value, not both",
+            messages,
+        )
+
+    def test_allows_contract_path_overlap_across_request_and_output(self):
+        messages = check_messages(
+            """
+            RECORD Cart
+              total: number
+
+            REQUEST cart is Cart
+            OUTPUT cart.total is number
+            """
+        )
+
+        self.assertEqual(messages, [])
+
     def test_reports_unknown_dto_field_type(self):
         messages = check_messages(
             """
@@ -341,6 +387,29 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.assertIn("unknown record field type: list<MissingItem>", messages)
+
+    def test_reports_overlapping_record_field_paths(self):
+        messages = check_messages(
+            """
+            RECORD Foo
+              x: text
+                y: number
+            """
+        )
+
+        self.assertIn("record Foo field path x.y overlaps x; declare x or x.y, not both", messages)
+
+    def test_reports_overlapping_record_field_paths_when_ancestor_comes_second(self):
+        messages = check_messages(
+            """
+            RECORD Foo
+              x:
+                y: number
+              x: text
+            """
+        )
+
+        self.assertIn("record Foo field path x.y overlaps x; declare x or x.y, not both", messages)
 
     def test_accepts_typed_dto_collection_and_table(self):
         messages = check_messages(

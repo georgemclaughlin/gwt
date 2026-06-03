@@ -9,7 +9,9 @@ See [spec/v0.1.md](spec/v0.1.md) for the versioned v0.1 specification and
 guidance inspired by OpenSpec, GitHub Spec Kit, Cucumber, SpecFlow/Reqnroll,
 and BDD examples. See [spec-is-code.md](spec-is-code.md) for the product thesis
 behind making behavior specs executable instead of agent-interpreted handoff
-documents.
+documents. See [host-language-clients.md](host-language-clients.md) for the
+client-library model for Python, .NET, Java, TypeScript, and other host
+languages.
 
 ## Program Shape
 
@@ -153,6 +155,15 @@ RECORD Account
     name: text
 ```
 
+Within a `RECORD`, field paths must not overlap. Declare either a scalar field
+or a nested object field, not both:
+
+```gwt
+RECORD Account
+  owner: text
+    name: text # invalid: owner.name overlaps owner
+```
+
 Records are contracts only; they do not define behavior or methods. `DTO` is
 accepted as a legacy alias for `RECORD`; `gwt format` emits the canonical
 `RECORD` spelling.
@@ -207,6 +218,17 @@ contracts are validated after `WHEN` execution. When a program has one or more
 JSON/API payloads use a stable envelope. The top-level `result` value contains
 only declared output paths when `OUTPUT` contracts are present; `state` still
 keeps the full final runtime state for debugging and tests.
+
+Within `REQUEST` or within `OUTPUT`, contract paths must not overlap. Declare
+either a whole record path or explicit leaf paths, not both:
+
+```gwt
+REQUEST cart is Cart
+AND cart.total is number # invalid: cart.total overlaps cart
+```
+
+Request and output contracts are checked separately, so a `REQUEST` path may
+overlap an `OUTPUT` path.
 
 GWT v0.1 does not have a source-level `null` literal. JSON input can still
 contain `null` at raw integration boundaries, but typed contracts reject it for
@@ -291,6 +313,16 @@ python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --json
 ```
 
+Use `--json-input -` to read the JSON object from stdin. This gives other host
+languages a simple client protocol before they have native SDKs:
+
+```sh
+printf '%s' "$REQUEST_JSON" | python -m gwtlang run rules.gwt \
+  --json-input - \
+  --entry "review vendor into decision" \
+  --json
+```
+
 The JSON file must contain an object whose keys are GWT state paths. Nested
 JSON objects are ordinary record values:
 
@@ -325,25 +357,64 @@ Host applications can call GWT through the Python package instead of shelling
 out to the CLI:
 
 ```python
-from gwtlang import check_file, run_json_file
+from gwtlang import GwtClient
 
-check = check_file("rules.gwt")
+client = GwtClient("rules.gwt")
+check = client.check()
 if check.ok:
-    execution = run_json_file(
-        "rules.gwt",
+    execution = client.run_json(
         request_state,
         entry="review report into decision",
     )
     state = execution.state
 ```
 
-`check_file` returns a structured result with `ok`, `diagnostics`, and
-`as_payload()`. `run_file` returns an execution result with `state`, `output`,
-`scenarios`, and `as_payload()`. `state` is the full final runtime state.
-`as_payload()` always returns an envelope with `ok`, `file`, `request_file`,
-`scenario_count`, `scenarios`, `state`, `result`, and `output`. The top-level
-`state`, `result`, and `output` values are populated for single-scenario runs;
-multi-scenario details are always available under `scenarios`.
+`GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
+and `run_json_file` functions. `check_file` returns a structured result with
+`ok`, `diagnostics`, and `as_payload()`. `run_file` and `run_json_file` return
+an execution result with `state`, `output`, `scenarios`, and `as_payload()`.
+`state` is the full final runtime state. `as_payload()` always returns an
+envelope with `ok`, `file`, `request_file`, `scenario_count`, `scenarios`,
+`state`, `result`, and `output`. The top-level `state`, `result`, and `output`
+values are populated for single-scenario runs; multi-scenario details are
+always available under `scenarios`.
+
+## Generated Host Types
+
+The same `RECORD`, `REQUEST`, and `OUTPUT` contracts can generate host-language
+types. For TypeScript:
+
+```sh
+python -m gwtlang types rules.gwt --language typescript --output rules.d.ts
+```
+
+The generated declaration file includes record interfaces, one-of record
+unions, `GwtRequest`, and `GwtOutput`. These declarations are integration
+helpers for host code; the `.gwt` source remains the normative contract.
+Generated TypeScript uses nested object shape for dotted contract paths. Raw
+CLI JSON input may still provide state through dotted path keys such as
+`"cart.total"`, or through nested objects that produce the same state.
+
+TypeScript callers can pair generated types with the CLI-backed client:
+
+```ts
+import { GwtClient } from "@gwtlang/client";
+import type { GwtOutput, GwtRequest } from "./rules.js";
+
+const request: GwtRequest = { vendor, decision };
+const client = new GwtClient("rules.gwt");
+const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
+  entry: "review vendor into decision",
+});
+
+execution.result.decision.status;
+```
+
+With NodeNext-style ESM, import the generated `rules.d.ts` declarations through
+the runtime-style `./rules.js` specifier.
+
+For a complete host example, see
+[`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
 
 ## Static Checking
 

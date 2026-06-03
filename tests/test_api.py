@@ -4,8 +4,10 @@ import unittest
 
 from gwtlang import (
     GwtError,
+    GwtClient,
     check_file,
     check_text,
+    generate_typescript_text,
     run_file,
     run_json_file,
     run_json_text,
@@ -14,6 +16,79 @@ from gwtlang import (
 
 
 class PublicApiTests(unittest.TestCase):
+    def test_gwt_client_checks_and_runs_json_entry(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            program.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
+                  set cart.total to cart.subtotal + cart.shipping
+                """
+            )
+
+            client = GwtClient(program)
+            check = client.check()
+            result = client.run_json(
+                {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
+                entry="checkout cart",
+            )
+
+        self.assertTrue(check.ok)
+        self.assertEqual(result.as_payload()["result"]["cart"]["total"], 92)
+
+    def test_gwt_client_generates_typescript_types(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            program.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  status: "new" | "priced"
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+                """
+            )
+
+            result = GwtClient(program).typescript_types()
+
+        self.assertIn("export interface Cart", result.source)
+        self.assertIn('status: "new" | "priced";', result.source)
+        self.assertIn("export interface GwtRequest", result.source)
+        self.assertEqual(result.language, "typescript")
+
+    def test_gwt_client_runs_gwt_request_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            request = Path(temp_dir) / "request.gwt"
+            program.write_text(
+                """
+                WHEN checkout cart
+                  set cart.total to cart.subtotal + cart.shipping
+                """
+            )
+            request.write_text(
+                """
+                GIVEN cart.subtotal is 84
+                AND cart.shipping is 8
+
+                WHEN checkout cart
+                """
+            )
+
+            result = GwtClient(program).run(request_file=request)
+
+        self.assertEqual(result.as_payload()["result"]["cart"]["total"], 92)
+
     def test_check_file_returns_structured_result(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "bad.gwt"
@@ -40,6 +115,43 @@ class PublicApiTests(unittest.TestCase):
 
         self.assertTrue(result.ok)
         self.assertEqual(result.diagnostics, [])
+
+    def test_generate_typescript_text_maps_records_variants_and_contracts(self):
+        result = generate_typescript_text(
+            """
+            RECORD Vendor
+              name: text
+              risk: "low" | "high"
+              scores: list<number>
+              owner:
+                email: text
+
+            RECORD Review is one of
+              approved:
+                reason: text
+              denied:
+                code: number
+
+            REQUEST vendor is Vendor
+            AND metadata.trace_id is text
+            OUTPUT review is Review
+            """,
+            filename="rules.gwt",
+        )
+
+        self.assertIn("export interface Vendor", result.source)
+        self.assertIn("scores: number[];", result.source)
+        self.assertIn("owner: {\n    email: string;\n  };", result.source)
+        self.assertIn("export type Review =", result.source)
+        self.assertIn('kind: "approved";', result.source)
+        self.assertIn("export interface GwtRequest", result.source)
+        self.assertIn("metadata: {\n    trace_id: string;\n  };", result.source)
+        self.assertIn("export interface GwtOutput", result.source)
+        self.assertIn("review: Review;", result.source)
+
+    def test_generate_typescript_text_rejects_unknown_contract_type(self):
+        with self.assertRaisesRegex(GwtError, "unknown REQUEST contract type: Missing"):
+            generate_typescript_text("REQUEST cart is Missing\n")
 
     def test_run_file_with_request_file_returns_execution_result(self):
         with tempfile.TemporaryDirectory() as temp_dir:

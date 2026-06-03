@@ -8,6 +8,7 @@ from .errors import GwtError
 from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_expression
 from .runtime import (
     Action,
+    ContractBinding,
     DtoValidation,
     DTO_TYPES,
     FindBlock,
@@ -104,6 +105,7 @@ class Checker:
 
     def _check_dto_field_types(self) -> None:
         for dto in self.program.dtos.values():
+            self._check_record_field_path_overlaps(dto.name, dto.fields, dto.field_lines)
             for field, value_type in dto.fields.items():
                 if not self._is_known_type(value_type):
                     self._add_line(
@@ -121,7 +123,29 @@ class Checker:
                             "GWT014",
                         )
 
+    def _check_record_field_path_overlaps(
+        self,
+        record_name: str,
+        fields: dict[str, str],
+        field_lines: dict[str, Line],
+    ) -> None:
+        ordered = list(fields)
+        for index, field in enumerate(ordered):
+            for previous in ordered[:index]:
+                overlap = _contract_path_overlap(previous, field)
+                if overlap is not None:
+                    ancestor, descendant = overlap
+                    self._add_line(
+                        field_lines[field],
+                        f"record {record_name} field path {descendant} overlaps {ancestor}; "
+                        f"declare {ancestor} or {descendant}, not both",
+                        "GWT014",
+                    )
+                    break
+
     def _check_program_contracts(self) -> None:
+        self._check_contract_path_overlaps("REQUEST", self.program.inputs)
+        self._check_contract_path_overlaps("OUTPUT", self.program.outputs)
         for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
             if not self._is_known_type(binding.value_type):
                 keyword = binding.kind.upper()
@@ -130,6 +154,21 @@ class Checker:
                     f"unknown {keyword} contract type: {binding.value_type}",
                     "GWT014",
                 )
+
+    def _check_contract_path_overlaps(self, keyword: str, bindings: dict[str, ContractBinding]) -> None:
+        ordered = list(bindings.values())
+        for index, binding in enumerate(ordered):
+            for previous in ordered[:index]:
+                overlap = _contract_path_overlap(previous.path, binding.path)
+                if overlap is not None:
+                    ancestor, descendant = overlap
+                    self._add_line(
+                        binding.line,
+                        f"{keyword} contract path {descendant} overlaps {ancestor}; "
+                        f"declare {ancestor} or {descendant}, not both",
+                        "GWT014",
+                    )
+                    break
 
     def _check_behavior_signatures(self) -> None:
         seen: dict[tuple[str | None, tuple[str, ...]], Action] = {}
@@ -1041,6 +1080,18 @@ def _first_duplicate(values: list[str]) -> str | None:
         if value in seen:
             return value
         seen.add(value)
+    return None
+
+
+def _is_ancestor_path(ancestor: str, descendant: str) -> bool:
+    return descendant.startswith(f"{ancestor}.")
+
+
+def _contract_path_overlap(left: str, right: str) -> tuple[str, str] | None:
+    if _is_ancestor_path(left, right):
+        return left, right
+    if _is_ancestor_path(right, left):
+        return right, left
     return None
 
 

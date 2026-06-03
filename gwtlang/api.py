@@ -7,6 +7,7 @@ from typing import Any
 from .checker import Diagnostic
 from .runtime import RunResult, ScenarioResult, run_json_request, run_request, run_source
 from .service import Analysis, analyze_file, analyze_source
+from .typegen import TypeScriptTypesResult, generate_typescript_file, generate_typescript_text
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,31 @@ class ExecutionResult:
 
     def as_payload(self) -> dict[str, object]:
         return run_result_payload(self.result, file=self.file, request_file=self.request_file)
+
+
+@dataclass(frozen=True)
+class GwtClient:
+    """Reference host-language client for one GWT program file."""
+
+    path: str | Path
+
+    def check(self) -> CheckResult:
+        return check_file(self.path)
+
+    def run(self, *, request_file: str | Path | None = None) -> ExecutionResult:
+        return run_file(self.path, request_file=request_file)
+
+    def run_json(
+        self,
+        json_state: dict[str, Any],
+        *,
+        entry: str,
+        json_file: str | Path | None = None,
+    ) -> ExecutionResult:
+        return run_json_file(self.path, json_state, entry=entry, json_file=json_file)
+
+    def typescript_types(self) -> TypeScriptTypesResult:
+        return generate_typescript_file(self.path)
 
 
 def run_result_payload(

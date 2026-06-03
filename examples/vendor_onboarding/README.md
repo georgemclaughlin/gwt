@@ -56,10 +56,22 @@ python -m gwtlang run examples/vendor_onboarding/rules.gwt \
   --json
 ```
 
+Generate TypeScript host declarations:
+
+```sh
+python -m gwtlang types examples/vendor_onboarding/rules.gwt \
+  --language typescript \
+  --output clients/typescript/examples/vendor-onboarding.generated.d.ts
+```
+
+Use those declarations from a TypeScript host app:
+[`clients/typescript/examples/vendor-onboarding.ts`](../../clients/typescript/examples/vendor-onboarding.ts).
+
 ## What This Demonstrates
 
 - typed `REQUEST` and `OUTPUT` contracts
 - JSON input as host-facing state
+- generated TypeScript host types
 - typed tables for documents and risk signals
 - explicit missing and expired document handling
 - deterministic status and reason output

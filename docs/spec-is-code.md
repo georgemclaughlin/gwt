@@ -72,7 +72,9 @@ GWT is a good fit for:
 GWT should not try to own every part of software development. Product vision,
 UX taste, broad architecture, deployment strategy, and non-deterministic
 integrations can still live in surrounding docs and host systems. Those systems
-can call GWT, but durable domain behavior should remain visible in GWT source.
+can call GWT through host-language clients, but durable domain behavior should
+remain visible in GWT source. See
+[host-language-clients.md](host-language-clients.md) for the integration model.
 
 ## Working With Agents
 

@@ -1,0 +1,22 @@
+{
+  "name": "@gwtlang/client",
+  "version": "0.1.0",
+  "description": "Node/TypeScript client for running GWT programs through the GWT CLI.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.mjs && node --check test/client.test.mjs",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
