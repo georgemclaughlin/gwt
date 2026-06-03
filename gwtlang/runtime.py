@@ -290,8 +290,13 @@ class StackFrame:
     locals: dict[str, Any]
 
 
-def run_source(source: str, filename: str = "<source>") -> RunResult:
-    program = parse_program(source, filename)
+def run_source(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_policy: ImportPolicy | None = None,
+) -> RunResult:
+    program = parse_program(source, filename, import_policy=import_policy)
     runtime = Runtime(program)
     return runtime.run()
 
@@ -302,13 +307,15 @@ def run_request(
     *,
     filename: str = "<program>",
     request_filename: str = "<request>",
+    import_policy: ImportPolicy | None = None,
 ) -> RunResult:
-    program = parse_program(program_source, filename)
+    program = parse_program(program_source, filename, import_policy=import_policy)
     request = parse_program(
         request_source,
         request_filename,
         initial_dtos=program.dtos,
         initial_variants=program.variants,
+        import_policy=import_policy,
     )
     combined = Program(
         name=program.name,
@@ -340,8 +347,9 @@ def run_json_request(
     entry: str,
     filename: str = "<program>",
     entry_filename: str = "<entry>",
+    import_policy: ImportPolicy | None = None,
 ) -> RunResult:
-    program = parse_program(program_source, filename)
+    program = parse_program(program_source, filename, import_policy=import_policy)
     runtime = Runtime(program)
     return runtime.run_json(state, entry, entry_filename=entry_filename)
 

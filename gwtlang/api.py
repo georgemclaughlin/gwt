@@ -123,8 +123,19 @@ class GwtClient:
     def check(self) -> CheckResult:
         return check_file(self.path)
 
-    def run(self, *, request_file: str | Path | None = None) -> ExecutionResult:
-        return run_file(self.path, request_file=request_file)
+    def run(
+        self,
+        *,
+        request_file: str | Path | None = None,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> ExecutionResult:
+        return run_file(
+            self.path,
+            request_file=request_file,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
 
     def run_json(
         self,
@@ -132,8 +143,17 @@ class GwtClient:
         *,
         entry: str,
         json_file: str | Path | None = None,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
     ) -> ExecutionResult:
-        return run_json_file(self.path, json_state, entry=entry, json_file=json_file)
+        return run_json_file(
+            self.path,
+            json_state,
+            entry=entry,
+            json_file=json_file,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
 
     def compile(
         self,
@@ -252,11 +272,21 @@ def compile_text(
     )
 
 
-def run_file(path: str | Path, *, request_file: str | Path | None = None) -> ExecutionResult:
+def run_file(
+    path: str | Path,
+    *,
+    request_file: str | Path | None = None,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> ExecutionResult:
     program_path = Path(path)
     source = program_path.read_text()
+    import_policy = _import_policy(import_roots, allow_absolute_imports)
     if request_file is None:
-        return ExecutionResult(run_source(source, filename=str(program_path)), str(program_path))
+        return ExecutionResult(
+            run_source(source, filename=str(program_path), import_policy=import_policy),
+            str(program_path),
+        )
 
     request_path = Path(request_file)
     result = run_request(
@@ -264,6 +294,7 @@ def run_file(path: str | Path, *, request_file: str | Path | None = None) -> Exe
         request_path.read_text(),
         filename=str(program_path),
         request_filename=str(request_path),
+        import_policy=import_policy,
     )
     return ExecutionResult(result, str(program_path), str(request_path))
 
@@ -274,6 +305,8 @@ def run_json_file(
     *,
     entry: str,
     json_file: str | Path | None = None,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
 ) -> ExecutionResult:
     program_path = Path(path)
     result = run_json_request(
@@ -281,6 +314,7 @@ def run_json_file(
         json_state,
         entry=entry,
         filename=str(program_path),
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
     )
     return ExecutionResult(
         result,
@@ -295,11 +329,23 @@ def run_text(
     request_source: str | None = None,
     filename: str = "<source>",
     request_filename: str = "<request>",
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
 ) -> ExecutionResult:
+    import_policy = _import_policy(import_roots, allow_absolute_imports)
     if request_source is None:
-        return ExecutionResult(run_source(source, filename=filename), filename)
+        return ExecutionResult(
+            run_source(source, filename=filename, import_policy=import_policy),
+            filename,
+        )
     return ExecutionResult(
-        run_request(source, request_source, filename=filename, request_filename=request_filename),
+        run_request(
+            source,
+            request_source,
+            filename=filename,
+            request_filename=request_filename,
+            import_policy=import_policy,
+        ),
         filename,
         request_filename,
     )
@@ -312,9 +358,18 @@ def run_json_text(
     entry: str,
     filename: str = "<source>",
     entry_filename: str = "<entry>",
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
 ) -> ExecutionResult:
     return ExecutionResult(
-        run_json_request(source, json_state, entry=entry, filename=filename, entry_filename=entry_filename),
+        run_json_request(
+            source,
+            json_state,
+            entry=entry,
+            filename=filename,
+            entry_filename=entry_filename,
+            import_policy=_import_policy(import_roots, allow_absolute_imports),
+        ),
         filename,
     )
 

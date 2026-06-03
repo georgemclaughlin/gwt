@@ -393,6 +393,76 @@ class CliDiagnosticsTests(unittest.TestCase):
             payload["diagnostics"][0]["message"],
         )
 
+    def test_test_command_rejects_imports_outside_import_root(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program_path = root / "workflow.gwt"
+            outside.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+                """
+            )
+            program_path.write_text(
+                """
+                USE "../outside.gwt"
+
+                GIVEN count is 1
+                WHEN touch count
+                """
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["test", str(program_path), "--import-root", str(root)])
+
+        self.assertEqual(status, 1)
+        self.assertIn("USE import is outside allowed roots", stderr.getvalue())
+
+    def test_run_command_rejects_absolute_imports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module_path = root / "steps.gwt"
+            program_path = root / "workflow.gwt"
+            request_path = root / "request.json"
+            module_path.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+                """
+            )
+            program_path.write_text(
+                f"""
+                USE "{module_path}"
+
+                REQUEST count is number
+                OUTPUT count is number
+                """
+            )
+            request_path.write_text('{"count": 1}\n')
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        str(request_path),
+                        "--entry",
+                        "touch count",
+                        "--import-root",
+                        str(root),
+                        "--no-absolute-imports",
+                    ]
+                )
+
+        self.assertEqual(status, 1)
+        self.assertIn("USE absolute import is not allowed", stderr.getvalue())
+
     def test_types_command_prints_typescript_declarations(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"

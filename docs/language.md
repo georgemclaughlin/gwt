@@ -400,6 +400,7 @@ The compiled program keeps the parsed and checked program in memory and creates
 a fresh runtime for each execution. `import_roots` confines `USE` imports to
 known directories, matching `--import-root`, and
 `allow_absolute_imports=False` matches `--no-absolute-imports`.
+The same import-confinement flags are available on `gwt test` and `gwt run`.
 
 `GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
 `run_json_file`, and `compile_file` functions. `check_file` returns a

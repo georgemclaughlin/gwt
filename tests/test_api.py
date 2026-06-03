@@ -174,6 +174,38 @@ class PublicApiTests(unittest.TestCase):
             result.diagnostics[0].message,
         )
 
+    def test_run_json_file_enforces_import_policy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program = root / "main.gwt"
+            outside.write_text(
+                """
+                WHEN touch count
+                  add 1 to count
+                """
+            )
+            program.write_text(
+                """
+                USE "../outside.gwt"
+
+                REQUEST count is number
+                OUTPUT count is number
+                """
+            )
+
+            with self.assertRaisesRegex(
+                GwtError,
+                "USE import is outside allowed roots",
+            ):
+                run_json_file(
+                    program,
+                    {"count": 1},
+                    entry="touch count",
+                    import_roots=[root],
+                )
+
     def test_gwt_client_checks_and_runs_json_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
