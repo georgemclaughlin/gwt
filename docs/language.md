@@ -369,15 +369,39 @@ if check.ok:
     state = execution.state
 ```
 
+For production-style embedding, compile and check a program once during host
+application startup:
+
+```python
+from gwtlang import compile_file
+
+rules = compile_file(
+    "rules.gwt",
+    import_roots=["rules"],
+    allow_absolute_imports=False,
+)
+
+execution = rules.run_json(
+    request_state,
+    entry="review report into decision",
+)
+```
+
+The compiled program keeps the parsed and checked program in memory and creates
+a fresh runtime for each execution. `import_roots` confines `USE` imports to
+known directories, and `allow_absolute_imports=False` rejects absolute import
+paths.
+
 `GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
-and `run_json_file` functions. `check_file` returns a structured result with
-`ok`, `diagnostics`, and `as_payload()`. `run_file` and `run_json_file` return
-an execution result with `state`, `output`, `scenarios`, and `as_payload()`.
-`state` is the full final runtime state. `as_payload()` always returns an
-envelope with `ok`, `file`, `request_file`, `scenario_count`, `scenarios`,
-`state`, `result`, and `output`. The top-level `state`, `result`, and `output`
-values are populated for single-scenario runs; multi-scenario details are
-always available under `scenarios`.
+`run_json_file`, and `compile_file` functions. `check_file` returns a
+structured result with `ok`, `diagnostics`, and `as_payload()`. `run_file`,
+`run_json_file`, and compiled-program `run_json` return an execution result
+with `state`, `output`, `scenarios`, and `as_payload()`. `state` is the full
+final runtime state. `as_payload()` always returns an envelope with `ok`,
+`file`, `request_file`, `scenario_count`, `scenarios`, `state`, `result`, and
+`output`. The top-level `state`, `result`, and `output` values are populated
+for single-scenario runs; multi-scenario details are always available under
+`scenarios`.
 
 ## Generated Host Types
 

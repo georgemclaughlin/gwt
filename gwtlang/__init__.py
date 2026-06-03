@@ -2,11 +2,14 @@
 
 from .api import (
     CheckResult,
+    CompiledProgram,
     ExecutionResult,
     GwtClient,
     TypeScriptTypesResult,
     check_file,
     check_text,
+    compile_file,
+    compile_text,
     generate_typescript_file,
     generate_typescript_text,
     run_file,
@@ -17,16 +20,25 @@ from .api import (
 )
 from .checker import check_program
 from .formatter import FormatResult, format_file, format_text, is_formatted
-from .runtime import GwtError, parse_program, run_json_request, run_request, run_source
+from .runtime import (
+    GwtError,
+    ImportPolicy,
+    parse_program,
+    run_json_request,
+    run_request,
+    run_source,
+)
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
 
 __all__ = [
     "CheckResult",
+    "CompiledProgram",
     "ExecutionResult",
     "FormatResult",
     "GwtClient",
     "GwtError",
+    "ImportPolicy",
     "TypeScriptTypesResult",
     "analyze_file",
     "analyze_source",
@@ -34,6 +46,8 @@ __all__ = [
     "check_file",
     "check_program",
     "check_text",
+    "compile_file",
+    "compile_text",
     "format_file",
     "format_text",
     "generate_typescript_file",

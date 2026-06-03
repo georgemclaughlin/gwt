@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 from typing import Any
 
-from .checker import Diagnostic
-from .runtime import RunResult, ScenarioResult, run_json_request, run_request, run_source
+from .checker import Diagnostic, check_program
+from .runtime import (
+    GwtError,
+    ImportPolicy,
+    Program,
+    RunResult,
+    Runtime,
+    ScenarioResult,
+    parse_program,
+    run_json_request,
+    run_request,
+    run_source,
+)
 from .service import Analysis, analyze_file, analyze_source
 from .typegen import TypeScriptTypesResult, generate_typescript_file, generate_typescript_text
 
@@ -56,6 +69,52 @@ class ExecutionResult:
 
 
 @dataclass(frozen=True)
+class CompiledProgram:
+    """Checked, reusable GWT program for embedded host applications."""
+
+    source: str
+    file: str
+    program: Program
+    diagnostics: list[Diagnostic]
+    source_hash: str
+
+    @property
+    def ok(self) -> bool:
+        return not any(diagnostic.severity == "error" for diagnostic in self.diagnostics)
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "ok": self.ok,
+            "file": self.file,
+            "source_hash": self.source_hash,
+            "diagnostics": [
+                diagnostic.as_payload(self.file) for diagnostic in self.diagnostics
+            ],
+        }
+
+    def run_json(
+        self,
+        json_state: dict[str, Any],
+        *,
+        entry: str,
+        json_file: str | Path | None = None,
+    ) -> ExecutionResult:
+        if not self.ok:
+            errors = [
+                diagnostic
+                for diagnostic in self.diagnostics
+                if diagnostic.severity == "error"
+            ]
+            diagnostic = errors[0]
+            raise GwtError(diagnostic.as_error_message(self.file))
+        return ExecutionResult(
+            Runtime(self.program).run_json(json_state, entry),
+            self.file,
+            str(json_file) if json_file is not None else None,
+        )
+
+
+@dataclass(frozen=True)
 class GwtClient:
     """Reference host-language client for one GWT program file."""
 
@@ -75,6 +134,18 @@ class GwtClient:
         json_file: str | Path | None = None,
     ) -> ExecutionResult:
         return run_json_file(self.path, json_state, entry=entry, json_file=json_file)
+
+    def compile(
+        self,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> CompiledProgram:
+        return compile_file(
+            self.path,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
 
     def typescript_types(self) -> TypeScriptTypesResult:
         return generate_typescript_file(self.path)
@@ -120,6 +191,43 @@ def check_file(path: str | Path) -> CheckResult:
 
 def check_text(source: str, filename: str = "<source>") -> CheckResult:
     return CheckResult(analyze_source(source, filename))
+
+
+def compile_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> CompiledProgram:
+    file_path = Path(path)
+    return compile_text(
+        file_path.read_text(),
+        filename=str(file_path),
+        import_roots=import_roots,
+        allow_absolute_imports=allow_absolute_imports,
+    )
+
+
+def compile_text(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> CompiledProgram:
+    import_policy = _import_policy(import_roots, allow_absolute_imports)
+    program = parse_program(source, filename=filename, import_policy=import_policy)
+    diagnostics = check_program(program)
+    errors = [diagnostic for diagnostic in diagnostics if diagnostic.severity == "error"]
+    if errors:
+        raise GwtError(errors[0].as_error_message(filename))
+    return CompiledProgram(
+        source,
+        filename,
+        program,
+        diagnostics,
+        _source_hash(source),
+    )
 
 
 def run_file(path: str | Path, *, request_file: str | Path | None = None) -> ExecutionResult:
@@ -187,3 +295,17 @@ def run_json_text(
         run_json_request(source, json_state, entry=entry, filename=filename, entry_filename=entry_filename),
         filename,
     )
+
+
+def _import_policy(
+    import_roots: Iterable[str | Path] | None,
+    allow_absolute_imports: bool,
+) -> ImportPolicy | None:
+    if import_roots is None and allow_absolute_imports:
+        return None
+    roots = tuple(Path(root).resolve() for root in import_roots or ())
+    return ImportPolicy(roots, allow_absolute_imports)
+
+
+def _source_hash(source: str) -> str:
+    return hashlib.sha256(source.encode("utf-8")).hexdigest()

@@ -7,6 +7,8 @@ from gwtlang import (
     GwtClient,
     check_file,
     check_text,
+    compile_file,
+    compile_text,
     generate_typescript_text,
     run_file,
     run_json_file,
@@ -16,6 +18,139 @@ from gwtlang import (
 
 
 class PublicApiTests(unittest.TestCase):
+    def test_compile_file_checks_once_and_reuses_program(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            program.write_text(
+                """
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST cart is Cart
+                OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
+                  set cart.total to cart.subtotal + cart.shipping
+                """
+            )
+
+            compiled = compile_file(program)
+            program.write_text("this is no longer valid GWT")
+            first = compiled.run_json(
+                {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
+                entry="checkout cart",
+            )
+            second = compiled.run_json(
+                {"cart": {"subtotal": 10, "shipping": 5, "total": 0}},
+                entry="checkout cart",
+            )
+
+        self.assertTrue(compiled.ok)
+        self.assertEqual(len(compiled.source_hash), 64)
+        self.assertEqual(first.as_payload()["result"]["cart"]["total"], 92)
+        self.assertEqual(second.as_payload()["result"]["cart"]["total"], 15)
+
+    def test_gwt_client_compile_returns_reusable_program(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "counter.gwt"
+            program.write_text(
+                """
+                REQUEST count is number
+                OUTPUT count is number
+
+                WHEN increment count
+                  add 1 to count
+                """
+            )
+
+            compiled = GwtClient(program).compile()
+            result = compiled.run_json({"count": 2}, entry="increment count")
+
+        self.assertEqual(result.as_payload()["result"]["count"], 3)
+
+    def test_compile_text_rejects_checker_errors(self):
+        with self.assertRaisesRegex(GwtError, "GWT001 no behavior matches: missing count"):
+            compile_text(
+                """
+                GIVEN count is 1
+                WHEN missing count
+                """,
+                filename="bad.gwt",
+            )
+
+    def test_compile_file_allows_imports_inside_import_roots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module = root / "types.gwt"
+            program = root / "main.gwt"
+            module.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program.write_text(
+                """
+                USE "./types.gwt"
+
+                REQUEST account is Account
+                OUTPUT account is Account
+
+                WHEN credit account
+                  add 5 to account.balance
+                """
+            )
+
+            compiled = compile_file(
+                program,
+                import_roots=[root],
+                allow_absolute_imports=False,
+            )
+            result = compiled.run_json(
+                {"account": {"balance": 10}},
+                entry="credit account",
+            )
+
+        self.assertEqual(result.as_payload()["result"]["account"]["balance"], 15)
+
+    def test_compile_file_rejects_imports_outside_import_roots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program = root / "main.gwt"
+            outside.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program.write_text('USE "../outside.gwt"\n')
+
+            with self.assertRaisesRegex(GwtError, "USE import is outside allowed roots"):
+                compile_file(program, import_roots=[root])
+
+    def test_compile_file_can_reject_absolute_imports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module = root / "types.gwt"
+            program = root / "main.gwt"
+            module.write_text(
+                """
+                RECORD Account
+                  balance: number
+                """
+            )
+            program.write_text(f'USE "{module}"\n')
+
+            with self.assertRaisesRegex(GwtError, "USE absolute import is not allowed"):
+                compile_file(program, import_roots=[root], allow_absolute_imports=False)
+
     def test_gwt_client_checks_and_runs_json_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
