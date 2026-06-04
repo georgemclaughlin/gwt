@@ -111,6 +111,7 @@ condition_or_record
               | path "is", record_block ;
 
 condition      = expression
+              | expression "does not contain" expression
               | expression "is" expression
               | expression "is not" expression
               | expression "is greater than" expression
@@ -120,12 +121,13 @@ condition      = expression
 
 expression     = logical_or ;
 logical_or     = logical_and, ("or", logical_and)* ;
-logical_and    = equality, ("and", equality)* ;
+logical_and    = negation, ("and", negation)* ;
+negation       = "not", negation | equality ;
 equality       = comparison, (("==" | "!="), comparison)* ;
-comparison     = term, ((">" | "<" | ">=" | "<="), term)* ;
+comparison     = term, ((">" | "<" | ">=" | "<=" | "contains"), term)* ;
 term           = factor, (("+" | "-"), factor)* ;
 factor         = unary, (("*" | "/"), unary)* ;
-unary          = ("-" | "not"), unary | primary ;
+unary          = "-", unary | primary ;
 primary        = number | string | boolean | path | list | "(", expression, ")" ;
 list           = "[", (expression, (",", expression)*)?, "]" ;
 literal        = number | string | boolean ;

@@ -844,14 +844,22 @@ Expressions support:
 (amount + fee) / 2
 account.balance >= amount + fee
 account.status == "open" and account.balance >= amount
+response.body contains "200"
+not response.body contains "500"
 not account.locked
 ```
 
 Supported operators:
 
 - arithmetic: `+`, `-`, `*`, `/`
-- comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`, `contains`
 - boolean: `and`, `or`, `not`
+
+`contains` checks substrings for text values and membership for lists.
+`not` negates a whole comparison before combining with `and` or `or`, so
+`not tags contains "xml"` means `not (tags contains "xml")`. In conditions,
+`value does not contain item` is also accepted as a readable alias for
+`not (value contains item)`.
 
 ## Behavior
 
@@ -908,6 +916,9 @@ path is at least value
 path is at most value
 expression == expression
 expression >= expression
+expression contains expression
+not expression contains expression
+expression does not contain expression
 expression and expression
 ```
 

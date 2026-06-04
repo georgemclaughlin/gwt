@@ -25,6 +25,7 @@ from .api import (
 )
 from .checker import check_program
 from .formatter import FormatResult, format_file, format_text, is_formatted
+from .host import GwtHostAdapter, HostContext, HostObservation
 from .runtime import (
     GwtError,
     ImportPolicy,
@@ -43,6 +44,9 @@ __all__ = [
     "FormatResult",
     "GwtClient",
     "GwtError",
+    "GwtHostAdapter",
+    "HostContext",
+    "HostObservation",
     "InspectionResult",
     "ImportPolicy",
     "TypeScriptTypesResult",

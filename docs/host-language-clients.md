@@ -79,6 +79,51 @@ fresh runtime state for each execution. `import_roots` and
 `allow_absolute_imports=False` should match the CLI `--import-root` and
 `--no-absolute-imports` options used in CI.
 
+## Python Host Observation Adapter
+
+Some applications need GWT to check behavior around code that should remain in
+the host project: parser output, formatter results, HTTP responses, SQL
+analysis, async framework events, or other ecosystem-specific objects. Keep
+that work in Python and inject a normalized observation record before GWT runs:
+
+```python
+from gwtlang import GwtHostAdapter, HostObservation
+
+
+def observe_format(context):
+    case = context.get("case")
+    formatted = run_real_formatter(case["source"])
+    return {
+        "status": "ok",
+        "formatted": formatted,
+        "error": "",
+    }
+
+
+rules = GwtHostAdapter.from_file(
+    "format_rules.gwt",
+    entry="review case using observation into decision",
+    observations=[
+        HostObservation("observation", observe_format),
+    ],
+    import_roots=["rules"],
+    allow_absolute_imports=False,
+)
+
+execution = rules.run_json({
+    "case": {"source": source, "expected": expected},
+    "decision": {"status": "new", "reason": ""},
+})
+decision = execution.as_payload()["result"]["decision"]
+```
+
+The observation is computed from the host state, inserted at the named GWT
+state path, and then validated by `REQUEST` contracts like any other input. The
+adapter accepts JSON-compatible values and dataclass instances. It is
+intentionally not a general callback system inside the GWT runtime: host code
+owns I/O and framework behavior, while GWT owns deterministic contracts,
+decisions, and assertions over normalized state.
+
 Host-language clients should offer the same shape across ecosystems:
 
 ```csharp

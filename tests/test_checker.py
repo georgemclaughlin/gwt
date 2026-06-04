@@ -727,6 +727,28 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("EXAMPLES has no value for <missing>", messages)
 
+    def test_accepts_contains_conditions(self):
+        messages = check_messages(
+            """
+            GIVEN response.body is "HTTP/1.1 200 OK"
+            AND tags is ["api", "json"]
+
+            WHEN require api tag <tags>
+              GIVEN tags is list<text>
+              REQUIRE response.body contains "200"
+              AND tags contains "api"
+
+            WHEN require api tag tags
+
+            THEN response.body contains "OK"
+            AND not tags contains "xml"
+            AND not response.body == "HTTP/1.1 500"
+            AND response.body does not contain "500"
+            """
+        )
+
+        self.assertEqual(messages, [])
+
 
 if __name__ == "__main__":
     unittest.main()
