@@ -45,10 +45,16 @@ For long-running Python hosts, run the production-shaped check in local
 development and CI:
 
 ```sh
-python -m gwtlang check rules.gwt \
+python -m gwtlang validate rules.gwt \
   --import-root rules \
   --no-absolute-imports
 ```
+
+`gwt validate` checks imports, static diagnostics, canonical formatting, and
+embedded scenarios when the file has scenario content, before the host
+application boots. Use `gwt inspect rules.gwt --json` when a CI job, editor, or
+agent needs a stable manifest of records, contracts, behaviors, inferred entry
+candidates, scenarios, imports, and the program hash.
 
 Then use the checked compile-once API during application startup as a final
 safety gate:
@@ -108,6 +114,8 @@ The exact host-language API can vary, but each client should preserve the same
 conceptual contract:
 
 - check a `.gwt` program before running it
+- expose the `inspect` manifest for tools that need records, contracts, entry
+  candidates, and program hashes
 - send a JSON-compatible request object
 - name the entry behavior explicitly
 - return the stable GWT execution envelope
@@ -299,7 +307,8 @@ const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
 top-level `REQUEST` paths. This gives host code compile-time protection against
 entry typos. Explicit language-level entry declarations are still an open design
 area because inferred entries cannot always distinguish public workflows from
-helper behaviors.
+helper behaviors. The same inference powers `gwt inspect --json`, so host types
+and tool manifests agree on which entry strings are currently valid.
 
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as

@@ -17,6 +17,8 @@ from .runtime import (
 )
 from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
 
+SCHEMA_VERSION = 1
+
 
 @dataclass(frozen=True)
 class Analysis:
@@ -28,6 +30,7 @@ class Analysis:
 
     def as_payload(self) -> dict[str, object]:
         return {
+            "schemaVersion": SCHEMA_VERSION,
             "file": self.filename,
             "program": self.program.name if self.program is not None else None,
             "inputs": len(self.program.inputs) if self.program is not None else 0,
@@ -59,7 +62,7 @@ def analyze_source(
             source,
             filename,
             None,
-            [_parse_error_diagnostic(str(exc), source, filename)],
+            [diagnostic_from_error(str(exc), source, filename)],
             SymbolTable([]),
         )
 
@@ -138,7 +141,14 @@ def completion_items(analysis: Analysis) -> list[dict[str, object]]:
     return items
 
 
-def _parse_error_diagnostic(message: str, source: str, fallback_filename: str) -> Diagnostic:
+def diagnostic_from_error(
+    message: str,
+    source: str,
+    fallback_filename: str,
+    *,
+    code: str = "GWT900",
+    category: str | None = None,
+) -> Diagnostic:
     filename = fallback_filename
     line = 1
     detail = message
@@ -148,10 +158,15 @@ def _parse_error_diagnostic(message: str, source: str, fallback_filename: str) -
         line = int(match.group(2))
         detail = match.group(3)
     else:
-        line_match = re.match(r"^line (\d+):\s*(.+)$", message)
-        if line_match:
-            line = int(line_match.group(1))
-            detail = line_match.group(2)
+        scenario_match = re.match(r"^(.+): line (\d+):\s*(.+)$", message)
+        if scenario_match:
+            line = int(scenario_match.group(2))
+            detail = f"{scenario_match.group(1)}: {scenario_match.group(3)}"
+        else:
+            line_match = re.match(r"^line (\d+):\s*(.+)$", message)
+            if line_match:
+                line = int(line_match.group(1))
+                detail = line_match.group(2)
 
     source_lines = source.splitlines()
     column = 1
@@ -161,7 +176,7 @@ def _parse_error_diagnostic(message: str, source: str, fallback_filename: str) -
         column = len(source_line) - len(source_line.lstrip(" ")) + 1
         length = max(1, len(source_line.strip()))
 
-    return Diagnostic(filename, line, detail, "GWT900", "error", column, length)
+    return Diagnostic(filename, line, detail, code, "error", column, length, category)
 
 
 def _range_contains(source_range: SourceRange, line: int, character: int) -> bool:

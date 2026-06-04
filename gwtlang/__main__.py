@@ -10,9 +10,11 @@ from .api import generate_typescript_file, run_file, run_json_file, run_result_p
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
+from .inspection import inspect_file
 from .lsp import run_stdio_server
 from .runtime import GwtError, ImportPolicy, run_source
 from .service import analyze_file
+from .validation import validate_file
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,6 +28,10 @@ def main(argv: list[str] | None = None) -> int:
         return test_command(args)
     if args.command == "check":
         return check_command(args)
+    if args.command == "inspect":
+        return inspect_command(args)
+    if args.command == "validate":
+        return validate_command(args)
     if args.command == "format":
         return format_command(args)
     if args.command == "types":
@@ -87,6 +93,40 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help="Print check result as JSON.",
+    )
+
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Print a machine-readable manifest for a GWT file.",
+    )
+    add_file_arguments(inspect_parser)
+    add_import_policy_arguments(inspect_parser)
+    inspect_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print inspect result as JSON. This is currently the only output mode.",
+    )
+
+    validate_parser = subparsers.add_parser(
+        "validate",
+        help="Run the standard local/CI validation workflow.",
+    )
+    add_file_arguments(validate_parser)
+    add_import_policy_arguments(validate_parser)
+    validate_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print validation result as JSON.",
+    )
+    validate_parser.add_argument(
+        "--skip-format",
+        action="store_true",
+        help="Skip canonical format checking.",
+    )
+    validate_parser.add_argument(
+        "--skip-test",
+        action="store_true",
+        help="Skip embedded scenario execution.",
     )
 
     format_parser = subparsers.add_parser("format", help="Format a GWT file.")
@@ -258,8 +298,8 @@ def test_command(args: argparse.Namespace) -> int:
 def check_command(args: argparse.Namespace) -> int:
     analysis = analyze_file(args.file, import_policy=import_policy_from_args(args))
     source = analysis.source
-    payload = analysis.as_payload()
     errors = [diagnostic for diagnostic in analysis.diagnostics if diagnostic.severity == "error"]
+    payload = {"ok": not errors, **analysis.as_payload()}
     if errors:
         if args.json:
             print(json.dumps(payload, indent=2, sort_keys=True))
@@ -289,6 +329,63 @@ def check_command(args: argparse.Namespace) -> int:
             f"({payload['dtos']} records, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
+
+
+def inspect_command(args: argparse.Namespace) -> int:
+    result = inspect_file(args.file, import_policy=import_policy_from_args(args))
+    payload = result.as_payload()
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0 if result.ok else 1
+
+
+def validate_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    result = validate_file(
+        args.file,
+        import_policy=import_policy_from_args(args),
+        check_format=not args.skip_format,
+        run_tests=not args.skip_test,
+    )
+    payload = result.as_payload()
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif result.ok:
+        print(f"OK {args.file} ({_validate_summary(payload)})")
+    else:
+        errors = [
+            diagnostic
+            for diagnostic in result.diagnostics
+            if diagnostic.severity == "error"
+        ]
+        print(
+            "\n\n".join(
+                format_diagnostic(diagnostic, source, str(args.file))
+                for diagnostic in errors
+            ),
+            file=sys.stderr,
+        )
+    return 0 if result.ok else 1
+
+
+def _validate_summary(payload: dict[str, object]) -> str:
+    phases = payload.get("phases", {})
+    if not isinstance(phases, dict):
+        return "validated"
+
+    labels: list[str] = []
+    for name in ("check", "format", "test"):
+        phase = phases.get(name)
+        if not isinstance(phase, dict) or not phase.get("checked"):
+            continue
+        if name == "test":
+            scenario_count = phase.get("scenario_count", 0)
+            labels.append(f"test; {scenario_count} scenarios")
+        else:
+            labels.append(name)
+    return ", ".join(labels) if labels else "validated"
 
 
 def import_policy_from_args(args: argparse.Namespace) -> ImportPolicy | None:
@@ -380,7 +477,18 @@ def print_run_result(result: object) -> None:
 def _normalize_argv(argv: list[str]) -> list[str]:
     if not argv:
         return argv
-    known_commands = {"run", "test", "check", "format", "types", "lsp", "debug", "debug-lines"}
+    known_commands = {
+        "run",
+        "test",
+        "check",
+        "inspect",
+        "validate",
+        "format",
+        "types",
+        "lsp",
+        "debug",
+        "debug-lines",
+    }
     if argv[0] in {*known_commands, "-h", "--help"}:
         return argv
     return ["run", *argv]

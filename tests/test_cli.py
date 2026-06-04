@@ -294,6 +294,8 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["dtos"], 0)
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertTrue(payload["ok"])
         self.assertEqual(payload["diagnostics"], [])
         self.assertTrue(any(symbol["kind"] == "behavior" for symbol in payload["symbols"]))
 
@@ -334,7 +336,214 @@ class CliDiagnosticsTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["diagnostics"][0]["message"], "no behavior matches: missing count")
         self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
+        self.assertEqual(payload["diagnostics"][0]["category"], "check")
+        self.assertEqual(payload["diagnostics"][0]["source"], "gwt")
+        self.assertEqual(payload["diagnostics"][0]["path"], str(program_path))
+        self.assertEqual(payload["ok"], False)
         self.assertIn("range", payload["diagnostics"][0])
+
+    def test_inspect_command_json_reports_manifest_and_entries(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module_path = root / "types.gwt"
+            program_path = root / "workflow.gwt"
+            module_path.write_text(
+                "RECORD Cart\n"
+                "  subtotal: number\n"
+                "  total: number\n"
+            )
+            program_path.write_text(
+                'USE "./types.gwt"\n'
+                "\n"
+                "PROGRAM checkout\n"
+                "\n"
+                "REQUEST cart is Cart\n"
+                "OUTPUT cart is Cart\n"
+                "\n"
+                "WHEN checkout <cart>\n"
+                "  GIVEN cart is Cart\n"
+                "  set cart.total to cart.subtotal\n"
+                "\n"
+                "SCENARIO prices cart\n"
+                "GIVEN cart is Cart\n"
+                "  subtotal: 84\n"
+                "  total: 0\n"
+                "WHEN checkout cart\n"
+                "THEN cart.total == 84\n"
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "inspect",
+                        str(program_path),
+                        "--import-root",
+                        str(root),
+                        "--no-absolute-imports",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["program"], "checkout")
+        self.assertTrue(payload["programHash"].startswith("sha256:"))
+        self.assertEqual(payload["imports"][0]["path"], "./types.gwt")
+        self.assertEqual(payload["counts"]["records"], 1)
+        self.assertEqual(payload["records"][0]["name"], "Cart")
+        self.assertEqual(payload["entryCandidates"][0]["text"], "checkout cart")
+        self.assertEqual(payload["behaviors"][0]["parameters"], ["cart"])
+        self.assertEqual(payload["scenarios"][0]["name"], "prices cart")
+
+    def test_inspect_command_json_reports_parse_errors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "bad.gwt"
+            program_path.write_text("AND count is 1\n")
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["inspect", str(program_path), "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 1)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["diagnostics"][0]["code"], "GWT900")
+        self.assertEqual(payload["diagnostics"][0]["category"], "parse")
+
+    def test_validate_command_json_runs_standard_ci_checks(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                "WHEN touch <count>\n"
+                "  add 1 to count\n"
+                "\n"
+                "GIVEN count is 1\n"
+                "WHEN touch count\n"
+                "THEN count == 2\n"
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["validate", str(program_path), "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(payload["ok"])
+        self.assertTrue(payload["phases"]["check"]["ok"])
+        self.assertTrue(payload["phases"]["format"]["ok"])
+        self.assertTrue(payload["phases"]["test"]["ok"])
+        self.assertEqual(payload["phases"]["test"]["scenario_count"], 1)
+
+    def test_validate_command_skips_test_for_host_rules_without_scenarios(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                "REQUEST count is number\n"
+                "OUTPUT count is number\n"
+                "\n"
+                "WHEN increment <count>\n"
+                "  add 1 to count\n"
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["validate", str(program_path), "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(payload["ok"])
+        self.assertTrue(payload["phases"]["format"]["ok"])
+        self.assertFalse(payload["phases"]["test"]["checked"])
+        self.assertEqual(payload["phases"]["test"]["skipped"], "no executable scenarios")
+
+    def test_validate_command_reports_unformatted_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text("GIVEN  count is 1\nTHEN count == 1\n")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["validate", str(program_path)])
+
+        self.assertEqual(status, 1)
+        self.assertIn("GWT901", stderr.getvalue())
+        self.assertIn("file is not formatted", stderr.getvalue())
+
+    def test_validate_command_can_skip_format_during_adoption(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text("GIVEN  count is 1\nTHEN count == 1\n")
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["validate", str(program_path), "--skip-format", "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(payload["ok"])
+        self.assertFalse(payload["phases"]["format"]["checked"])
+
+    def test_validate_command_text_reports_only_checked_success_phases(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text("GIVEN count is 1\nTHEN count == 1\n")
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["validate", str(program_path), "--skip-format", "--skip-test"])
+
+        self.assertEqual(status, 0)
+        self.assertIn("(check)", stdout.getvalue())
+        self.assertNotIn("format", stdout.getvalue())
+        self.assertNotIn("test", stdout.getvalue())
+
+    def test_validate_command_skips_later_phases_after_import_policy_failure(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            outside = Path(temp_dir) / "outside.gwt"
+            program_path = root / "workflow.gwt"
+            outside.write_text("GIVEN count is 1\n")
+            program_path.write_text('USE "../outside.gwt"\n')
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "validate",
+                        str(program_path),
+                        "--import-root",
+                        str(root),
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 1)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["diagnostics"][0]["category"], "import")
+        self.assertFalse(payload["phases"]["format"]["checked"])
+        self.assertFalse(payload["phases"]["test"]["checked"])
+
+    def test_check_command_json_categorizes_circular_imports_as_import_errors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            first = Path(temp_dir) / "first.gwt"
+            second = Path(temp_dir) / "second.gwt"
+            first.write_text('USE "./second.gwt"\n')
+            second.write_text('USE "./first.gwt"\n')
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["check", str(first), "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["diagnostics"][0]["code"], "GWT900")
+        self.assertEqual(payload["diagnostics"][0]["category"], "import")
 
     def test_check_command_rejects_imports_outside_import_root(self):
         with tempfile.TemporaryDirectory() as temp_dir:

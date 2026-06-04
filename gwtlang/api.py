@@ -19,8 +19,14 @@ from .runtime import (
     run_request,
     run_source,
 )
+from .inspection import (
+    InspectionResult,
+    inspect_file as _inspect_file,
+    inspect_source as _inspect_source,
+)
 from .service import Analysis, analyze_file, analyze_source
 from .typegen import TypeScriptTypesResult, generate_typescript_file, generate_typescript_text
+from .validation import ValidationResult, validate_file as _validate_file
 
 
 @dataclass(frozen=True)
@@ -170,6 +176,34 @@ class GwtClient:
     def typescript_types(self) -> TypeScriptTypesResult:
         return generate_typescript_file(self.path)
 
+    def inspect(
+        self,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> InspectionResult:
+        return inspect_file(
+            self.path,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
+
+    def validate(
+        self,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+        check_format: bool = True,
+        run_tests: bool = True,
+    ) -> ValidationResult:
+        return validate_file(
+            self.path,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+            check_format=check_format,
+            run_tests=run_tests,
+        )
+
 
 def run_result_payload(
     result: RunResult,
@@ -216,6 +250,48 @@ def check_file(
             path,
             import_policy=_import_policy(import_roots, allow_absolute_imports),
         )
+    )
+
+
+def inspect_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> InspectionResult:
+    return _inspect_file(
+        path,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def inspect_source(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> InspectionResult:
+    return _inspect_source(
+        source,
+        filename,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def validate_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+    check_format: bool = True,
+    run_tests: bool = True,
+) -> ValidationResult:
+    return _validate_file(
+        path,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+        check_format=check_format,
+        run_tests=run_tests,
     )
 
 

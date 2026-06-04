@@ -57,6 +57,10 @@ class Diagnostic:
     severity: str = "error"
     column: int = 1
     length: int = 1
+    category: str | None = None
+    expected: str | None = None
+    actual: str | None = None
+    help: str | None = None
 
     def as_error_message(self, fallback_filename: str) -> str:
         filename = self.filename or fallback_filename
@@ -64,12 +68,37 @@ class Diagnostic:
 
     def as_payload(self, fallback_filename: str) -> dict[str, object]:
         source_range = SourceRange(self.filename, self.line, self.column, self.length).as_payload(fallback_filename)
-        return {
+        filename = self.filename or fallback_filename
+        payload: dict[str, object] = {
             **source_range,
             "code": self.code,
             "severity": self.severity,
+            "source": "gwt",
+            "path": filename,
+            "category": self.category or _diagnostic_category(self.code, self.message),
             "message": self.message,
         }
+        if self.expected is not None:
+            payload["expected"] = self.expected
+        if self.actual is not None:
+            payload["actual"] = self.actual
+        if self.help is not None:
+            payload["help"] = self.help
+        return payload
+
+
+def _diagnostic_category(code: str, message: str) -> str:
+    if code == "GWT900":
+        if message.startswith("USE ") or message.startswith("circular USE import"):
+            return "import"
+        return "parse"
+    if code == "GWT901":
+        return "format"
+    if code == "GWT800":
+        return "runtime"
+    if code.startswith("GWT"):
+        return "check"
+    return "unknown"
 
 
 @dataclass
