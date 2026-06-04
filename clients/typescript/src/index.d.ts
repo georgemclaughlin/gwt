@@ -6,8 +6,8 @@ export interface GwtClientOptions {
   env?: Record<string, string | undefined>;
 }
 
-export interface GwtRunJsonOptions {
-  entry: string;
+export interface GwtRunJsonOptions<TEntry extends string = string> {
+  entry: TEntry;
   cwd?: string;
   env?: Record<string, string | undefined>;
 }
@@ -91,9 +91,10 @@ export class GwtClient {
     TInput extends object = GwtPayload,
     TResult extends object = GwtPayload,
     TState extends object = GwtPayload,
+    TEntry extends string = string,
   >(
     input: TInput,
-    options: GwtRunJsonOptions,
+    options: GwtRunJsonOptions<TEntry>,
   ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;
   runRequest<TResult extends object = GwtPayload, TState extends object = GwtPayload>(
     requestFile: string,
@@ -110,11 +111,12 @@ export function runFile<
   TInput extends object = GwtPayload,
   TResult extends object = GwtPayload,
   TState extends object = GwtPayload,
+  TEntry extends string = string,
 >(
   file: string,
   options: Omit<GwtClientOptions, "file"> & {
     input: TInput;
-    entry: string;
+    entry: TEntry;
     requestFile?: never;
   },
 ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;

@@ -70,8 +70,8 @@ Use those declarations from a TypeScript host app:
 ## What This Demonstrates
 
 - typed `REQUEST` and `OUTPUT` contracts
-- JSON input as host-facing state
-- generated TypeScript host types
+- typed JSON-shaped host input
+- generated TypeScript host types, including `GwtEntry`
 - typed tables for documents and risk signals
 - explicit missing and expired document handling
 - deterministic status and reason output

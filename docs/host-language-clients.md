@@ -239,7 +239,7 @@ contracts:
   them.
 
 For TypeScript, GWT emits declarations for records, one-of records, `GwtRequest`,
-and `GwtOutput`:
+`GwtOutput`, and an inferred `GwtEntry` union:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
@@ -251,10 +251,17 @@ contract types fail with the same source-located diagnostics as `gwt check`.
 The generated declarations can be passed to `@gwtlang/client` as generics:
 
 ```ts
+const entry: GwtEntry = "review vendor into decision";
 const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry: "review vendor into decision",
+  entry,
 });
 ```
+
+`GwtEntry` is inferred from behavior signatures that can be called with
+top-level `REQUEST` paths. This gives host code compile-time protection against
+entry typos. Explicit language-level entry declarations are still an open design
+area because inferred entries cannot always distinguish public workflows from
+helper behaviors.
 
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as

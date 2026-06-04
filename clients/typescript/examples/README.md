@@ -1,9 +1,9 @@
 # TypeScript Examples
 
 `vendor-onboarding.ts` shows a TypeScript host application calling the GWT
-vendor onboarding workflow through `@gwtlang/client`.
-It checks the GWT rules file, sends typed JSON input, and prints a typed
-decision summary from the generated `GwtOutput` contract.
+vendor onboarding workflow through `@gwtlang/client`. It checks the GWT rules
+file, builds a typed `GwtRequest`, uses a generated `GwtEntry`, and prints a
+typed decision summary from the generated `GwtOutput` contract.
 
 The example imports generated declarations from
 `vendor-onboarding.generated.d.ts`. Refresh them when

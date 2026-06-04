@@ -43,3 +43,11 @@ export interface GwtRequest {
 export interface GwtOutput {
   decision: VendorDecision;
 }
+
+export type GwtEntry =
+  | "reset decision"
+  | "collect requirements from vendor into decision"
+  | "score inherent risk from vendor into decision"
+  | "score risk signals from vendor into decision"
+  | "classify decision"
+  | "review vendor into decision";
