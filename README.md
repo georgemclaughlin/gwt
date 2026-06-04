@@ -234,6 +234,11 @@ WHEN review <report> into <decision>
     set decision.status to "approved"
 ```
 
+Conditions can also check containment, such as
+`response.body contains "error"` for text, `tags contains "api"` for lists, and
+`not tags contains "xml"` or `tags does not contain "xml"` for a negative
+check.
+
 The fuller version lives in
 [`examples/v01_language_tour`](examples/v01_language_tour).
 
@@ -257,6 +262,12 @@ python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --entry "fulfill order from inventory into fulfillment" \
   --json
 ```
+
+Python hosts that need to run project-specific code first can use
+`GwtHostAdapter` to inject normalized observation records before GWT validates
+and executes the request. This keeps parsing, HTTP, SQL, formatting, and async
+framework behavior in Python while GWT owns the executable decision spec. See
+[`docs/host-language-clients.md`](docs/host-language-clients.md) for an example.
 
 The JSON result uses a stable envelope. For this request, `result` contains the
 declared `OUTPUT` paths:

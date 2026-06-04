@@ -239,6 +239,47 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.state["account"]["balance"], 75)
 
+    def test_contains_expressions_for_text_and_lists(self):
+        result = run_source(
+            '''
+            GIVEN response.body is "HTTP/1.1 200 OK"
+            AND tags is ["api", "json"]
+
+            WHEN set body_has_status to response.body contains "200"
+
+            THEN body_has_status == true
+            AND response.body contains "OK"
+            AND tags contains "api"
+            AND not tags contains "xml"
+            AND not response.body == "HTTP/1.1 500"
+            AND response.body does not contain "500"
+            '''
+        )
+
+        self.assertEqual(result.state["body_has_status"], True)
+
+    def test_contains_conditions_work_in_loop_filters(self):
+        result = run_source(
+            '''
+            GIVEN requests are
+              | url           | count |
+              | "/api/users"  | 1     |
+              | "/assets/app" | 1     |
+              | "/api/items"  | 1     |
+            AND api_count is 0
+
+            WHEN tally api requests
+              FOR request in requests WHERE request.url contains "/api/"
+                add request.count to api_count
+
+            WHEN tally api requests
+
+            THEN api_count == 2
+            '''
+        )
+
+        self.assertEqual(result.state["api_count"], 2)
+
     def test_and_continues_when_and_require(self):
         result = run_source(
             '''

@@ -104,6 +104,11 @@ class Binary(Expr):
             return left >= right
         if self.operator == "<=":
             return left <= right
+        if self.operator == "contains":
+            try:
+                return right in left
+            except TypeError as exc:
+                raise GwtError("contains requires a text, list, or mapping value on the left") from exc
         raise AssertionError(self.operator)
 
 
@@ -125,10 +130,15 @@ class ExpressionParser:
         return expression
 
     def _and(self) -> Expr:
-        expression = self._equality()
+        expression = self._not()
         while self._match("word", "and"):
-            expression = Binary(expression, "and", self._equality())
+            expression = Binary(expression, "and", self._not())
         return expression
+
+    def _not(self) -> Expr:
+        if self._match("word", "not"):
+            return Unary("not", self._not())
+        return self._equality()
 
     def _equality(self) -> Expr:
         expression = self._comparison()
@@ -139,8 +149,13 @@ class ExpressionParser:
 
     def _comparison(self) -> Expr:
         expression = self._term()
-        while self._match("operator", ">", "<", ">=", "<="):
-            operator = self._previous().value
+        while True:
+            if self._match("operator", ">", "<", ">=", "<="):
+                operator = self._previous().value
+            elif self._match("identifier", "contains"):
+                operator = "contains"
+            else:
+                break
             expression = Binary(expression, operator, self._term())
         return expression
 
@@ -161,8 +176,6 @@ class ExpressionParser:
     def _unary(self) -> Expr:
         if self._match("operator", "-"):
             return Unary("-", self._unary())
-        if self._match("word", "not"):
-            return Unary("not", self._unary())
         return self._primary()
 
     def _primary(self) -> Expr:

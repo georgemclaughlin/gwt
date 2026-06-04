@@ -2322,6 +2322,14 @@ def _condition_to_expression(text: str) -> str:
     except GwtError:
         pass
 
+    does_not_contain_index = _find_word_outside_string(text, "does not contain")
+    if does_not_contain_index is not None:
+        left = text[:does_not_contain_index].strip()
+        right = text[does_not_contain_index + len("does not contain") :].strip()
+        if not left or not right:
+            raise GwtError(f"invalid condition: {text}")
+        return f"not ({left} contains {right})"
+
     is_index = _find_word_outside_string(text, "is")
     if is_index is None:
         return text

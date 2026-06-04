@@ -1176,7 +1176,7 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
         if expression.operator == "-":
             return _infer_expression_type(expression.right, scope)
     if isinstance(expression, Binary):
-        if expression.operator in {"==", "!=", ">", "<", ">=", "<=", "and", "or"}:
+        if expression.operator in {"==", "!=", ">", "<", ">=", "<=", "contains", "and", "or"}:
             return "boolean"
         if expression.operator in {"+", "-", "*", "/"}:
             left_type = _infer_expression_type(expression.left, scope)
