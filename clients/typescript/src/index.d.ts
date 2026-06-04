@@ -1,25 +1,47 @@
+export interface GwtImportPolicyOptions {
+  importRoots?: string[];
+  allowAbsoluteImports?: boolean;
+}
+
 export interface GwtClientOptions {
   file: string;
   command?: string;
   commandArgs?: string[];
   cwd?: string;
   env?: Record<string, string | undefined>;
+  importRoots?: string[];
+  allowAbsoluteImports?: boolean;
 }
 
-export interface GwtRunJsonOptions<TEntry extends string = string> {
+export interface GwtRunJsonOptions<TEntry extends string = string> extends GwtImportPolicyOptions {
   entry: TEntry;
   cwd?: string;
   env?: Record<string, string | undefined>;
 }
 
-export interface GwtRunRequestOptions {
+export interface GwtRunRequestOptions extends GwtImportPolicyOptions {
   cwd?: string;
   env?: Record<string, string | undefined>;
 }
 
-export interface GwtCheckOptions {
+export interface GwtTestOptions extends GwtImportPolicyOptions {
   cwd?: string;
   env?: Record<string, string | undefined>;
+}
+
+export interface GwtCheckOptions extends GwtImportPolicyOptions {
+  cwd?: string;
+  env?: Record<string, string | undefined>;
+}
+
+export interface GwtSpecOptions<TEntry extends string = string> extends GwtClientOptions {
+  entry?: TEntry;
+  checkBeforeRun?: boolean;
+}
+
+export interface GwtSpecRuntimeOptions<TEntry extends string = string> {
+  entry?: TEntry;
+  checkBeforeRun?: boolean;
 }
 
 export type GwtPayload = Record<string, unknown>;
@@ -85,6 +107,8 @@ export class GwtClient {
   commandArgs: string[];
   cwd?: string;
   env?: Record<string, string | undefined>;
+  importRoots: string[];
+  allowAbsoluteImports: boolean;
 
   check(options?: GwtCheckOptions): Promise<GwtCheckPayload>;
   runJson<
@@ -100,7 +124,48 @@ export class GwtClient {
     requestFile: string,
     options?: GwtRunRequestOptions,
   ): Promise<GwtExecutionEnvelope<TResult, TState>>;
+  test<TResult extends object = GwtPayload, TState extends object = GwtPayload>(
+    options?: GwtTestOptions,
+  ): Promise<GwtExecutionEnvelope<TResult, TState>>;
 }
+
+export class GwtSpec<
+  TInput extends object = GwtPayload,
+  TResult extends object = GwtPayload,
+  TState extends object = GwtPayload,
+  TEntry extends string = string,
+> {
+  constructor(
+    options: string | GwtClient | GwtSpecOptions<TEntry>,
+    specOptions?: GwtSpecRuntimeOptions<TEntry>,
+  );
+
+  client: GwtClient;
+  entry?: TEntry;
+  checkBeforeRun: boolean;
+
+  checkOnce(options?: GwtCheckOptions): Promise<GwtCheckPayload>;
+  resetCheck(): void;
+  runJson(
+    input: TInput,
+    options?: Partial<GwtRunJsonOptions<TEntry>>,
+  ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;
+  runRequest(
+    requestFile: string,
+    options?: GwtRunRequestOptions,
+  ): Promise<GwtExecutionEnvelope<TResult, TState>>;
+  test(options?: GwtTestOptions): Promise<GwtExecutionEnvelope<TResult, TState>>;
+}
+
+export function createGwtSpec<
+  TInput extends object = GwtPayload,
+  TResult extends object = GwtPayload,
+  TState extends object = GwtPayload,
+  TEntry extends string = string,
+>(
+  options: string | GwtClient | GwtSpecOptions<TEntry>,
+  specOptions?: GwtSpecRuntimeOptions<TEntry>,
+): GwtSpec<TInput, TResult, TState, TEntry>;
 
 export function checkFile(
   file: string,
