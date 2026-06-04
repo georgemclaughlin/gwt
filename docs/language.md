@@ -423,8 +423,9 @@ python -m gwtlang types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated declaration file includes record interfaces, one-of record
-unions, `GwtRequest`, and `GwtOutput`. These declarations are integration
-helpers for host code; the `.gwt` source remains the normative contract.
+unions, `GwtRequest`, `GwtOutput`, and an inferred `GwtEntry` union. These
+declarations are integration helpers for host code; the `.gwt` source remains
+the normative contract.
 Generated TypeScript uses nested object shape for dotted contract paths. Raw
 CLI JSON input may still provide state through dotted path keys such as
 `"cart.total"`, or through nested objects that produce the same state.
@@ -433,12 +434,13 @@ TypeScript callers can pair generated types with the CLI-backed client:
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
 
 const request: GwtRequest = { vendor, decision };
+const entry: GwtEntry = "review vendor into decision";
 const client = new GwtClient("rules.gwt");
 const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry: "review vendor into decision",
+  entry,
 });
 
 execution.result.decision.status;
@@ -449,6 +451,11 @@ the runtime-style `./rules.js` specifier.
 
 For a complete host example, see
 [`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
+
+`GwtEntry` is currently inferred from behavior signatures that can be called
+with top-level `REQUEST` paths. That catches host-side typos without adding
+language syntax, but it cannot always distinguish public entries from helper
+behaviors. First-class entry declarations remain an open language design area.
 
 ## Static Checking
 

@@ -11,6 +11,42 @@ class TypeGenerationTests(unittest.TestCase):
 
         self.assertEqual(fixture.read_text(), generated.source)
 
+    def test_typescript_generation_emits_inferred_entry_union(self):
+        result = generate_typescript_text(
+            """
+            RECORD Vendor
+              name: text
+
+            RECORD Decision
+              status: text
+
+            REQUEST vendor is Vendor
+            AND decision is Decision
+
+            OUTPUT decision is Decision
+
+            WHEN review <vendor> into <decision>
+              GIVEN vendor is Vendor
+              AND decision is Decision
+              PASS
+
+            WHEN reset <decision>
+              GIVEN decision is Decision
+              PASS
+
+            WHEN ignore <other>
+              PASS
+            """
+        )
+
+        self.assertIn(
+            'export type GwtEntry =\n'
+            '  | "review vendor into decision"\n'
+            '  | "reset decision";',
+            result.source,
+        )
+        self.assertNotIn("ignore other", result.source)
+
     def test_typescript_generation_rejects_overlapping_contract_paths(self):
         with self.assertRaisesRegex(GwtError, "REQUEST contract path x\\.y overlaps x"):
             generate_typescript_text(

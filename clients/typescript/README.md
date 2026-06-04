@@ -53,19 +53,20 @@ gwt types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated file includes record interfaces, one-of record unions,
-`GwtRequest`, and `GwtOutput` declarations that can be imported by host
-application code.
+`GwtRequest`, `GwtOutput`, and `GwtEntry` declarations that can be imported by
+host application code.
 
 Use those generated types as client generics:
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
 
 const input: GwtRequest = { vendor, decision };
+const entry: GwtEntry = "review vendor into decision";
 const client = new GwtClient("rules.gwt");
 const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
-  entry: "review vendor into decision",
+  entry,
 });
 
 console.log(execution.result.decision.status);

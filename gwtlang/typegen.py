@@ -7,12 +7,15 @@ from pathlib import Path
 
 from .errors import GwtError
 from .runtime import (
+    Action,
     ContractBinding,
     DtoDefinition,
     Program,
     VariantDefinition,
     _list_item_type,
     _literal_union_values,
+    _signature_parameter_name,
+    _signature_parameters,
 )
 from .service import analyze_source
 
@@ -78,6 +81,11 @@ def _emit_typescript(program: Program, filename: str) -> str:
         lines.extend(_emit_contract_interface("GwtOutput", program.outputs.values()))
         lines.append("")
 
+    entry_lines = _emit_entry_union(program)
+    if entry_lines:
+        lines.extend(entry_lines)
+        lines.append("")
+
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -108,6 +116,48 @@ def _emit_contract_interface(name: str, bindings: Iterable[ContractBinding]) -> 
     lines.extend(_emit_properties(root.children, 2))
     lines.append("}")
     return lines
+
+
+def _emit_entry_union(program: Program) -> list[str]:
+    entries = _entry_texts(program)
+    if not entries:
+        return []
+    if len(entries) == 1:
+        return [f"export type GwtEntry = {_literal_type(entries[0])};"]
+    lines = ["export type GwtEntry ="]
+    for index, entry in enumerate(entries):
+        suffix = ";" if index == len(entries) - 1 else ""
+        lines.append(f"  | {_literal_type(entry)}{suffix}")
+    return lines
+
+
+def _entry_texts(program: Program) -> list[str]:
+    request_roots = {
+        binding.path.split(".", 1)[0] for binding in program.inputs.values()
+    }
+    if not request_roots:
+        return []
+
+    entries: list[str] = []
+    seen: set[str] = set()
+    for action in program.actions:
+        parameters = _signature_parameters(action.signature)
+        if not parameters or not all(parameter in request_roots for parameter in parameters):
+            continue
+        text = _entry_text(action)
+        if text in seen:
+            continue
+        seen.add(text)
+        entries.append(text)
+    return entries
+
+
+def _entry_text(action: Action) -> str:
+    parts: list[str] = []
+    for index, token in enumerate(action.signature):
+        parameter_name = _signature_parameter_name(action.signature, index, token)
+        parts.append(parameter_name or token)
+    return " ".join(parts)
 
 
 def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:

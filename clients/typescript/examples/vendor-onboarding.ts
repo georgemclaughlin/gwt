@@ -1,17 +1,46 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest } from "./vendor-onboarding.generated.js";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./vendor-onboarding.generated.js";
 
 type VendorDecision = GwtOutput["decision"];
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const rulesFile = path.join(repoRoot, "examples/vendor_onboarding/rules.gwt");
-const requestFile = path.join(repoRoot, "examples/vendor_onboarding/request.json");
 
-const request = JSON.parse(await readFile(requestFile, "utf8")) as GwtRequest;
+const request: GwtRequest = {
+  vendor: {
+    vendor_name: "Cloud Ledger",
+    country: "US",
+    annual_spend: 125000,
+    handles_customer_data: true,
+    stores_payment_data: false,
+    documents: [
+      { name: "tax_form", status: "provided" },
+      { name: "insurance", status: "expired" },
+      { name: "security_questionnaire", status: "missing" },
+    ],
+    risk_signals: [
+      { name: "new_vendor", severity: "low", points: 1 },
+      { name: "data_region", severity: "medium", points: 2 },
+    ],
+  },
+  decision: {
+    required_document_count: 0,
+    missing_document_count: 0,
+    expired_document_count: 0,
+    high_signal_count: 0,
+    risk_points: 0,
+    missing_requirements: [],
+    reasons: [],
+    data_review_required: false,
+    tier: "new",
+    status: "new",
+    reason: "new",
+  },
+};
+const entry: GwtEntry = "review vendor into decision";
 const client = new GwtClient({
   file: rulesFile,
   command: "python",
@@ -25,7 +54,7 @@ if (!check.ok) {
 }
 
 const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry: "review vendor into decision",
+  entry,
 });
 
 printDecision(request, execution.result.decision);

@@ -452,8 +452,10 @@ release, use the repository example or a local `file:` dependency.
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
 
+const request: GwtRequest = { vendor, decision };
+const entry: GwtEntry = "review vendor into decision";
 const client = new GwtClient("examples/vendor_onboarding/rules.gwt");
 const check = await client.check();
 if (!check.ok) {
@@ -461,7 +463,7 @@ if (!check.ok) {
 }
 
 const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry: "review vendor into decision",
+  entry,
 });
 
 console.log(execution.result.decision.status);
