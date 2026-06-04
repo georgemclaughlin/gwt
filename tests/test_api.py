@@ -10,10 +10,12 @@ from gwtlang import (
     compile_file,
     compile_text,
     generate_typescript_text,
+    inspect_file,
     run_file,
     run_json_file,
     run_json_text,
     run_text,
+    validate_file,
 )
 
 
@@ -255,6 +257,116 @@ class PublicApiTests(unittest.TestCase):
         self.assertIn('status: "new" | "priced";', result.source)
         self.assertIn("export interface GwtRequest", result.source)
         self.assertEqual(result.language, "typescript")
+
+    def test_inspect_file_reports_entry_candidates(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "checkout.gwt"
+            program.write_text(
+                "RECORD Cart\n"
+                "  subtotal: number\n"
+                "  total: number\n"
+                "\n"
+                "REQUEST cart is Cart\n"
+                "OUTPUT cart is Cart\n"
+                "\n"
+                "WHEN checkout <cart>\n"
+                "  GIVEN cart is Cart\n"
+                "  set cart.total to cart.subtotal\n"
+            )
+
+            result = inspect_file(program)
+            payload = result.as_payload()
+
+        self.assertTrue(result.ok)
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["entryCandidates"][0]["text"], "checkout cart")
+        self.assertEqual(payload["counts"]["entryCandidates"], 1)
+
+    def test_inspect_file_accepts_public_import_policy_options(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module = root / "types.gwt"
+            program = root / "checkout.gwt"
+            module.write_text(
+                "RECORD Cart\n"
+                "  subtotal: number\n"
+            )
+            program.write_text(
+                'USE "./types.gwt"\n'
+                "\n"
+                "REQUEST cart is Cart\n"
+            )
+
+            result = inspect_file(
+                program,
+                import_roots=[root],
+                allow_absolute_imports=False,
+            )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.as_payload()["records"][0]["name"], "Cart")
+
+    def test_validate_file_runs_format_and_scenarios(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "counter.gwt"
+            program.write_text(
+                "WHEN touch <count>\n"
+                "  add 1 to count\n"
+                "\n"
+                "GIVEN count is 1\n"
+                "WHEN touch count\n"
+                "THEN count == 2\n"
+            )
+
+            result = validate_file(program)
+            payload = result.as_payload()
+
+        self.assertTrue(result.ok)
+        self.assertTrue(payload["phases"]["check"]["ok"])
+        self.assertTrue(payload["phases"]["format"]["ok"])
+        self.assertEqual(payload["phases"]["test"]["scenario_count"], 1)
+
+    def test_validate_file_accepts_public_import_policy_options(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "rules"
+            root.mkdir()
+            module = root / "steps.gwt"
+            program = root / "counter.gwt"
+            module.write_text(
+                "WHEN touch <count>\n"
+                "  add 1 to count\n"
+            )
+            program.write_text(
+                'USE "./steps.gwt"\n'
+                "\n"
+                "GIVEN count is 1\n"
+                "WHEN touch count\n"
+                "THEN count == 2\n"
+            )
+
+            result = validate_file(
+                program,
+                import_roots=[root],
+                allow_absolute_imports=False,
+            )
+
+        self.assertTrue(result.ok)
+
+    def test_gwt_client_inspects_and_validates(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "counter.gwt"
+            program.write_text(
+                "GIVEN count is 1\n"
+                "THEN count == 1\n"
+            )
+
+            client = GwtClient(program)
+            inspected = client.inspect()
+            validated = client.validate()
+
+        self.assertTrue(inspected.ok)
+        self.assertTrue(validated.ok)
 
     def test_gwt_client_runs_gwt_request_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

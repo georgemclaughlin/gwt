@@ -320,6 +320,8 @@ gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfill
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
+gwt inspect examples/vendor_onboarding/rules.gwt --json
+gwt validate examples/vendor_onboarding/rules.gwt --import-root examples/vendor_onboarding --no-absolute-imports
 gwt format examples/bank.gwt --check
 gwt lsp
 gwt debug-lines examples/checkout_scenarios.gwt --json
@@ -331,6 +333,18 @@ behavior signatures, invalid built-in statement shapes, type mismatches, and
 `LET`/`RETURN` misuse. It also warns about deprecated implicit behavior
 parameters. JSON output includes diagnostic codes, source ranges, and symbols
 for editor tooling.
+
+`gwt inspect file.gwt --json` emits a versioned machine-readable manifest for
+tools, agents, and CI. It includes the program hash, direct imports, records,
+request/output contracts, behaviors, inferred entry candidates, scenarios, and
+diagnostics. This is intentionally an inspection surface, not a separate graph
+or alternate source format.
+
+`gwt validate file.gwt` is the standard local/CI gate. It checks the program,
+verifies canonical formatting, and runs embedded scenarios when the file has
+scenario content, without waiting for a host application to boot. Use
+`--skip-format` or `--skip-test` only while rolling the workflow into an
+existing project.
 
 `gwt format file.gwt` rewrites valid source to the canonical v0.1 layout.
 `gwt format file.gwt --check` is intended for CI.
@@ -400,13 +414,15 @@ For production-style embedding, first make the rule check part of the local and
 CI feedback loop:
 
 ```sh
-python -m gwtlang check examples/order_fulfillment/rules.gwt \
+python -m gwtlang validate examples/order_fulfillment/rules.gwt \
   --import-root examples/order_fulfillment \
   --no-absolute-imports
 ```
 
-Then compile and check the program once during application startup as a final
-safety gate, optionally confining `USE` imports to the same known rule roots:
+`gwt validate` catches parse/check/import/format failures and runs embedded
+scenario content before the application starts. Then compile and check the
+program once during application startup as a final safety gate, optionally
+confining `USE` imports to the same known rule roots:
 
 ```python
 from gwtlang import compile_file
@@ -424,12 +440,15 @@ execution = rules.run_json(
 ```
 
 The same `--import-root` and `--no-absolute-imports` flags are available on
-`gwt test` and `gwt run` for executable-spec and runner workflows.
+`gwt check`, `gwt inspect`, `gwt validate`, `gwt test`, and `gwt run` for
+executable-spec and runner workflows.
 
 The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
 `run_json_text` functions are also available for callers that do not want a
-client object. `GwtClient.compile()` is the equivalent compile-once API for a
-client object. `GwtClient.typescript_types()` and
+client object. `GwtClient.inspect()` exposes the same manifest as
+`gwt inspect`, and `GwtClient.validate()` exposes the local/CI validation
+workflow from Python. `GwtClient.compile()` is the equivalent compile-once API
+for a client object. `GwtClient.typescript_types()` and
 `generate_typescript_file()` generate TypeScript declarations from checked GWT
 contracts.
 

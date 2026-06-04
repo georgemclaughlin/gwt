@@ -5,17 +5,15 @@ from dataclasses import dataclass, field
 import json
 from pathlib import Path
 
+from .entries import entry_candidates
 from .errors import GwtError
 from .runtime import (
-    Action,
     ContractBinding,
     DtoDefinition,
     Program,
     VariantDefinition,
     _list_item_type,
     _literal_union_values,
-    _signature_parameter_name,
-    _signature_parameters,
 )
 from .service import analyze_source
 
@@ -132,32 +130,7 @@ def _emit_entry_union(program: Program) -> list[str]:
 
 
 def _entry_texts(program: Program) -> list[str]:
-    request_roots = {
-        binding.path.split(".", 1)[0] for binding in program.inputs.values()
-    }
-    if not request_roots:
-        return []
-
-    entries: list[str] = []
-    seen: set[str] = set()
-    for action in program.actions:
-        parameters = _signature_parameters(action.signature)
-        if not parameters or not all(parameter in request_roots for parameter in parameters):
-            continue
-        text = _entry_text(action)
-        if text in seen:
-            continue
-        seen.add(text)
-        entries.append(text)
-    return entries
-
-
-def _entry_text(action: Action) -> str:
-    parts: list[str] = []
-    for index, token in enumerate(action.signature):
-        parameter_name = _signature_parameter_name(action.signature, index, token)
-        parts.append(parameter_name or token)
-    return " ".join(parts)
+    return [candidate.text for candidate in entry_candidates(program)]
 
 
 def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:

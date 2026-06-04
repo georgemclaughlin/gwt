@@ -21,7 +21,7 @@ Good fits include:
 Start with an optional spec file and run it locally:
 
 ```sh
-python -m gwtlang test specs/ota_update.gwt \
+python -m gwtlang validate specs/ota_update.gwt \
   --import-root specs \
   --no-absolute-imports
 ```
@@ -38,10 +38,16 @@ request-to-decision rule.
 Check the rules in local development and CI:
 
 ```sh
-python -m gwtlang check rules/main.gwt \
+python -m gwtlang validate rules/main.gwt \
   --import-root rules \
   --no-absolute-imports
 ```
+
+`gwt validate` checks imports, parser/checker diagnostics, canonical formatting,
+and embedded scenarios when the file has scenario content. Use `gwt inspect
+rules/main.gwt --json` when CI, review tools, or agents need a versioned
+manifest of records, contracts, behaviors, entry candidates, scenarios, and the
+program hash without executing a host application.
 
 Compile once at application startup as a final safety gate:
 
