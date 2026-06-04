@@ -21,10 +21,12 @@ export class GwtClient {
     this.commandArgs = normalized.commandArgs ?? [];
     this.cwd = normalized.cwd;
     this.env = normalized.env;
+    this.importRoots = normalized.importRoots ?? [];
+    this.allowAbsoluteImports = normalized.allowAbsoluteImports ?? true;
   }
 
   async check(options = {}) {
-    const result = await this.#run(["check", this.file, "--json"], {
+    const result = await this.#run(["check", this.file, ...this.#importPolicyArgs(options), "--json"], {
       ...options,
       allowNonZeroJson: true,
     });
@@ -36,7 +38,16 @@ export class GwtClient {
       throw new TypeError("runJson requires an entry behavior");
     }
     const result = await this.#run(
-      ["run", this.file, "--json-input", "-", "--entry", options.entry, "--json"],
+      [
+        "run",
+        this.file,
+        ...this.#importPolicyArgs(options),
+        "--json-input",
+        "-",
+        "--entry",
+        options.entry,
+        "--json",
+      ],
       {
         ...options,
         input: JSON.stringify(input),
@@ -46,7 +57,18 @@ export class GwtClient {
   }
 
   async runRequest(requestFile, options = {}) {
-    const result = await this.#run(["run", this.file, "--input", requestFile, "--json"], options);
+    const result = await this.#run(
+      ["run", this.file, ...this.#importPolicyArgs(options), "--input", requestFile, "--json"],
+      options,
+    );
+    return parsePayload(result.stdout, result);
+  }
+
+  async test(options = {}) {
+    const result = await this.#run(
+      ["test", this.file, ...this.#importPolicyArgs(options), "--json"],
+      options,
+    );
     return parsePayload(result.stdout, result);
   }
 
@@ -61,6 +83,87 @@ export class GwtClient {
     }
     return result;
   }
+
+  #importPolicyArgs(options = {}) {
+    const args = [];
+    for (const root of options.importRoots ?? this.importRoots) {
+      args.push("--import-root", root);
+    }
+    if ((options.allowAbsoluteImports ?? this.allowAbsoluteImports) === false) {
+      args.push("--no-absolute-imports");
+    }
+    return args;
+  }
+}
+
+export class GwtSpec {
+  #checkPromises = new Map();
+
+  constructor(options, specOptions = {}) {
+    if (options instanceof GwtClient) {
+      this.client = options;
+      this.entry = specOptions.entry;
+      this.checkBeforeRun = specOptions.checkBeforeRun ?? true;
+      return;
+    }
+
+    const normalized = typeof options === "string" ? { file: options } : { ...options };
+    this.client = new GwtClient(normalized);
+    this.entry = specOptions.entry ?? normalized.entry;
+    this.checkBeforeRun = specOptions.checkBeforeRun ?? normalized.checkBeforeRun ?? true;
+  }
+
+  async checkOnce(options = {}) {
+    const cacheKey = checkCacheKey(this.client, options);
+    let checkPromise = this.#checkPromises.get(cacheKey);
+    if (!checkPromise) {
+      checkPromise = this.client.check(options).then(check => {
+        if (!check.ok) {
+          throw new GwtClientError(checkFailedMessage(check), {
+            exitCode: 1,
+            stdout: JSON.stringify(check, null, 2),
+            stderr: diagnosticsMessage(check),
+          });
+        }
+        return check;
+      });
+      this.#checkPromises.set(cacheKey, checkPromise);
+    }
+    return checkPromise;
+  }
+
+  resetCheck() {
+    this.#checkPromises.clear();
+  }
+
+  async runJson(input, options = {}) {
+    const entry = options.entry ?? this.entry;
+    if (!entry) {
+      throw new TypeError("GwtSpec.runJson requires an entry behavior");
+    }
+    if (this.checkBeforeRun) {
+      await this.checkOnce(options);
+    }
+    return this.client.runJson(input, { ...options, entry });
+  }
+
+  async runRequest(requestFile, options = {}) {
+    if (this.checkBeforeRun) {
+      await this.checkOnce(options);
+    }
+    return this.client.runRequest(requestFile, options);
+  }
+
+  async test(options = {}) {
+    if (this.checkBeforeRun) {
+      await this.checkOnce(options);
+    }
+    return this.client.test(options);
+  }
+}
+
+export function createGwtSpec(options, specOptions) {
+  return new GwtSpec(options, specOptions);
 }
 
 export async function checkFile(file, options = {}) {
@@ -127,6 +230,39 @@ function normalizeCheckPayload(payload) {
     ok: !diagnostics.some(diagnostic => diagnostic?.severity === "error"),
     ...payload,
   };
+}
+
+function checkCacheKey(client, options) {
+  return JSON.stringify({
+    file: client.file,
+    command: client.command,
+    commandArgs: client.commandArgs,
+    cwd: options.cwd ?? client.cwd ?? null,
+    env: stableEntries(options.env ?? client.env),
+    importRoots: (options.importRoots ?? client.importRoots).map(root => String(root)),
+    allowAbsoluteImports: options.allowAbsoluteImports ?? client.allowAbsoluteImports,
+  });
+}
+
+function stableEntries(record) {
+  if (!record) {
+    return null;
+  }
+  return Object.entries(record).sort(([left], [right]) => left.localeCompare(right));
+}
+
+function checkFailedMessage(check) {
+  const diagnostics = Array.isArray(check.diagnostics) ? check.diagnostics : [];
+  const errorCount = diagnostics.filter(diagnostic => diagnostic?.severity === "error").length;
+  return `GWT check failed for ${check.file ?? "rules"} with ${errorCount} error(s)`;
+}
+
+function diagnosticsMessage(check) {
+  const diagnostics = Array.isArray(check.diagnostics) ? check.diagnostics : [];
+  return diagnostics
+    .filter(diagnostic => diagnostic?.severity === "error")
+    .map(diagnostic => diagnostic?.message ?? JSON.stringify(diagnostic))
+    .join("\n");
 }
 
 function errorMessage(result) {

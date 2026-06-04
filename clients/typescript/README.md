@@ -79,12 +79,59 @@ See [`examples/vendor-onboarding.ts`](examples/vendor-onboarding.ts) for a
 complete typed host example that runs the repository's vendor onboarding
 workflow.
 
+## Test Fixtures
+
+For TypeScript test suites, `createGwtSpec` wraps the same client with a cached
+`check()` and an optional default entry. It is test-framework agnostic, so it can
+be used from Vitest, Mocha, or Node's built-in test runner:
+
+```ts
+import { beforeAll, expect, it } from "vitest";
+import { createGwtSpec } from "@gwtlang/client";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+
+const rules = createGwtSpec<
+  GwtRequest,
+  GwtOutput,
+  Record<string, unknown>,
+  GwtEntry
+>({
+  file: "rules.gwt",
+  entry: "review vendor into decision",
+  importRoots: ["rules"],
+  allowAbsoluteImports: false,
+});
+
+beforeAll(() => rules.checkOnce());
+
+it("reviews a vendor request", async () => {
+  const request: GwtRequest = { vendor, decision };
+  const execution = await rules.runJson(request);
+
+  expect(execution.result.decision.status).toBe("approved");
+});
+
+it("keeps embedded GWT scenarios passing", async () => {
+  const execution = await rules.test();
+
+  expect(execution.scenario_count).toBeGreaterThan(0);
+});
+```
+
+Use `importRoots` and `allowAbsoluteImports: false` in local tests when they
+should mirror CI import confinement.
+
 ## API
 
 - `new GwtClient(fileOrOptions)`
 - `client.check()`
+- `client.test()`
 - `client.runJson<TInput, TResult>(input, { entry })`
 - `client.runRequest(requestFile)`
+- `createGwtSpec<TInput, TResult>(fileOrOptions)`
+- `spec.checkOnce()`
+- `spec.runJson(input)`
+- `spec.test()`
 - `checkFile(file, options)`
 - `runFile<TInput, TResult>(file, options)`
 

@@ -205,6 +205,44 @@ shows the complete host flow: generate declarations from GWT contracts, read a
 JSON request, check the rules file, run the entry behavior, and consume a typed
 `GwtOutput` result.
 
+TypeScript test suites can use the same package as a small spec fixture:
+
+```ts
+import { beforeAll, expect, it } from "vitest";
+import { createGwtSpec } from "@gwtlang/client";
+import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+
+const rules = createGwtSpec<
+  GwtRequest,
+  GwtOutput,
+  Record<string, unknown>,
+  GwtEntry
+>({
+  file: "rules.gwt",
+  entry: "review vendor into decision",
+  importRoots: ["rules"],
+  allowAbsoluteImports: false,
+});
+
+beforeAll(() => rules.checkOnce());
+
+it("reviews a vendor request", async () => {
+  const execution = await rules.runJson(request);
+
+  expect(execution.result.decision.status).toBe("approved");
+});
+
+it("keeps embedded GWT scenarios passing", async () => {
+  const execution = await rules.test();
+
+  expect(execution.scenario_count).toBeGreaterThan(0);
+});
+```
+
+`createGwtSpec` is intentionally test-framework agnostic. It caches the
+`check()` result, supports the generated `GwtEntry` type as a default entry, and
+passes import policy options through to `gwt check`, `gwt run`, and `gwt test`.
+
 ### 3. Generated Host Types
 
 Add type generation after the client contract is stable. Start with TypeScript:
