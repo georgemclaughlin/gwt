@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 import unittest
 
 from gwtlang import GwtError, GwtHostAdapter, HostObservation
@@ -54,6 +55,12 @@ class FormatObservation:
     error: str
 
 
+@dataclass(frozen=True)
+class Price:
+    amount: Decimal
+    total: Decimal
+
+
 class HostAdapterTests(unittest.TestCase):
     def test_host_observation_is_injected_before_request_validation(self):
         def observe_format(context):
@@ -80,6 +87,26 @@ class HostAdapterTests(unittest.TestCase):
         self.assertEqual(payload["result"]["decision"]["status"], "passed")
         self.assertEqual(payload["result"]["decision"]["reason"], "formatted_as_expected")
         self.assertEqual(payload["state"]["observation"]["formatted"], "print(1)\n")
+
+    def test_host_adapter_converts_decimal_values_to_exact_json_strings(self):
+        adapter = GwtHostAdapter.from_text(
+            """
+            RECORD Price
+              amount: decimal
+              total: decimal
+
+            REQUEST price is Price
+            OUTPUT price is Price
+
+            WHEN double price
+              set price.total to price.amount * 2
+            """,
+            entry="double price",
+        )
+
+        execution = adapter.run_json({"price": Price(Decimal("12.30"), Decimal("0.00"))})
+
+        self.assertEqual(execution.as_payload()["result"]["price"]["total"], "24.60")
 
     def test_adapter_can_add_observations_fluently(self):
         adapter = GwtHostAdapter.from_text(

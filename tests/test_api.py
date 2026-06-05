@@ -1,4 +1,5 @@
 from pathlib import Path
+from decimal import Decimal
 import tempfile
 import unittest
 
@@ -72,6 +73,168 @@ class PublicApiTests(unittest.TestCase):
             result = compiled.run_json({"count": 2}, entry="increment count")
 
         self.assertEqual(result.as_payload()["result"]["count"], 3)
+
+    def test_decimal_contract_accepts_exact_json_strings_and_serializes_payloads(self):
+        compiled = compile_text(
+            """
+            RECORD Price
+              amount: decimal
+              quantity: integer
+              total: decimal
+
+            REQUEST price is Price
+            OUTPUT price is Price
+
+            WHEN price order <price>
+              GIVEN price is Price
+              set price.total to price.amount * price.quantity
+            """
+        )
+
+        result = compiled.run_json(
+            {"price": {"amount": "12.30", "quantity": 2, "total": "0.00"}},
+            entry="price order price",
+        )
+
+        self.assertEqual(result.state["price"]["amount"], Decimal("12.30"))
+        self.assertEqual(result.state["price"]["quantity"], 2)
+        self.assertEqual(result.state["price"]["total"], Decimal("24.60"))
+        self.assertEqual(result.as_payload()["result"]["price"]["total"], "24.60")
+
+    def test_decimal_contract_rejects_json_float(self):
+        compiled = compile_text(
+            """
+            RECORD Price
+              amount: decimal
+
+            REQUEST price is Price
+            OUTPUT price is Price
+
+            WHEN accept price
+              PASS
+            """
+        )
+
+        with self.assertRaisesRegex(GwtError, "expected price.amount to be decimal, got number"):
+            compiled.run_json({"price": {"amount": 12.3}}, entry="accept price")
+
+    def test_decimal_contract_rejects_non_finite_strings(self):
+        compiled = compile_text(
+            """
+            RECORD Price
+              amount: decimal
+
+            REQUEST price is Price
+
+            WHEN accept price
+              PASS
+            """
+        )
+
+        for amount in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(amount=amount):
+                with self.assertRaisesRegex(GwtError, "expected price.amount to be decimal"):
+                    compiled.run_json({"price": {"amount": amount}}, entry="accept price")
+
+    def test_number_output_serializes_decimal_literal_as_json_number(self):
+        compiled = compile_text(
+            """
+            REQUEST amount is number
+            OUTPUT amount is number
+
+            WHEN choose
+              set amount to 1.5
+            """
+        )
+
+        result = compiled.run_json({"amount": 0}, entry="choose")
+
+        self.assertEqual(result.state["amount"], 1.5)
+        self.assertEqual(result.as_payload()["result"]["amount"], 1.5)
+
+    def test_number_value_branch_matches_json_float(self):
+        result = run_json_text(
+            """
+            REQUEST mode is number
+            OUTPUT status is text
+
+            WHEN classify <mode>
+              GIVEN mode is number
+              DEPENDING ON mode
+                WHEN the value is 1.5
+                  set status to "matched"
+                ELSE
+                  set status to "other"
+            """,
+            {"mode": 1.5, "status": "new"},
+            entry="classify mode",
+        )
+
+        self.assertEqual(result.as_payload()["result"]["status"], "matched")
+
+    def test_compiled_program_calls_export_by_stable_name(self):
+        compiled = compile_text(
+            """
+            RECORD Cart
+              subtotal: integer
+              total: integer
+
+            REQUEST cart is Cart
+            OUTPUT cart is Cart
+
+            EXPORT price_cart_v1 as price cart
+
+            WHEN price <cart>
+              GIVEN cart is Cart
+              set cart.total to cart.subtotal
+            """
+        )
+
+        result = compiled.call_json(
+            "price_cart_v1",
+            {"cart": {"subtotal": 84, "total": 0}},
+        )
+
+        self.assertEqual(result.as_payload()["result"]["cart"]["total"], 84)
+        with self.assertRaisesRegex(GwtError, "unknown export: missing"):
+            compiled.call_json("missing", {"cart": {"subtotal": 84, "total": 0}})
+
+    def test_run_json_file_accepts_export_name_as_entry(self):
+        result = run_json_file(
+            "examples/exact_pricing/rules.gwt",
+            {
+                "cart": {
+                    "mode": "reserve",
+                    "quantity": 2,
+                    "unit_price": "12.30",
+                    "total": "0.00",
+                    "status": "pending",
+                }
+            },
+            entry="price_cart_v1",
+        )
+
+        self.assertEqual(result.as_payload()["result"]["cart"]["total"], "24.60")
+
+    def test_trusted_json_skips_only_boundary_contracts(self):
+        compiled = compile_text(
+            """
+            REQUEST amount is integer
+            OUTPUT amount is integer
+
+            EXPORT accept_amount_v1 as accept amount
+
+            WHEN accept amount
+              PASS
+            """
+        )
+
+        with self.assertRaisesRegex(GwtError, "REQUEST contract failed"):
+            compiled.run_json({"amount": "bad"}, entry="accept amount")
+
+        result = compiled.call_trusted_json("accept_amount_v1", {"amount": "bad"})
+
+        self.assertEqual(result.as_payload()["result"]["amount"], "bad")
 
     def test_compile_text_rejects_checker_errors(self):
         with self.assertRaisesRegex(GwtError, "GWT001 no behavior matches: missing count"):
@@ -281,6 +444,28 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(payload["schemaVersion"], 1)
         self.assertEqual(payload["entryCandidates"][0]["text"], "checkout cart")
         self.assertEqual(payload["counts"]["entryCandidates"], 1)
+
+    def test_inspect_file_tokenizes_export_entries_like_runtime(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "workflow.gwt"
+            program.write_text(
+                """
+                REQUEST status is text
+
+                EXPORT classify_review_v1 as classify "needs review"
+
+                WHEN classify <status>
+                  GIVEN status is text
+                  print status
+                """
+            )
+
+            payload = inspect_file(program).as_payload()
+
+        entry = payload["entryCandidates"][0]
+        self.assertEqual(entry["text"], "classify_review_v1")
+        self.assertEqual(entry["entry"], 'classify "needs review"')
+        self.assertEqual(entry["signature"], ["classify", "needs review"])
 
     def test_inspect_file_accepts_public_import_policy_options(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -104,6 +104,42 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["result"]["cart"]["total"], 92)
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
 
+    def test_cli_runs_program_with_json_input_file_and_export_entry(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            request_path = Path(temp_dir) / "request.json"
+            request_path.write_text(
+                json.dumps(
+                    {
+                        "cart": {
+                            "mode": "reserve",
+                            "quantity": 2,
+                            "unit_price": "12.30",
+                            "total": "0.00",
+                            "status": "pending",
+                        }
+                    }
+                )
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "run",
+                        "examples/exact_pricing/rules.gwt",
+                        "--json-input",
+                        str(request_path),
+                        "--entry",
+                        "price_cart_v1",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["result"]["cart"]["total"], "24.60")
+        self.assertEqual(payload["result"]["cart"]["status"], "reserved")
+
     def test_cli_runs_program_with_json_input_from_stdin(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "checkout.gwt"

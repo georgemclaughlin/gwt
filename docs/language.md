@@ -143,9 +143,18 @@ GIVEN cart is Cart
 ```
 
 Record validation requires all declared fields, rejects unknown fields, and checks
-primitive value types. Supported record field types are `number`, `text`,
-`boolean`, `list`, `any`, declared record names, typed collections such as
-`list<CartItem>`, and literal unions such as `"new" | "approved" | "denied"`.
+primitive value types. Supported record field types are `number`, `integer`,
+`decimal`, `text`, `boolean`, `list`, `any`, declared record names, typed
+collections such as `list<CartItem>`, and literal unions such as
+`"new" | "approved" | "denied"`.
+
+`integer` is an exact whole number. `decimal` is a finite exact base-10 decimal value.
+`number` is the legacy broad numeric type. `integer` can be assigned to
+`decimal` or `number`; `decimal` can be assigned to `number`. At JSON
+boundaries, `decimal` accepts finite exact decimal strings such as `"12.30"`
+and integer JSON numbers such as `12`, but rejects JSON floats such as `12.30`
+and non-finite strings such as `"NaN"` or `"Infinity"`. API and CLI payloads
+serialize `decimal` values as strings.
 Nested fields are declared with nested blocks:
 
 ```gwt
@@ -232,13 +241,14 @@ overlap an `OUTPUT` path.
 
 GWT v0.1 does not have a source-level `null` literal. JSON input can still
 contain `null` at raw integration boundaries, but typed contracts reject it for
-`number`, `text`, `boolean`, `list`, records, typed lists, and literal unions.
+`number`, `integer`, `decimal`, `text`, `boolean`, `list`, records, typed
+lists, and literal unions.
 Use `any` for raw input that may contain JSON nulls, then normalize that input
 into explicit domain state such as status fields or one-of records.
 
 Declared record, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
-change a known `number` field to `text`, or replace a `list<OrderItem>` with a
+change a known numeric field to `text`, or replace a `list<OrderItem>` with a
 non-list value, fails at the mutation line.
 
 ## Behavior Contracts
@@ -346,6 +356,16 @@ validates `REQUEST` contracts, runs the entry behavior, validates `OUTPUT`
 contracts, and returns the same stable execution envelope used by `.gwt`
 request files.
 
+Programs can give host callers stable entry names with `EXPORT`:
+
+```gwt
+EXPORT review_vendor_v1 as review vendor into decision
+```
+
+The checker rejects duplicate exports and exports whose behavior call cannot be
+resolved. Host applications should prefer export names for public integrations;
+raw behavior entry text remains useful for local development and experiments.
+
 JSON `null` values are accepted only where the receiving contract is `any`.
 They do not match typed records or primitive fields. Prefer a normalization
 behavior that turns nullable raw payloads into explicit state before the rest of
@@ -402,6 +422,17 @@ known directories, matching `--import-root`, and
 `allow_absolute_imports=False` matches `--no-absolute-imports`.
 The same import-confinement flags are available on `gwt test` and `gwt run`.
 
+Compiled programs can also run exported entries:
+
+```python
+execution = rules.call_json("review_vendor_v1", request_state)
+```
+
+For already-prevalidated internal loops, `run_trusted_json()` and
+`call_trusted_json()` skip only `REQUEST` and `OUTPUT` boundary validation.
+Behavior contracts, runtime type checks, assertions, and ordinary runtime
+errors still apply.
+
 `GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
 `run_json_file`, and `compile_file` functions. `check_file` returns a
 structured result with `ok`, `diagnostics`, and `as_payload()`. `run_file`,
@@ -423,7 +454,10 @@ python -m gwtlang types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated declaration file includes record interfaces, one-of record
-unions, `GwtRequest`, `GwtOutput`, and an inferred `GwtEntry` union. These
+unions, `GwtRequest`, `GwtOutput`, and a `GwtEntry` union. When `EXPORT`
+declarations exist, `GwtEntry` uses export names; otherwise it uses inferred
+behavior entries. Generated TypeScript maps `integer` and `number` to
+`number`, and maps `decimal` to `string` at the JSON boundary. These
 declarations are integration helpers for host code; the `.gwt` source remains
 the normative contract.
 Generated TypeScript uses nested object shape for dotted contract paths. Raw
@@ -452,10 +486,9 @@ the runtime-style `./rules.js` specifier.
 For a complete host example, see
 [`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
 
-`GwtEntry` is currently inferred from behavior signatures that can be called
-with top-level `REQUEST` paths. That catches host-side typos without adding
-language syntax, but it cannot always distinguish public entries from helper
-behaviors. First-class entry declarations remain an open language design area.
+`GwtEntry` uses `EXPORT` names when a program declares them. For programs
+without exports, it falls back to inferred behavior signatures that can be
+called with top-level `REQUEST` paths.
 
 ## Static Checking
 
@@ -553,7 +586,8 @@ when they should be strings:
 
 Supported values:
 
-- numbers: `10`, `3.14`
+- integer literals: `10`
+- decimal literals: `3.14`
 - strings: `"open"`
 - booleans: `true`, `false`
 - lists: `[10, 20, 30]`
@@ -813,6 +847,26 @@ DEPENDING ON statement
 `DEPENDING ON statement`, `WHEN the kind is let_number` means `statement.kind`
 is `let_number`. GWT can then check ordinary paths such as `statement.value`
 and `statement.text` for the active kind.
+
+`DEPENDING ON` can also branch on scalar literal values:
+
+```gwt
+DEPENDING ON mode
+  WHEN the value is "reserve"
+    set decision.status to "reserved"
+  WHEN the value is "quote"
+    set decision.status to "quoted"
+  ELSE
+    set decision.status to "manual_review"
+```
+
+Value branches are literal-only and type-aware. `"1"` does not match `1`, and
+integer `1` does not match decimal `1.0`. A block cannot mix
+`WHEN the kind is` and `WHEN the value is` branches. `ELSE` is required unless
+the expression has a finite literal-union type and every value is covered.
+For broad `number` expressions, decimal-looking branch literals match host
+number values by numeric value; use `decimal` when exact decimal matching is
+required.
 
 ## Return Values
 

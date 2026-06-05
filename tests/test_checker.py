@@ -184,7 +184,7 @@ class CheckerTests(unittest.TestCase):
             """
         )
 
-        self.assertIn("subtract from cart.status expected number, got text", messages)
+        self.assertIn("subtract from cart.status expected numeric, got text", messages)
 
     def test_reports_set_type_mismatch_inside_behavior_contract(self):
         messages = check_messages(
@@ -519,6 +519,67 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("set statement.value expected number, got text", messages)
         self.assertIn("DEPENDING ON requires ELSE unless all kinds are covered; missing print_text", messages)
 
+    def test_accepts_scalar_depending_on_for_covered_literal_union(self):
+        messages = check_messages(
+            '''
+            RECORD Decision
+              status: text
+
+            WHEN decide <mode> into <decision>
+              GIVEN mode is "reserve" | "quote"
+              GIVEN decision is Decision
+              DEPENDING ON mode
+                WHEN the value is "reserve"
+                  set decision.status to "reserved"
+                WHEN the value is "quote"
+                  set decision.status to "quoted"
+            '''
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_scalar_depending_on_missing_else_for_open_type(self):
+        messages = check_messages(
+            '''
+            WHEN decide <mode>
+              GIVEN mode is text
+              DEPENDING ON mode
+                WHEN the value is "reserve"
+                  print "reserved"
+            '''
+        )
+
+        self.assertIn("DEPENDING ON value requires ELSE unless all values are covered", messages)
+
+    def test_reports_scalar_depending_on_duplicate_and_type_mismatch(self):
+        messages = check_messages(
+            """
+            WHEN decide <amount>
+              GIVEN amount is decimal
+              DEPENDING ON amount
+                WHEN the value is 1
+                  print "integer"
+                WHEN the value is 1
+                  print "duplicate"
+                ELSE
+                  print "other"
+            """
+        )
+
+        self.assertIn("branch value 1 cannot match decimal", messages)
+        self.assertIn("duplicate value branch: 1", messages)
+
+    def test_reports_unresolved_export(self):
+        messages = check_messages(
+            """
+            REQUEST count is integer
+
+            EXPORT increment_count_v1 as increment count
+            """
+        )
+
+        self.assertIn("no behavior matches: increment count", messages)
+
     def test_accepts_collection_helpers_and_for_where(self):
         messages = check_messages(
             """
@@ -582,7 +643,7 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.assertIn("count requires a list, got number", messages)
-        self.assertIn("count into cart.status expected text, got number", messages)
+        self.assertIn("count into cart.status expected text, got integer", messages)
         self.assertIn("sum requires a list, got text", messages)
         self.assertIn("sum requires a list of numbers, got list<text>", messages)
         self.assertIn("append to cart.total expected list, got number", messages)
@@ -683,7 +744,7 @@ class CheckerTests(unittest.TestCase):
             """
         )
 
-        self.assertIn("behavior argument 'cart' expected Cart, got number", messages)
+        self.assertIn("behavior argument 'cart' expected Cart, got integer", messages)
 
     def test_reports_return_type_mismatch(self):
         messages = check_messages(

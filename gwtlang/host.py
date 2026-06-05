@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, fields, is_dataclass
+from decimal import Decimal
 from enum import Enum
 from pathlib import Path
 import re
@@ -138,6 +139,10 @@ class GwtHostAdapter:
 
 
 def _json_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise GwtError(f"host decimal is not finite: {value}")
+        return str(value)
     if value is None or isinstance(value, bool | int | float | str):
         return value
     if isinstance(value, Enum):

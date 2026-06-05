@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 from gwtlang import GwtError
@@ -16,6 +18,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/minilang2_vm/rules.gwt"),
     Path("examples/input_normalization/rules.gwt"),
     Path("examples/vendor_onboarding/rules.gwt"),
+    Path("examples/exact_pricing/rules.gwt"),
 ]
 
 
@@ -80,6 +83,20 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(result.state["decision"]["reason"], "within_policy")
         self.assertFalse(result.state["decision"]["has_violation"])
         self.assertEqual(result.state["decision"]["violation_amount"], 0)
+
+    def test_exact_pricing_python_host_example_runs(self):
+        completed = subprocess.run(
+            [sys.executable, "examples/exact_pricing/host_app.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn('"price_cart_v1"', completed.stdout)
+        self.assertIn('"total": "24.60"', completed.stdout)
+        self.assertIn("runtime total: 24.60 (Decimal)", completed.stdout)
+        self.assertIn("float input rejected:", completed.stdout)
+        self.assertIn('"total": "29.97"', completed.stdout)
 
     def test_loan_underwriting_example_runs_scenarios_and_request(self):
         program = Path("examples/loan_underwriting/rules.gwt")

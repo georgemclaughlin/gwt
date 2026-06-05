@@ -36,6 +36,7 @@ GWT removes the semantic handoff for deterministic domain behavior:
 - `WHEN` behavior is executable logic, not a step name backed by separate code.
 - `THEN` assertions are regression checks, not suggestions.
 - `REQUEST` and `OUTPUT` contracts are host-facing runtime boundaries.
+- `EXPORT` names are stable host-facing entry points.
 
 GWT does not remove all product ambiguity. It forces behavior ambiguity to be
 resolved before the spec becomes executable.
@@ -51,6 +52,12 @@ clients can wrap the same runtime contract:
 
 ```text
 host app -> JSON request object -> GWT entry behavior -> typed result envelope
+```
+
+Programs can expose stable entry names for host code:
+
+```gwt
+EXPORT review_vendor_v1 as review vendor into decision
 ```
 
 The CLI also supports a portable runner protocol for early clients in .NET,
@@ -191,7 +198,18 @@ GIVEN account is Account
   status: "open"
 ```
 
-Program contracts define the host-facing interface:
+Program contracts define the host-facing interface. Use `integer` for exact
+whole numbers, `decimal` for finite exact base-10 values, and `number` for
+legacy broad numeric values. Decimal JSON input should use strings such as
+`"12.30"`; decimal values serialize as strings in JSON/API payloads.
+
+```gwt
+RECORD LineItem
+  quantity: integer
+  unit_price: decimal
+```
+
+Request/output contracts declare the boundary paths:
 
 ```gwt
 REQUEST report is ExpenseReport
@@ -388,6 +406,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/record_contracts.gwt`](examples/record_contracts.gwt) | Record validation |
 | [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
+| [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, exported host entry, and Python host example |
 | [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of v0.1 |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
@@ -459,9 +478,17 @@ The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
 client object. `GwtClient.inspect()` exposes the same manifest as
 `gwt inspect`, and `GwtClient.validate()` exposes the local/CI validation
 workflow from Python. `GwtClient.compile()` is the equivalent compile-once API
-for a client object. `GwtClient.typescript_types()` and
+for a client object. Compiled programs can call exports with
+`call_json("review_vendor_v1", state)`. For already-prevalidated internal
+loops, `run_trusted_json()` and `call_trusted_json()` skip only `REQUEST` and
+`OUTPUT` boundary validation. `GwtClient.typescript_types()` and
 `generate_typescript_file()` generate TypeScript declarations from checked GWT
 contracts.
+
+A fuller runnable Python host example lives in
+[`examples/exact_pricing/host_app.py`](examples/exact_pricing/host_app.py).
+It validates, inspects, compiles, calls an exported entry, rejects accidental
+float input for `decimal`, and demonstrates trusted prevalidated execution.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 

@@ -53,7 +53,7 @@ python -m gwtlang validate rules.gwt \
 `gwt validate` checks imports, static diagnostics, canonical formatting, and
 embedded scenarios when the file has scenario content, before the host
 application boots. Use `gwt inspect rules.gwt --json` when a CI job, editor, or
-agent needs a stable manifest of records, contracts, behaviors, inferred entry
+agent needs a stable manifest of records, contracts, behaviors, entry
 candidates, scenarios, imports, and the program hash.
 
 Then use the checked compile-once API during application startup as a final
@@ -330,7 +330,7 @@ contracts:
   them.
 
 For TypeScript, GWT emits declarations for records, one-of records, `GwtRequest`,
-`GwtOutput`, and an inferred `GwtEntry` union:
+`GwtOutput`, and a `GwtEntry` union:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
@@ -348,12 +348,12 @@ const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
 });
 ```
 
-`GwtEntry` is inferred from behavior signatures that can be called with
-top-level `REQUEST` paths. This gives host code compile-time protection against
-entry typos. Explicit language-level entry declarations are still an open design
-area because inferred entries cannot always distinguish public workflows from
-helper behaviors. The same inference powers `gwt inspect --json`, so host types
-and tool manifests agree on which entry strings are currently valid.
+`GwtEntry` uses `EXPORT` names when a program declares them. Without exports,
+GWT falls back to behavior signatures that can be called with top-level
+`REQUEST` paths. This gives host code compile-time protection against entry
+typos while letting production integrations publish stable names such as
+`reserve_cart_v1`. The same entry candidate logic powers `gwt inspect --json`,
+so host types and tool manifests agree on which entry strings are valid.
 
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as

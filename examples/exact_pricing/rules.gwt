@@ -1,0 +1,35 @@
+PROGRAM exact_pricing
+
+RECORD Cart
+  mode: "reserve" | "quote"
+  quantity: integer
+  unit_price: decimal
+  total: decimal
+  status: text
+
+REQUEST cart is Cart
+OUTPUT cart is Cart
+
+EXPORT price_cart_v1 as price cart
+
+WHEN price <cart>
+  GIVEN cart is Cart
+  set cart.total to cart.unit_price * cart.quantity
+  DEPENDING ON cart.mode
+    WHEN the value is "reserve"
+      set cart.status to "reserved"
+    WHEN the value is "quote"
+      set cart.status to "quoted"
+
+SCENARIO reserve cart uses exact decimals
+GIVEN cart is Cart
+  mode: "reserve"
+  quantity: 2
+  unit_price: 12.30
+  total: 0.00
+  status: "pending"
+
+WHEN price cart
+
+THEN cart.total == 24.60
+AND cart.status == "reserved"

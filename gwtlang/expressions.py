@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any, Protocol
 
 from .errors import GwtError
@@ -83,6 +84,7 @@ class Binary(Expr):
 
         left = self.left.evaluate(scope)
         right = self.right.evaluate(scope)
+        left, right = _coerce_mixed_float_decimal(left, right)
 
         if self.operator == "+":
             return left + right
@@ -93,9 +95,9 @@ class Binary(Expr):
         if self.operator == "/":
             return left / right
         if self.operator == "==":
-            return left == right
+            return _equal_values(left, right)
         if self.operator == "!=":
-            return left != right
+            return not _equal_values(left, right)
         if self.operator == ">":
             return left > right
         if self.operator == "<":
@@ -110,6 +112,29 @@ class Binary(Expr):
             except TypeError as exc:
                 raise GwtError("contains requires a text, list, or mapping value on the left") from exc
         raise AssertionError(self.operator)
+
+
+def _coerce_mixed_float_decimal(left: Any, right: Any) -> tuple[Any, Any]:
+    if isinstance(left, float) and isinstance(right, Decimal):
+        return left, float(right)
+    if isinstance(left, Decimal) and isinstance(right, float):
+        return float(left), right
+    return left, right
+
+
+def _equal_values(left: Any, right: Any) -> bool:
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(
+            _equal_values(left_item, right_item)
+            for left_item, right_item in zip(left, right)
+        )
+    if isinstance(left, dict) and isinstance(right, dict):
+        return left.keys() == right.keys() and all(
+            _equal_values(left[key], right[key])
+            for key in left
+        )
+    left, right = _coerce_mixed_float_decimal(left, right)
+    return left == right
 
 
 class ExpressionParser:
@@ -181,7 +206,7 @@ class ExpressionParser:
     def _primary(self) -> Expr:
         if self._match("number"):
             text = self._previous().value
-            return Literal(float(text) if "." in text else int(text))
+            return Literal(Decimal(text) if "." in text else int(text))
         if self._match("string"):
             return Literal(self._previous().value)
         if self._match("word", "true"):
@@ -306,6 +331,8 @@ def _scan_number(text: str, start: int) -> tuple[str, int]:
         index += 1
     if index < len(text) and text[index] == ".":
         index += 1
+        if index >= len(text) or not text[index].isdigit():
+            raise GwtError("decimal number requires digits after '.'")
         while index < len(text) and text[index].isdigit():
             index += 1
     return text[start:index], index

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from decimal import Decimal
 import hashlib
 from pathlib import Path
 from typing import Any
@@ -105,19 +106,78 @@ class CompiledProgram:
         entry: str,
         json_file: str | Path | None = None,
     ) -> ExecutionResult:
-        if not self.ok:
-            errors = [
-                diagnostic
-                for diagnostic in self.diagnostics
-                if diagnostic.severity == "error"
-            ]
-            diagnostic = errors[0]
-            raise GwtError(diagnostic.as_error_message(self.file))
+        self._raise_if_not_ok()
         return ExecutionResult(
             Runtime(self.program).run_json(json_state, entry),
             self.file,
             str(json_file) if json_file is not None else None,
         )
+
+    def run_trusted_json(
+        self,
+        json_state: dict[str, Any],
+        *,
+        entry: str,
+        json_file: str | Path | None = None,
+    ) -> ExecutionResult:
+        """Run prevalidated JSON input without REQUEST/OUTPUT boundary checks."""
+        self._raise_if_not_ok()
+        return ExecutionResult(
+            Runtime(self.program).run_json(json_state, entry, validate_contracts=False),
+            self.file,
+            str(json_file) if json_file is not None else None,
+        )
+
+    def call_json(
+        self,
+        export_name: str,
+        json_state: dict[str, Any],
+        *,
+        json_file: str | Path | None = None,
+    ) -> ExecutionResult:
+        """Run a host-facing exported entry by stable export name."""
+        self._raise_if_not_ok()
+        return ExecutionResult(
+            Runtime(self.program).run_json(json_state, self._export_entry(export_name)),
+            self.file,
+            str(json_file) if json_file is not None else None,
+        )
+
+    def call_trusted_json(
+        self,
+        export_name: str,
+        json_state: dict[str, Any],
+        *,
+        json_file: str | Path | None = None,
+    ) -> ExecutionResult:
+        """Run an exported entry for JSON state that the host has already validated."""
+        self._raise_if_not_ok()
+        return ExecutionResult(
+            Runtime(self.program).run_json(
+                json_state,
+                self._export_entry(export_name),
+                validate_contracts=False,
+            ),
+            self.file,
+            str(json_file) if json_file is not None else None,
+        )
+
+    def _export_entry(self, export_name: str) -> str:
+        exported = self.program.exports.get(export_name)
+        if exported is None:
+            raise GwtError(f"unknown export: {export_name}")
+        return exported.entry
+
+    def _raise_if_not_ok(self) -> None:
+        if self.ok:
+            return
+        errors = [
+            diagnostic
+            for diagnostic in self.diagnostics
+            if diagnostic.severity == "error"
+        ]
+        diagnostic = errors[0]
+        raise GwtError(diagnostic.as_error_message(self.file))
 
 
 @dataclass(frozen=True)
@@ -160,6 +220,48 @@ class GwtClient:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         )
+
+    def call_json(
+        self,
+        export_name: str,
+        json_state: dict[str, Any],
+        *,
+        json_file: str | Path | None = None,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> ExecutionResult:
+        return self.compile(
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        ).call_json(export_name, json_state, json_file=json_file)
+
+    def run_trusted_json(
+        self,
+        json_state: dict[str, Any],
+        *,
+        entry: str,
+        json_file: str | Path | None = None,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> ExecutionResult:
+        return self.compile(
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        ).run_trusted_json(json_state, entry=entry, json_file=json_file)
+
+    def call_trusted_json(
+        self,
+        export_name: str,
+        json_state: dict[str, Any],
+        *,
+        json_file: str | Path | None = None,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> ExecutionResult:
+        return self.compile(
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        ).call_trusted_json(export_name, json_state, json_file=json_file)
 
     def compile(
         self,
@@ -233,10 +335,20 @@ def _scenario_payload(scenario: ScenarioResult) -> dict[str, object]:
     result = scenario.returned_state if scenario.returned_state is not None else scenario.state
     return {
         "name": scenario.name,
-        "state": scenario.state,
-        "result": result,
-        "output": scenario.output,
+        "state": _jsonable(scenario.state),
+        "result": _jsonable(result),
+        "output": _jsonable(scenario.output),
     }
+
+
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, list):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _jsonable(item) for key, item in value.items()}
+    return value
 
 
 def check_file(
