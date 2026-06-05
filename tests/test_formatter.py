@@ -118,6 +118,33 @@ WHEN handle <statement>
 """,
         )
 
+    def test_format_text_normalizes_export_and_value_depending_on(self):
+        formatted = format_text(
+            """
+            EXPORT   decide_mode_v1 as decide mode
+
+            WHEN decide <mode>
+              DEPENDING ON  mode
+                WHEN the value is "reserve"
+                  print  "reserved"
+                ELSE
+                  print  "other"
+            """
+        )
+
+        self.assertEqual(
+            formatted,
+            """EXPORT decide_mode_v1 as decide mode
+
+WHEN decide <mode>
+  DEPENDING ON mode
+    WHEN the value is "reserve"
+      print "reserved"
+    ELSE
+      print "other"
+""",
+        )
+
     def test_format_file_reports_changed_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "counter.gwt"

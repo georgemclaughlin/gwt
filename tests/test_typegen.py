@@ -47,6 +47,28 @@ class TypeGenerationTests(unittest.TestCase):
         )
         self.assertNotIn("ignore other", result.source)
 
+    def test_typescript_generation_emits_exact_numeric_types_and_exports(self):
+        result = generate_typescript_text(
+            """
+            RECORD Price
+              quantity: integer
+              amount: decimal
+
+            REQUEST price is Price
+            OUTPUT price is Price
+
+            EXPORT price_order_v1 as price order price
+
+            WHEN price order <price>
+              GIVEN price is Price
+              PASS
+            """
+        )
+
+        self.assertIn("quantity: number;", result.source)
+        self.assertIn("amount: string;", result.source)
+        self.assertIn('export type GwtEntry = "price_order_v1";', result.source)
+
     def test_typescript_generation_rejects_overlapping_contract_paths(self):
         with self.assertRaisesRegex(GwtError, "REQUEST contract path x\\.y overlaps x"):
             generate_typescript_text(

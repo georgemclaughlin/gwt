@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from decimal import Decimal
 import json
 from pathlib import Path
 
@@ -181,8 +182,10 @@ def _typescript_type(value_type: str) -> str:
     if literal_values is not None:
         return " | ".join(_literal_type(value) for value in literal_values)
 
-    if value_type == "number":
+    if value_type in {"number", "integer"}:
         return "number"
+    if value_type == "decimal":
+        return "string"
     if value_type == "text":
         return "string"
     if value_type == "boolean":
@@ -200,6 +203,8 @@ def _typescript_type(value_type: str) -> str:
 
 
 def _literal_type(value: object) -> str:
+    if isinstance(value, Decimal):
+        return json.dumps(str(value))
     return json.dumps(value)
 
 

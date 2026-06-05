@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .runtime import Action, Program, _signature_parameter_name, _signature_parameters
+from .runtime import (
+    Action,
+    GwtError,
+    Program,
+    _signature_parameter_name,
+    _signature_parameters,
+    _tokens,
+)
 
 
 @dataclass(frozen=True)
@@ -15,10 +22,12 @@ class EntryCandidate:
     line: int
     column: int
     length: int
+    exported: bool = False
+    entry: str | None = None
 
     def as_payload(self, fallback_filename: str) -> dict[str, object]:
         filename = self.filename or fallback_filename
-        return {
+        payload: dict[str, object] = {
             "text": self.text,
             "behavior": self.behavior,
             "signature": self.signature,
@@ -35,9 +44,19 @@ class EntryCandidate:
                 },
             },
         }
+        if self.exported:
+            payload["exported"] = True
+            payload["entry"] = self.entry or self.text
+        return payload
 
 
 def entry_candidates(program: Program) -> list[EntryCandidate]:
+    if program.exports:
+        return [
+            _export_candidate(name, exported.entry, exported.line)
+            for name, exported in program.exports.items()
+        ]
+
     request_roots = {
         binding.path.split(".", 1)[0] for binding in program.inputs.values()
     }
@@ -68,6 +87,27 @@ def entry_candidates(program: Program) -> list[EntryCandidate]:
             )
         )
     return entries
+
+
+def _export_candidate(name: str, entry: str, line: object) -> EntryCandidate:
+    filename = getattr(line, "filename", None)
+    line_number = getattr(line, "number", 1)
+    try:
+        signature = _tokens(entry, filename or "<source>", line_number)
+    except GwtError:
+        signature = entry.split()
+    return EntryCandidate(
+        name,
+        signature[0] if signature else entry,
+        signature,
+        [],
+        filename,
+        line_number,
+        getattr(line, "column", 1),
+        getattr(line, "length", len(name)),
+        True,
+        entry,
+    )
 
 
 def entry_text(action: Action) -> str:

@@ -159,6 +159,56 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["result"]["total"], 2)
         self.assertEqual(result.state["result"]["output"], ["done"])
 
+    def test_depending_on_scalar_value_branch(self):
+        result = run_source(
+            '''
+            RECORD Decision
+              status: text
+
+            GIVEN request.mode is "reserve"
+            GIVEN decision is Decision
+              status: "pending"
+
+            WHEN decide <mode> into <decision>
+              GIVEN mode is "reserve" | "quote"
+              GIVEN decision is Decision
+              DEPENDING ON mode
+                WHEN the value is "reserve"
+                  set decision.status to "reserved"
+                WHEN the value is "quote"
+                  set decision.status to "quoted"
+
+            WHEN decide request.mode into decision
+
+            THEN decision.status == "reserved"
+            '''
+        )
+
+        self.assertEqual(result.state["decision"]["status"], "reserved")
+
+    def test_depending_on_scalar_value_else_branch(self):
+        result = run_source(
+            '''
+            GIVEN mode is "cancel"
+            GIVEN decision.status is "pending"
+
+            WHEN decide <mode> into <decision>
+              GIVEN mode is text
+              GIVEN decision is any
+              DEPENDING ON mode
+                WHEN the value is "reserve"
+                  set decision.status to "reserved"
+                ELSE
+                  set decision.status to "manual_review"
+
+            WHEN decide mode into decision
+
+            THEN decision.status == "manual_review"
+            '''
+        )
+
+        self.assertEqual(result.state["decision"]["status"], "manual_review")
+
     def test_one_of_record_rejects_fields_from_other_kind(self):
         with self.assertRaisesRegex(GwtError, "unknown field for kind let_number"):
             run_source(

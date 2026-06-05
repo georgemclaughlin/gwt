@@ -9,6 +9,7 @@ blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 program        = top_level* ;
 top_level      = program_header
                | use
+               | export
                | record
                | one_of_record
                | program_contract
@@ -19,6 +20,7 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
+export         = "EXPORT" name "as" command ;
 record         = ("RECORD" | "DTO") name, record_block ;
 record_block   = record_field+ ;
 record_field   = name ":" type | name ":", record_block ;
@@ -26,7 +28,7 @@ one_of_record  = "RECORD" name "is one of", one_of_kind+ ;
 one_of_kind    = name ":", one_of_field+ ;
 one_of_field   = name ":" type ;
 type           = primitive_type | name | "list<", type_name, ">" | literal_union ;
-primitive_type = "number" | "text" | "boolean" | "list" | "any" ;
+primitive_type = "number" | "integer" | "decimal" | "text" | "boolean" | "list" | "any" ;
 type_name      = primitive_type | name ;
 literal_union  = literal, "|", literal, ("|", literal)* ;
 program_contract
@@ -81,8 +83,11 @@ for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_bloc
 find_block     = "FIND" name "in" expression "WHERE" condition,
                  behavior_block, "ELSE", behavior_block ;
 depending_block
-              = "DEPENDING ON" expression, kind_branch+, ("ELSE", behavior_block)? ;
+              = "DEPENDING ON" expression, depending_branch+, ("ELSE", behavior_block)? ;
+depending_branch
+              = kind_branch | value_branch ;
 kind_branch    = "WHEN the kind is" name, behavior_block ;
+value_branch   = "WHEN the value is" literal, behavior_block ;
 return         = "RETURN" expression_or_behavior_call ;
 pass           = "PASS" ;
 
@@ -139,7 +144,9 @@ Indentation is significant:
 - Behavior block statements are indented by two spaces.
 - Nested `IF`, `ELSE`, `FOR`, and `FIND` bodies add two spaces per level.
 - Record blocks also add two spaces per level.
-- `DEPENDING ON` branches use `WHEN the kind is name` at the branch indent.
+- `DEPENDING ON` branches use `WHEN the kind is name` or
+  `WHEN the value is literal` at the branch indent. A block cannot mix kind and
+  value branches.
 
 CLI request mode runs two parsed programs together: the main program contributes
 behavior definitions and optional background setup, while the request program

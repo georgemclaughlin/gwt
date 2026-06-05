@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 import re
 from typing import Any
 
@@ -26,6 +27,7 @@ from .runtime import (
     _is_local_name,
     _is_type_syntax,
     _is_builtin_statement,
+    _literal_value_text,
     _literal_union_base_type,
     _literal_union_values,
     _list_item_type,
@@ -125,6 +127,7 @@ class Checker:
         self._check_dto_field_types()
         self._check_program_contracts()
         self._check_behavior_signatures()
+        self._check_exports()
         for action in self.program.actions:
             self._check_action(action)
         self._check_background()
@@ -286,6 +289,16 @@ class Checker:
             if line is not None:
                 self._add_line(line, f"unknown return type: {action.contract.return_type}", "GWT014")
 
+    def _check_exports(self) -> None:
+        scope = self._scope_from_inputs()
+        for exported in self.program.exports.values():
+            try:
+                tokens = _tokens(exported.entry, exported.line.filename or "<source>", exported.line.number)
+            except GwtError as exc:
+                self._add_line(exported.line, _strip_location(str(exc)), "GWT010")
+                continue
+            self._check_behavior_call(tokens, exported.line, scope, require_return_value=False)
+
     def _check_background(self) -> None:
         background_lines = [
             *self.program.background.givens,
@@ -435,6 +448,14 @@ class Checker:
     def _check_match_block(self, statement: MatchBlock, scope: Scope, expected_return: str | None = None) -> None:
         expression = self._check_expression(statement.expression.text, statement.expression)
         expression_type = _infer_expression_type(expression, scope) if expression is not None else None
+        selector = statement.cases[0].selector if statement.cases else "kind"
+        if any(case.selector != selector for case in statement.cases):
+            self._add_line(statement.expression, "DEPENDING ON cannot mix kind and value branches", "GWT014")
+            selector = "kind"
+        if selector == "value":
+            self._check_scalar_match_block(statement, scope, expected_return, expression_type)
+            return
+
         variant = self.program.variants.get(expression_type) if expression_type is not None else None
         if expression_type is not None and variant is None and expression_type != "any":
             self._add_line(statement.expression, f"DEPENDING ON expected one-of record, got {expression_type}", "GWT016")
@@ -462,6 +483,63 @@ class Checker:
                 )
         elif not statement.else_body:
             self._add_line(statement.expression, "DEPENDING ON requires ELSE for unknown one-of records", "GWT014")
+
+        self._check_body(statement.else_body, scope.copy(), expected_return)
+
+    def _check_scalar_match_block(
+        self,
+        statement: MatchBlock,
+        scope: Scope,
+        expected_return: str | None = None,
+        expression_type: str | None = None,
+        ) -> None:
+        if expression_type is not None and not _is_scalar_match_type(expression_type):
+            self._add_line(
+                statement.expression,
+                f"DEPENDING ON value expected scalar, got {expression_type}",
+                "GWT016",
+            )
+
+        seen: set[tuple[type[Any], Any]] = set()
+        for case in statement.cases:
+            literal = case.literal
+            key = (type(literal), literal)
+            if key in seen:
+                self._add_line(case.line, f"duplicate value branch: {_literal_value_text(literal)}", "GWT014")
+            seen.add(key)
+
+            literal_type = _literal_type_name(literal)
+            if (
+                expression_type is not None
+                and not _case_literal_matches_expression_type(literal, literal_type, expression_type)
+            ):
+                self._add_line(
+                    case.line,
+                    f"branch value {_literal_value_text(literal)} cannot match {expression_type}",
+                    "GWT016",
+                )
+            self._check_body(case.body, scope.copy(), expected_return)
+
+        literal_values = _literal_union_values(expression_type) if expression_type is not None else None
+        if literal_values is not None:
+            missing = [
+                literal
+                for literal in literal_values
+                if not any(_value_matches_literal(case.literal, literal) for case in statement.cases)
+            ]
+            if missing and not statement.else_body:
+                self._add_line(
+                    statement.expression,
+                    "DEPENDING ON value requires ELSE unless all values are covered; "
+                    f"missing {_literal_value_text(missing[0])}",
+                    "GWT014",
+                )
+        elif not statement.else_body:
+            self._add_line(
+                statement.expression,
+                "DEPENDING ON value requires ELSE unless all values are covered",
+                "GWT014",
+            )
 
         self._check_body(statement.else_body, scope.copy(), expected_return)
 
@@ -751,7 +829,7 @@ class Checker:
             if value_type is not None and not _is_collection_type(value_type):
                 self._add_line(line, f"count requires a list, got {value_type}", "GWT016")
             self._check_path(path, line)
-            self._check_assignment_type("count into", path, "number", line, scope)
+            self._check_assignment_type("count into", path, "integer", line, scope)
             return
 
         if command == "sum":
@@ -775,7 +853,7 @@ class Checker:
             elif value_type is not None:
                 self._check_sum_item_type(value_type, line)
             self._check_path(path, line)
-            self._check_assignment_type("sum into", path, "number", line, scope)
+            self._check_assignment_type("sum into", path, _sum_result_type(value_type), line, scope)
             return
 
         if command == "find":
@@ -833,15 +911,15 @@ class Checker:
 
     def _check_subtract_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
         expected_type = scope.types.get(path)
-        if expected_type is not None and expected_type != "number" and expected_type != "any":
-            self._add_line(line, f"subtract from {path} expected number, got {expected_type}", "GWT016")
+        if expected_type is not None and not _is_numeric_type(expected_type) and expected_type != "any":
+            self._add_line(line, f"subtract from {path} expected numeric, got {expected_type}", "GWT016")
             return
-        if actual_type is not None and actual_type != "number" and actual_type != "any":
-            self._add_line(line, f"subtract value expected number, got {actual_type}", "GWT016")
+        if actual_type is not None and not _is_numeric_type(actual_type) and actual_type != "any":
+            self._add_line(line, f"subtract value expected numeric, got {actual_type}", "GWT016")
 
     def _check_sum_item_type(self, value_type: str, line: Line) -> None:
         item_type = _list_item_type(value_type)
-        if item_type is None or item_type in {"number", "any"}:
+        if item_type is None or item_type == "any" or _is_numeric_type(item_type):
             return
         self._add_line(line, f"sum requires a list of numbers, got {value_type}", "GWT016")
 
@@ -867,10 +945,11 @@ class Checker:
 
         projected = self._check_expression(projection_text, line)
         projected_type = _infer_expression_type(projected, projection_scope) if projected is not None else None
-        if projected_type is not None and projected_type not in {"number", "any"}:
+        if projected_type is not None and projected_type != "any" and not _is_numeric_type(projected_type):
             self._add_line(line, f"sum projection expected number, got {projected_type}", "GWT016")
         self._check_path(path, line)
-        self._check_assignment_type("sum into", path, "number", line, scope)
+        result_type = _sum_result_type(f"list<{projected_type}>") if projected_type is not None else None
+        self._check_assignment_type("sum into", path, result_type, line, scope)
 
     def _check_find(self, line: Line, scope: Scope) -> None:
         parsed = _parse_find_statement(line.text)
@@ -1159,7 +1238,11 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
         value = expression.value
         if isinstance(value, bool):
             return "boolean"
-        if isinstance(value, (int, float)):
+        if isinstance(value, int):
+            return "integer"
+        if isinstance(value, Decimal):
+            return "decimal"
+        if isinstance(value, float):
             return "number"
         if isinstance(value, str):
             return "text"
@@ -1181,8 +1264,8 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
         if expression.operator in {"+", "-", "*", "/"}:
             left_type = _infer_expression_type(expression.left, scope)
             right_type = _infer_expression_type(expression.right, scope)
-            if left_type == right_type == "number":
-                return "number"
+            if _is_numeric_type(left_type) and _is_numeric_type(right_type):
+                return _numeric_result_type(left_type, right_type, expression.operator)
             if expression.operator == "+" and left_type == right_type == "text":
                 return "text"
     return None
@@ -1196,7 +1279,11 @@ def _assignable(actual_type: str, expected_type: str) -> bool:
         return actual_type == expected_literal_base
     actual_literal_base = _literal_union_base_type(actual_type)
     if actual_literal_base is not None:
-        return actual_literal_base == expected_type
+        return _assignable(actual_literal_base, expected_type)
+    if actual_type == "integer" and expected_type in {"decimal", "number"}:
+        return True
+    if actual_type == "decimal" and expected_type == "number":
+        return True
     actual_item = _list_item_type(actual_type)
     expected_item = _list_item_type(expected_type)
     if expected_type == "list" and actual_item is not None:
@@ -1206,6 +1293,66 @@ def _assignable(actual_type: str, expected_type: str) -> bool:
     if actual_item is not None and expected_item is not None:
         return _assignable(actual_item, expected_item)
     return False
+
+
+def _is_numeric_type(value_type: str | None) -> bool:
+    return value_type in {"number", "integer", "decimal"}
+
+
+def _numeric_result_type(left_type: str, right_type: str, operator: str) -> str:
+    if "number" in {left_type, right_type}:
+        return "number"
+    if "decimal" in {left_type, right_type}:
+        return "decimal"
+    if operator == "/":
+        return "number"
+    return "integer"
+
+
+def _sum_result_type(value_type: str | None) -> str | None:
+    if value_type is None:
+        return None
+    item_type = _list_item_type(value_type)
+    if item_type is None:
+        return None
+    if item_type == "any":
+        return "number"
+    return item_type if _is_numeric_type(item_type) else "number"
+
+
+def _literal_type_name(value: Any) -> str | None:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, Decimal):
+        return "decimal"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "text"
+    if isinstance(value, list):
+        return "list"
+    return None
+
+
+def _is_scalar_match_type(value_type: str) -> bool:
+    if value_type == "any":
+        return True
+    if value_type in {"text", "boolean", "number", "integer", "decimal"}:
+        return True
+    return _literal_union_values(value_type) is not None
+
+
+def _case_literal_matches_expression_type(literal: Any, literal_type: str | None, expression_type: str) -> bool:
+    if expression_type == "any":
+        return True
+    literal_values = _literal_union_values(expression_type)
+    if literal_values is not None:
+        return any(_value_matches_literal(literal, value) for value in literal_values)
+    if expression_type == "number":
+        return _is_numeric_type(literal_type)
+    return literal_type == expression_type
 
 
 def _is_collection_type(value_type: str) -> bool:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import re
 import shlex
@@ -12,7 +13,7 @@ from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
-DTO_TYPES = {"number", "text", "boolean", "list", "any"}
+DTO_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
 LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
 SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
 RESERVED_BEHAVIOR_NAMES = {
@@ -145,6 +146,8 @@ class MatchCase:
     name: str
     body: list[Any]
     line: Line
+    selector: str = "kind"
+    literal: Any = None
 
 
 @dataclass
@@ -154,6 +157,13 @@ class MatchBlock:
     else_body: list[Any]
     header_line: Line | None = None
     else_line: Line | None = None
+
+
+@dataclass(frozen=True)
+class ExportedEntry:
+    name: str
+    entry: str
+    line: Line
 
 
 @dataclass(frozen=True)
@@ -248,6 +258,7 @@ class Program:
     dtos: dict[str, DtoDefinition] = field(default_factory=dict)
     variants: dict[str, VariantDefinition] = field(default_factory=dict)
     actions: list[Action] = field(default_factory=list)
+    exports: dict[str, ExportedEntry] = field(default_factory=dict)
     scenarios: list[Scenario] = field(default_factory=list)
 
 
@@ -334,6 +345,7 @@ def run_request(
         dtos={**program.dtos, **request.dtos},
         variants={**program.variants, **request.variants},
         actions=[*program.actions, *request.actions],
+        exports={**program.exports, **request.exports},
         scenarios=request.scenarios,
     )
     runtime = Runtime(combined)
@@ -348,10 +360,11 @@ def run_json_request(
     filename: str = "<program>",
     entry_filename: str = "<entry>",
     import_policy: ImportPolicy | None = None,
+    validate_contracts: bool = True,
 ) -> RunResult:
     program = parse_program(program_source, filename, import_policy=import_policy)
     runtime = Runtime(program)
-    return runtime.run_json(state, entry, entry_filename=entry_filename)
+    return runtime.run_json(state, entry, entry_filename=entry_filename, validate_contracts=validate_contracts)
 
 
 def parse_program(
@@ -418,6 +431,10 @@ def parse_program(
             program.dtos.update(imported.dtos)
             program.variants.update(imported.variants)
             program.actions.extend(imported.actions)
+            duplicate_exports = sorted(set(program.exports) & set(imported.exports))
+            if duplicate_exports:
+                raise GwtError(f"{filename}:{line.number}: EXPORT already declares: {duplicate_exports[0]}")
+            program.exports.update(imported.exports)
             index += 1
             continue
 
@@ -452,6 +469,13 @@ def parse_program(
             program.name = text.removeprefix("PROGRAM ").strip()
             if not program.name:
                 raise GwtError(f"{filename}:{line.number}: PROGRAM requires a name")
+            index += 1
+            last_top_keyword = None
+        elif text.startswith("EXPORT "):
+            exported = _parse_export(text, filename, line)
+            if exported.name in program.exports:
+                raise GwtError(f"{filename}:{line.number}: EXPORT already declares: {exported.name}")
+            program.exports[exported.name] = exported
             index += 1
             last_top_keyword = None
         elif text.startswith("REQUEST "):
@@ -570,12 +594,22 @@ class Runtime:
                 results.append(self._run_scenario(scenario))
         return RunResult(results)
 
-    def run_json(self, state: dict[str, Any], entry: str, *, entry_filename: str = "<entry>") -> RunResult:
+    def run_json(
+        self,
+        state: dict[str, Any],
+        entry: str,
+        *,
+        entry_filename: str = "<entry>",
+        validate_contracts: bool = True,
+    ) -> RunResult:
         if not isinstance(state, dict):
             raise GwtError("JSON input must be an object")
         entry = entry.strip()
         if not entry:
             raise GwtError("entry behavior is required for JSON input")
+        exported = self.program.exports.get(entry)
+        if exported is not None:
+            entry = exported.entry
 
         self.state = {}
         self.output = []
@@ -594,21 +628,27 @@ class Runtime:
 
         json_line = Line(1, "<json-input>", entry_filename, 1, len("<json-input>"))
         try:
+            declared_path_types = self.path_types
+            self.path_types = {}
             for path, value in state.items():
                 if not isinstance(path, str) or not _is_path(path):
                     raise GwtError(f"JSON input key must be a state path: {path}")
                 self._set_path(path, deepcopy(value), {}, json_line)
         except GwtError as exc:
             raise _with_line_context(json_line, exc) from exc
+        finally:
+            self.path_types = declared_path_types
 
-        self._validate_contract_bindings(self.program.inputs, "REQUEST")
+        if validate_contracts:
+            self._validate_contract_bindings(self.program.inputs, "REQUEST")
         for line in self.program.background.whens:
             self._run_command_or_action(line, {})
 
         entry_line = Line(1, entry, entry_filename, 1, max(1, len(entry)))
         self._run_command_or_action(entry_line, {})
 
-        self._validate_contract_bindings(self.program.outputs, "OUTPUT")
+        if validate_contracts:
+            self._validate_contract_bindings(self.program.outputs, "OUTPUT")
         for line in self.program.background.thens:
             self._before_line(line, {})
             try:
@@ -689,16 +729,17 @@ class Runtime:
             if isinstance(value, PathRef):
                 resolved = self._resolve_path(value.path, {})
                 self._register_path_type(resolved, value_type)
-                self._validate_value_type(resolved, self._get_path(resolved, {}), value_type, line)
+                normalized = self._validate_value_type(resolved, self._get_path(resolved, {}), value_type, line)
+                self._set_path(resolved, normalized, {}, line)
             else:
-                self._validate_value_type(name, value, value_type, line)
+                env[name] = self._validate_value_type(name, value, value_type, line)
 
-    def _validate_assignment(self, path: str, value: Any, line: Line | None) -> None:
+    def _validate_assignment(self, path: str, value: Any, line: Line | None) -> Any:
         expected_type = self.path_types.get(path)
         if expected_type is None:
-            return
+            return value
         validation_line = line or Line(0, path)
-        self._validate_value_type(path, value, expected_type, validation_line)
+        return self._validate_value_type(path, value, expected_type, validation_line)
 
     def _validate_dto(self, validation: DtoValidation) -> None:
         dto = self.program.dtos.get(validation.dto_name)
@@ -734,49 +775,57 @@ class Runtime:
 
         for field, expected_type in dto.fields.items():
             field_value = flat_value[field]
-            self._validate_value_type(f"{base_path}.{field}", field_value, expected_type, line)
+            normalized = self._validate_value_type(f"{base_path}.{field}", field_value, expected_type, line)
+            _set_flat_record_value(value, field, normalized)
 
-    def _validate_value_type(self, path: str, value: Any, expected_type: str, line: Line) -> None:
+    def _validate_value_type(self, path: str, value: Any, expected_type: str, line: Line) -> Any:
         if expected_type == "any":
-            return
+            return value
         literal_values = _literal_union_values(expected_type)
         if literal_values is not None:
-            if not any(_value_matches_literal(value, literal) for literal in literal_values):
+            candidate = value
+            base_type = _value_type_name(literal_values[0])
+            if base_type in DTO_TYPES:
+                normalized = _normalize_primitive_value(value, base_type)
+                if normalized is not _INVALID_TYPE:
+                    candidate = normalized
+            if not any(_value_matches_literal(candidate, literal) for literal in literal_values):
                 raise GwtError(
                     f"expected {path} to be one of {_format_literal_values(literal_values)}, "
                     f"got {_literal_value_text(value)}"
                 )
-            return
+            return candidate
         if expected_type in DTO_TYPES:
-            if not _value_matches_primitive_type(value, expected_type):
+            normalized = _normalize_primitive_value(value, expected_type)
+            if normalized is _INVALID_TYPE:
                 raise GwtError(
                     f"expected {path} to be {expected_type}, got {_value_type_name(value)}"
                 )
-            return
+            return normalized
 
         item_type = _list_item_type(expected_type)
         if item_type is not None:
             if not isinstance(value, list):
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
             for index, item in enumerate(value, start=1):
-                self._validate_value_type(f"{path}[{index}]", item, item_type, line)
-            return
+                value[index - 1] = self._validate_value_type(f"{path}[{index}]", item, item_type, line)
+            return value
 
         dto = self.program.dtos.get(expected_type)
         if dto is not None:
             if not isinstance(value, dict):
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
             self._validate_dto_fields(path, value, dto, line)
-            return
+            return value
 
         variant = self.program.variants.get(expected_type)
         if variant is not None:
             self._validate_variant_value(path, value, variant, line)
-            return
+            return value
 
         raise GwtError(f"unknown record type: {expected_type}")
 
-    def _validate_variant_value(self, path: str, value: Any, variant: VariantDefinition, line: Line) -> None:
+    def _validate_variant_value(self, path: str, value: Any, variant: VariantDefinition, line: Line) -> dict[str, Any]:
         if not isinstance(value, dict):
             raise GwtError(f"expected {path} to be {variant.name}, got {_value_type_name(value)}")
         kind = value.get("kind")
@@ -799,13 +848,16 @@ class Runtime:
             raise GwtError(f"record {variant.name} unknown field for kind {kind}: {path}.{extra[0]}")
 
         for field, expected_type in case.fields.items():
-            self._validate_value_type(f"{path}.{field}", flat_value[field], expected_type, line)
+            normalized = self._validate_value_type(f"{path}.{field}", flat_value[field], expected_type, line)
+            _set_flat_record_value(value, field, normalized)
+        return value
 
     def _validate_contract_bindings(self, bindings: dict[str, ContractBinding], label: str) -> None:
         for binding in bindings.values():
             try:
                 value = self._get_path(binding.path, {})
-                self._validate_value_type(binding.path, value, binding.value_type, binding.line)
+                normalized = self._validate_value_type(binding.path, value, binding.value_type, binding.line)
+                self._set_path(binding.path, normalized, {}, binding.line)
             except GwtError as exc:
                 raise _with_line_context(binding.line, GwtError(f"{label} contract failed for {binding.path}: {exc}")) from exc
 
@@ -944,7 +996,10 @@ class Runtime:
             try:
                 new_value = self._get_path(path, env) + value
             except TypeError as exc:
-                current_type = _value_type_name(self._get_path(path, env))
+                current_type = self.path_types.get(
+                    self._resolve_path(path, env),
+                    _value_type_name(self._get_path(path, env)),
+                )
                 raise GwtError(f"line {line.number}: cannot add {_value_type_name(value)} to {current_type}") from exc
             self._set_path(path, new_value, env, line)
         elif tokens[0] == "subtract":
@@ -957,7 +1012,10 @@ class Runtime:
             try:
                 new_value = self._get_path(path, env) - value
             except TypeError as exc:
-                current_type = _value_type_name(self._get_path(path, env))
+                current_type = self.path_types.get(
+                    self._resolve_path(path, env),
+                    _value_type_name(self._get_path(path, env)),
+                )
                 raise GwtError(
                     f"line {line.number}: cannot subtract {_value_type_name(value)} from {current_type}"
                 ) from exc
@@ -994,7 +1052,7 @@ class Runtime:
                     sum_env = dict(env)
                     sum_env[name] = value
                     item = self._eval_expression(projection_text, sum_env)
-                    if not isinstance(item, (int, float)) or isinstance(item, bool):
+                    if not _is_numeric_value(item):
                         raise GwtError(f"line {line.number}: sum requires numeric projected values")
                     total += item
                 self._set_path(path, total, env, line)
@@ -1005,7 +1063,7 @@ class Runtime:
                 raise GwtError(f"line {line.number}: sum requires a list")
             total = 0
             for value in values:
-                if not isinstance(value, (int, float)) or isinstance(value, bool):
+                if not _is_numeric_value(value):
                     raise GwtError(f"line {line.number}: sum requires a list of numbers")
                 total += value
             self._set_path(path, total, env, line)
@@ -1155,17 +1213,30 @@ class Runtime:
             value = self._eval_expression(statement.expression.text, env)
         except GwtError as exc:
             raise _with_line_context(statement.expression, exc) from exc
-        if not isinstance(value, dict):
-            raise GwtError(f"line {statement.expression.number}: DEPENDING ON requires a record value")
-        kind = value.get("kind")
-        if not isinstance(kind, str):
-            raise GwtError(f"line {statement.expression.number}: DEPENDING ON record has no kind")
+
+        selector = statement.cases[0].selector if statement.cases else "kind"
+        if selector == "kind":
+            if not isinstance(value, dict):
+                raise GwtError(f"line {statement.expression.number}: DEPENDING ON requires a record value")
+            kind = value.get("kind")
+            if not isinstance(kind, str):
+                raise GwtError(f"line {statement.expression.number}: DEPENDING ON record has no kind")
+            for case in statement.cases:
+                if case.name == kind:
+                    return self._run_body(case.body, env)
+            if statement.else_body:
+                return self._run_body(statement.else_body, env)
+            raise GwtError(f"line {statement.expression.number}: DEPENDING ON has no branch for kind: {kind}")
+
         for case in statement.cases:
-            if case.name == kind:
+            if _value_matches_literal(value, case.literal):
                 return self._run_body(case.body, env)
         if statement.else_body:
             return self._run_body(statement.else_body, env)
-        raise GwtError(f"line {statement.expression.number}: DEPENDING ON has no branch for kind: {kind}")
+        raise GwtError(
+            f"line {statement.expression.number}: "
+            f"DEPENDING ON has no branch for value: {_literal_value_text(value)}"
+        )
 
     def _match_action(self, action: Action, call: list[str], caller_env: dict[str, Any]) -> dict[str, Any] | None:
         if len(action.signature) != len(call):
@@ -1253,7 +1324,7 @@ class Runtime:
             raise GwtError(f"invalid path: {path}")
 
         if parts[0] in env and not isinstance(env[parts[0]], PathRef):
-            self._validate_assignment(resolved, value, line)
+            value = self._validate_assignment(resolved, value, line)
             if len(parts) == 1:
                 env[parts[0]] = value
                 return
@@ -1270,7 +1341,7 @@ class Runtime:
             current[parts[-1]] = value
             return
 
-        self._validate_assignment(resolved, value, line)
+        value = self._validate_assignment(resolved, value, line)
 
         current = self.state
         for part in parts[:-1]:
@@ -1395,6 +1466,20 @@ def _parse_contract_binding(keyword: str, text: str, filename: str, line: Line) 
     return ContractBinding(keyword.lower(), path, value_type, _derived_line(line, text, 0))
 
 
+def _parse_export(text: str, filename: str, line: Line) -> ExportedEntry:
+    statement = text.removeprefix("EXPORT ").strip()
+    if " as " not in statement:
+        raise GwtError(f"{filename}:{line.number}: EXPORT expects 'EXPORT name as behavior call'")
+    name, entry = statement.split(" as ", 1)
+    name = name.strip()
+    entry = entry.strip()
+    if not _is_local_name(name):
+        raise GwtError(f"{filename}:{line.number}: EXPORT requires a simple name")
+    if not entry:
+        raise GwtError(f"{filename}:{line.number}: EXPORT requires a behavior call")
+    return ExportedEntry(name, entry, _derived_line(line, name, len("EXPORT ")))
+
+
 def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: int = 2) -> tuple[list[Any], int]:
     body: list[Any] = []
     last_body_keyword: str | None = None
@@ -1412,8 +1497,8 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             break
         if text.startswith("ELSE "):
             raise GwtError(f"{filename}:{line.number}: ELSE does not take a condition")
-        if text.startswith("WHEN the kind is "):
-            raise GwtError(f"{filename}:{line.number}: WHEN the kind is can only appear inside DEPENDING ON")
+        if text.startswith("WHEN the kind is ") or text.startswith("WHEN the value is "):
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind/value is can only appear inside DEPENDING ON")
         if text.startswith("GIVEN ") or text.startswith("THEN returns "):
             raise GwtError(f"{filename}:{line.number}: behavior contracts must appear before executable statements")
 
@@ -1497,7 +1582,7 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             index += 1
             cases, else_body, else_line, index = _parse_depending_block(lines, index, filename, indent + 2)
             if not cases:
-                raise GwtError(f"{filename}:{line.number}: DEPENDING ON requires WHEN the kind is branches")
+                raise GwtError(f"{filename}:{line.number}: DEPENDING ON requires WHEN the kind/value is branches")
             body.append(
                 MatchBlock(
                     _derived_line(line, expression, len("DEPENDING ON ")),
@@ -1526,6 +1611,7 @@ def _parse_depending_block(
     else_body: list[Any] = []
     else_line: Line | None = None
     seen_else = False
+    selector: str | None = None
 
     while index < len(lines):
         line = lines[index]
@@ -1547,28 +1633,68 @@ def _parse_depending_block(
                 raise GwtError(f"{filename}:{line.number}: ELSE requires a body")
             continue
 
-        case_name = _parse_depending_case_header(text, filename, line.number)
-        if case_name is None:
-            raise GwtError(f"{filename}:{line.number}: DEPENDING ON expects 'WHEN the kind is name' or ELSE")
+        case = _parse_depending_case_header(text, filename, line.number)
+        if case is None:
+            raise GwtError(
+                f"{filename}:{line.number}: "
+                "DEPENDING ON expects 'WHEN the kind is name', 'WHEN the value is literal', or ELSE"
+            )
         if seen_else:
-            raise GwtError(f"{filename}:{line.number}: WHEN the kind is cannot follow ELSE")
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind/value is cannot follow ELSE")
+        if selector is None:
+            selector = case.selector
+        elif selector != case.selector:
+            raise GwtError(f"{filename}:{line.number}: DEPENDING ON cannot mix kind and value branches")
         index += 1
         case_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
         if not case_body:
-            raise GwtError(f"{filename}:{line.number}: WHEN the kind is requires a body")
-        cases.append(MatchCase(case_name, case_body, _derived_line(line, case_name, text.find(case_name))))
+            raise GwtError(f"{filename}:{line.number}: WHEN the kind/value is requires a body")
+        cases.append(
+            MatchCase(
+                case.name,
+                case_body,
+                case.line,
+                case.selector,
+                case.literal,
+            )
+        )
 
     return cases, else_body, else_line, index
 
 
-def _parse_depending_case_header(text: str, filename: str, line_number: int) -> str | None:
+def _parse_depending_case_header(text: str, filename: str, line_number: int) -> MatchCase | None:
     match = re.match(r"^WHEN the kind is ([A-Za-z_][A-Za-z0-9_]*)$", text)
-    if match is None:
+    if match is not None:
+        case_name = match.group(1)
+        if not _is_local_name(case_name):
+            raise GwtError(f"{filename}:{line_number}: WHEN the kind is requires a simple name")
+        return MatchCase(
+            case_name,
+            [],
+            Line(line_number, case_name, filename, text.find(case_name) + 1, len(case_name)),
+            "kind",
+            None,
+        )
+
+    prefix = "WHEN the value is "
+    if not text.startswith(prefix):
         return None
-    case_name = match.group(1)
-    if not _is_local_name(case_name):
-        raise GwtError(f"{filename}:{line_number}: WHEN the kind is requires a simple name")
-    return case_name
+    literal_text = text.removeprefix(prefix).strip()
+    if not literal_text:
+        raise GwtError(f"{filename}:{line_number}: WHEN the value is requires a literal")
+    try:
+        expression = parse_expression(literal_text)
+    except GwtError as exc:
+        raise GwtError(f"{filename}:{line_number}: WHEN the value is requires a literal: {exc}") from exc
+    if not isinstance(expression, Literal) or isinstance(expression.value, list):
+        raise GwtError(f"{filename}:{line_number}: WHEN the value is requires a literal")
+    return MatchCase(
+        _literal_value_text(expression.value),
+        [],
+        Line(line_number, literal_text, filename, text.find(literal_text) + 1, len(literal_text)),
+        "value",
+        expression.value,
+    )
 
 
 def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinition, int]:
@@ -2254,6 +2380,17 @@ def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
     return flattened
 
 
+def _set_flat_record_value(target: dict[str, Any], path: str, value: Any) -> None:
+    current = target
+    parts = path.split(".")
+    for part in parts[:-1]:
+        next_value = current.setdefault(part, {})
+        if not isinstance(next_value, dict):
+            raise GwtError(f"record path collides with scalar: {path}")
+        current = next_value
+    current[parts[-1]] = value
+
+
 def _set_nested_output(target: dict[str, Any], path: str, value: Any) -> None:
     current = target
     parts = path.split(".")
@@ -2265,18 +2402,49 @@ def _set_nested_output(target: dict[str, Any], path: str, value: Any) -> None:
     current[parts[-1]] = value
 
 
-def _value_matches_primitive_type(value: Any, expected_type: str) -> bool:
+_INVALID_TYPE = object()
+
+
+def _is_numeric_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, Decimal):
+        return value.is_finite()
+    return isinstance(value, (int, float))
+
+
+def _normalize_primitive_value(value: Any, expected_type: str) -> Any:
     if expected_type == "number":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        if not _is_numeric_value(value):
+            return _INVALID_TYPE
+        return float(value) if isinstance(value, Decimal) else value
+    if expected_type == "integer":
+        return value if isinstance(value, int) and not isinstance(value, bool) else _INVALID_TYPE
+    if expected_type == "decimal":
+        if isinstance(value, Decimal):
+            return value if value.is_finite() else _INVALID_TYPE
+        if isinstance(value, int) and not isinstance(value, bool):
+            return Decimal(value)
+        if isinstance(value, str):
+            try:
+                normalized = Decimal(value)
+            except InvalidOperation:
+                return _INVALID_TYPE
+            return normalized if normalized.is_finite() else _INVALID_TYPE
+        return _INVALID_TYPE
     if expected_type == "text":
-        return isinstance(value, str)
+        return value if isinstance(value, str) else _INVALID_TYPE
     if expected_type == "boolean":
-        return isinstance(value, bool)
+        return value if isinstance(value, bool) else _INVALID_TYPE
     if expected_type == "list":
-        return isinstance(value, list)
+        return value if isinstance(value, list) else _INVALID_TYPE
     if expected_type == "any":
-        return True
+        return value
     raise AssertionError(expected_type)
+
+
+def _value_matches_primitive_type(value: Any, expected_type: str) -> bool:
+    return _normalize_primitive_value(value, expected_type) is not _INVALID_TYPE
 
 
 def _value_type_name(value: Any) -> str:
@@ -2284,7 +2452,11 @@ def _value_type_name(value: Any) -> str:
         return "null"
     if isinstance(value, bool):
         return "boolean"
-    if isinstance(value, (int, float)):
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, Decimal):
+        return "decimal"
+    if isinstance(value, float):
         return "number"
     if isinstance(value, str):
         return "text"
@@ -2454,7 +2626,7 @@ def _literal_union_values(value_type: str) -> tuple[Any, ...] | None:
         if isinstance(value, list):
             return None
         value_type_name = _value_type_name(value)
-        if value_type_name not in {"text", "number", "boolean"}:
+        if value_type_name not in {"text", "number", "integer", "decimal", "boolean"}:
             return None
         if base_type is None:
             base_type = value_type_name
@@ -2478,8 +2650,14 @@ def _variant_kind_type(variant: VariantDefinition) -> str:
 def _value_matches_literal(value: Any, literal: Any) -> bool:
     if isinstance(literal, bool):
         return isinstance(value, bool) and value == literal
-    if isinstance(literal, (int, float)):
-        return isinstance(value, (int, float)) and not isinstance(value, bool) and value == literal
+    if isinstance(literal, int):
+        return isinstance(value, int) and not isinstance(value, bool) and value == literal
+    if isinstance(literal, Decimal):
+        if isinstance(value, float):
+            return value == float(literal)
+        return isinstance(value, Decimal) and value == literal
+    if isinstance(literal, float):
+        return isinstance(value, float) and value == literal
     return type(value) is type(literal) and value == literal
 
 
