@@ -5,20 +5,20 @@ import hashlib
 import re
 from pathlib import Path
 
-from .entries import entry_candidates
 from .runtime import (
     Action,
     ContractBinding,
     DtoDefinition,
     ImportPolicy,
     Line,
+    NamedRequest,
     Scenario,
     VariantDefinition,
     _signature_parameters,
 )
 from .service import Analysis, analyze_file, analyze_source
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -47,18 +47,14 @@ class InspectionResult:
             ],
             "records": [],
             "oneOfRecords": [],
-            "request": [],
-            "output": [],
+            "requests": [],
             "behaviors": [],
-            "entryCandidates": [],
             "scenarios": [],
             "counts": {
                 "records": 0,
                 "oneOfRecords": 0,
-                "requestBindings": 0,
-                "outputBindings": 0,
+                "requests": 0,
                 "behaviors": 0,
-                "entryCandidates": 0,
                 "scenarios": 0,
             },
         }
@@ -70,21 +66,13 @@ class InspectionResult:
             _variant_payload(variant, analysis.filename)
             for variant in program.variants.values()
         ]
-        request = [
-            _contract_payload(binding, analysis.filename)
-            for binding in program.inputs.values()
-        ]
-        output = [
-            _contract_payload(binding, analysis.filename)
-            for binding in program.outputs.values()
-        ]
         behaviors = [
             _behavior_payload(action, analysis.filename)
             for action in program.actions
         ]
-        entries = [
-            candidate.as_payload(analysis.filename)
-            for candidate in entry_candidates(program)
+        requests = [
+            _request_payload(request, analysis.filename)
+            for request in program.requests.values()
         ]
         scenarios = [
             _scenario_payload(scenario, analysis.filename)
@@ -95,18 +83,14 @@ class InspectionResult:
             {
                 "records": records,
                 "oneOfRecords": variants,
-                "request": request,
-                "output": output,
+                "requests": requests,
                 "behaviors": behaviors,
-                "entryCandidates": entries,
                 "scenarios": scenarios,
                 "counts": {
                     "records": len(records),
                     "oneOfRecords": len(variants),
-                    "requestBindings": len(request),
-                    "outputBindings": len(output),
+                    "requests": len(requests),
                     "behaviors": len(behaviors),
-                    "entryCandidates": len(entries),
                     "scenarios": len(scenarios),
                 },
             }
@@ -250,6 +234,28 @@ def _behavior_payload(action: Action, fallback_filename: str) -> dict[str, objec
         "line": action.line,
         "column": action.column,
         "length": action.length,
+    }
+
+
+def _request_payload(request: NamedRequest, fallback_filename: str) -> dict[str, object]:
+    line = request.line
+    return {
+        "name": request.name,
+        "file": line.filename or fallback_filename,
+        "line": line.number,
+        "column": line.column,
+        "length": line.length,
+        "inputs": [
+            _contract_payload(binding, fallback_filename)
+            for binding in request.inputs.values()
+        ],
+        "outputs": [
+            _contract_payload(binding, fallback_filename)
+            for binding in request.outputs.values()
+        ],
+        "givens": len(request.givens),
+        "whens": len(request.whens),
+        "thens": len(request.thens),
     }
 
 

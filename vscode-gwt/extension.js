@@ -599,7 +599,12 @@ function sourceLineKind(sourcePath, line) {
     if (stripped === "EXAMPLES" || stripped.startsWith("|")) {
       return "examples";
     }
-    if (/^(REQUEST|OUTPUT)\b/.test(stripped)) {
+    if (/^REQUEST\b/.test(stripped)) {
+      const nextText = lines[line] || "";
+      const hasBody = /^\s{2,}\S/.test(nextText);
+      return hasBody ? "declaration" : "unknown";
+    }
+    if (/^OUTPUT\b/.test(stripped)) {
       return "contract";
     }
     if (/^(PROGRAM|BACKGROUND|SCENARIO|USE|RECORD|DTO)\b/.test(stripped)) {
@@ -612,7 +617,9 @@ function sourceLineKind(sourcePath, line) {
       return "contract";
     }
     if (/^WHEN\b/.test(stripped)) {
-      return "behavior-definition";
+      const nextText = lines[line] || "";
+      const hasBody = /^\s{2,}\S/.test(nextText);
+      return hasBody ? "behavior-definition" : "unknown";
     }
     return "unknown";
   } catch (error) {

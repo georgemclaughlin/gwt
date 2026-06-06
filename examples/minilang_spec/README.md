@@ -70,7 +70,7 @@ Run with production-style JSON input:
 ```sh
 python -m gwtlang run examples/minilang_spec/rules.gwt \
   --json-input examples/minilang_spec/request.json \
-  --entry "run source through front_end into runtime" \
+  --request "run mini source" \
   --json
 ```
 

@@ -10,7 +10,7 @@ GWT is an experimental programming language built around executable
 - Runtime/parser/checker code lives in `gwtlang/`.
 - The VS Code extension lives in `vscode-gwt/`.
 - Language examples live in `examples/`.
-- The current versioned spec is `docs/spec/v0.1.md`.
+- The current versioned spec is `docs/spec/v0.2.md`.
 - The EBNF grammar is `docs/grammar.md`.
 - The longer language guide is `docs/language.md`.
 - Design principles and language-shape guardrails are in
@@ -61,7 +61,7 @@ plus `git diff --check`.
   in `tests/test_runtime.py`, `tests/test_checker.py`, and
   `tests/test_spec_v01.py`.
 - Keep docs aligned with implementation. Syntax or semantic changes usually
-  require updates to `docs/spec/v0.1.md`, `docs/grammar.md`,
+  require updates to the current `docs/spec/v*.md`, `docs/grammar.md`,
   `docs/language.md`, and often `README.md`.
 - Do not add new syntax without at least one runtime test, checker coverage
   when applicable, and an example or spec note.
@@ -79,7 +79,7 @@ plus `git diff --check`.
 
 ## Formatter Expectations
 
-`gwt format` is the canonical source formatter for v0.1.
+`gwt format` is the canonical source formatter for the current language.
 
 - Keep all example `.gwt` files formatted.
 - Formatter validation is syntax-oriented and permits request files whose DTOs

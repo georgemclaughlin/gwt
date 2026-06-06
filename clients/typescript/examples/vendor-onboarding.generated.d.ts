@@ -35,19 +35,23 @@ export interface VendorDecision {
   reason: "new" | "ready_to_onboard" | "manual_review_required" | "high_risk_signal" | "risk_too_high";
 }
 
-export interface GwtRequest {
+export interface ReviewVendorRequest {
   vendor: VendorRequest;
+}
+
+export interface ReviewVendorOutput {
   decision: VendorDecision;
 }
 
-export interface GwtOutput {
-  decision: VendorDecision;
+export type GwtRequestName = "review vendor";
+
+export interface GwtRequests {
+  "review vendor": ReviewVendorRequest;
 }
 
-export type GwtEntry =
-  | "reset decision"
-  | "collect requirements from vendor into decision"
-  | "score inherent risk from vendor into decision"
-  | "score risk signals from vendor into decision"
-  | "classify decision"
-  | "review vendor into decision";
+export interface GwtOutputs {
+  "review vendor": ReviewVendorOutput;
+}
+
+export type GwtRequest = GwtRequests[GwtRequestName];
+export type GwtOutput = GwtOutputs[GwtRequestName];

@@ -92,7 +92,7 @@ class ExampleProgramTests(unittest.TestCase):
             text=True,
         )
 
-        self.assertIn('"price_cart_v1"', completed.stdout)
+        self.assertIn('"price cart"', completed.stdout)
         self.assertIn('"total": "24.60"', completed.stdout)
         self.assertIn("runtime total: 24.60 (Decimal)", completed.stdout)
         self.assertIn("float input rejected:", completed.stdout)
@@ -230,9 +230,9 @@ class ExampleProgramTests(unittest.TestCase):
         request_result = run_json_request(
             program.read_text(),
             json.loads(request.read_text()),
-            entry="fulfill order from inventory into fulfillment",
+            request="fulfill order",
             filename=str(program),
-            entry_filename=str(request),
+            request_filename=str(request),
         )
         self.assertEqual(request_result.state["fulfillment"]["status"], "partial")
         self.assertEqual(request_result.state["inventory"]["items"][1]["available"], 0)
@@ -259,9 +259,9 @@ class ExampleProgramTests(unittest.TestCase):
         request_result = run_json_request(
             program.read_text(),
             json.loads(request.read_text()),
-            entry="run source through front_end into runtime",
+            request="run mini source",
             filename=str(program),
-            entry_filename=str(request),
+            request_filename=str(request),
         )
         self.assertEqual(request_result.scenarios[0].returned_state["runtime"]["status"], "passed")
         self.assertEqual(request_result.scenarios[0].returned_state["runtime"]["outputs"], ["large"])
@@ -270,7 +270,7 @@ class ExampleProgramTests(unittest.TestCase):
     def test_minilang2_vm_runs_scenarios_and_json_request(self):
         program = Path("examples/minilang2_vm/rules.gwt")
         request = Path("examples/minilang2_vm/request.json")
-        entry = "execute program source through front_end with resolver and bytecode on vm under debugger using repl"
+        request_name = "execute mini2 source"
 
         analysis = analyze_file(program)
         self.assertEqual(analysis.diagnostics, [])
@@ -288,9 +288,9 @@ class ExampleProgramTests(unittest.TestCase):
         request_result = run_json_request(
             program.read_text(),
             json.loads(request.read_text()),
-            entry=entry,
+            request=request_name,
             filename=str(program),
-            entry_filename=str(request),
+            request_filename=str(request),
         )
         returned = request_result.scenarios[0].returned_state
         self.assertEqual(returned["vm"]["status"], "passed")
@@ -313,9 +313,9 @@ class ExampleProgramTests(unittest.TestCase):
         request_result = run_json_request(
             program.read_text(),
             json.loads(request.read_text()),
-            entry="normalize raw into profile",
+            request="normalize contact profile",
             filename=str(program),
-            entry_filename=str(request),
+            request_filename=str(request),
         )
         profile = request_result.scenarios[0].returned_state["profile"]
         self.assertEqual(profile["status"], "normalized")
@@ -345,9 +345,9 @@ class ExampleProgramTests(unittest.TestCase):
         request_result = run_json_request(
             program.read_text(),
             json.loads(request.read_text()),
-            entry="review vendor into decision",
+            request="review vendor",
             filename=str(program),
-            entry_filename=str(request),
+            request_filename=str(request),
         )
         decision = request_result.scenarios[0].returned_state["decision"]
         self.assertEqual(decision["status"], "needs_review")
@@ -363,9 +363,13 @@ class ExampleProgramTests(unittest.TestCase):
                 RECORD Decision
                   status: "new" | "done"
 
-                OUTPUT decision is Decision
+                REQUEST bad output
+                  WHEN print "bad"
 
-                GIVEN count is 1
+                  OUTPUT decision is Decision
+
+                SCENARIO bad output
+                REQUEST bad output
                 '''
             )
 

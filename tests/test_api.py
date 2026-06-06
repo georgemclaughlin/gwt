@@ -31,8 +31,12 @@ class PublicApiTests(unittest.TestCase):
                   shipping: number
                   total: number
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
 
                 WHEN checkout <cart>
                   GIVEN cart is Cart
@@ -44,11 +48,11 @@ class PublicApiTests(unittest.TestCase):
             program.write_text("this is no longer valid GWT")
             first = compiled.run_json(
                 {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
-                entry="checkout cart",
+                request="checkout cart",
             )
             second = compiled.run_json(
                 {"cart": {"subtotal": 10, "shipping": 5, "total": 0}},
-                entry="checkout cart",
+                request="checkout cart",
             )
 
         self.assertTrue(compiled.ok)
@@ -61,8 +65,12 @@ class PublicApiTests(unittest.TestCase):
             program = Path(temp_dir) / "counter.gwt"
             program.write_text(
                 """
-                REQUEST count is number
-                OUTPUT count is number
+                REQUEST increment count
+                  GIVEN count is number
+
+                  WHEN increment count
+
+                  OUTPUT count is number
 
                 WHEN increment count
                   add 1 to count
@@ -70,7 +78,7 @@ class PublicApiTests(unittest.TestCase):
             )
 
             compiled = GwtClient(program).compile()
-            result = compiled.run_json({"count": 2}, entry="increment count")
+            result = compiled.run_json({"count": 2}, request="increment count")
 
         self.assertEqual(result.as_payload()["result"]["count"], 3)
 
@@ -82,8 +90,12 @@ class PublicApiTests(unittest.TestCase):
               quantity: integer
               total: decimal
 
-            REQUEST price is Price
-            OUTPUT price is Price
+            REQUEST price order
+              GIVEN price is Price
+
+              WHEN price order price
+
+              OUTPUT price is Price
 
             WHEN price order <price>
               GIVEN price is Price
@@ -93,7 +105,7 @@ class PublicApiTests(unittest.TestCase):
 
         result = compiled.run_json(
             {"price": {"amount": "12.30", "quantity": 2, "total": "0.00"}},
-            entry="price order price",
+            request="price order",
         )
 
         self.assertEqual(result.state["price"]["amount"], Decimal("12.30"))
@@ -107,8 +119,12 @@ class PublicApiTests(unittest.TestCase):
             RECORD Price
               amount: decimal
 
-            REQUEST price is Price
-            OUTPUT price is Price
+            REQUEST accept price
+              GIVEN price is Price
+
+              WHEN accept price
+
+              OUTPUT price is Price
 
             WHEN accept price
               PASS
@@ -116,7 +132,7 @@ class PublicApiTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(GwtError, "expected price.amount to be decimal, got number"):
-            compiled.run_json({"price": {"amount": 12.3}}, entry="accept price")
+            compiled.run_json({"price": {"amount": 12.3}}, request="accept price")
 
     def test_decimal_contract_rejects_non_finite_strings(self):
         compiled = compile_text(
@@ -124,7 +140,10 @@ class PublicApiTests(unittest.TestCase):
             RECORD Price
               amount: decimal
 
-            REQUEST price is Price
+            REQUEST accept price
+              GIVEN price is Price
+
+              WHEN accept price
 
             WHEN accept price
               PASS
@@ -134,20 +153,22 @@ class PublicApiTests(unittest.TestCase):
         for amount in ("NaN", "Infinity", "-Infinity"):
             with self.subTest(amount=amount):
                 with self.assertRaisesRegex(GwtError, "expected price.amount to be decimal"):
-                    compiled.run_json({"price": {"amount": amount}}, entry="accept price")
+                    compiled.run_json({"price": {"amount": amount}}, request="accept price")
 
     def test_number_output_serializes_decimal_literal_as_json_number(self):
         compiled = compile_text(
             """
-            REQUEST amount is number
-            OUTPUT amount is number
+            REQUEST choose amount
+              WHEN choose
+
+              OUTPUT amount is number
 
             WHEN choose
               set amount to 1.5
             """
         )
 
-        result = compiled.run_json({"amount": 0}, entry="choose")
+        result = compiled.run_json({}, request="choose amount")
 
         self.assertEqual(result.state["amount"], 1.5)
         self.assertEqual(result.as_payload()["result"]["amount"], 1.5)
@@ -155,8 +176,12 @@ class PublicApiTests(unittest.TestCase):
     def test_number_value_branch_matches_json_float(self):
         result = run_json_text(
             """
-            REQUEST mode is number
-            OUTPUT status is text
+            REQUEST classify mode
+              GIVEN mode is number
+
+              WHEN classify mode
+
+              OUTPUT status is text
 
             WHEN classify <mode>
               GIVEN mode is number
@@ -166,23 +191,25 @@ class PublicApiTests(unittest.TestCase):
                 ELSE
                   set status to "other"
             """,
-            {"mode": 1.5, "status": "new"},
-            entry="classify mode",
+            {"mode": 1.5},
+            request="classify mode",
         )
 
         self.assertEqual(result.as_payload()["result"]["status"], "matched")
 
-    def test_compiled_program_calls_export_by_stable_name(self):
+    def test_compiled_program_runs_named_request(self):
         compiled = compile_text(
             """
             RECORD Cart
               subtotal: integer
               total: integer
 
-            REQUEST cart is Cart
-            OUTPUT cart is Cart
+            REQUEST price cart
+              GIVEN cart is Cart
 
-            EXPORT price_cart_v1 as price cart
+              WHEN price cart
+
+              OUTPUT cart is Cart
 
             WHEN price <cart>
               GIVEN cart is Cart
@@ -190,16 +217,13 @@ class PublicApiTests(unittest.TestCase):
             """
         )
 
-        result = compiled.call_json(
-            "price_cart_v1",
-            {"cart": {"subtotal": 84, "total": 0}},
-        )
+        result = compiled.run_json({"cart": {"subtotal": 84, "total": 0}}, request="price cart")
 
         self.assertEqual(result.as_payload()["result"]["cart"]["total"], 84)
-        with self.assertRaisesRegex(GwtError, "unknown export: missing"):
-            compiled.call_json("missing", {"cart": {"subtotal": 84, "total": 0}})
+        with self.assertRaisesRegex(GwtError, "unknown request: missing"):
+            compiled.run_json({"cart": {"subtotal": 84, "total": 0}}, request="missing")
 
-    def test_run_json_file_accepts_export_name_as_entry(self):
+    def test_run_json_file_accepts_request_name(self):
         result = run_json_file(
             "examples/exact_pricing/rules.gwt",
             {
@@ -211,7 +235,7 @@ class PublicApiTests(unittest.TestCase):
                     "status": "pending",
                 }
             },
-            entry="price_cart_v1",
+            request="price cart",
         )
 
         self.assertEqual(result.as_payload()["result"]["cart"]["total"], "24.60")
@@ -219,20 +243,22 @@ class PublicApiTests(unittest.TestCase):
     def test_trusted_json_skips_only_boundary_contracts(self):
         compiled = compile_text(
             """
-            REQUEST amount is integer
-            OUTPUT amount is integer
+            REQUEST accept amount
+              GIVEN amount is integer
 
-            EXPORT accept_amount_v1 as accept amount
+              WHEN accept amount
+
+              OUTPUT amount is integer
 
             WHEN accept amount
-              PASS
+              print "accepted"
             """
         )
 
         with self.assertRaisesRegex(GwtError, "REQUEST contract failed"):
-            compiled.run_json({"amount": "bad"}, entry="accept amount")
+            compiled.run_json({"amount": "bad"}, request="accept amount")
 
-        result = compiled.call_trusted_json("accept_amount_v1", {"amount": "bad"})
+        result = compiled.run_trusted_json({"amount": "bad"}, request="accept amount")
 
         self.assertEqual(result.as_payload()["result"]["amount"], "bad")
 
@@ -262,8 +288,12 @@ class PublicApiTests(unittest.TestCase):
                 """
                 USE "./types.gwt"
 
-                REQUEST account is Account
-                OUTPUT account is Account
+                REQUEST credit account
+                  GIVEN account is Account
+
+                  WHEN credit account
+
+                  OUTPUT account is Account
 
                 WHEN credit account
                   add 5 to account.balance
@@ -277,7 +307,7 @@ class PublicApiTests(unittest.TestCase):
             )
             result = compiled.run_json(
                 {"account": {"balance": 10}},
-                entry="credit account",
+                request="credit account",
             )
 
         self.assertEqual(result.as_payload()["result"]["account"]["balance"], 15)
@@ -355,8 +385,12 @@ class PublicApiTests(unittest.TestCase):
                 """
                 USE "../outside.gwt"
 
-                REQUEST count is number
-                OUTPUT count is number
+                REQUEST touch count
+                  GIVEN count is number
+
+                  WHEN touch count
+
+                  OUTPUT count is number
                 """
             )
 
@@ -367,11 +401,11 @@ class PublicApiTests(unittest.TestCase):
                 run_json_file(
                     program,
                     {"count": 1},
-                    entry="touch count",
+                    request="touch count",
                     import_roots=[root],
                 )
 
-    def test_gwt_client_checks_and_runs_json_entry(self):
+    def test_gwt_client_checks_and_runs_json_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
             program.write_text(
@@ -381,8 +415,12 @@ class PublicApiTests(unittest.TestCase):
                   shipping: number
                   total: number
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
 
                 WHEN checkout <cart>
                   GIVEN cart is Cart
@@ -394,7 +432,7 @@ class PublicApiTests(unittest.TestCase):
             check = client.check()
             result = client.run_json(
                 {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
-                entry="checkout cart",
+                request="checkout cart",
             )
 
         self.assertTrue(check.ok)
@@ -409,8 +447,12 @@ class PublicApiTests(unittest.TestCase):
                   subtotal: number
                   status: "new" | "priced"
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN print "priced"
+
+                  OUTPUT cart is Cart
                 """
             )
 
@@ -418,10 +460,10 @@ class PublicApiTests(unittest.TestCase):
 
         self.assertIn("export interface Cart", result.source)
         self.assertIn('status: "new" | "priced";', result.source)
-        self.assertIn("export interface GwtRequest", result.source)
+        self.assertIn("export interface PriceCartRequest", result.source)
         self.assertEqual(result.language, "typescript")
 
-    def test_inspect_file_reports_entry_candidates(self):
+    def test_inspect_file_reports_named_requests(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
             program.write_text(
@@ -429,8 +471,12 @@ class PublicApiTests(unittest.TestCase):
                 "  subtotal: number\n"
                 "  total: number\n"
                 "\n"
-                "REQUEST cart is Cart\n"
-                "OUTPUT cart is Cart\n"
+                "REQUEST checkout cart\n"
+                "  GIVEN cart is Cart\n"
+                "\n"
+                "  WHEN checkout cart\n"
+                "\n"
+                "  OUTPUT cart is Cart\n"
                 "\n"
                 "WHEN checkout <cart>\n"
                 "  GIVEN cart is Cart\n"
@@ -441,18 +487,21 @@ class PublicApiTests(unittest.TestCase):
             payload = result.as_payload()
 
         self.assertTrue(result.ok)
-        self.assertEqual(payload["schemaVersion"], 1)
-        self.assertEqual(payload["entryCandidates"][0]["text"], "checkout cart")
-        self.assertEqual(payload["counts"]["entryCandidates"], 1)
+        self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["requests"][0]["name"], "checkout cart")
+        self.assertEqual(payload["counts"]["requests"], 1)
 
-    def test_inspect_file_tokenizes_export_entries_like_runtime(self):
+    def test_inspect_file_reports_request_contracts(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "workflow.gwt"
             program.write_text(
                 """
-                REQUEST status is text
+                REQUEST classify review
+                  GIVEN status is text
 
-                EXPORT classify_review_v1 as classify "needs review"
+                  WHEN classify status
+
+                  OUTPUT status is text
 
                 WHEN classify <status>
                   GIVEN status is text
@@ -462,10 +511,10 @@ class PublicApiTests(unittest.TestCase):
 
             payload = inspect_file(program).as_payload()
 
-        entry = payload["entryCandidates"][0]
-        self.assertEqual(entry["text"], "classify_review_v1")
-        self.assertEqual(entry["entry"], 'classify "needs review"')
-        self.assertEqual(entry["signature"], ["classify", "needs review"])
+        request = payload["requests"][0]
+        self.assertEqual(request["name"], "classify review")
+        self.assertEqual(request["inputs"][0]["path"], "status")
+        self.assertEqual(request["outputs"][0]["path"], "status")
 
     def test_inspect_file_accepts_public_import_policy_options(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -480,7 +529,10 @@ class PublicApiTests(unittest.TestCase):
             program.write_text(
                 'USE "./types.gwt"\n'
                 "\n"
-                "REQUEST cart is Cart\n"
+                "REQUEST price cart\n"
+                "  GIVEN cart is Cart\n"
+                "\n"
+                "  WHEN print \"priced\"\n"
             )
 
             result = inspect_file(
@@ -619,9 +671,13 @@ class PublicApiTests(unittest.TestCase):
               denied:
                 code: number
 
-            REQUEST vendor is Vendor
-            AND metadata.trace_id is text
-            OUTPUT review is Review
+            REQUEST review vendor
+              GIVEN vendor is Vendor
+              AND metadata.trace_id is text
+
+              WHEN print metadata.trace_id
+
+              OUTPUT review is Review
             """,
             filename="rules.gwt",
         )
@@ -631,14 +687,21 @@ class PublicApiTests(unittest.TestCase):
         self.assertIn("owner: {\n    email: string;\n  };", result.source)
         self.assertIn("export type Review =", result.source)
         self.assertIn('kind: "approved";', result.source)
-        self.assertIn("export interface GwtRequest", result.source)
+        self.assertIn("export interface ReviewVendorRequest", result.source)
         self.assertIn("metadata: {\n    trace_id: string;\n  };", result.source)
-        self.assertIn("export interface GwtOutput", result.source)
+        self.assertIn("export interface ReviewVendorOutput", result.source)
         self.assertIn("review: Review;", result.source)
 
     def test_generate_typescript_text_rejects_unknown_contract_type(self):
         with self.assertRaisesRegex(GwtError, "unknown REQUEST contract type: Missing"):
-            generate_typescript_text("REQUEST cart is Missing\n")
+            generate_typescript_text(
+                """
+                REQUEST bad request
+                  GIVEN cart is Missing
+
+                  WHEN print "bad"
+                """
+            )
 
     def test_run_file_with_request_file_returns_execution_result(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -675,12 +738,13 @@ class PublicApiTests(unittest.TestCase):
               shipping: number
               total: number
 
-            REQUEST cart is Cart
-            OUTPUT cart is Cart
+            REQUEST checkout cart
+              GIVEN cart is Cart
 
-            WHEN checkout cart
-              set cart.total to cart.subtotal + cart.shipping
-              set audit.status to "priced"
+              WHEN set cart.total to cart.subtotal + cart.shipping
+              WHEN set audit.status to "priced"
+
+              OUTPUT cart is Cart
             """,
             request_source="""
             GIVEN cart is Cart
@@ -688,7 +752,7 @@ class PublicApiTests(unittest.TestCase):
               shipping: 8
               total: 0
 
-            WHEN checkout cart
+            REQUEST checkout cart
             """,
         )
 
@@ -697,7 +761,7 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(payload["result"], {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
 
-    def test_run_json_text_runs_entry_with_request_contracts(self):
+    def test_run_json_text_runs_named_request_with_request_contracts(self):
         result = run_json_text(
             """
             RECORD Cart
@@ -705,16 +769,16 @@ class PublicApiTests(unittest.TestCase):
               shipping: number
               total: number
 
-            REQUEST cart is Cart
-            OUTPUT cart is Cart
-
-            WHEN checkout <cart>
+            REQUEST checkout cart
               GIVEN cart is Cart
-              set cart.total to cart.subtotal + cart.shipping
-              set audit.status to "priced"
+
+              WHEN set cart.total to cart.subtotal + cart.shipping
+              WHEN set audit.status to "priced"
+
+              OUTPUT cart is Cart
             """,
             {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
-            entry="checkout cart",
+            request="checkout cart",
         )
 
         self.assertEqual(result.state["cart"]["total"], 92)
@@ -724,6 +788,21 @@ class PublicApiTests(unittest.TestCase):
             {"cart": {"subtotal": 84, "shipping": 8, "total": 92}},
         )
 
+    def test_run_json_text_request_without_outputs_returns_empty_result(self):
+        result = run_json_text(
+            """
+            REQUEST touch count
+              GIVEN count is number
+
+              WHEN add 1 to count
+            """,
+            {"count": 1},
+            request="touch count",
+        )
+
+        self.assertEqual(result.state["count"], 2)
+        self.assertEqual(result.as_payload()["result"], {})
+
     def test_run_json_text_validates_missing_request_contract(self):
         with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
             run_json_text(
@@ -731,14 +810,13 @@ class PublicApiTests(unittest.TestCase):
                 RECORD Cart
                   subtotal: number
 
-                REQUEST cart is Cart
-
-                WHEN checkout <cart>
+                REQUEST checkout cart
                   GIVEN cart is Cart
-                  print cart.subtotal
+
+                  WHEN print cart.subtotal
                 """,
                 {},
-                entry="checkout cart",
+                request="checkout cart",
             )
 
     def test_run_json_text_reports_null_for_typed_contract_mismatch(self):
@@ -747,11 +825,13 @@ class PublicApiTests(unittest.TestCase):
           name: text
           score: number
 
-        REQUEST profile is Profile
-
-        WHEN accept <profile>
+        REQUEST accept profile
           GIVEN profile is Profile
-          PASS
+
+          WHEN accept profile
+
+        WHEN accept profile
+          print "accepted"
         """
 
         cases = [
@@ -761,20 +841,23 @@ class PublicApiTests(unittest.TestCase):
         for field, profile, message in cases:
             with self.subTest(field=field):
                 with self.assertRaisesRegex(GwtError, message):
-                    run_json_text(program, {"profile": profile}, entry="accept profile")
+                    run_json_text(program, {"profile": profile}, request="accept profile")
 
     def test_run_json_text_allows_null_for_any_contract(self):
         result = run_json_text(
             """
-            REQUEST raw is any
-            OUTPUT raw is any
-
-            WHEN accept <raw>
+            REQUEST accept raw
               GIVEN raw is any
-              PASS
+
+              WHEN accept raw
+
+              OUTPUT raw is any
+
+            WHEN accept raw
+              print "accepted"
             """,
             {"raw": None},
-            entry="accept raw",
+            request="accept raw",
         )
 
         self.assertIsNone(result.state["raw"])
@@ -786,15 +869,19 @@ class PublicApiTests(unittest.TestCase):
             payload = Path(temp_dir) / "request.json"
             program.write_text(
                 """
-                WHEN checkout <cart>
-                  set cart.total to cart.subtotal + cart.shipping
+                REQUEST checkout cart
+                  GIVEN cart is any
+
+                  WHEN set cart.total to cart.subtotal + cart.shipping
+
+                  OUTPUT cart is any
                 """
             )
 
             result = run_json_file(
                 program,
                 {"cart": {"subtotal": 84, "shipping": 8, "total": 0}},
-                entry="checkout cart",
+                request="checkout cart",
                 json_file=payload,
             )
 

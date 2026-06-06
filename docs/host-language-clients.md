@@ -10,7 +10,7 @@ application decisions, see [Adoption Modes](adoption-modes.md).
 The intended boundary is:
 
 ```text
-host application -> GWT request object -> GWT behavior -> typed GWT result
+host application -> JSON request object -> GWT named request -> typed GWT result
 ```
 
 The host language owns I/O, persistence, networking, UI, scheduling, and other
@@ -34,8 +34,8 @@ if not check.ok:
     raise RuntimeError(check.as_payload())
 
 execution = client.run_json(
-    {"vendor": vendor, "decision": decision},
-    entry="review vendor into decision",
+    {"vendor": vendor},
+    request="review vendor",
 )
 
 result = execution.as_payload()["result"]["decision"]
@@ -53,8 +53,8 @@ python -m gwtlang validate rules.gwt \
 `gwt validate` checks imports, static diagnostics, canonical formatting, and
 embedded scenarios when the file has scenario content, before the host
 application boots. Use `gwt inspect rules.gwt --json` when a CI job, editor, or
-agent needs a stable manifest of records, contracts, behaviors, entry
-candidates, scenarios, imports, and the program hash.
+agent needs a stable manifest of records, named requests, behaviors, scenarios,
+imports, and the program hash.
 
 Then use the checked compile-once API during application startup as a final
 safety gate:
@@ -69,8 +69,8 @@ rules = compile_file(
 )
 
 execution = rules.run_json(
-    {"vendor": vendor, "decision": decision},
-    entry="review vendor into decision",
+    {"vendor": vendor},
+    request="review vendor",
 )
 ```
 
@@ -102,7 +102,7 @@ def observe_format(context):
 
 rules = GwtHostAdapter.from_file(
     "format_rules.gwt",
-    entry="review case using observation into decision",
+    request="review case",
     observations=[
         HostObservation("observation", observe_format),
     ],
@@ -129,8 +129,8 @@ Host-language clients should offer the same shape across ecosystems:
 ```csharp
 var result = await Gwt.RunFileAsync(
     "rules.gwt",
-    new { vendor, decision },
-    entry: "review vendor into decision");
+    new { vendor },
+    request: "review vendor");
 
 var reviewed = result.Result["decision"];
 ```
@@ -138,8 +138,8 @@ var reviewed = result.Result["decision"];
 ```java
 GwtResult result = Gwt.runFile(
     "rules.gwt",
-    Map.of("vendor", vendor, "decision", decision),
-    "review vendor into decision");
+    Map.of("vendor", vendor),
+    "review vendor");
 
 VendorDecision reviewed = result.resultAs("decision", VendorDecision.class);
 ```
@@ -148,8 +148,8 @@ VendorDecision reviewed = result.resultAs("decision", VendorDecision.class);
 import { runFile } from "@gwtlang/client";
 
 const result = await runFile("rules.gwt", {
-  input: { vendor, decision },
-  entry: "review vendor into decision",
+  input: { vendor },
+  request: "review vendor",
 });
 
 const reviewed = result.result.decision;
@@ -159,10 +159,10 @@ The exact host-language API can vary, but each client should preserve the same
 conceptual contract:
 
 - check a `.gwt` program before running it
-- expose the `inspect` manifest for tools that need records, contracts, entry
-  candidates, and program hashes
+- expose the `inspect` manifest for tools that need records, named requests,
+  and program hashes
 - send a JSON-compatible request object
-- name the entry behavior explicitly
+- name the public request explicitly
 - return the stable GWT execution envelope
 - expose diagnostics and runtime failures without hiding GWT source locations
 
@@ -174,7 +174,7 @@ protocol is process-based:
 ```sh
 printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
   --json-input - \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json
 ```
 
@@ -184,13 +184,13 @@ clients to exist as thin wrappers around the CLI.
 
 The process contract is intentionally small:
 
-- command: `gwt run <rules.gwt> --json-input - --entry "<behavior call>" --json`
+- command: `gwt run <rules.gwt> --json-input - --request "<request name>" --json`
 - stdin: one JSON object containing initial GWT state
 - stdout on success: the stable execution envelope with `ok: true`
 - stderr on failure: GWT diagnostics or runtime errors with source locations
 - exit code `0`: execution succeeded
 - exit code `1`: parse, check, contract, runtime, or JSON input failure
-- exit code `2`: command-line usage error, such as missing `--entry`
+- exit code `2`: command-line usage error, such as missing `--request`
 
 Native clients can later replace the process call with an embedded runtime or a
 service call while preserving the same public API.
@@ -220,7 +220,7 @@ goal is a stable integration contract, not a large fleet of clients.
 
 Harden the current Python API and the process runner as one reference contract:
 
-- document the runner protocol: stdin JSON, explicit `--entry`, stdout envelope,
+- document the runner protocol: stdin JSON, explicit `--request`, stdout envelope,
   stderr diagnostics, and exit codes
 - keep `GwtClient`, `check_file`, `run_json_file`, and `run_json_text` as the
   reference SDK shape
@@ -241,8 +241,8 @@ small API such as:
 import { runFile } from "@gwtlang/client";
 
 const result = await runFile("rules.gwt", {
-  input: { vendor, decision },
-  entry: "review vendor into decision",
+  input: { vendor },
+  request: "review vendor",
 });
 ```
 
@@ -255,7 +255,7 @@ returns the parsed envelope.
 The typed vendor onboarding example at
 [`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts)
 shows the complete host flow: generate declarations from GWT contracts, read a
-JSON request, check the rules file, run the entry behavior, and consume a typed
+JSON request, check the rules file, run the named request, and consume a typed
 `GwtOutput` result.
 
 TypeScript test suites can use the same package as a small spec fixture:
@@ -263,16 +263,16 @@ TypeScript test suites can use the same package as a small spec fixture:
 ```ts
 import { beforeAll, expect, it } from "vitest";
 import { createGwtSpec } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
 
 const rules = createGwtSpec<
   GwtRequest,
   GwtOutput,
   Record<string, unknown>,
-  GwtEntry
+  GwtRequestName
 >({
   file: "rules.gwt",
-  entry: "review vendor into decision",
+  request: "review vendor",
   importRoots: ["rules"],
   allowAbsoluteImports: false,
 });
@@ -293,8 +293,9 @@ it("keeps embedded GWT scenarios passing", async () => {
 ```
 
 `createGwtSpec` is intentionally test-framework agnostic. It caches the
-`check()` result, supports the generated `GwtEntry` type as a default entry, and
-passes import policy options through to `gwt check`, `gwt run`, and `gwt test`.
+`check()` result, supports the generated `GwtRequestName` type as a default
+request, and passes import policy options through to `gwt check`, `gwt run`,
+and `gwt test`.
 
 ### 3. Generated Host Types
 
@@ -302,8 +303,8 @@ Add type generation after the client contract is stable. Start with TypeScript:
 
 - `RECORD` declarations become interfaces or type aliases
 - literal unions become string literal unions
-- `REQUEST` declarations become the input type
-- `OUTPUT` declarations become the result type
+- named request inputs become the input type
+- named request outputs become the result type
 
 Python `TypedDict` or dataclass generation can follow. .NET and Java clients can
 start as CLI-backed wrappers before they need generated classes.
@@ -324,13 +325,13 @@ Client libraries become more useful when host types can be generated from GWT
 contracts:
 
 - `RECORD` declarations map to host DTOs/classes/interfaces.
-- `REQUEST` declarations map to the required input object.
-- `OUTPUT` declarations map to the result object.
+- named request input bindings map to the required input object.
+- named request output bindings map to the result object.
 - Literal unions map to enums or string literal unions when the host supports
   them.
 
-For TypeScript, GWT emits declarations for records, one-of records, `GwtRequest`,
-`GwtOutput`, and a `GwtEntry` union:
+For TypeScript, GWT emits declarations for records, one-of records,
+`GwtRequestName`, `GwtRequests`, `GwtOutputs`, `GwtRequest`, and `GwtOutput`:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
@@ -342,18 +343,16 @@ contract types fail with the same source-located diagnostics as `gwt check`.
 The generated declarations can be passed to `@gwtlang/client` as generics:
 
 ```ts
-const entry: GwtEntry = "review vendor into decision";
-const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry,
+const input: GwtRequest = { vendor };
+const requestName: GwtRequestName = "review vendor";
+const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
+  request: requestName,
 });
 ```
 
-`GwtEntry` uses `EXPORT` names when a program declares them. Without exports,
-GWT falls back to behavior signatures that can be called with top-level
-`REQUEST` paths. This gives host code compile-time protection against entry
-typos while letting production integrations publish stable names such as
-`reserve_cart_v1`. The same entry candidate logic powers `gwt inspect --json`,
-so host types and tool manifests agree on which entry strings are valid.
+`GwtRequestName` gives host code compile-time protection against request-name
+typos. The same named request list powers `gwt inspect --json`, so host types
+and tool manifests agree on which request strings are valid.
 
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as
@@ -368,7 +367,7 @@ Client libraries should reinforce GWT's core promise:
 
 - Do not reimplement GWT rules in the host language.
 - Do not hide checker/runtime diagnostics behind generic client errors.
-- Do not make entry behavior implicit when more than one workflow exists.
+- Do not make the request name implicit when more than one workflow exists.
 - Do not let host callbacks introduce non-determinism into ordinary GWT
   behavior.
 - Do keep JSON/API boundaries explicit and testable.

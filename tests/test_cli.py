@@ -60,7 +60,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(stdout.getvalue())["result"]["cart"]["total"], 92)
 
-    def test_cli_runs_program_with_json_input_file_and_entry(self):
+    def test_cli_runs_program_with_json_input_file_and_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "checkout.gwt"
             request_path = Path(temp_dir) / "request.json"
@@ -71,8 +71,12 @@ class CliDiagnosticsTests(unittest.TestCase):
                   shipping: number
                   total: number
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
 
                 WHEN checkout <cart>
                   GIVEN cart is Cart
@@ -92,7 +96,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                         str(program_path),
                         "--json-input",
                         str(request_path),
-                        "--entry",
+                        "--request",
                         "checkout cart",
                         "--json",
                     ]
@@ -104,7 +108,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["result"]["cart"]["total"], 92)
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
 
-    def test_cli_runs_program_with_json_input_file_and_export_entry(self):
+    def test_cli_runs_program_with_json_input_file_and_named_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             request_path = Path(temp_dir) / "request.json"
             request_path.write_text(
@@ -129,8 +133,8 @@ class CliDiagnosticsTests(unittest.TestCase):
                         "examples/exact_pricing/rules.gwt",
                         "--json-input",
                         str(request_path),
-                        "--entry",
-                        "price_cart_v1",
+                        "--request",
+                        "price cart",
                         "--json",
                     ]
                 )
@@ -150,8 +154,12 @@ class CliDiagnosticsTests(unittest.TestCase):
                   shipping: number
                   total: number
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
 
                 WHEN checkout <cart>
                   GIVEN cart is Cart
@@ -168,7 +176,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                         str(program_path),
                         "--json-input",
                         "-",
-                        "--entry",
+                        "--request",
                         "checkout cart",
                         "--json",
                     ]
@@ -192,7 +200,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                         str(program_path),
                         "--json-input",
                         "-",
-                        "--entry",
+                        "--request",
                         "checkout cart",
                     ]
                 )
@@ -213,7 +221,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                         str(program_path),
                         "--json-input",
                         "-",
-                        "--entry",
+                        "--request",
                         "checkout cart",
                     ]
                 )
@@ -221,7 +229,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn("stdin JSON input is invalid at line 1, column 2", stderr.getvalue())
 
-    def test_cli_json_input_requires_entry(self):
+    def test_cli_json_input_requires_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "checkout.gwt"
             request_path = Path(temp_dir) / "request.json"
@@ -233,19 +241,57 @@ class CliDiagnosticsTests(unittest.TestCase):
                 status = main(["run", str(program_path), "--json-input", str(request_path)])
 
         self.assertEqual(status, 2)
-        self.assertIn("--entry is required", stderr.getvalue())
+        self.assertIn("--request is required", stderr.getvalue())
 
-    def test_cli_entry_requires_json_input(self):
+    def test_cli_request_requires_json_input(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "checkout.gwt"
             program_path.write_text("WHEN checkout <cart>\n  print cart\n")
 
             stderr = io.StringIO()
             with redirect_stderr(stderr):
-                status = main(["run", str(program_path), "--entry", "checkout cart"])
+                status = main(["run", str(program_path), "--request", "checkout cart"])
 
         self.assertEqual(status, 2)
-        self.assertIn("--entry requires --json-input", stderr.getvalue())
+        self.assertIn("--request requires --json-input", stderr.getvalue())
+
+    def test_cli_rejects_removed_entry_option(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            program_path.write_text("WHEN checkout <cart>\n  print cart\n")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(["run", str(program_path), "--entry", "checkout cart"])
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("unrecognized arguments: --entry checkout cart", stderr.getvalue())
+
+    def test_cli_unknown_json_request_points_at_request_selector(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            request_path = Path(temp_dir) / "request.json"
+            program_path.write_text("PROGRAM checkout\n")
+            request_path.write_text("{}")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(
+                    [
+                        "run",
+                        str(program_path),
+                        "--json-input",
+                        str(request_path),
+                        "--request",
+                        "missing request",
+                    ]
+                )
+
+        self.assertEqual(status, 1)
+        message = stderr.getvalue()
+        self.assertIn("gwt: <request>:1: unknown request: missing request", message)
+        self.assertIn("missing request", message)
+        self.assertNotIn(str(request_path), message)
 
     def test_legacy_cli_invocation_still_runs(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -330,7 +376,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["dtos"], 0)
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
-        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["schemaVersion"], 2)
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["diagnostics"], [])
         self.assertTrue(any(symbol["kind"] == "behavior" for symbol in payload["symbols"]))
@@ -378,7 +424,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["ok"], False)
         self.assertIn("range", payload["diagnostics"][0])
 
-    def test_inspect_command_json_reports_manifest_and_entries(self):
+    def test_inspect_command_json_reports_manifest_and_requests(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "rules"
             root.mkdir()
@@ -394,8 +440,12 @@ class CliDiagnosticsTests(unittest.TestCase):
                 "\n"
                 "PROGRAM checkout\n"
                 "\n"
-                "REQUEST cart is Cart\n"
-                "OUTPUT cart is Cart\n"
+                "REQUEST checkout cart\n"
+                "  GIVEN cart is Cart\n"
+                "\n"
+                "  WHEN checkout cart\n"
+                "\n"
+                "  OUTPUT cart is Cart\n"
                 "\n"
                 "WHEN checkout <cart>\n"
                 "  GIVEN cart is Cart\n"
@@ -405,7 +455,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                 "GIVEN cart is Cart\n"
                 "  subtotal: 84\n"
                 "  total: 0\n"
-                "WHEN checkout cart\n"
+                "REQUEST checkout cart\n"
                 "THEN cart.total == 84\n"
             )
 
@@ -424,14 +474,14 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         payload = json.loads(stdout.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["schemaVersion"], 2)
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["program"], "checkout")
         self.assertTrue(payload["programHash"].startswith("sha256:"))
         self.assertEqual(payload["imports"][0]["path"], "./types.gwt")
         self.assertEqual(payload["counts"]["records"], 1)
         self.assertEqual(payload["records"][0]["name"], "Cart")
-        self.assertEqual(payload["entryCandidates"][0]["text"], "checkout cart")
+        self.assertEqual(payload["requests"][0]["name"], "checkout cart")
         self.assertEqual(payload["behaviors"][0]["parameters"], ["cart"])
         self.assertEqual(payload["scenarios"][0]["name"], "prices cart")
 
@@ -478,8 +528,12 @@ class CliDiagnosticsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"
             program_path.write_text(
-                "REQUEST count is number\n"
-                "OUTPUT count is number\n"
+                "REQUEST increment count\n"
+                "  GIVEN count is number\n"
+                "\n"
+                "  WHEN increment count\n"
+                "\n"
+                "  OUTPUT count is number\n"
                 "\n"
                 "WHEN increment <count>\n"
                 "  add 1 to count\n"
@@ -683,8 +737,12 @@ class CliDiagnosticsTests(unittest.TestCase):
                 f"""
                 USE "{module_path}"
 
-                REQUEST count is number
-                OUTPUT count is number
+                REQUEST touch count
+                  GIVEN count is number
+
+                  WHEN touch count
+
+                  OUTPUT count is number
                 """
             )
             request_path.write_text('{"count": 1}\n')
@@ -697,7 +755,7 @@ class CliDiagnosticsTests(unittest.TestCase):
                         str(program_path),
                         "--json-input",
                         str(request_path),
-                        "--entry",
+                        "--request",
                         "touch count",
                         "--import-root",
                         str(root),
@@ -717,8 +775,12 @@ class CliDiagnosticsTests(unittest.TestCase):
                   subtotal: number
                   status: "new" | "priced"
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN print "priced"
+
+                  OUTPUT cart is Cart
                 """
             )
 
@@ -730,7 +792,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("export interface Cart", output)
         self.assertIn('status: "new" | "priced";', output)
-        self.assertIn("export interface GwtRequest", output)
+        self.assertIn("export interface PriceCartRequest", output)
         self.assertIn("cart: Cart;", output)
 
     def test_types_command_writes_output_file(self):
@@ -742,7 +804,10 @@ class CliDiagnosticsTests(unittest.TestCase):
                 RECORD Cart
                   subtotal: number
 
-                REQUEST cart is Cart
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN print "priced"
                 """
             )
 
@@ -757,7 +822,14 @@ class CliDiagnosticsTests(unittest.TestCase):
     def test_types_command_reports_checker_errors(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"
-            program_path.write_text("REQUEST cart is Missing\n")
+            program_path.write_text(
+                """
+                REQUEST bad request
+                  GIVEN cart is Missing
+
+                  WHEN print "bad"
+                """
+            )
 
             stderr = io.StringIO()
             with redirect_stderr(stderr):

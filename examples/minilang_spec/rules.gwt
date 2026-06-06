@@ -59,12 +59,15 @@ RECORD MiniRuntime
   errors: list<text>
   status: "new" | "passed" | "failed"
 
-REQUEST source is MiniSource
-AND front_end is MiniFrontEnd
-AND runtime is MiniRuntime
+REQUEST run mini source
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
 
-OUTPUT front_end is MiniFrontEnd
-AND runtime is MiniRuntime
+  WHEN run source through front_end into runtime
+
+  OUTPUT front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
 
 WHEN reset <front_end>
   GIVEN front_end is MiniFrontEnd
@@ -380,7 +383,7 @@ GIVEN runtime.bindings are MiniBinding
   | "y"    | "unset" | 0            | []          |
   | "nums" | "unset" | 0            | []          |
 
-WHEN run source through front_end into runtime
+REQUEST run mini source
 
 THEN front_end.lexed == true
 AND front_end.parsed == true
@@ -527,7 +530,7 @@ GIVEN runtime.bindings are MiniBinding
   | "y"    | "unset" | 0            | []          |
   | "nums" | "unset" | 0            | []          |
 
-WHEN run source through front_end into runtime
+REQUEST run mini source
 
 THEN front_end.lexed == true
 AND front_end.parsed == false

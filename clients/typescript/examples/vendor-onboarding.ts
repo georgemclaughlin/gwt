@@ -2,14 +2,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { GwtClient } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./vendor-onboarding.generated.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./vendor-onboarding.generated.js";
 
 type VendorDecision = GwtOutput["decision"];
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const rulesFile = path.join(repoRoot, "examples/vendor_onboarding/rules.gwt");
 
-const request: GwtRequest = {
+const payload: GwtRequest = {
   vendor: {
     vendor_name: "Cloud Ledger",
     country: "US",
@@ -26,21 +26,8 @@ const request: GwtRequest = {
       { name: "data_region", severity: "medium", points: 2 },
     ],
   },
-  decision: {
-    required_document_count: 0,
-    missing_document_count: 0,
-    expired_document_count: 0,
-    high_signal_count: 0,
-    risk_points: 0,
-    missing_requirements: [],
-    reasons: [],
-    data_review_required: false,
-    tier: "new",
-    status: "new",
-    reason: "new",
-  },
 };
-const entry: GwtEntry = "review vendor into decision";
+const requestName: GwtRequestName = "review vendor";
 const client = new GwtClient({
   file: rulesFile,
   command: "python",
@@ -53,11 +40,11 @@ if (!check.ok) {
   throw new Error(JSON.stringify(check.diagnostics, null, 2));
 }
 
-const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry,
+const execution = await client.runJson<GwtRequest, GwtOutput>(payload, {
+  request: requestName,
 });
 
-printDecision(request, execution.result.decision);
+printDecision(payload, execution.result.decision);
 
 function printDecision(input: GwtRequest, decision: VendorDecision) {
   const missing = decision.missing_requirements.length

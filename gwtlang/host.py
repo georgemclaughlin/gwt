@@ -57,7 +57,7 @@ class GwtHostAdapter:
     """
 
     program: CompiledProgram
-    entry: str
+    request: str
     observations: tuple[HostObservation, ...] = ()
 
     @classmethod
@@ -65,7 +65,7 @@ class GwtHostAdapter:
         cls,
         path: str | Path,
         *,
-        entry: str,
+        request: str,
         observations: Sequence[HostObservation] = (),
         import_roots: Sequence[str | Path] | None = None,
         allow_absolute_imports: bool = True,
@@ -76,7 +76,7 @@ class GwtHostAdapter:
                 import_roots=import_roots,
                 allow_absolute_imports=allow_absolute_imports,
             ),
-            entry,
+            request,
             tuple(observations),
         )
 
@@ -85,7 +85,7 @@ class GwtHostAdapter:
         cls,
         source: str,
         *,
-        entry: str,
+        request: str,
         observations: Sequence[HostObservation] = (),
         filename: str = "<source>",
         import_roots: Sequence[str | Path] | None = None,
@@ -98,14 +98,14 @@ class GwtHostAdapter:
                 import_roots=import_roots,
                 allow_absolute_imports=allow_absolute_imports,
             ),
-            entry,
+            request,
             tuple(observations),
         )
 
     def with_observation(self, path: str, observe: HostObserver) -> GwtHostAdapter:
         return GwtHostAdapter(
             self.program,
-            self.entry,
+            self.request,
             (*self.observations, HostObservation(path, observe)),
         )
 
@@ -114,7 +114,7 @@ class GwtHostAdapter:
         state: Mapping[str, Any],
         *,
         observations: Sequence[HostObservation] = (),
-        entry: str | None = None,
+        request: str | None = None,
         json_file: str | Path | None = None,
     ) -> ExecutionResult:
         json_state = _json_value(state)
@@ -133,7 +133,7 @@ class GwtHostAdapter:
 
         return self.program.run_json(
             json_state,
-            entry=entry or self.entry,
+            request=request or self.request,
             json_file=json_file,
         )
 

@@ -2,7 +2,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from gwtlang import GwtError, run_request, run_source
+from gwtlang import GwtError, run_json_request, run_request, run_source
 
 
 class RuntimeTests(unittest.TestCase):
@@ -1424,63 +1424,105 @@ class RuntimeTests(unittest.TestCase):
 
     def test_request_contract_requires_declared_input_state(self):
         with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
-            run_source(
+            run_json_request(
                 '''
                 RECORD Cart
                   total: number
 
-                REQUEST cart is Cart
-                '''
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN print "checkout"
+                ''',
+                {},
+                request="checkout cart",
             )
 
     def test_output_contract_rejects_invalid_final_state(self):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
-            run_source(
+            run_json_request(
                 '''
                 RECORD Cart
                   total: number
 
-                REQUEST cart is Cart
-                OUTPUT cart is Cart
+                REQUEST checkout cart
+                  GIVEN cart is Cart
 
-                GIVEN cart is Cart
-                  total: 0
+                  WHEN set cart.total to "bad"
 
-                WHEN set cart.total to "bad"
-                '''
+                  OUTPUT cart is Cart
+                ''',
+                {"cart": {"total": 0}},
+                request="checkout cart",
             )
 
     def test_set_enforces_declared_field_type_at_mutation(self):
+        with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
+            run_json_request(
+                '''
+                RECORD Cart
+                  total: number
+
+                REQUEST break cart
+                  GIVEN cart is Cart
+
+                  WHEN set cart.total to "bad"
+                ''',
+                {"cart": {"total": 0}},
+                request="break cart",
+            )
+
+    def test_add_enforces_declared_field_type_at_mutation(self):
+        with self.assertRaisesRegex(GwtError, "cannot add text to number"):
+            run_json_request(
+                '''
+                RECORD Cart
+                  total: number
+
+                REQUEST break cart
+                  GIVEN cart is Cart
+
+                  WHEN add "bad" to cart.total
+                ''',
+                {"cart": {"total": 0}},
+                request="break cart",
+            )
+
+    def test_request_preserves_existing_typed_state_during_execution(self):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):
             run_source(
                 '''
                 RECORD Cart
                   total: number
 
-                REQUEST cart is Cart
+                REQUEST break cart
+                  WHEN break cart
 
+                WHEN break cart
+                  set cart.total to "bad"
+
+                SCENARIO typed state remains protected
                 GIVEN cart is Cart
                   total: 0
 
-                WHEN set cart.total to "bad"
+                REQUEST break cart
                 '''
             )
 
-    def test_add_enforces_declared_field_type_at_mutation(self):
-        with self.assertRaisesRegex(GwtError, "cannot add text to number"):
-            run_source(
-                '''
-                RECORD Cart
-                  total: number
+    def test_request_without_outputs_returns_empty_result(self):
+        result = run_json_request(
+            '''
+            REQUEST touch count
+              GIVEN count is number
 
-                REQUEST cart is Cart
+              WHEN add 1 to count
+            ''',
+            {"count": 1},
+            request="touch count",
+        )
 
-                GIVEN cart is Cart
-                  total: 0
-
-                WHEN add "bad" to cart.total
-                '''
-            )
+        self.assertEqual(result.state["count"], 2)
+        self.assertEqual(result.scenarios[0].returned_state, {})
 
     def test_behavior_contract_enforces_pathref_mutation_type(self):
         with self.assertRaisesRegex(GwtError, "expected cart.total to be number, got text"):

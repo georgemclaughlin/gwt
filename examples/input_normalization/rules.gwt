@@ -9,10 +9,21 @@ RECORD ContactProfile
   error_count: number
   status: "new" | "normalized" | "invalid"
 
-REQUEST raw is any
-AND profile is ContactProfile
+REQUEST normalize contact profile
+  GIVEN raw is any
 
-OUTPUT profile is ContactProfile
+  GIVEN profile is ContactProfile
+    name: ""
+    email: ""
+    middle_name_status: "missing"
+    middle_name: ""
+    errors: []
+    error_count: 0
+    status: "new"
+
+  WHEN normalize raw into profile
+
+  OUTPUT profile is ContactProfile
 
 WHEN reset profile state <profile>
   GIVEN profile is ContactProfile
@@ -67,16 +78,7 @@ GIVEN raw is
   middle_name_state: "provided"
   middle_name: "Lovelace"
 
-GIVEN profile is ContactProfile
-  name: ""
-  email: ""
-  middle_name_status: "missing"
-  middle_name: ""
-  errors: []
-  error_count: 0
-  status: "new"
-
-WHEN normalize raw into profile
+REQUEST normalize contact profile
 
 THEN profile.status == "normalized"
 AND profile.name == "Ada"

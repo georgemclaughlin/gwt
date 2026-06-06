@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 import json
 from pathlib import Path
+import re
 
-from .entries import entry_candidates
 from .errors import GwtError
 from .runtime import (
     ContractBinding,
@@ -72,17 +72,9 @@ def _emit_typescript(program: Program, filename: str) -> str:
         lines.extend(_emit_variant(variant))
         lines.append("")
 
-    if program.inputs:
-        lines.extend(_emit_contract_interface("GwtRequest", program.inputs.values()))
-        lines.append("")
-
-    if program.outputs:
-        lines.extend(_emit_contract_interface("GwtOutput", program.outputs.values()))
-        lines.append("")
-
-    entry_lines = _emit_entry_union(program)
-    if entry_lines:
-        lines.extend(entry_lines)
+    request_lines = _emit_named_request_types(program)
+    if request_lines:
+        lines.extend(request_lines)
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
@@ -117,21 +109,81 @@ def _emit_contract_interface(name: str, bindings: Iterable[ContractBinding]) -> 
     return lines
 
 
-def _emit_entry_union(program: Program) -> list[str]:
-    entries = _entry_texts(program)
-    if not entries:
+def _emit_named_request_types(program: Program) -> list[str]:
+    requests = list(program.requests.values())
+    if not requests:
         return []
-    if len(entries) == 1:
-        return [f"export type GwtEntry = {_literal_type(entries[0])};"]
-    lines = ["export type GwtEntry ="]
-    for index, entry in enumerate(entries):
-        suffix = ";" if index == len(entries) - 1 else ""
-        lines.append(f"  | {_literal_type(entry)}{suffix}")
+
+    lines: list[str] = []
+    names: dict[str, tuple[str, str]] = {}
+    used_names = {
+        *program.dtos,
+        *program.variants,
+        "GwtRequestName",
+        "GwtRequests",
+        "GwtOutputs",
+        "GwtRequest",
+        "GwtOutput",
+    }
+    for request in requests:
+        base = _request_type_base(request.name)
+        input_name = _unique_type_name(f"{base}Request", used_names)
+        used_names.add(input_name)
+        output_name = _unique_type_name(f"{base}Output", used_names)
+        used_names.add(output_name)
+        names[request.name] = (input_name, output_name)
+        lines.extend(_emit_contract_interface(input_name, request.inputs.values()))
+        lines.append("")
+        lines.extend(_emit_contract_interface(output_name, request.outputs.values()))
+        lines.append("")
+
+    request_names = [request.name for request in requests]
+    lines.extend(_emit_literal_union("GwtRequestName", request_names))
+    lines.append("")
+    lines.extend(_emit_request_map("GwtRequests", request_names, {name: pair[0] for name, pair in names.items()}))
+    lines.append("")
+    lines.extend(_emit_request_map("GwtOutputs", request_names, {name: pair[1] for name, pair in names.items()}))
+    lines.append("")
+    lines.append("export type GwtRequest = GwtRequests[GwtRequestName];")
+    lines.append("export type GwtOutput = GwtOutputs[GwtRequestName];")
     return lines
 
 
-def _entry_texts(program: Program) -> list[str]:
-    return [candidate.text for candidate in entry_candidates(program)]
+def _emit_literal_union(name: str, values: list[str]) -> list[str]:
+    if len(values) == 1:
+        return [f"export type {name} = {_literal_type(values[0])};"]
+    lines = [f"export type {name} ="]
+    for index, value in enumerate(values):
+        suffix = ";" if index == len(values) - 1 else ""
+        lines.append(f"  | {_literal_type(value)}{suffix}")
+    return lines
+
+
+def _emit_request_map(name: str, request_names: list[str], type_names: dict[str, str]) -> list[str]:
+    lines = [f"export interface {name} {{"]
+    for request_name in request_names:
+        lines.append(f"  {_literal_type(request_name)}: {type_names[request_name]};")
+    lines.append("}")
+    return lines
+
+
+def _request_type_base(name: str) -> str:
+    words = [word for word in re.split(r"[^A-Za-z0-9]+", name) if word]
+    if not words:
+        return "Request"
+    base = "".join(word[:1].upper() + word[1:] for word in words)
+    if not base[0].isalpha():
+        base = f"Request{base}"
+    return base
+
+
+def _unique_type_name(name: str, used: set[str]) -> str:
+    candidate = name
+    suffix = 2
+    while candidate in used:
+        candidate = f"{name}{suffix}"
+        suffix += 1
+    return candidate
 
 
 def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:

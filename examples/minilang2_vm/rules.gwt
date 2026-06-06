@@ -203,20 +203,23 @@ RECORD Mini2Repl
   errors: list<text>
   status: "new" | "ran" | "failed"
 
-REQUEST source is Mini2Source
-AND front_end is Mini2FrontEnd
-AND resolver is Mini2Resolver
-AND bytecode is Mini2Bytecode
-AND vm is Mini2Runtime
-AND debugger is Mini2Debugger
-AND repl is Mini2Repl
+REQUEST execute mini2 source
+  GIVEN source is Mini2Source
+  AND front_end is Mini2FrontEnd
+  AND resolver is Mini2Resolver
+  AND bytecode is Mini2Bytecode
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  AND repl is Mini2Repl
 
-OUTPUT front_end is Mini2FrontEnd
-AND resolver is Mini2Resolver
-AND bytecode is Mini2Bytecode
-AND vm is Mini2Runtime
-AND debugger is Mini2Debugger
-AND repl is Mini2Repl
+  WHEN execute program source through front_end with resolver and bytecode on vm under debugger using repl
+
+  OUTPUT front_end is Mini2FrontEnd
+  AND resolver is Mini2Resolver
+  AND bytecode is Mini2Bytecode
+  AND vm is Mini2Runtime
+  AND debugger is Mini2Debugger
+  AND repl is Mini2Repl
 
 WHEN reset front end <front_end>
   GIVEN front_end is Mini2FrontEnd
@@ -994,7 +997,7 @@ GIVEN repl is Mini2Repl
   errors: []
   status: "new"
 
-WHEN execute program source through front_end with resolver and bytecode on vm under debugger using repl
+REQUEST execute mini2 source
 
 THEN front_end.lexed == true
 AND front_end.parsed == true

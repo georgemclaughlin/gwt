@@ -1,7 +1,7 @@
-# GWT v0.1 Grammar
+# GWT v0.2 Grammar
 
-This grammar describes the implemented v0.1 surface. The normative v0.1
-language notes live in [spec/v0.1.md](spec/v0.1.md). The parser is currently
+This grammar describes the implemented v0.2 surface. The normative v0.2
+language notes live in [spec/v0.2.md](spec/v0.2.md). The parser is currently
 hand-written, but behavior bodies are parsed into structured statement nodes for
 blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 
@@ -9,10 +9,9 @@ blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 program        = top_level* ;
 top_level      = program_header
                | use
-               | export
                | record
                | one_of_record
-               | program_contract
+               | named_request
                | behavior
                | background
                | scenario
@@ -20,7 +19,6 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
-export         = "EXPORT" name "as" command ;
 record         = ("RECORD" | "DTO") name, record_block ;
 record_block   = record_field+ ;
 record_field   = name ":" type | name ":", record_block ;
@@ -31,13 +29,20 @@ type           = primitive_type | name | "list<", type_name, ">" | literal_union
 primitive_type = "number" | "integer" | "decimal" | "text" | "boolean" | "list" | "any" ;
 type_name      = primitive_type | name ;
 literal_union  = literal, "|", literal, ("|", literal)* ;
-program_contract
-               = request_contract
-               | output_contract ;
-request_contract
-               = "REQUEST" path "is" type ;
-output_contract
-               = "OUTPUT" path "is" type ;
+
+named_request  = "REQUEST" text, request_body ;
+request_body   = request_statement+ ;
+request_statement
+               = request_given
+               | request_when
+               | request_output
+               | request_then
+               | and ;
+request_given  = "GIVEN" path "is" type
+               | "GIVEN" assignment_or_record ;
+request_when   = "WHEN" command ;
+request_output = "OUTPUT" path "is" type ;
+request_then   = "THEN" condition_or_record ;
 
 background     = "BACKGROUND", step* ;
 scenario       = "SCENARIO" text, step*, examples? ;
@@ -45,8 +50,9 @@ examples       = "EXAMPLES", table ;
 table          = table_row, table_row+ ;
 table_row      = "|", cell, ("|", cell)*, "|" ;
 
-step           = given | when_call | then | and ;
+step           = given | request_call | when_call | then | and ;
 given          = "GIVEN" assignment_or_record ;
+request_call   = "REQUEST" text ;
 when_call      = "WHEN" command ;
 then           = "THEN" condition_or_record ;
 and            = "AND" text ;
@@ -148,9 +154,20 @@ Indentation is significant:
   `WHEN the value is literal` at the branch indent. A block cannot mix kind and
   value branches.
 
-CLI request mode runs two parsed programs together: the main program contributes
-behavior definitions and optional background setup, while the request program
-contributes the scenarios/request steps to execute.
+`REQUEST path is Type` is no longer a top-level program contract. At the top
+level, `REQUEST name` with an indented body declares a public callable request.
+Inside a scenario or request file, single-line `REQUEST name` invokes that named
+request using the current scenario state.
+
+Inside a named request, `GIVEN path is Type` without an indented body declares
+caller-provided input. `GIVEN path is Type` with an indented body creates
+request-local setup state and validates it against `Type`. Each named request
+must contain at least one `WHEN` call.
+
+CLI `.gwt` request-file mode runs two parsed programs together: the main program
+contributes named requests, behavior definitions, and optional background setup,
+while the request program contributes scenario setup and `REQUEST` calls to
+execute.
 
 `BACKGROUND` must appear before explicit `SCENARIO` blocks. `EXAMPLES` attaches
 to the current scenario. Behavior names cannot use reserved built-in or

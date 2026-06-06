@@ -8,7 +8,7 @@ from gwtlang import GwtClient, GwtError
 
 
 RULES = Path(__file__).with_name("rules.gwt")
-EXPORT_NAME = "price_cart_v1"
+REQUEST_NAME = "price cart"
 
 
 def main() -> int:
@@ -34,7 +34,7 @@ def main() -> int:
         import_roots=[RULES.parent],
         allow_absolute_imports=False,
     ).as_payload()
-    print_json("public entries", manifest["entryCandidates"])
+    print_json("public requests", manifest["requests"])
 
     rules = client.compile(
         import_roots=[RULES.parent],
@@ -50,7 +50,7 @@ def main() -> int:
             "status": "pending",
         }
     }
-    execution = rules.call_json(EXPORT_NAME, request)
+    execution = rules.run_json(request, request=REQUEST_NAME)
     print_json("result payload", execution.as_payload()["result"])
 
     total = execution.state["cart"]["total"]
@@ -66,7 +66,7 @@ def main() -> int:
                 "status": "pending",
             }
         }
-        rules.call_json(EXPORT_NAME, bad_request)
+        rules.run_json(bad_request, request=REQUEST_NAME)
     except GwtError as exc:
         print(f"float input rejected: {exc}")
 
@@ -79,7 +79,7 @@ def main() -> int:
             "status": "pending",
         }
     }
-    trusted = rules.call_trusted_json(EXPORT_NAME, prevalidated_state)
+    trusted = rules.run_trusted_json(prevalidated_state, request=REQUEST_NAME)
     print_json("trusted prevalidated payload", trusted.as_payload()["result"])
 
     return 0

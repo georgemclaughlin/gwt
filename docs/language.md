@@ -1,9 +1,10 @@
 # GWT Language Draft
 
-GWT is an executable behavior language. A program describes initial state,
-named behavior, execution, and expected results.
+GWT is an executable behavior language. A program describes public named
+requests, reusable behavior, execution examples, and expected results.
 
-See [spec/v0.1.md](spec/v0.1.md) for the versioned v0.1 specification and
+See [spec/v0.2.md](spec/v0.2.md) for the current versioned specification,
+[spec/v0.1.md](spec/v0.1.md) for the previous boundary model, and
 [grammar.md](grammar.md) for the EBNF grammar. See
 [design-principles.md](design-principles.md) for non-normative language-shape
 guidance inspired by OpenSpec, GitHub Spec Kit, Cucumber, SpecFlow/Reqnroll,
@@ -24,8 +25,11 @@ RECORD Account
   balance: number
   status: text
 
-REQUEST request.path is Account
-OUTPUT result.path is Account
+REQUEST review account
+  GIVEN account is Account
+  WHEN review account
+  OUTPUT account is Account
+  THEN account.status != "blocked"
 
 BACKGROUND
 GIVEN state.path is value
@@ -58,6 +62,7 @@ WHEN behavior <parameter> from <target>
 
 WHEN concrete event from target
 AND another concrete event
+REQUEST review account
 
 THEN state.path is value
 AND other.path is value
@@ -67,7 +72,7 @@ THEN record is
 
 SCENARIO name
 GIVEN state.path is value
-WHEN concrete event from target
+REQUEST review account
 THEN state.path is value
 
 EXAMPLES
@@ -78,12 +83,14 @@ EXAMPLES
 `PROGRAM` is optional metadata. A file can contain one implicit scenario, or
 multiple explicit `SCENARIO` blocks. Execution order for each scenario is:
 
-1. Register all block-form `WHEN` behavior definitions.
+1. Register named `REQUEST` blocks and block-form `WHEN` behavior definitions.
 2. Run `BACKGROUND` and scenario `GIVEN` setup.
-3. Validate `REQUEST` contracts.
-4. Run `BACKGROUND` and scenario single-line `WHEN` statements.
-5. Validate `OUTPUT` contracts.
-6. Evaluate `BACKGROUND` and scenario `THEN` assertions.
+3. Run scenario single-line `REQUEST` and `WHEN` statements in source order.
+4. Evaluate `BACKGROUND` and scenario `THEN` assertions.
+
+When a scenario invokes a named request, the request validates its caller input,
+runs request-local setup, executes its `WHEN` calls, validates `OUTPUT`, and
+evaluates request-local `THEN` assertions before returning to the scenario.
 
 `AND` repeats the previous top-level keyword. Inside a behavior block, `AND`
 repeats the previous body keyword, which is most useful for chained `REQUIRE`
@@ -204,10 +211,11 @@ rejects fields that do not belong to the active kind. In GWT setup, `kind` is
 added automatically. In JSON input, include the same `kind` field shown in the
 stored record.
 
-## Program Contracts
+## Named Requests
 
-`REQUEST` declares state a host or request file must provide before execution.
-`OUTPUT` declares state the program promises to return after execution:
+`REQUEST <natural phrase>` declares a public callable request. Its body owns the
+input contract, request-local setup, execution plan, response shape, and
+optional postconditions:
 
 ```gwt
 RECORD CheckoutRequest
@@ -215,25 +223,36 @@ RECORD CheckoutRequest
   shipping: number
   total: number
 
-REQUEST cart is CheckoutRequest
-OUTPUT cart is CheckoutRequest
+REQUEST checkout cart
+  GIVEN cart is CheckoutRequest
+  WHEN checkout cart
+  OUTPUT cart is CheckoutRequest
 ```
 
-Contracts use the same type syntax as record fields and behavior contracts,
-including `list<RecordName>` and literal unions. `REQUEST` contracts are validated
-after all `GIVEN` setup has run and before any `WHEN` execution. `OUTPUT`
-contracts are validated after `WHEN` execution. When a program has one or more
-`OUTPUT` declarations,
-JSON/API payloads use a stable envelope. The top-level `result` value contains
-only declared output paths when `OUTPUT` contracts are present; `state` still
-keeps the full final runtime state for debugging and tests.
+Inside a named request:
 
-Within `REQUEST` or within `OUTPUT`, contract paths must not overlap. Declare
-either a whole record path or explicit leaf paths, not both:
+- `GIVEN path is Type` without a body declares caller-provided input.
+- `GIVEN path is Type` with a body creates request-local setup and validates it.
+- other `GIVEN` forms create request-local setup.
+- `WHEN command` calls reusable behavior or a built-in statement.
+- `OUTPUT path is Type` declares the response shape and returned paths.
+- `THEN condition` declares a postcondition.
+
+`OUTPUT` and `THEN` are intentionally separate. `OUTPUT` answers what the caller
+receives; `THEN` asserts what must be true after execution.
+
+Contracts use the same type syntax as record fields and behavior contracts,
+including `list<RecordName>` and literal unions. Request inputs validate before
+the request `WHEN` calls. `OUTPUT` validates after request `WHEN` execution.
+
+Within a request's inputs or within its outputs, contract paths must not
+overlap. Declare either a whole record path or explicit leaf paths, not both:
 
 ```gwt
-REQUEST cart is Cart
-AND cart.total is number # invalid: cart.total overlaps cart
+REQUEST checkout cart
+  GIVEN cart is Cart
+  AND cart.total is number # invalid: cart.total overlaps cart
+  WHEN checkout cart
 ```
 
 Request and output contracts are checked separately, so a `REQUEST` path may
@@ -246,7 +265,7 @@ lists, and literal unions.
 Use `any` for raw input that may contain JSON nulls, then normalize that input
 into explicit domain state such as status fields or one-of records.
 
-Declared record, `REQUEST`, `OUTPUT`, typed table, and behavior parameter
+Declared record, request input, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
 change a known numeric field to `text`, or replace a `list<OrderItem>` with a
 non-list value, fails at the mutation line.
@@ -301,25 +320,25 @@ The CLI can run a behavior file with a separate GWT-shaped request file:
 python -m gwtlang run examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
 ```
 
-The program file provides reusable block-form `WHEN` behavior. The input file
-provides the request as ordinary `GIVEN`, single-line `WHEN`, and optional
-`THEN` steps. This makes GWT usable as a deterministic workflow runner while
-keeping inputs in the same language shape.
+The program file provides named requests and reusable block-form `WHEN`
+behavior. The input file provides ordinary `GIVEN` setup, single-line
+`REQUEST` calls, and optional `THEN` steps. This makes GWT usable as a
+deterministic workflow runner while keeping inputs in the same language shape.
 
 Request files can use records declared by the program file.
 
-If the program declares `REQUEST` contracts, request files must provide those
-paths through `GIVEN` setup before execution. If the program declares `OUTPUT`
-contracts, the `result` field in CLI JSON and API payloads contains only the
-declared output paths.
+If a named request declares caller-provided `GIVEN path is Type` inputs, request
+files must provide those paths through setup before invoking that request. The
+`result` field in CLI JSON and API payloads contains only the invoked request's
+declared `OUTPUT` paths.
 
 For production-style embedding, callers can provide initial state as JSON and
-name the entry behavior to execute:
+name the public request to execute:
 
 ```sh
 python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --json-input examples/order_fulfillment/request.json \
-  --entry "fulfill order from inventory into fulfillment" \
+  --request "fulfill order" \
   --json
 ```
 
@@ -329,7 +348,7 @@ languages a simple client protocol before they have native SDKs:
 ```sh
 printf '%s' "$REQUEST_JSON" | python -m gwtlang run rules.gwt \
   --json-input - \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json
 ```
 
@@ -352,19 +371,10 @@ JSON objects are ordinary record values:
 ```
 
 The runtime loads program `BACKGROUND` setup first, then JSON state, then
-validates `REQUEST` contracts, runs the entry behavior, validates `OUTPUT`
-contracts, and returns the same stable execution envelope used by `.gwt`
-request files.
-
-Programs can give host callers stable entry names with `EXPORT`:
-
-```gwt
-EXPORT review_vendor_v1 as review vendor into decision
-```
-
-The checker rejects duplicate exports and exports whose behavior call cannot be
-resolved. Host applications should prefer export names for public integrations;
-raw behavior entry text remains useful for local development and experiments.
+validates the named request inputs, runs request-local setup and `WHEN` calls,
+validates `OUTPUT`, and returns the same stable execution envelope used by
+`.gwt` request files. `EXPORT` and raw behavior-call execution are not part of
+the v0.2 public interface.
 
 JSON `null` values are accepted only where the receiving contract is `any`.
 They do not match typed records or primitive fields. Prefer a normalization
@@ -384,7 +394,7 @@ check = client.check()
 if check.ok:
     execution = client.run_json(
         request_state,
-        entry="review report into decision",
+        request="review report",
     )
     state = execution.state
 ```
@@ -412,7 +422,7 @@ rules = compile_file(
 
 execution = rules.run_json(
     request_state,
-    entry="review report into decision",
+    request="review report",
 )
 ```
 
@@ -422,16 +432,10 @@ known directories, matching `--import-root`, and
 `allow_absolute_imports=False` matches `--no-absolute-imports`.
 The same import-confinement flags are available on `gwt test` and `gwt run`.
 
-Compiled programs can also run exported entries:
-
-```python
-execution = rules.call_json("review_vendor_v1", request_state)
-```
-
 For already-prevalidated internal loops, `run_trusted_json()` and
-`call_trusted_json()` skip only `REQUEST` and `OUTPUT` boundary validation.
-Behavior contracts, runtime type checks, assertions, and ordinary runtime
-errors still apply.
+`run_trusted_json()` skip only named-request input and output boundary
+validation. Behavior contracts, runtime type checks, assertions, and ordinary
+runtime errors still apply.
 
 `GwtClient` is a small facade over the lower-level `check_file`, `run_file`,
 `run_json_file`, and `compile_file` functions. `check_file` returns a
@@ -446,20 +450,19 @@ for single-scenario runs; multi-scenario details are always available under
 
 ## Generated Host Types
 
-The same `RECORD`, `REQUEST`, and `OUTPUT` contracts can generate host-language
-types. For TypeScript:
+The same `RECORD` contracts and named request boundaries can generate
+host-language types. For TypeScript:
 
 ```sh
 python -m gwtlang types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated declaration file includes record interfaces, one-of record
-unions, `GwtRequest`, `GwtOutput`, and a `GwtEntry` union. When `EXPORT`
-declarations exist, `GwtEntry` uses export names; otherwise it uses inferred
-behavior entries. Generated TypeScript maps `integer` and `number` to
-`number`, and maps `decimal` to `string` at the JSON boundary. These
-declarations are integration helpers for host code; the `.gwt` source remains
-the normative contract.
+unions, per-request input/output interfaces, `GwtRequestName`, `GwtRequests`,
+`GwtOutputs`, `GwtRequest`, and `GwtOutput`. Generated TypeScript maps
+`integer` and `number` to `number`, and maps `decimal` to `string` at the JSON
+boundary. These declarations are integration helpers for host code; the `.gwt`
+source remains the normative contract.
 Generated TypeScript uses nested object shape for dotted contract paths. Raw
 CLI JSON input may still provide state through dotted path keys such as
 `"cart.total"`, or through nested objects that produce the same state.
@@ -468,13 +471,13 @@ TypeScript callers can pair generated types with the CLI-backed client:
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
 
-const request: GwtRequest = { vendor, decision };
-const entry: GwtEntry = "review vendor into decision";
+const input: GwtRequest = { vendor };
+const request: GwtRequestName = "review vendor";
 const client = new GwtClient("rules.gwt");
-const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry,
+const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
+  request,
 });
 
 execution.result.decision.status;
@@ -485,10 +488,6 @@ the runtime-style `./rules.js` specifier.
 
 For a complete host example, see
 [`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
-
-`GwtEntry` uses `EXPORT` names when a program declares them. For programs
-without exports, it falls back to inferred behavior signatures that can be
-called with top-level `REQUEST` paths.
 
 ## Static Checking
 
@@ -519,10 +518,10 @@ The current checker reports:
 - implicit behavior parameters as deprecation warnings
 
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
-source ranges, and a symbol list for records, record fields, behavior signatures,
-parameters, local names, program contracts, and scenarios.
+source ranges, and a symbol list for records, record fields, named requests,
+behavior signatures, parameters, local names, and scenarios.
 
-`gwt format file.gwt` rewrites a valid GWT file using the canonical v0.1 source
+`gwt format file.gwt` rewrites a valid GWT file using the canonical current source
 layout. Use `gwt format file.gwt --check` in CI to fail when a file needs
 formatting, or `gwt format file.gwt --stdout` to print the formatted source
 without writing.

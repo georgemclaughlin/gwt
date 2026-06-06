@@ -12,17 +12,7 @@ GIVEN application is LoanApplication
   bankruptcies: 0
   employment_years: 4
 
-GIVEN decision is LoanDecision
-  principal: 0
-  dti: 0
-  ltv: 0
-  reserve_months: 0
-  risk_points: 0
-  interest_rate: 0
-  status: "new"
-  reason: "new"
-
-WHEN underwrite application into decision
+REQUEST underwrite loan
 
 THEN decision.status == "approved"
 AND decision.reason == "strong_application"

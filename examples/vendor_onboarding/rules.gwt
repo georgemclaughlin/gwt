@@ -31,10 +31,25 @@ RECORD VendorDecision
   status: "new" | "approved" | "needs_review" | "rejected"
   reason: "new" | "ready_to_onboard" | "manual_review_required" | "high_risk_signal" | "risk_too_high"
 
-REQUEST vendor is VendorRequest
-AND decision is VendorDecision
+REQUEST review vendor
+  GIVEN vendor is VendorRequest
 
-OUTPUT decision is VendorDecision
+  GIVEN decision is VendorDecision
+    required_document_count: 0
+    missing_document_count: 0
+    expired_document_count: 0
+    high_signal_count: 0
+    risk_points: 0
+    missing_requirements: []
+    reasons: []
+    data_review_required: false
+    tier: "new"
+    status: "new"
+    reason: "new"
+
+  WHEN review vendor into decision
+
+  OUTPUT decision is VendorDecision
 
 WHEN reset <decision>
   GIVEN decision is VendorDecision
@@ -149,20 +164,7 @@ GIVEN vendor.documents are VendorDocument
   | "tax_form"  | "provided" |
   | "insurance" | "provided" |
 
-GIVEN decision is VendorDecision
-  required_document_count: 0
-  missing_document_count: 0
-  expired_document_count: 0
-  high_signal_count: 0
-  risk_points: 0
-  missing_requirements: []
-  reasons: []
-  data_review_required: false
-  tier: "new"
-  status: "new"
-  reason: "new"
-
-WHEN review vendor into decision
+REQUEST review vendor
 
 THEN decision.status == "approved"
 AND decision.reason == "ready_to_onboard"
@@ -192,20 +194,7 @@ GIVEN vendor.risk_signals are VendorRiskSignal
   | "new_vendor"  | "low"    | 1      |
   | "data_region" | "medium" | 2      |
 
-GIVEN decision is VendorDecision
-  required_document_count: 0
-  missing_document_count: 0
-  expired_document_count: 0
-  high_signal_count: 0
-  risk_points: 0
-  missing_requirements: []
-  reasons: []
-  data_review_required: false
-  tier: "new"
-  status: "new"
-  reason: "new"
-
-WHEN review vendor into decision
+REQUEST review vendor
 
 THEN decision.status == "needs_review"
 AND decision.reason == "manual_review_required"
@@ -238,20 +227,7 @@ GIVEN vendor.risk_signals are VendorRiskSignal
   | name              | severity | points |
   | "sanctions_match" | "high"   | 10     |
 
-GIVEN decision is VendorDecision
-  required_document_count: 0
-  missing_document_count: 0
-  expired_document_count: 0
-  high_signal_count: 0
-  risk_points: 0
-  missing_requirements: []
-  reasons: []
-  data_review_required: false
-  tier: "new"
-  status: "new"
-  reason: "new"
-
-WHEN review vendor into decision
+REQUEST review vendor
 
 THEN decision.status == "rejected"
 AND decision.reason == "high_risk_signal"

@@ -17,8 +17,10 @@ from .runtime import (
     IfBlock,
     Line,
     MatchBlock,
+    NamedRequest,
     Program,
     RESERVED_BEHAVIOR_NAMES,
+    RequestCall,
     Scenario,
     TableAssignment,
     VariantAssignment,
@@ -125,11 +127,11 @@ class Checker:
 
     def check(self) -> list[Diagnostic]:
         self._check_dto_field_types()
-        self._check_program_contracts()
         self._check_behavior_signatures()
-        self._check_exports()
         for action in self.program.actions:
             self._check_action(action)
+        for request in self.program.requests.values():
+            self._check_named_request(request)
         self._check_background()
         for scenario in self.program.scenarios:
             self._check_scenario(scenario)
@@ -175,10 +177,10 @@ class Checker:
                     )
                     break
 
-    def _check_program_contracts(self) -> None:
-        self._check_contract_path_overlaps("REQUEST", self.program.inputs)
-        self._check_contract_path_overlaps("OUTPUT", self.program.outputs)
-        for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
+    def _check_named_request(self, request: NamedRequest) -> None:
+        self._check_contract_path_overlaps("REQUEST", request.inputs)
+        self._check_contract_path_overlaps("OUTPUT", request.outputs)
+        for binding in [*request.inputs.values(), *request.outputs.values()]:
             if not self._is_known_type(binding.value_type):
                 keyword = binding.kind.upper()
                 self._add_line(
@@ -186,6 +188,92 @@ class Checker:
                     f"unknown {keyword} contract type: {binding.value_type}",
                     "GWT014",
                 )
+
+        for line in request.givens:
+            if isinstance(line, TableAssignment):
+                self._check_table_placeholders(line, set())
+            elif isinstance(line, VariantAssignment):
+                self._check_variant_placeholders(line, set())
+            elif isinstance(line, Line):
+                self._check_placeholders(line, set())
+        for line in request.whens:
+            self._check_placeholders(line, set())
+        for line in request.thens:
+            self._check_placeholders(line, set())
+
+        for line in request.givens:
+            self._check_given(line)
+        scope = self._request_scope(request)
+        for line in request.whens:
+            self._check_command_or_action(line, scope, allow_let=False)
+        for line in request.thens:
+            self._check_condition_with_scope(line, scope)
+
+    def _request_scope(self, request: NamedRequest) -> Scope:
+        scope = Scope(set())
+        for binding in [*request.inputs.values(), *request.outputs.values()]:
+            self._add_typed_name(scope, binding.path, binding.value_type)
+        return self._scope_from_givens(request.givens, scope)
+
+    def _check_request_call(self, call: RequestCall, scope: Scope) -> None:
+        request = self.program.requests.get(call.name)
+        if request is None:
+            self._add_line(call.line, f"unknown request: {call.name}", "GWT001")
+            return
+        for binding in request.inputs.values():
+            actual_type = scope.types.get(binding.path)
+            if actual_type is None:
+                if self._check_request_input_descendants(call, scope, binding):
+                    continue
+                self._add_line(
+                    call.line,
+                    f"request input {binding.path} is missing; expected {binding.value_type}",
+                    "GWT016",
+                )
+            elif not _assignable(actual_type, binding.value_type):
+                self._add_line(
+                    call.line,
+                    f"request input {binding.path} expected {binding.value_type}, got {actual_type}",
+                    "GWT016",
+                )
+
+    def _check_request_input_descendants(self, call: RequestCall, scope: Scope, binding: ContractBinding) -> bool:
+        if binding.value_type == "any" and _has_descendant_path(scope, binding.path):
+            return True
+
+        dto = self.program.dtos.get(binding.value_type)
+        if dto is None:
+            return False
+
+        saw_descendant = False
+        for field, expected_type in dto.fields.items():
+            field_path = f"{binding.path}.{field}"
+            actual_type = scope.types.get(field_path)
+            if actual_type is None:
+                if saw_descendant:
+                    self._add_line(
+                        call.line,
+                        f"request input {binding.path} expected {binding.value_type} but is missing {field_path}",
+                        "GWT016",
+                    )
+                    return True
+                return False
+            saw_descendant = True
+            if not _assignable(actual_type, expected_type):
+                self._add_line(
+                    call.line,
+                    f"request input {field_path} expected {expected_type}, got {actual_type}",
+                    "GWT016",
+                )
+                return True
+        return saw_descendant
+
+    def _add_request_outputs_to_scope(self, scope: Scope, request_name: str) -> None:
+        request = self.program.requests.get(request_name)
+        if request is None:
+            return
+        for binding in request.outputs.values():
+            self._add_typed_name(scope, binding.path, binding.value_type)
 
     def _check_contract_path_overlaps(self, keyword: str, bindings: dict[str, ContractBinding]) -> None:
         ordered = list(bindings.values())
@@ -289,16 +377,6 @@ class Checker:
             if line is not None:
                 self._add_line(line, f"unknown return type: {action.contract.return_type}", "GWT014")
 
-    def _check_exports(self) -> None:
-        scope = self._scope_from_inputs()
-        for exported in self.program.exports.values():
-            try:
-                tokens = _tokens(exported.entry, exported.line.filename or "<source>", exported.line.number)
-            except GwtError as exc:
-                self._add_line(exported.line, _strip_location(str(exc)), "GWT010")
-                continue
-            self._check_behavior_call(tokens, exported.line, scope, require_return_value=False)
-
     def _check_background(self) -> None:
         background_lines = [
             *self.program.background.givens,
@@ -310,6 +388,8 @@ class Checker:
                 self._check_table_placeholders(line, set())
             elif isinstance(line, VariantAssignment):
                 self._check_variant_placeholders(line, set())
+            elif isinstance(line, RequestCall):
+                self._check_placeholders(line.line, set())
             elif isinstance(line, Line):
                 self._check_placeholders(line, set())
 
@@ -317,9 +397,13 @@ class Checker:
             self._check_given(line)
         background_scope = self._scope_from_givens(self.program.background.givens)
         for line in self.program.background.whens:
-            self._check_command_or_action(line, background_scope, allow_let=False)
+            if isinstance(line, RequestCall):
+                self._check_request_call(line, background_scope)
+                self._add_request_outputs_to_scope(background_scope, line.name)
+            else:
+                self._check_command_or_action(line, background_scope, allow_let=False)
         for line in self.program.background.thens:
-            self._check_condition(line)
+            self._check_condition_with_scope(line, background_scope)
 
     def _check_scenario(self, scenario: Scenario) -> None:
         example_headers = set(scenario.examples[0]) if scenario.examples else set()
@@ -331,7 +415,10 @@ class Checker:
             elif isinstance(line, Line):
                 self._check_placeholders(line, example_headers)
         for line in scenario.whens:
-            self._check_placeholders(line, example_headers)
+            if isinstance(line, RequestCall):
+                self._check_placeholders(line.line, example_headers)
+            else:
+                self._check_placeholders(line, example_headers)
         for line in scenario.thens:
             self._check_placeholders(line, example_headers)
 
@@ -339,12 +426,16 @@ class Checker:
             self._check_given(line)
         scenario_scope = self._scope_from_givens([*self.program.background.givens, *scenario.givens])
         for line in scenario.whens:
-            self._check_command_or_action(line, scenario_scope, allow_let=False)
+            if isinstance(line, RequestCall):
+                self._check_request_call(line, scenario_scope)
+                self._add_request_outputs_to_scope(scenario_scope, line.name)
+            else:
+                self._check_command_or_action(line, scenario_scope, allow_let=False)
         for line in scenario.thens:
-            self._check_condition(line)
+            self._check_condition_with_scope(line, scenario_scope)
 
-    def _scope_from_givens(self, givens: list[Any]) -> Scope:
-        scope = self._scope_from_inputs()
+    def _scope_from_givens(self, givens: list[Any], base: Scope | None = None) -> Scope:
+        scope = base.copy() if base is not None else Scope(set())
         for given in givens:
             if isinstance(given, DtoValidation):
                 self._add_typed_name(scope, given.path, given.dto_name)
@@ -357,21 +448,14 @@ class Checker:
             elif isinstance(given, Line) and " is " in given.text:
                 path, expression = given.text.split(" is ", 1)
                 path = path.strip()
-                if "." not in path:
-                    scope.names.add(path)
-                    try:
-                        expression_type = parse_expression(expression.strip())
-                    except GwtError:
-                        expression_type = None
-                    inferred_type = _infer_expression_type(expression_type, scope) if expression_type is not None else None
-                    if inferred_type is not None:
-                        self._add_typed_name(scope, path, inferred_type)
-        return scope
-
-    def _scope_from_inputs(self) -> Scope:
-        scope = Scope(set())
-        for binding in self.program.inputs.values():
-            self._add_typed_name(scope, binding.path, binding.value_type)
+                scope.names.add(path)
+                try:
+                    expression_type = parse_expression(expression.strip())
+                except GwtError:
+                    expression_type = None
+                inferred_type = _infer_expression_type(expression_type, scope) if expression_type is not None else None
+                if inferred_type is not None:
+                    self._add_typed_name(scope, path, inferred_type)
         return scope
 
     def _add_typed_name(self, scope: Scope, name: str, value_type: str) -> None:
@@ -722,7 +806,10 @@ class Checker:
             if not condition:
                 self._add_line(line, "REQUIRE requires a condition", "GWT010")
                 return
-            self._check_condition(Line(line.number, condition, line.filename, line.column + len("REQUIRE "), len(condition)))
+            self._check_condition_with_scope(
+                Line(line.number, condition, line.filename, line.column + len("REQUIRE "), len(condition)),
+                scope,
+            )
             return
 
         if _is_builtin_statement(tokens, line.text):
@@ -1293,6 +1380,13 @@ def _assignable(actual_type: str, expected_type: str) -> bool:
     if actual_item is not None and expected_item is not None:
         return _assignable(actual_item, expected_item)
     return False
+
+
+def _has_descendant_path(scope: Scope, path: str) -> bool:
+    prefix = f"{path}."
+    return any(name.startswith(prefix) for name in scope.names) or any(
+        typed_path.startswith(prefix) for typed_path in scope.types
+    )
 
 
 def _is_numeric_type(value_type: str | None) -> bool:

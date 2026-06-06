@@ -16,8 +16,12 @@ RECORD Invoice
   featured_name: text
   status: "draft" | "ready"
 
-REQUEST invoice is Invoice
-OUTPUT invoice is Invoice
+REQUEST calculate invoice
+  GIVEN invoice is Invoice
+
+  WHEN calculate invoice
+
+  OUTPUT invoice is Invoice
 
 WHEN calculate <invoice>
   GIVEN invoice is Invoice
@@ -55,7 +59,7 @@ GIVEN invoice.items are LineItem
   | "keyboard" | 2        | 75         |
   | "mouse"    | 1        | 50         |
 
-WHEN calculate invoice
+REQUEST calculate invoice
 
 THEN invoice.subtotal == 200
 AND invoice.discount == 20

@@ -17,10 +17,10 @@ vendor request
   -> onboarding decision
 ```
 
-The entry behavior is:
+The public named request is:
 
 ```gwt
-WHEN review <vendor> into <decision>
+REQUEST review vendor
 ```
 
 The output decision includes:
@@ -52,7 +52,7 @@ Run with JSON input:
 ```sh
 python -m gwtlang run examples/vendor_onboarding/rules.gwt \
   --json-input examples/vendor_onboarding/request.json \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json
 ```
 
@@ -69,9 +69,9 @@ Use those declarations from a TypeScript host app:
 
 ## What This Demonstrates
 
-- typed `REQUEST` and `OUTPUT` contracts
+- typed named request inputs and outputs
 - typed JSON-shaped host input
-- generated TypeScript host types, including `GwtEntry`
+- generated TypeScript host types, including `GwtRequestName`
 - typed tables for documents and risk signals
 - explicit missing and expired document handling
 - deterministic status and reason output

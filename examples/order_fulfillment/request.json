@@ -1,20 +1,4 @@
 {
-  "fulfillment": {
-    "backordered_units": 0,
-    "cable_backordered": 0,
-    "cable_reserved": 0,
-    "gadget_backordered": 0,
-    "gadget_reserved": 0,
-    "package_count": 0,
-    "reason": "new",
-    "requested_units": 0,
-    "reserved_units": 0,
-    "shipping_fee": 0,
-    "status": "new",
-    "unknown_sku_count": 0,
-    "widget_backordered": 0,
-    "widget_reserved": 0
-  },
   "inventory": {
     "cable_available": 5,
     "cable_reserved": 0,

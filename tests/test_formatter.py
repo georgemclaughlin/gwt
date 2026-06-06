@@ -118,10 +118,15 @@ WHEN handle <statement>
 """,
         )
 
-    def test_format_text_normalizes_export_and_value_depending_on(self):
+    def test_format_text_normalizes_request_and_value_depending_on(self):
         formatted = format_text(
             """
-            EXPORT   decide_mode_v1 as decide mode
+            REQUEST   decide mode
+              GIVEN   mode is text
+
+              WHEN   decide mode
+
+              OUTPUT   mode is text
 
             WHEN decide <mode>
               DEPENDING ON  mode
@@ -134,7 +139,12 @@ WHEN handle <statement>
 
         self.assertEqual(
             formatted,
-            """EXPORT decide_mode_v1 as decide mode
+            """REQUEST decide mode
+  GIVEN mode is text
+
+  WHEN decide mode
+
+  OUTPUT mode is text
 
 WHEN decide <mode>
   DEPENDING ON mode

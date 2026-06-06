@@ -160,13 +160,6 @@ class MatchBlock:
 
 
 @dataclass(frozen=True)
-class ExportedEntry:
-    name: str
-    entry: str
-    line: Line
-
-
-@dataclass(frozen=True)
 class DtoDefinition:
     name: str
     fields: dict[str, str]
@@ -236,6 +229,12 @@ class BehaviorReturn:
     value: Any
 
 
+@dataclass(frozen=True)
+class RequestCall:
+    name: str
+    line: Line
+
+
 @dataclass
 class Scenario:
     name: str
@@ -244,21 +243,30 @@ class Scenario:
     column: int = 1
     length: int = 1
     givens: list[Any] = field(default_factory=list)
-    whens: list[Line] = field(default_factory=list)
+    whens: list[Any] = field(default_factory=list)
     thens: list[Line] = field(default_factory=list)
     examples: list[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class NamedRequest:
+    name: str
+    line: Line
+    inputs: dict[str, ContractBinding] = field(default_factory=dict)
+    outputs: dict[str, ContractBinding] = field(default_factory=dict)
+    givens: list[Any] = field(default_factory=list)
+    whens: list[Line] = field(default_factory=list)
+    thens: list[Line] = field(default_factory=list)
 
 
 @dataclass
 class Program:
     name: str | None = None
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
-    inputs: dict[str, ContractBinding] = field(default_factory=dict)
-    outputs: dict[str, ContractBinding] = field(default_factory=dict)
     dtos: dict[str, DtoDefinition] = field(default_factory=dict)
     variants: dict[str, VariantDefinition] = field(default_factory=dict)
     actions: list[Action] = field(default_factory=list)
-    exports: dict[str, ExportedEntry] = field(default_factory=dict)
+    requests: dict[str, NamedRequest] = field(default_factory=dict)
     scenarios: list[Scenario] = field(default_factory=list)
 
 
@@ -340,12 +348,10 @@ def run_request(
             whens=[*program.background.whens, *request.background.whens],
             thens=[*program.background.thens, *request.background.thens],
         ),
-        inputs={**program.inputs, **request.inputs},
-        outputs={**program.outputs, **request.outputs},
         dtos={**program.dtos, **request.dtos},
         variants={**program.variants, **request.variants},
         actions=[*program.actions, *request.actions],
-        exports={**program.exports, **request.exports},
+        requests={**program.requests, **request.requests},
         scenarios=request.scenarios,
     )
     runtime = Runtime(combined)
@@ -356,15 +362,22 @@ def run_json_request(
     program_source: str,
     state: dict[str, Any],
     *,
-    entry: str,
+    request: str,
     filename: str = "<program>",
-    entry_filename: str = "<entry>",
+    request_filename: str = "<request>",
+    json_filename: str | None = None,
     import_policy: ImportPolicy | None = None,
     validate_contracts: bool = True,
 ) -> RunResult:
     program = parse_program(program_source, filename, import_policy=import_policy)
     runtime = Runtime(program)
-    return runtime.run_json(state, entry, entry_filename=entry_filename, validate_contracts=validate_contracts)
+    return runtime.run_json(
+        state,
+        request,
+        request_filename=request_filename,
+        json_filename=json_filename,
+        validate_contracts=validate_contracts,
+    )
 
 
 def parse_program(
@@ -431,10 +444,10 @@ def parse_program(
             program.dtos.update(imported.dtos)
             program.variants.update(imported.variants)
             program.actions.extend(imported.actions)
-            duplicate_exports = sorted(set(program.exports) & set(imported.exports))
-            if duplicate_exports:
-                raise GwtError(f"{filename}:{line.number}: EXPORT already declares: {duplicate_exports[0]}")
-            program.exports.update(imported.exports)
+            duplicate_requests = sorted(set(program.requests) & set(imported.requests))
+            if duplicate_requests:
+                raise GwtError(f"{filename}:{line.number}: REQUEST already declares: {duplicate_requests[0]}")
+            program.requests.update(imported.requests)
             index += 1
             continue
 
@@ -472,26 +485,34 @@ def parse_program(
             index += 1
             last_top_keyword = None
         elif text.startswith("EXPORT "):
-            exported = _parse_export(text, filename, line)
-            if exported.name in program.exports:
-                raise GwtError(f"{filename}:{line.number}: EXPORT already declares: {exported.name}")
-            program.exports[exported.name] = exported
-            index += 1
-            last_top_keyword = None
+            raise GwtError(f"{filename}:{line.number}: EXPORT is no longer a public interface form; use REQUEST <name>")
         elif text.startswith("REQUEST "):
-            binding = _parse_contract_binding("REQUEST", text, filename, line)
-            if binding.path in program.inputs:
-                raise GwtError(f"{filename}:{line.number}: REQUEST already declares: {binding.path}")
-            program.inputs[binding.path] = binding
-            index += 1
-            last_top_keyword = "REQUEST"
+            if index + 1 < len(lines) and _indent_width(lines[index + 1].text) >= 2:
+                named_request, index = _parse_named_request(
+                    lines,
+                    index,
+                    filename,
+                    program.dtos,
+                    allow_unknown_dtos=allow_unknown_dtos,
+                )
+                if named_request.name in program.requests:
+                    raise GwtError(f"{filename}:{line.number}: REQUEST already declares: {named_request.name}")
+                program.requests[named_request.name] = named_request
+                last_top_keyword = None
+            else:
+                request_name = text.removeprefix("REQUEST ").strip()
+                if not request_name:
+                    raise GwtError(f"{filename}:{line.number}: REQUEST requires a name")
+                if _looks_like_removed_request_contract(request_name):
+                    raise GwtError(
+                        f"{filename}:{line.number}: top-level REQUEST contracts were removed; "
+                        "use REQUEST <name> with indented GIVEN bindings"
+                    )
+                current.whens.append(RequestCall(request_name, _derived_line(line, request_name, len("REQUEST "))))
+                index += 1
+                last_top_keyword = None
         elif text.startswith("OUTPUT "):
-            binding = _parse_contract_binding("OUTPUT", text, filename, line)
-            if binding.path in program.outputs:
-                raise GwtError(f"{filename}:{line.number}: OUTPUT already declares: {binding.path}")
-            program.outputs[binding.path] = binding
-            index += 1
-            last_top_keyword = "OUTPUT"
+            raise GwtError(f"{filename}:{line.number}: OUTPUT must appear inside a named REQUEST block")
         elif text.startswith("GIVEN "):
             statement = text.removeprefix("GIVEN ").strip()
             if _is_table_header(statement):
@@ -583,6 +604,7 @@ class Runtime:
         self.call_stack: list[CallFrame] = []
         self.base_path_types = self._base_path_types()
         self.path_types: dict[str, str] = {}
+        self._last_returned_state: dict[str, Any] | None = None
 
     def run(self) -> RunResult:
         results: list[ScenarioResult] = []
@@ -597,36 +619,26 @@ class Runtime:
     def run_json(
         self,
         state: dict[str, Any],
-        entry: str,
+        request: str,
         *,
-        entry_filename: str = "<entry>",
+        request_filename: str = "<request>",
+        json_filename: str | None = None,
         validate_contracts: bool = True,
     ) -> RunResult:
         if not isinstance(state, dict):
             raise GwtError("JSON input must be an object")
-        entry = entry.strip()
-        if not entry:
-            raise GwtError("entry behavior is required for JSON input")
-        exported = self.program.exports.get(entry)
-        if exported is not None:
-            entry = exported.entry
+        request = request.strip()
+        if not request:
+            raise GwtError("request name is required for JSON input")
 
         self.state = {}
         self.output = []
         self.path_types = dict(self.base_path_types)
+        self._last_returned_state = None
 
-        for line in self.program.background.givens:
-            if isinstance(line, DtoValidation):
-                self._before_line(line.line, {})
-                self._validate_dto(line)
-            elif isinstance(line, TableAssignment):
-                self._run_table_assignment(line)
-            elif isinstance(line, VariantAssignment):
-                self._run_variant_assignment(line)
-            else:
-                self._run_given(line)
+        self._run_givens(self.program.background.givens)
 
-        json_line = Line(1, "<json-input>", entry_filename, 1, len("<json-input>"))
+        json_line = Line(1, "<json-input>", json_filename or request_filename, 1, len("<json-input>"))
         try:
             declared_path_types = self.path_types
             self.path_types = {}
@@ -639,16 +651,12 @@ class Runtime:
         finally:
             self.path_types = declared_path_types
 
-        if validate_contracts:
-            self._validate_contract_bindings(self.program.inputs, "REQUEST")
         for line in self.program.background.whens:
-            self._run_command_or_action(line, {})
+            self._run_when_step(line, {})
 
-        entry_line = Line(1, entry, entry_filename, 1, max(1, len(entry)))
-        self._run_command_or_action(entry_line, {})
+        request_line = Line(1, request, request_filename, 1, max(1, len(request)))
+        self._run_request_call(request, request_line, validate_contracts=validate_contracts)
 
-        if validate_contracts:
-            self._validate_contract_bindings(self.program.outputs, "OUTPUT")
         for line in self.program.background.thens:
             self._before_line(line, {})
             try:
@@ -658,7 +666,7 @@ class Runtime:
             if not assertion_passed:
                 raise GwtError(f"Main: line {line.number}: assertion failed: {line.text}")
 
-        return RunResult([ScenarioResult("Main", self.state, self.output, self._declared_output_state())])
+        return RunResult([ScenarioResult("Main", self.state, self.output, self._last_returned_state)])
 
     def _run_scenario(
         self, scenario: Scenario, example: dict[str, str] | None = None, result_name: str | None = None
@@ -666,9 +674,39 @@ class Runtime:
         self.state = {}
         self.output = []
         self.path_types = dict(self.base_path_types)
+        self._last_returned_state = None
         givens = [*self.program.background.givens, *_substitute_lines(scenario.givens, example)]
         whens = [*self.program.background.whens, *_substitute_lines(scenario.whens, example)]
         thens = [*self.program.background.thens, *_substitute_lines(scenario.thens, example)]
+        self._run_givens(givens)
+        for line in whens:
+            self._run_when_step(line, {})
+        for line in thens:
+            self._before_line(line, {})
+            try:
+                assertion_passed = self._evaluate_condition(line.text, {})
+            except GwtError as exc:
+                raise _with_line_context(line, exc) from exc
+            if not assertion_passed:
+                raise GwtError(f"{scenario.name}: line {line.number}: assertion failed: {line.text}")
+        return ScenarioResult(result_name or scenario.name, self.state, self.output, self._last_returned_state)
+
+    def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
+        indexed: dict[str, list[Action]] = {}
+        for action in actions:
+            indexed.setdefault(action.name, []).append(action)
+        return indexed
+
+    def _base_path_types(self) -> dict[str, str]:
+        return {}
+
+    def _request_path_types(self, request: NamedRequest, current_path_types: dict[str, str] | None = None) -> dict[str, str]:
+        path_types = dict(self.base_path_types if current_path_types is None else current_path_types)
+        for binding in [*request.inputs.values(), *request.outputs.values()]:
+            self._register_path_type(binding.path, binding.value_type, path_types)
+        return path_types
+
+    def _run_givens(self, givens: list[Any]) -> None:
         for line in givens:
             if isinstance(line, DtoValidation):
                 self._before_line(line.line, {})
@@ -679,31 +717,47 @@ class Runtime:
                 self._run_variant_assignment(line)
             else:
                 self._run_given(line)
-        self._validate_contract_bindings(self.program.inputs, "REQUEST")
-        for line in whens:
-            self._run_command_or_action(line, {})
-        self._validate_contract_bindings(self.program.outputs, "OUTPUT")
-        for line in thens:
-            self._before_line(line, {})
-            try:
-                assertion_passed = self._evaluate_condition(line.text, {})
-            except GwtError as exc:
-                raise _with_line_context(line, exc) from exc
-            if not assertion_passed:
-                raise GwtError(f"{scenario.name}: line {line.number}: assertion failed: {line.text}")
-        return ScenarioResult(result_name or scenario.name, self.state, self.output, self._declared_output_state())
 
-    def _index_actions(self, actions: list[Action]) -> dict[str, list[Action]]:
-        indexed: dict[str, list[Action]] = {}
-        for action in actions:
-            indexed.setdefault(action.name, []).append(action)
-        return indexed
+    def _run_when_step(self, step: Any, env: dict[str, Any]) -> None:
+        if isinstance(step, RequestCall):
+            self._run_request_call(step.name, step.line)
+            return
+        self._run_command_or_action(step, env)
 
-    def _base_path_types(self) -> dict[str, str]:
-        path_types: dict[str, str] = {}
-        for binding in [*self.program.inputs.values(), *self.program.outputs.values()]:
-            self._register_path_type(binding.path, binding.value_type, path_types)
-        return path_types
+    def _run_request_call(
+        self,
+        name: str,
+        line: Line,
+        *,
+        validate_contracts: bool = True,
+    ) -> None:
+        request = self.program.requests.get(name)
+        if request is None:
+            raise _with_line_context(line, GwtError(f"unknown request: {name}"))
+
+        self._before_line(line, {})
+        previous_path_types = self.path_types
+        self.path_types = self._request_path_types(request, previous_path_types)
+        try:
+            if validate_contracts:
+                self._validate_contract_bindings(request.inputs, "REQUEST")
+            self._run_givens(request.givens)
+            for when in request.whens:
+                self._run_command_or_action(when, {})
+            if validate_contracts:
+                self._validate_contract_bindings(request.outputs, "OUTPUT")
+            for then in request.thens:
+                self._before_line(then, {})
+                try:
+                    assertion_passed = self._evaluate_condition(then.text, {})
+                except GwtError as exc:
+                    raise _with_line_context(then, exc) from exc
+                if not assertion_passed:
+                    raise GwtError(f"REQUEST {request.name}: line {then.number}: assertion failed: {then.text}")
+            self._last_returned_state = self._declared_output_state(request)
+        finally:
+            previous_path_types.update(self.path_types)
+            self.path_types = previous_path_types
 
     def _register_path_type(self, path: str, value_type: str, path_types: dict[str, str] | None = None) -> None:
         target = self.path_types if path_types is None else path_types
@@ -861,12 +915,12 @@ class Runtime:
             except GwtError as exc:
                 raise _with_line_context(binding.line, GwtError(f"{label} contract failed for {binding.path}: {exc}")) from exc
 
-    def _declared_output_state(self) -> dict[str, Any] | None:
-        if not self.program.outputs:
-            return None
+    def _declared_output_state(self, request: NamedRequest) -> dict[str, Any]:
+        if not request.outputs:
+            return {}
 
         returned: dict[str, Any] = {}
-        for binding in self.program.outputs.values():
+        for binding in request.outputs.values():
             _set_nested_output(returned, binding.path, self._get_path(binding.path, {}))
         return returned
 
@@ -1466,18 +1520,203 @@ def _parse_contract_binding(keyword: str, text: str, filename: str, line: Line) 
     return ContractBinding(keyword.lower(), path, value_type, _derived_line(line, text, 0))
 
 
-def _parse_export(text: str, filename: str, line: Line) -> ExportedEntry:
-    statement = text.removeprefix("EXPORT ").strip()
-    if " as " not in statement:
-        raise GwtError(f"{filename}:{line.number}: EXPORT expects 'EXPORT name as behavior call'")
-    name, entry = statement.split(" as ", 1)
-    name = name.strip()
-    entry = entry.strip()
-    if not _is_local_name(name):
-        raise GwtError(f"{filename}:{line.number}: EXPORT requires a simple name")
-    if not entry:
-        raise GwtError(f"{filename}:{line.number}: EXPORT requires a behavior call")
-    return ExportedEntry(name, entry, _derived_line(line, name, len("EXPORT ")))
+def _looks_like_removed_request_contract(statement: str) -> bool:
+    if " is " not in statement:
+        return False
+    path, value_type = statement.split(" is ", 1)
+    value_type = value_type.strip()
+    return _is_path(path.strip()) and _looks_like_type_name(value_type)
+
+
+def _looks_like_type_name(value_type: str) -> bool:
+    if not _is_type_syntax(value_type):
+        return False
+    if value_type in DTO_TYPES or value_type.startswith("list<"):
+        return True
+    if "|" in value_type:
+        return True
+    return bool(value_type and value_type[0].isupper())
+
+
+def _parse_named_request(
+    lines: list[Line],
+    index: int,
+    filename: str,
+    dtos: dict[str, DtoDefinition],
+    *,
+    allow_unknown_dtos: bool = False,
+) -> tuple[NamedRequest, int]:
+    header = lines[index]
+    name = header.text.removeprefix("REQUEST ").strip()
+    if not name:
+        raise GwtError(f"{filename}:{header.number}: REQUEST requires a name")
+    if _looks_like_removed_request_contract(name):
+        raise GwtError(
+            f"{filename}:{header.number}: top-level REQUEST contracts were removed; "
+            "use REQUEST <name> with indented GIVEN bindings"
+        )
+    if index + 1 >= len(lines) or _indent_width(lines[index + 1].text) < 2:
+        raise GwtError(f"{filename}:{header.number}: REQUEST {name} requires an indented body")
+
+    body_start = index + 1
+    body_end = body_start
+    while body_end < len(lines) and _indent_width(lines[body_end].text) >= 2:
+        body_end += 1
+
+    body_lines = [_dedent_line(line, 2) for line in lines[body_start:body_end]]
+    request = NamedRequest(name, _derived_line(header, name, len("REQUEST ")))
+    _parse_named_request_body(
+        request,
+        body_lines,
+        filename,
+        dtos,
+        allow_unknown_dtos=allow_unknown_dtos,
+    )
+    if not request.whens:
+        raise GwtError(f"{filename}:{header.number}: REQUEST {name} requires at least one WHEN")
+    return request, body_end
+
+
+def _dedent_line(line: Line, width: int) -> Line:
+    text = line.text[width:] if len(line.text) >= width else ""
+    return Line(line.number, text, line.filename, line.column, max(1, len(text.strip())))
+
+
+def _parse_named_request_body(
+    request: NamedRequest,
+    lines: list[Line],
+    filename: str,
+    dtos: dict[str, DtoDefinition],
+    *,
+    allow_unknown_dtos: bool = False,
+) -> None:
+    index = 0
+    last_keyword: str | None = None
+    while index < len(lines):
+        line = lines[index]
+        if _indent_width(line.text) != 0:
+            raise GwtError(f"{filename}:{line.number}: REQUEST body statement is indented too far")
+        text = line.text
+        if text.startswith("AND "):
+            if last_keyword not in {"GIVEN", "WHEN", "OUTPUT", "THEN"}:
+                raise GwtError(f"{filename}:{line.number}: AND has no previous request statement")
+            text = f"{last_keyword} {text.removeprefix('AND ').strip()}"
+
+        if text.startswith("GIVEN "):
+            index = _parse_request_given(
+                request,
+                text,
+                lines,
+                index,
+                filename,
+                dtos,
+                allow_unknown_dtos=allow_unknown_dtos,
+            )
+            last_keyword = "GIVEN"
+            continue
+
+        if text.startswith("WHEN "):
+            call_text = text.removeprefix("WHEN ").strip()
+            if not call_text:
+                raise GwtError(f"{filename}:{line.number}: REQUEST WHEN requires a behavior call")
+            if index + 1 < len(lines) and _indent_width(lines[index + 1].text) > 0:
+                raise GwtError(
+                    f"{filename}:{line.number}: REQUEST WHEN cannot define behavior; define block-form WHEN at top level"
+                )
+            request.whens.append(_derived_line(line, call_text, len("WHEN ")))
+            index += 1
+            last_keyword = "WHEN"
+            continue
+
+        if text.startswith("OUTPUT "):
+            binding = _parse_contract_binding("OUTPUT", text, filename, line)
+            if binding.path in request.outputs:
+                raise GwtError(f"{filename}:{line.number}: OUTPUT already declares: {binding.path}")
+            request.outputs[binding.path] = binding
+            index += 1
+            last_keyword = "OUTPUT"
+            continue
+
+        if text.startswith("THEN "):
+            statement = text.removeprefix("THEN ").strip()
+            if _is_record_header(statement):
+                index += 1
+                expanded, index = _expand_record_block(statement, lines, index, filename)
+                request.thens.extend(expanded)
+            else:
+                request.thens.append(_derived_line(line, statement, len("THEN ")))
+                index += 1
+            last_keyword = "THEN"
+            continue
+
+        if text.startswith("REQUEST "):
+            raise GwtError(f"{filename}:{line.number}: nested REQUEST calls are not allowed inside a REQUEST block")
+        raise GwtError(f"{filename}:{line.number}: unknown REQUEST body form: {text}")
+
+
+def _parse_request_given(
+    request: NamedRequest,
+    text: str,
+    lines: list[Line],
+    index: int,
+    filename: str,
+    dtos: dict[str, DtoDefinition],
+    *,
+    allow_unknown_dtos: bool = False,
+) -> int:
+    line = lines[index]
+    statement = text.removeprefix("GIVEN ").strip()
+    has_body = index + 1 < len(lines) and _indent_width(lines[index + 1].text) > 0
+    if _is_table_header(statement):
+        if not has_body:
+            raise GwtError(f"{filename}:{line.number}: GIVEN table requires a body")
+        index += 1
+        table, index = _parse_table_assignment(statement, lines, index, filename, line)
+        request.givens.append(table)
+        return index
+    if _is_variant_assignment_header(statement):
+        if not has_body:
+            raise GwtError(f"{filename}:{line.number}: one-of setup requires a body")
+        index += 1
+        assignment, index = _parse_variant_assignment(statement, lines, index, filename, line)
+        request.givens.append(assignment)
+        return index
+    if _is_typed_record_header(statement):
+        if has_body:
+            index += 1
+            expanded, index, validation = _expand_typed_record_block(
+                statement,
+                lines,
+                index,
+                filename,
+                dtos,
+                allow_unknown_dtos=allow_unknown_dtos,
+            )
+            request.givens.extend(expanded)
+            request.givens.append(validation)
+            return index
+        binding = _parse_contract_binding("REQUEST", f"REQUEST {statement}", filename, line)
+        if binding.path in request.inputs:
+            raise GwtError(f"{filename}:{line.number}: REQUEST input already declares: {binding.path}")
+        request.inputs[binding.path] = binding
+        return index + 1
+    if _is_record_header(statement):
+        if not has_body:
+            raise GwtError(f"{filename}:{line.number}: record block requires a body")
+        index += 1
+        expanded, index = _expand_record_block(statement, lines, index, filename)
+        request.givens.extend(expanded)
+        return index
+    if not has_body and " is " in statement:
+        _path, value_type = statement.split(" is ", 1)
+        if _is_type_syntax(value_type.strip()):
+            binding = _parse_contract_binding("REQUEST", f"REQUEST {statement}", filename, line)
+            if binding.path in request.inputs:
+                raise GwtError(f"{filename}:{line.number}: REQUEST input already declares: {binding.path}")
+            request.inputs[binding.path] = binding
+            return index + 1
+    request.givens.append(_derived_line(line, statement, len("GIVEN ")))
+    return index + 1
 
 
 def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: int = 2) -> tuple[list[Any], int]:
@@ -2043,6 +2282,19 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
     for line in lines:
         if isinstance(line, DtoValidation):
             substituted.append(line)
+        elif isinstance(line, RequestCall):
+            substituted.append(
+                RequestCall(
+                    _substitute_placeholders(line.name, values, line.line.number),
+                    Line(
+                        line.line.number,
+                        _substitute_placeholders(line.line.text, values, line.line.number),
+                        line.line.filename,
+                        line.line.column,
+                        line.line.length,
+                    ),
+                )
+            )
         elif isinstance(line, TableAssignment):
             substituted.append(
                 TableAssignment(
