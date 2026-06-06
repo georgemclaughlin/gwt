@@ -33,6 +33,29 @@ export class GwtClient {
     return normalizeCheckPayload(parsePayload(result.stdout, result));
   }
 
+  async inspect(options = {}) {
+    const result = await this.#run(["inspect", this.file, ...this.#importPolicyArgs(options), "--json"], {
+      ...options,
+      allowNonZeroJson: true,
+    });
+    return parsePayload(result.stdout, result);
+  }
+
+  async validate(options = {}) {
+    const args = ["validate", this.file, ...this.#importPolicyArgs(options), "--json"];
+    if (options.checkFormat === false) {
+      args.push("--skip-format");
+    }
+    if (options.runTests === false) {
+      args.push("--skip-test");
+    }
+    const result = await this.#run(args, {
+      ...options,
+      allowNonZeroJson: true,
+    });
+    return parsePayload(result.stdout, result);
+  }
+
   async runJson(input, options) {
     if (!options?.request) {
       throw new TypeError("runJson requires a request name");
@@ -162,12 +185,51 @@ export class GwtSpec {
   }
 }
 
+export class GwtProgram {
+  constructor(options, specOptions) {
+    this.spec = new GwtSpec(options, specOptions);
+    this.client = this.spec.client;
+  }
+
+  checkOnce(options = {}) {
+    return this.spec.checkOnce(options);
+  }
+
+  resetCheck() {
+    this.spec.resetCheck();
+  }
+
+  runJson(input, options = {}) {
+    return this.spec.runJson(input, options);
+  }
+
+  runRequest(requestFile, options = {}) {
+    return this.spec.runRequest(requestFile, options);
+  }
+
+  test(options = {}) {
+    return this.spec.test(options);
+  }
+}
+
 export function createGwtSpec(options, specOptions) {
   return new GwtSpec(options, specOptions);
 }
 
+export function createGwtProgram(options, specOptions) {
+  return new GwtProgram(options, specOptions);
+}
+
 export async function checkFile(file, options = {}) {
-  return new GwtClient({ ...options, file }).check();
+  return new GwtClient({ ...options, file }).check(options);
+}
+
+export async function inspectFile(file, options = {}) {
+  return new GwtClient({ ...options, file }).inspect(options);
+}
+
+export async function validateFile(file, options = {}) {
+  return new GwtClient({ ...options, file }).validate(options);
 }
 
 export async function runFile(file, options) {

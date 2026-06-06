@@ -297,6 +297,29 @@ it("keeps embedded GWT scenarios passing", async () => {
 request, and passes import policy options through to `gwt check`, `gwt run`,
 and `gwt test`.
 
+Host application code can use `createGwtProgram` with generated `GwtRequests`
+and `GwtOutputs` maps when it wants the request name, input object, and output
+object to stay correlated:
+
+```ts
+import { createGwtProgram } from "@gwtlang/client";
+import type { GwtOutputs, GwtRequests } from "./rules.js";
+
+const rules = createGwtProgram<GwtRequests, GwtOutputs, "review vendor">({
+  file: "rules.gwt",
+  request: "review vendor",
+  importRoots: ["rules"],
+  allowAbsoluteImports: false,
+});
+
+const execution = await rules.runJson({ vendor });
+const status = execution.result.decision.status;
+```
+
+`GwtClient.inspect()` and `GwtClient.validate()` expose the same JSON payloads
+as `gwt inspect --json` and `gwt validate --json`, including non-OK diagnostic
+payloads.
+
 ### 3. Generated Host Types
 
 Add type generation after the client contract is stable. Start with TypeScript:
@@ -341,19 +364,22 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript \
 
 The generator checks the source before emitting types, so unknown record or
 contract types fail with the same source-located diagnostics as `gwt check`.
-The generated declarations can be passed to `@gwtlang/client` as generics:
+The generated request/output maps can be passed to `@gwtlang/client` as
+generics:
 
 ```ts
-const input: GwtRequest = { vendor };
-const requestName: GwtRequestName = "review vendor";
-const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
-  request: requestName,
+const rules = createGwtProgram<GwtRequests, GwtOutputs, "review vendor">({
+  file: "rules.gwt",
+  request: "review vendor",
 });
+const execution = await rules.runJson({ vendor });
 ```
 
 `GwtRequestName` gives host code compile-time protection against request-name
-typos. The same named request list powers `gwt inspect --json`, so host types
-and tool manifests agree on which request strings are valid.
+typos. `createGwtProgram` uses the `GwtRequests` and `GwtOutputs` maps plus the
+default request literal to keep each request name correlated with its input and
+output shape. The same named request list powers `gwt inspect --json`, so host
+types and tool manifests agree on which request strings are valid.
 
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as

@@ -531,20 +531,19 @@ It uses the same JSON runner protocol as the Python API. Before a public npm
 release, use the repository example or a local `file:` dependency.
 
 ```ts
-import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
+import { createGwtProgram } from "@gwtlang/client";
+import type { GwtOutputs, GwtRequests } from "./rules.js";
 
-const input: GwtRequest = { vendor };
-const request: GwtRequestName = "review vendor";
-const client = new GwtClient("examples/vendor_onboarding/rules.gwt");
-const check = await client.check();
+const rules = createGwtProgram<GwtRequests, GwtOutputs, "review vendor">({
+  file: "examples/vendor_onboarding/rules.gwt",
+  request: "review vendor",
+});
+const check = await rules.checkOnce();
 if (!check.ok) {
   throw new Error(JSON.stringify(check.diagnostics));
 }
 
-const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
-  request,
-});
+const execution = await rules.runJson({ vendor });
 
 console.log(execution.result.decision.status);
 ```
