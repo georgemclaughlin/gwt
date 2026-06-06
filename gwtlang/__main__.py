@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
     input_group.add_argument(
         "--input",
         type=Path,
-        help="Path to a GWT request file containing GIVEN/WHEN/THEN steps.",
+        help="Path to a GWT request file containing GIVEN/REQUEST/THEN steps.",
     )
     input_group.add_argument(
         "--json-input",

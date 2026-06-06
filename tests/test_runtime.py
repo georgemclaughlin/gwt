@@ -1275,37 +1275,87 @@ class RuntimeTests(unittest.TestCase):
                 """
             )
 
-    def test_run_request_uses_program_behaviors_with_gwt_input_steps(self):
+    def test_run_request_uses_program_named_request_with_gwt_input_steps(self):
         program = '''
-        WHEN checkout cart
+        RECORD Cart
+          subtotal: number
+          shipping: number
+          total: number
+
+        REQUEST checkout cart
+          GIVEN cart is Cart
+
+          WHEN checkout cart
+
+          OUTPUT cart is Cart
+
+        WHEN checkout <cart>
+          GIVEN cart is Cart
           set cart.total to cart.subtotal + cart.shipping
-          set order.status to "priced"
         '''
         request = '''
-        GIVEN cart.subtotal is 84
-        AND cart.shipping is 8
-        AND order.status is "new"
+        GIVEN cart is Cart
+          subtotal: 84
+          shipping: 8
+          total: 0
 
-        WHEN checkout cart
+        REQUEST checkout cart
 
         THEN cart.total == 92
-        AND order.status == "priced"
         '''
 
         result = run_request(program, request)
 
         self.assertEqual(result.state["cart"]["total"], 92)
-        self.assertEqual(result.state["order"]["status"], "priced")
+        self.assertEqual(result.scenarios[0].returned_state, {"cart": {"subtotal": 84, "shipping": 8, "total": 92}})
+
+    def test_run_request_rejects_direct_when_steps(self):
+        program = '''
+        WHEN checkout cart
+          set cart.total to cart.subtotal + cart.shipping
+        '''
+        request = '''
+        GIVEN cart.subtotal is 84
+        AND cart.shipping is 8
+
+        WHEN checkout cart
+        '''
+
+        with self.assertRaisesRegex(GwtError, "direct WHEN is not allowed: checkout cart"):
+            run_request(program, request)
+
+    def test_run_request_rejects_program_declarations_in_request_files(self):
+        program = '''
+        REQUEST checkout cart
+          WHEN print "checkout"
+        '''
+        request = '''
+        PROGRAM checkout request
+
+        REQUEST checkout cart
+        '''
+
+        with self.assertRaisesRegex(GwtError, "request files cannot declare PROGRAM"):
+            run_request(program, request)
 
     def test_run_request_keeps_request_scenarios_and_examples(self):
         program = '''
+        REQUEST withdraw funds
+          GIVEN account.balance is number
+          AND amount is number
+
+          WHEN withdraw amount from account
+
+          OUTPUT account.balance is number
+
         WHEN withdraw amount from account
           subtract amount from account.balance
         '''
         request = '''
         SCENARIO request examples
         GIVEN account.balance is <start>
-        WHEN withdraw <amount> from account
+        AND amount is <amount>
+        REQUEST withdraw funds
         THEN account.balance == <end>
 
         EXAMPLES
@@ -1320,7 +1370,7 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.scenarios[0].state["account"]["balance"], 70)
         self.assertEqual(result.scenarios[1].state["account"]["balance"], 40)
 
-    def test_run_request_can_use_request_local_behavior(self):
+    def test_run_request_rejects_request_local_behavior_definitions(self):
         program = '''
         WHEN calculate fee for amount
           RETURN 3
@@ -1335,9 +1385,23 @@ class RuntimeTests(unittest.TestCase):
         THEN account.balance == 67
         '''
 
-        result = run_request(program, request)
+        with self.assertRaisesRegex(GwtError, "request files cannot define WHEN behavior"):
+            run_request(program, request)
 
-        self.assertEqual(result.state["account"]["balance"], 67)
+    def test_run_request_rejects_request_local_named_request_definitions(self):
+        program = '''
+        WHEN approve account
+          set account.status to "approved"
+        '''
+        request = '''
+        REQUEST approve account
+          WHEN approve account
+
+        REQUEST approve account
+        '''
+
+        with self.assertRaisesRegex(GwtError, "request files cannot define named REQUEST blocks"):
+            run_request(program, request)
 
     def test_dto_validates_typed_given_record(self):
         result = run_source(
@@ -1405,6 +1469,13 @@ class RuntimeTests(unittest.TestCase):
           subtotal: number
           total: number
 
+        REQUEST price cart
+          GIVEN cart is Cart
+
+          WHEN price cart
+
+          OUTPUT cart is Cart
+
         WHEN price cart
           set cart.total to cart.subtotal
         '''
@@ -1413,7 +1484,7 @@ class RuntimeTests(unittest.TestCase):
           subtotal: 42
           total: 0
 
-        WHEN price cart
+        REQUEST price cart
 
         THEN cart.total == 42
         '''

@@ -1,5 +1,3 @@
-PROGRAM loan request
-
 GIVEN application is LoanApplication
   credit_score: 720
   annual_income: 96000
