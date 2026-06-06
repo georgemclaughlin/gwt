@@ -53,22 +53,22 @@ gwt types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated file includes record interfaces, one-of record unions,
-per-request input/output interfaces, `GwtRequestName`, `GwtRequest`, and
-`GwtOutput` declarations that can be imported by host application code.
+per-request input/output interfaces, `GwtRequestName`, `GwtRequests`,
+`GwtOutputs`, `GwtRequest`, and `GwtOutput` declarations that can be imported
+by host application code.
 
-Use those generated types as client generics:
+Use those generated request/output maps with the typed program facade:
 
 ```ts
-import { GwtClient } from "@gwtlang/client";
-import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
+import { createGwtProgram } from "@gwtlang/client";
+import type { GwtOutputs, GwtRequests } from "./rules.js";
 
-const input: GwtRequest = { vendor };
-const request: GwtRequestName = "review vendor";
-const client = new GwtClient("rules.gwt");
-const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
-  request,
+const rules = createGwtProgram<GwtRequests, GwtOutputs, "review vendor">({
+  file: "rules.gwt",
+  request: "review vendor",
 });
 
+const execution = await rules.runJson({ vendor });
 console.log(execution.result.decision.status);
 ```
 
@@ -125,14 +125,19 @@ should mirror CI import confinement.
 
 - `new GwtClient(fileOrOptions)`
 - `client.check()`
+- `client.inspect()`
+- `client.validate()`
 - `client.test()`
 - `client.runJson<TInput, TResult>(input, { request })`
 - `client.runRequest(requestFile)`
 - `createGwtSpec<TInput, TResult>(fileOrOptions)`
+- `createGwtProgram<GwtRequests, GwtOutputs, GwtRequestName>(fileOrOptions)`
 - `spec.checkOnce()`
 - `spec.runJson(input)`
 - `spec.test()`
 - `checkFile(file, options)`
+- `inspectFile(file, options)`
+- `validateFile(file, options)`
 - `runFile<TInput, TResult>(file, options)`
 
 Failures from the GWT process are raised as `GwtClientError` with `exitCode`,

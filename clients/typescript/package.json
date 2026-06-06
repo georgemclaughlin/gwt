@@ -12,8 +12,13 @@
     }
   },
   "scripts": {
-    "check": "node --check src/index.mjs && node --check test/client.test.mjs",
+    "check": "node --check src/index.mjs && node --check test/client.test.mjs && npm run typecheck",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3"
   },
   "license": "MIT",
   "engines": {

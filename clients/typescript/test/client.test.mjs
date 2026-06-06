@@ -5,7 +5,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { GwtClient, GwtClientError, createGwtSpec, runFile } from "../src/index.mjs";
+import {
+  GwtClient,
+  GwtClientError,
+  createGwtSpec,
+  inspectFile,
+  runFile,
+  validateFile,
+} from "../src/index.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -74,6 +81,40 @@ THEN count == 2
     result.scenarios.map(scenario => scenario.name),
     ["one", "two"],
   );
+});
+
+test("GwtClient inspects and validates lifecycle payloads", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "gwt-client-"));
+  const file = path.join(dir, "scenarios.gwt");
+  await writeFile(
+    file,
+    "GIVEN count is 1\nTHEN count == 1\n",
+  );
+
+  const client = repoClient(file);
+  const inspected = await client.inspect();
+  const validated = await client.validate();
+  const helperInspected = await inspectFile(file, {
+    command: "python",
+    commandArgs: ["-m", "gwtlang"],
+    cwd: repoRoot,
+  });
+  const helperValidated = await validateFile(file, {
+    command: "python",
+    commandArgs: ["-m", "gwtlang"],
+    cwd: repoRoot,
+    checkFormat: false,
+    runTests: false,
+  });
+
+  assert.equal(inspected.ok, true);
+  assert.equal(inspected.counts.scenarios, 1);
+  assert.equal(validated.ok, true);
+  assert.equal(validated.phases.check.ok, true);
+  assert.equal(validated.phases.test.scenario_count, 1);
+  assert.equal(helperInspected.ok, true);
+  assert.equal(helperValidated.phases.format.skipped, "disabled");
+  assert.equal(helperValidated.phases.test.skipped, "disabled");
 });
 
 test("GwtSpec caches check and runs JSON input with a default request", async () => {
