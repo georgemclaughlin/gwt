@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
 
-from gwtlang import GwtError
+from gwtlang import GwtError, check_file, is_formatted, run_file, run_json_file
 from gwtlang.runtime import run_json_request, run_request, run_source
 from gwtlang.service import analyze_file
 
@@ -22,7 +23,66 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
 ]
 
 
+def example_gwt_files():
+    return sorted(Path("examples").rglob("*.gwt"))
+
+
+def example_program_files():
+    request_files = {request for _, request in example_gwt_request_pairs()}
+    return [program for program in example_gwt_files() if program not in request_files]
+
+
+def example_gwt_request_pairs():
+    pairs = []
+    for request in sorted(Path("examples").glob("*/request*.gwt")):
+        program = request.parent / "rules.gwt"
+        if program.exists():
+            pairs.append((program, request))
+    return pairs
+
+
+def first_request_name(program):
+    match = re.search(r"(?m)^REQUEST\s+(.+)$", program.read_text())
+    if not match:
+        raise AssertionError(f"{program} has a JSON request file but no REQUEST declaration")
+    return match.group(1).strip()
+
+
 class ExampleProgramTests(unittest.TestCase):
+    def test_all_example_gwt_files_are_formatted(self):
+        for program in example_gwt_files():
+            with self.subTest(program=str(program)):
+                self.assertTrue(is_formatted(program.read_text(), filename=str(program)))
+
+    def test_all_example_program_files_check(self):
+        for program in example_program_files():
+            with self.subTest(program=str(program)):
+                result = check_file(program)
+                self.assertTrue(result.ok, result.as_payload())
+
+    def test_all_example_programs_run(self):
+        for program in example_program_files():
+            with self.subTest(program=str(program)):
+                run_file(program)
+
+    def test_all_example_gwt_request_files_run_with_their_program(self):
+        for program, request in example_gwt_request_pairs():
+            with self.subTest(program=str(program), request=str(request)):
+                run_file(program, request_file=request)
+
+    def test_all_example_json_request_files_run_with_their_program(self):
+        for request in sorted(Path("examples").glob("*/request.json")):
+            program = request.parent / "rules.gwt"
+            if not program.exists():
+                continue
+            with self.subTest(program=str(program), request=str(request)):
+                run_json_file(
+                    program,
+                    json.loads(request.read_text()),
+                    request=first_request_name(program),
+                    json_file=request,
+                )
+
     def test_public_examples_include_embedded_scenarios_with_assertions(self):
         for program in PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS:
             with self.subTest(program=str(program)):

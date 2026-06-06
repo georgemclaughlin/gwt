@@ -317,13 +317,14 @@ signature as an imported behavior, the later local definition is tried first.
 The CLI can run a behavior file with a separate GWT-shaped request file:
 
 ```sh
-python -m gwtlang run examples/checkout_app.gwt --input examples/requests/checkout_request.gwt --json
+python -m gwtlang run examples/checkout/rules.gwt --input examples/checkout/request.gwt --json
 ```
 
-The program file provides named requests and reusable block-form `WHEN`
-behavior. The input file provides ordinary `GIVEN` setup, single-line
-`REQUEST` calls, and optional `THEN` steps. This makes GWT usable as a
-deterministic workflow runner while keeping inputs in the same language shape.
+The program file provides records, reusable block-form `WHEN` behavior, and
+optionally named requests. The input file provides ordinary `GIVEN` setup,
+single-line `WHEN` or `REQUEST` calls, and optional `THEN` steps. This makes GWT
+usable as a deterministic workflow runner while keeping inputs in the same
+language shape.
 
 Request files can use records declared by the program file.
 
