@@ -432,8 +432,8 @@ known directories, matching `--import-root`, and
 `allow_absolute_imports=False` matches `--no-absolute-imports`.
 The same import-confinement flags are available on `gwt test` and `gwt run`.
 
-For already-prevalidated internal loops, `run_trusted_json()` and
-`run_trusted_json()` skip only named-request input and output boundary
+For already-prevalidated internal loops, `GwtClient.run_trusted_json()` and
+compiled-program `run_trusted_json()` skip only named-request input and output boundary
 validation. Behavior contracts, runtime type checks, assertions, and ordinary
 runtime errors still apply.
 
@@ -488,6 +488,26 @@ the runtime-style `./rules.js` specifier.
 
 For a complete host example, see
 [`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
+
+For Python:
+
+```sh
+python -m gwtlang types rules.gwt --language python --output rules_types.py
+```
+
+The generated Python module includes `TypedDict` records, per-request
+request/output shapes, `GwtRequestName`, `GwtRequest`, `GwtOutput`,
+request-name constants, and a program-specific client wrapper. Generated Python
+maps `integer` to `int`, `number` to `int | float`, and `decimal` to `str` at
+the JSON boundary.
+
+```python
+from rules_types import PricingClient, PriceCartRequest
+
+rules = PricingClient.from_file("rules.gwt")
+request: PriceCartRequest = {"cart": cart}
+result = rules.price_cart(request)
+```
 
 ## Static Checking
 

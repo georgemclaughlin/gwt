@@ -306,8 +306,9 @@ Add type generation after the client contract is stable. Start with TypeScript:
 - named request inputs become the input type
 - named request outputs become the result type
 
-Python `TypedDict` or dataclass generation can follow. .NET and Java clients can
-start as CLI-backed wrappers before they need generated classes.
+Python `TypedDict` generation follows the same request boundary and also emits a
+program-specific client wrapper. .NET and Java clients can start as CLI-backed
+wrappers before they need generated classes.
 
 The initial command is:
 
@@ -357,6 +358,26 @@ and tool manifests agree on which request strings are valid.
 Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as
 `"cart.total"`, or through nested objects that produce the same state.
+
+For Python, GWT emits `TypedDict` records, one-of record unions, per-request
+request/output shapes, request-name constants, `GwtRequestName`, `GwtRequest`,
+`GwtOutput`, and a program-specific client wrapper:
+
+```sh
+gwt types examples/exact_pricing/rules.gwt --language python \
+  --output examples/exact_pricing/rules_types.py
+```
+
+Python callers can use the generated wrapper for request-specific methods while
+keeping `GwtClient` or `gwt validate` for validation and inspection workflows:
+
+```python
+from rules_types import ExactPricingClient, PriceCartRequest
+
+rules = ExactPricingClient.from_file("rules.gwt")
+request: PriceCartRequest = {"cart": cart}
+result = rules.price_cart(request)
+```
 
 Generated types should be treated as host integration helpers, not as the source
 of truth. The `.gwt` contracts remain normative.

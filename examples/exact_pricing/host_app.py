@@ -3,12 +3,18 @@ from __future__ import annotations
 from decimal import Decimal
 import json
 from pathlib import Path
+from typing import cast
 
 from gwtlang import GwtClient, GwtError
+from rules_types import (
+    PRICE_CART_REQUEST,
+    ExactPricingClient,
+    PriceCartOutput,
+    PriceCartRequest,
+)
 
 
 RULES = Path(__file__).with_name("rules.gwt")
-REQUEST_NAME = "price cart"
 
 
 def main() -> int:
@@ -36,12 +42,13 @@ def main() -> int:
     ).as_payload()
     print_json("public requests", manifest["requests"])
 
-    rules = client.compile(
+    compiled = client.compile(
         import_roots=[RULES.parent],
         allow_absolute_imports=False,
     )
+    rules = ExactPricingClient(compiled)
 
-    request = {
+    request: PriceCartRequest = {
         "cart": {
             "mode": "reserve",
             "quantity": 2,
@@ -50,8 +57,9 @@ def main() -> int:
             "status": "pending",
         }
     }
-    execution = rules.run_json(request, request=REQUEST_NAME)
-    print_json("result payload", execution.as_payload()["result"])
+    execution = rules.run_price_cart(request)
+    result = cast(PriceCartOutput, execution.as_payload()["result"])
+    print_json("result payload", result)
 
     total = execution.state["cart"]["total"]
     print(f"runtime total: {total} ({type(total).__name__})")
@@ -66,7 +74,7 @@ def main() -> int:
                 "status": "pending",
             }
         }
-        rules.run_json(bad_request, request=REQUEST_NAME)
+        rules.run_price_cart(cast(PriceCartRequest, bad_request))
     except GwtError as exc:
         print(f"float input rejected: {exc}")
 
@@ -79,7 +87,7 @@ def main() -> int:
             "status": "pending",
         }
     }
-    trusted = rules.run_trusted_json(prevalidated_state, request=REQUEST_NAME)
+    trusted = compiled.run_trusted_json(prevalidated_state, request=PRICE_CART_REQUEST)
     print_json("trusted prevalidated payload", trusted.as_payload()["result"])
 
     return 0

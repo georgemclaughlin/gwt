@@ -1,13 +1,25 @@
 from pathlib import Path
 import unittest
 
-from gwtlang import GwtError, generate_typescript_file, generate_typescript_text
+from gwtlang import (
+    GwtError,
+    generate_python_file,
+    generate_python_text,
+    generate_typescript_file,
+    generate_typescript_text,
+)
 
 
 class TypeGenerationTests(unittest.TestCase):
     def test_vendor_onboarding_typescript_example_fixture_is_current(self):
         generated = generate_typescript_file("examples/vendor_onboarding/rules.gwt")
         fixture = Path("clients/typescript/examples/vendor-onboarding.generated.d.ts")
+
+        self.assertEqual(fixture.read_text(), generated.source)
+
+    def test_exact_pricing_python_example_fixture_is_current(self):
+        generated = generate_python_file("examples/exact_pricing/rules.gwt")
+        fixture = Path("examples/exact_pricing/rules_types.py")
 
         self.assertEqual(fixture.read_text(), generated.source)
 
@@ -76,6 +88,75 @@ class TypeGenerationTests(unittest.TestCase):
         self.assertIn("quantity: number;", result.source)
         self.assertIn("amount: string;", result.source)
         self.assertIn('export type GwtRequestName = "price order";', result.source)
+
+    def test_python_generation_emits_exact_numeric_types_request_constant_and_client(self):
+        result = generate_python_text(
+            """
+            PROGRAM exact_pricing
+
+            RECORD Price
+              mode: "reserve" | "quote"
+              quantity: integer
+              amount: decimal
+              total: decimal
+
+            REQUEST price order
+              GIVEN price is Price
+
+              WHEN price order price
+
+              OUTPUT price is Price
+
+            WHEN price order <price>
+              GIVEN price is Price
+              PASS
+            """
+        )
+
+        self.assertIn("class Price(TypedDict):", result.source)
+        self.assertIn("mode: Literal['reserve', 'quote']", result.source)
+        self.assertIn("quantity: int", result.source)
+        self.assertIn("amount: str", result.source)
+        self.assertIn("PRICE_ORDER_REQUEST: GwtRequestName = 'price order'", result.source)
+        self.assertIn("class ExactPricingClient:", result.source)
+        self.assertIn("def run_price_order(self, request: PriceOrderRequest) -> ExecutionResult:", result.source)
+        self.assertIn("def price_order(self, request: PriceOrderRequest) -> PriceOrderOutput:", result.source)
+
+    def test_python_generation_maps_nested_records_variants_and_request_maps(self):
+        result = generate_python_text(
+            """
+            RECORD Vendor
+              name: text
+              scores: list<number>
+              owner:
+                email: text
+
+            RECORD Review is one of
+              approved:
+                reason: text
+              denied:
+                code: integer
+
+            REQUEST review vendor
+              GIVEN vendor is Vendor
+              AND metadata.trace_id is text
+
+              WHEN print metadata.trace_id
+
+              OUTPUT review is Review
+            """,
+            filename="rules.gwt",
+        )
+
+        self.assertIn("class VendorOwner(TypedDict):", result.source)
+        self.assertIn("scores: list[int | float]", result.source)
+        self.assertIn("owner: VendorOwner", result.source)
+        self.assertIn("class ReviewApproved(TypedDict):", result.source)
+        self.assertIn("kind: Literal['approved']", result.source)
+        self.assertIn("Review: TypeAlias = ReviewApproved | ReviewDenied", result.source)
+        self.assertIn("class ReviewVendorRequestMetadata(TypedDict):", result.source)
+        self.assertIn("metadata: ReviewVendorRequestMetadata", result.source)
+        self.assertIn("'review vendor': ReviewVendorRequest", result.source)
 
     def test_typescript_generation_avoids_record_and_reserved_request_type_collisions(self):
         result = generate_typescript_text(

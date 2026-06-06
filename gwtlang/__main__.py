@@ -6,7 +6,13 @@ import re
 import sys
 from pathlib import Path
 
-from .api import generate_typescript_file, run_file, run_json_file, run_result_payload
+from .api import (
+    generate_python_file,
+    generate_typescript_file,
+    run_file,
+    run_json_file,
+    run_result_payload,
+)
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
@@ -149,9 +155,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_file_arguments(types_parser)
     types_parser.add_argument(
         "--language",
-        choices=["typescript"],
+        choices=["typescript", "python"],
         default="typescript",
-        help="Host language to generate. Currently only TypeScript is supported.",
+        help="Host language to generate.",
     )
     types_parser.add_argument(
         "--output",
@@ -427,7 +433,10 @@ def format_command(args: argparse.Namespace) -> int:
 def types_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
-        result = generate_typescript_file(args.file)
+        if args.language == "python":
+            result = generate_python_file(args.file)
+        else:
+            result = generate_typescript_file(args.file)
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1

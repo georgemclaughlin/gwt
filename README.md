@@ -388,8 +388,10 @@ existing project.
 `gwt format file.gwt --check` is intended for CI.
 
 `gwt types file.gwt --language typescript` generates host TypeScript
-declarations from `RECORD`, `REQUEST`, and `OUTPUT` contracts. The generated
-types are integration helpers; the `.gwt` file remains the source of truth.
+declarations from `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
+`--language python` to generate Python `TypedDict` request/output shapes plus a
+program-specific client wrapper. The generated types are integration helpers;
+the `.gwt` file remains the source of truth.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
@@ -489,14 +491,18 @@ client object. `GwtClient.inspect()` exposes the same manifest as
 workflow from Python. `GwtClient.compile()` is the equivalent compile-once API
 for a client object. For already-prevalidated internal loops,
 `run_trusted_json()` skips only named-request input and output boundary
-validation. `GwtClient.typescript_types()` and
-`generate_typescript_file()` generate TypeScript declarations from checked GWT
-contracts.
+validation. `GwtClient.typescript_types()` and `generate_typescript_file()`
+generate TypeScript declarations from checked GWT contracts.
+`GwtClient.python_types()` and `generate_python_file()` generate Python helper
+modules with `TypedDict` records, request/output aliases, request-name
+constants, and a request-specific client wrapper.
 
 A fuller runnable Python host example lives in
 [`examples/exact_pricing/host_app.py`](examples/exact_pricing/host_app.py).
-It validates, inspects, compiles, calls a named request, rejects accidental
-float input for `decimal`, and demonstrates trusted prevalidated execution.
+It validates, inspects, compiles, calls a named request through generated Python
+types in [`examples/exact_pricing/rules_types.py`](examples/exact_pricing/rules_types.py),
+rejects accidental float input for `decimal`, and demonstrates trusted
+prevalidated execution.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 
