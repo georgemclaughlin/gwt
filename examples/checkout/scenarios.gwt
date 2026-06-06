@@ -1,6 +1,6 @@
 PROGRAM checkout scenarios
 
-USE "./checkout_app.gwt"
+USE "./rules.gwt"
 
 SCENARIO checkout examples
 GIVEN customer.member is <member>

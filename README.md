@@ -357,13 +357,13 @@ The CLI currently supports:
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
-gwt test examples/checkout_scenarios.gwt
-gwt check examples/checkout_app.gwt
+gwt test examples/checkout/scenarios.gwt
+gwt check examples/checkout/rules.gwt
 gwt inspect examples/vendor_onboarding/rules.gwt --json
 gwt validate examples/vendor_onboarding/rules.gwt --import-root examples/vendor_onboarding --no-absolute-imports
 gwt format examples/bank.gwt --check
 gwt lsp
-gwt debug-lines examples/checkout_scenarios.gwt --json
+gwt debug-lines examples/checkout/scenarios.gwt --json
 ```
 
 `gwt check` parses a program and runs semantic checks without executing
@@ -407,16 +407,20 @@ active behavior calls, frame locals, and current state while paused.
 | --- | --- |
 | [`examples/hello.gwt`](examples/hello.gwt) | Smallest runnable program |
 | [`examples/bank.gwt`](examples/bank.gwt) | Reusable behavior, guards, mutation |
+| [`examples/expressions.gwt`](examples/expressions.gwt) | Boolean and arithmetic expressions |
 | [`examples/records.gwt`](examples/records.gwt) | Record-shaped state |
 | [`examples/let.gwt`](examples/let.gwt) | Local bindings |
 | [`examples/control_flow.gwt`](examples/control_flow.gwt) | `IF` / `ELSE` |
 | [`examples/return_values.gwt`](examples/return_values.gwt) | Returning values from behavior |
+| [`examples/scenarios.gwt`](examples/scenarios.gwt) | Multiple named scenarios with shared background |
 | [`examples/examples_table.gwt`](examples/examples_table.gwt) | Scenario examples tables |
-| [`examples/use_import.gwt`](examples/use_import.gwt) | `USE` imports |
+| [`examples/counter.gwt`](examples/counter.gwt) | Small mutable counter |
 | [`examples/collections.gwt`](examples/collections.gwt) | List iteration |
 | [`examples/record_contracts.gwt`](examples/record_contracts.gwt) | Record validation |
 | [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
+| [`examples/use_import`](examples/use_import) | Paired `USE` import example with an importer and imported module |
+| [`examples/checkout`](examples/checkout) | Checkout workflow split into rules, scenarios, and request-mode input |
 | [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, named request, and Python host example |
 | [`examples/language_tour`](examples/language_tour) | A compact tour of the current language |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
