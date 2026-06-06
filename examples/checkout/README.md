@@ -33,4 +33,4 @@ python -m gwtlang run examples/checkout/rules.gwt --json-input examples/checkout
 `request.gwt` does not import `rules.gwt` because request mode pairs the files
 at the CLI/API boundary. The program file provides the records and behavior;
 the request file provides the starting state, public request call, and
-assertions.
+assertions. Request files do not declare their own `PROGRAM`.

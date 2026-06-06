@@ -148,18 +148,7 @@ class ExampleProgramTests(unittest.TestCase):
           | "airport taxi" | 42     | "transport" | true         |
           | "team lunch"   | 18     | "meals"     | true         |
 
-        GIVEN decision is ExpenseDecision
-          line_count: 0
-          submitted_total: 0
-          approved_total: 0
-          approved_descriptions: []
-          has_violation: false
-          violation_description: "old"
-          violation_amount: 999
-          status: "new"
-          reason: "new"
-
-        WHEN review report into decision
+        REQUEST review expense report
         """
 
         result = run_request(program.read_text(), request, filename=str(program), request_filename="no_violation.gwt")
@@ -273,23 +262,7 @@ class ExampleProgramTests(unittest.TestCase):
           gadget_reserved: 0
           cable_reserved: 0
 
-        GIVEN fulfillment is FulfillmentState
-          requested_units: 0
-          reserved_units: 0
-          backordered_units: 0
-          widget_reserved: 0
-          gadget_reserved: 0
-          cable_reserved: 0
-          widget_backordered: 0
-          gadget_backordered: 0
-          cable_backordered: 0
-          unknown_sku_count: 0
-          package_count: 0
-          shipping_fee: 0
-          status: "new"
-          reason: "new"
-
-        WHEN fulfill order from inventory into fulfillment
+        REQUEST fulfill order
         """
 
         result = run_request(program.read_text(), request, filename=str(program), request_filename="unknown_sku.gwt")

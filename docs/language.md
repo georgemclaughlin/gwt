@@ -324,8 +324,9 @@ The program file provides records, named requests, and reusable block-form
 `WHEN` behavior. The input file provides ordinary `GIVEN` setup, single-line
 `REQUEST` calls, and optional `THEN` steps. This makes GWT usable as a
 deterministic workflow runner while keeping inputs in the same language shape.
-Direct single-line `WHEN` calls are still useful for low-level behavior checks,
-but host-facing request files should invoke named requests.
+Request files cannot declare `PROGRAM`, define behavior or named requests, or
+use direct single-line `WHEN` calls. Use ordinary program scenarios for
+low-level behavior checks.
 
 Request files can use records declared by the program file.
 

@@ -1,5 +1,3 @@
-PROGRAM checkout request
-
 GIVEN customer is Customer
   member: true
 

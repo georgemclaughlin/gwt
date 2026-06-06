@@ -641,16 +641,31 @@ class PublicApiTests(unittest.TestCase):
             request = Path(temp_dir) / "request.gwt"
             program.write_text(
                 """
-                WHEN checkout cart
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
                   set cart.total to cart.subtotal + cart.shipping
                 """
             )
             request.write_text(
                 """
-                GIVEN cart.subtotal is 84
-                AND cart.shipping is 8
+                GIVEN cart is Cart
+                  subtotal: 84
+                  shipping: 8
+                  total: 0
 
-                WHEN checkout cart
+                REQUEST checkout cart
                 """
             )
 
@@ -750,16 +765,31 @@ class PublicApiTests(unittest.TestCase):
             request = Path(temp_dir) / "request.gwt"
             program.write_text(
                 """
-                WHEN checkout cart
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
                   set cart.total to cart.subtotal + cart.shipping
                 """
             )
             request.write_text(
                 """
-                GIVEN cart.subtotal is 84
-                AND cart.shipping is 8
+                GIVEN cart is Cart
+                  subtotal: 84
+                  shipping: 8
+                  total: 0
 
-                WHEN checkout cart
+                REQUEST checkout cart
                 """
             )
 

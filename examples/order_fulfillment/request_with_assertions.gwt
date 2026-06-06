@@ -1,5 +1,3 @@
-PROGRAM order fulfillment request
-
 GIVEN order is OrderRequest
   order_id: "A200"
   payment_status: "paid"

@@ -38,16 +38,31 @@ class CliDiagnosticsTests(unittest.TestCase):
             request_path = Path(temp_dir) / "request.gwt"
             program_path.write_text(
                 '''
-                WHEN checkout cart
+                RECORD Cart
+                  subtotal: number
+                  shipping: number
+                  total: number
+
+                REQUEST checkout cart
+                  GIVEN cart is Cart
+
+                  WHEN checkout cart
+
+                  OUTPUT cart is Cart
+
+                WHEN checkout <cart>
+                  GIVEN cart is Cart
                   set cart.total to cart.subtotal + cart.shipping
                 '''
             )
             request_path.write_text(
                 '''
-                GIVEN cart.subtotal is 84
-                AND cart.shipping is 8
+                GIVEN cart is Cart
+                  subtotal: 84
+                  shipping: 8
+                  total: 0
 
-                WHEN checkout cart
+                REQUEST checkout cart
 
                 THEN cart.total == 92
                 '''
@@ -59,6 +74,57 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(stdout.getvalue())["result"]["cart"]["total"], 92)
+
+    def test_cli_rejects_direct_when_in_gwt_input_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            request_path = Path(temp_dir) / "request.gwt"
+            program_path.write_text(
+                '''
+                WHEN checkout cart
+                  set cart.total to cart.subtotal + cart.shipping
+                '''
+            )
+            request_path.write_text(
+                '''
+                GIVEN cart.subtotal is 84
+                AND cart.shipping is 8
+
+                WHEN checkout cart
+                '''
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["run", str(program_path), "--input", str(request_path), "--json"])
+
+        self.assertEqual(status, 1)
+        self.assertIn("request files must invoke named REQUESTs", stderr.getvalue())
+
+    def test_cli_rejects_program_declaration_in_gwt_input_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "checkout.gwt"
+            request_path = Path(temp_dir) / "request.gwt"
+            program_path.write_text(
+                '''
+                REQUEST checkout cart
+                  WHEN print "checkout"
+                '''
+            )
+            request_path.write_text(
+                '''
+                PROGRAM checkout request
+
+                REQUEST checkout cart
+                '''
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                status = main(["run", str(program_path), "--input", str(request_path), "--json"])
+
+        self.assertEqual(status, 1)
+        self.assertIn("request files cannot declare PROGRAM", stderr.getvalue())
 
     def test_cli_runs_program_with_json_input_file_and_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:

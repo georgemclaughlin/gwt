@@ -336,6 +336,7 @@ def run_request(
         initial_variants=program.variants,
         import_policy=import_policy,
     )
+    _validate_external_request_file(request, request_filename)
     combined = Program(
         name=program.name,
         background=Scenario(
@@ -356,6 +357,53 @@ def run_request(
     )
     runtime = Runtime(combined)
     return runtime.run()
+
+
+def _validate_external_request_file(request: Program, filename: str) -> None:
+    if request.name is not None:
+        raise GwtError(
+            f"{filename}:1: request files cannot declare PROGRAM; "
+            "the program is provided by the run target"
+        )
+
+    if request.actions:
+        action = request.actions[0]
+        raise GwtError(
+            f"{action.filename or filename}:{action.line}: "
+            "request files cannot define WHEN behavior; define behavior in the program file"
+        )
+
+    if request.requests:
+        named_request = next(iter(request.requests.values()))
+        line = named_request.line
+        raise GwtError(
+            f"{line.filename or filename}:{line.number}: "
+            "request files cannot define named REQUEST blocks; define public requests in the program file"
+        )
+
+    scenarios = request.scenarios or [Scenario("Main", 0)]
+    background_has_request = _validate_request_file_steps(request.background.whens, filename)
+    for scenario in scenarios:
+        scenario_has_request = _validate_request_file_steps(scenario.whens, filename)
+        if not background_has_request and not scenario_has_request:
+            line = scenario.line or request.background.line or 1
+            raise GwtError(
+                f"{filename}:{line}: request files must invoke at least one named REQUEST"
+            )
+
+
+def _validate_request_file_steps(steps: list[Any], filename: str) -> bool:
+    has_request = False
+    for step in steps:
+        if isinstance(step, RequestCall):
+            has_request = True
+            continue
+        if isinstance(step, Line):
+            raise GwtError(
+                f"{step.filename or filename}:{step.number}: "
+                f"request files must invoke named REQUESTs; direct WHEN is not allowed: {step.text}"
+            )
+    return has_request
 
 
 def run_json_request(
