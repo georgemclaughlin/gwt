@@ -215,6 +215,18 @@ h3 {
   color: var(--ink);
 }
 
+.icon-button {
+  width: 44px;
+  padding: 10px;
+}
+
+.github-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
 .execution-visual,
 .trace,
 .pipeline,
