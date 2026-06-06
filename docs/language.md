@@ -320,11 +320,12 @@ The CLI can run a behavior file with a separate GWT-shaped request file:
 python -m gwtlang run examples/checkout/rules.gwt --input examples/checkout/request.gwt --json
 ```
 
-The program file provides records, reusable block-form `WHEN` behavior, and
-optionally named requests. The input file provides ordinary `GIVEN` setup,
-single-line `WHEN` or `REQUEST` calls, and optional `THEN` steps. This makes GWT
-usable as a deterministic workflow runner while keeping inputs in the same
-language shape.
+The program file provides records, named requests, and reusable block-form
+`WHEN` behavior. The input file provides ordinary `GIVEN` setup, single-line
+`REQUEST` calls, and optional `THEN` steps. This makes GWT usable as a
+deterministic workflow runner while keeping inputs in the same language shape.
+Direct single-line `WHEN` calls are still useful for low-level behavior checks,
+but host-facing request files should invoke named requests.
 
 Request files can use records declared by the program file.
 

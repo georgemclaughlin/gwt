@@ -3,15 +3,17 @@ PROGRAM checkout scenarios
 USE "./rules.gwt"
 
 SCENARIO checkout examples
-GIVEN customer.member is <member>
-AND cart.items is <items>
-AND cart.subtotal is 0
-AND cart.shipping is 0
-AND cart.discount is 0
-AND cart.total is 0
-AND order.status is "new"
+GIVEN customer is Customer
+  member: <member>
 
-WHEN checkout cart
+GIVEN cart is Cart
+  items: <items>
+  subtotal: 0
+  shipping: 0
+  discount: 0
+  total: 0
+
+REQUEST checkout cart
 
 THEN cart.total == <total>
 AND cart.shipping == <shipping>

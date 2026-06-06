@@ -83,6 +83,31 @@ class ExampleProgramTests(unittest.TestCase):
                     json_file=request,
                 )
 
+    def test_checkout_request_uses_named_request_output_boundary(self):
+        result = run_file(
+            Path("examples/checkout/rules.gwt"),
+            request_file=Path("examples/checkout/request.gwt"),
+        )
+        payload = result.as_payload()
+
+        self.assertEqual(payload["result"]["cart"]["total"], 90.0)
+        self.assertEqual(payload["result"]["order"]["status"], "priced")
+        self.assertNotIn("customer", payload["result"])
+        self.assertIn("customer", payload["state"])
+
+        json_result = run_json_file(
+            Path("examples/checkout/rules.gwt"),
+            json.loads(Path("examples/checkout/request.json").read_text()),
+            request="checkout cart",
+            json_file=Path("examples/checkout/request.json"),
+        )
+        json_payload = json_result.as_payload()
+
+        self.assertEqual(json_payload["result"]["cart"]["total"], 90.0)
+        self.assertEqual(json_payload["result"]["order"]["status"], "priced")
+        self.assertNotIn("customer", json_payload["result"])
+        self.assertIn("customer", json_payload["state"])
+
     def test_public_examples_include_embedded_scenarios_with_assertions(self):
         for program in PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS:
             with self.subTest(program=str(program)):
