@@ -89,6 +89,11 @@ example in
 
 ## Quick Start
 
+For a concept-by-concept introduction, start with the
+[Getting Started walkthrough](docs/getting-started.html). It builds from a
+single `GIVEN / WHEN / THEN` program up through records, scenarios, named
+requests, and JSON input.
+
 Run the hello world example:
 
 ```sh
