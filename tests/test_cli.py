@@ -795,6 +795,37 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertIn("export interface PriceCartRequest", output)
         self.assertIn("cart: Cart;", output)
 
+    def test_types_command_prints_python_helpers(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                PROGRAM pricing
+
+                RECORD Cart
+                  subtotal: number
+                  status: "new" | "priced"
+
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN print "priced"
+
+                  OUTPUT cart is Cart
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["types", str(program_path), "--language", "python"])
+
+        self.assertEqual(status, 0)
+        output = stdout.getvalue()
+        self.assertIn("class Cart(TypedDict):", output)
+        self.assertIn("status: Literal['new', 'priced']", output)
+        self.assertIn("PRICE_CART_REQUEST: GwtRequestName = 'price cart'", output)
+        self.assertIn("class PricingClient:", output)
+
     def test_types_command_writes_output_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"

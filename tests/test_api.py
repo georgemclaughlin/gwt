@@ -10,6 +10,7 @@ from gwtlang import (
     check_text,
     compile_file,
     compile_text,
+    generate_python_text,
     generate_typescript_text,
     inspect_file,
     run_file,
@@ -463,6 +464,35 @@ class PublicApiTests(unittest.TestCase):
         self.assertIn("export interface PriceCartRequest", result.source)
         self.assertEqual(result.language, "typescript")
 
+    def test_gwt_client_generates_python_types(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "pricing.gwt"
+            program.write_text(
+                """
+                PROGRAM pricing
+
+                RECORD Cart
+                  subtotal: number
+                  total: decimal
+
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN print "priced"
+
+                  OUTPUT cart is Cart
+                """
+            )
+
+            result = GwtClient(program).python_types()
+
+        self.assertIn("class Cart(TypedDict):", result.source)
+        self.assertIn("subtotal: int | float", result.source)
+        self.assertIn("total: str", result.source)
+        self.assertIn("class PricingClient:", result.source)
+        self.assertIn("def price_cart(self, request: PriceCartRequest) -> PriceCartOutput:", result.source)
+        self.assertEqual(result.language, "python")
+
     def test_inspect_file_reports_named_requests(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "checkout.gwt"
@@ -695,6 +725,17 @@ class PublicApiTests(unittest.TestCase):
     def test_generate_typescript_text_rejects_unknown_contract_type(self):
         with self.assertRaisesRegex(GwtError, "unknown REQUEST contract type: Missing"):
             generate_typescript_text(
+                """
+                REQUEST bad request
+                  GIVEN cart is Missing
+
+                  WHEN print "bad"
+                """
+            )
+
+    def test_generate_python_text_rejects_unknown_contract_type(self):
+        with self.assertRaisesRegex(GwtError, "unknown REQUEST contract type: Missing"):
+            generate_python_text(
                 """
                 REQUEST bad request
                   GIVEN cart is Missing

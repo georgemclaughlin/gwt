@@ -26,7 +26,14 @@ from .inspection import (
     inspect_source as _inspect_source,
 )
 from .service import Analysis, analyze_file, analyze_source
-from .typegen import TypeScriptTypesResult, generate_typescript_file, generate_typescript_text
+from .typegen import (
+    PythonTypesResult,
+    TypeScriptTypesResult,
+    generate_python_file,
+    generate_python_text,
+    generate_typescript_file,
+    generate_typescript_text,
+)
 from .validation import ValidationResult, validate_file as _validate_file
 
 
@@ -220,6 +227,9 @@ class GwtClient:
 
     def typescript_types(self) -> TypeScriptTypesResult:
         return generate_typescript_file(self.path)
+
+    def python_types(self) -> PythonTypesResult:
+        return generate_python_file(self.path)
 
     def inspect(
         self,
