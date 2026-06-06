@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Getting Started With GWT</title>
+    <meta
+      name="description"
+      content="A step-by-step introduction to GWT programs, records, scenarios, requests, and JSON input."
+    >
+    <meta name="color-scheme" content="dark light">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="index.html">GWT</a>
+      <nav aria-label="Documentation links">
+        <a href="getting-started.html">Getting Started</a>
+        <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">Guide</a>
+        <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
+        <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="doc-page">
+      <section class="doc-hero">
+        <p class="eyebrow">Getting started</p>
+        <h1>Build A GWT Program In Small Steps</h1>
+        <p class="lede">
+          Start with one executable example, then add behavior, structured
+          state, record contracts, scenarios, and a host-facing request.
+        </p>
+        <div class="actions" aria-label="Getting started actions">
+          <a class="button primary" href="#first-program">Start The Walkthrough</a>
+          <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/checkout">
+            View Checkout Example
+          </a>
+        </div>
+      </section>
+
+      <div class="doc-layout">
+        <aside class="doc-nav" aria-label="Walkthrough steps">
+          <a href="#first-program">1. First Program</a>
+          <a href="#behavior">2. Behavior</a>
+          <a href="#record-state">3. Record State</a>
+          <a href="#record-contract">4. Record Contract</a>
+          <a href="#scenarios">5. Scenarios</a>
+          <a href="#request">6. Request Boundary</a>
+          <a href="#json">7. JSON Input</a>
+          <a href="#next">Next Steps</a>
+        </aside>
+
+        <article class="doc-article">
+          <section id="first-program" class="walk-step">
+            <p class="step-kicker">Step 1</p>
+            <h2>Start With State, Action, And Assertion</h2>
+            <p>
+              A GWT file is executable. This smallest program creates one value,
+              prints it, and checks that it has the expected value.
+            </p>
+            <pre><code>PROGRAM hello
+
+GIVEN greeting is "hello world"
+
+WHEN print greeting
+
+THEN greeting == "hello world"</code></pre>
+            <p>Run the checked-in copy:</p>
+            <pre><code>python -m gwtlang run examples/hello.gwt --json</code></pre>
+            <p>
+              <code>GIVEN</code> creates state, <code>WHEN</code> executes a
+              step, and <code>THEN</code> asserts the result. The JSON payload
+              includes the final state and any printed output.
+            </p>
+          </section>
+
+          <section id="behavior" class="walk-step">
+            <p class="step-kicker">Step 2</p>
+            <h2>Add Fields And Reusable Behavior</h2>
+            <p>
+              Dot paths let you build nested state directly. A block-form
+              <code>WHEN</code> defines reusable behavior; a single-line
+              <code>WHEN</code> runs it.
+            </p>
+            <pre><code>PROGRAM bank
+
+GIVEN account.balance is 100
+AND account.status is "open"
+
+WHEN withdraw &lt;amount&gt; from &lt;account&gt;
+  REQUIRE account.status == "open"
+  AND account.balance &gt;= amount
+  subtract amount from account.balance
+
+WHEN withdraw 30 from account
+
+THEN account.balance == 70
+AND account.status == "open"</code></pre>
+            <p>
+              The signature names the behavior in readable words and marks
+              parameters with angle brackets. Inside the behavior body, use the
+              bare parameter names.
+            </p>
+          </section>
+
+          <section id="record-state" class="walk-step">
+            <p class="step-kicker">Step 3</p>
+            <h2>Group Related State Into A Record</h2>
+            <p>
+              When values belong together, use record-shaped setup and
+              assertions instead of setting every path separately.
+            </p>
+            <pre><code>PROGRAM records
+
+WHEN withdraw &lt;amount&gt; from &lt;account&gt;
+  REQUIRE account.status == "open"
+  AND account.balance &gt;= amount
+  subtract amount from account.balance
+
+GIVEN account is
+  balance: 100
+  status: "open"
+  owner:
+    name: "Ada"
+
+WHEN withdraw 30 from account
+
+THEN account is
+  balance: 70
+  status: "open"
+  owner:
+    name: "Ada"</code></pre>
+            <p>
+              Record-shaped assertions keep examples readable as the state grows.
+            </p>
+          </section>
+
+          <section id="record-contract" class="walk-step">
+            <p class="step-kicker">Step 4</p>
+            <h2>Name The Shape With A Record Contract</h2>
+            <p>
+              <code>RECORD</code> declares the expected shape of state that
+              behavior reads or writes. The checker and runtime use it to catch
+              missing fields, unknown fields, and wrong value types.
+            </p>
+            <pre><code>PROGRAM typed bank
+
+RECORD Account
+  balance: number
+  status: "open" | "closed"
+  owner:
+    name: text
+
+WHEN withdraw &lt;amount&gt; from &lt;account&gt;
+  GIVEN account is Account
+  REQUIRE account.status == "open"
+  AND account.balance &gt;= amount
+  subtract amount from account.balance
+
+GIVEN account is Account
+  balance: 100
+  status: "open"
+  owner:
+    name: "Ada"
+
+WHEN withdraw 30 from account
+
+THEN account.balance == 70</code></pre>
+            <p>
+              Contracts are not classes or methods. They describe the data shape
+              that executable behavior depends on.
+            </p>
+          </section>
+
+          <section id="scenarios" class="walk-step">
+            <p class="step-kicker">Step 5</p>
+            <h2>Add Scenarios As Regression Coverage</h2>
+            <p>
+              <code>SCENARIO</code> starts an independent run with fresh state.
+              <code>BACKGROUND</code> provides setup shared by every scenario.
+            </p>
+            <pre><code>PROGRAM bank scenarios
+
+WHEN withdraw &lt;amount&gt; from &lt;account&gt;
+  REQUIRE account.status == "open"
+  AND account.balance &gt;= amount + fee
+  subtract amount + fee from account.balance
+
+BACKGROUND
+GIVEN account.status is "open"
+AND fee is 3
+
+SCENARIO successful withdrawal
+GIVEN account.balance is 100
+WHEN withdraw 30 from account
+THEN account.balance == 67
+AND account.status == "open"
+
+SCENARIO smaller withdrawal
+GIVEN account.balance is 50
+WHEN withdraw 10 from account
+THEN account.balance == 37
+AND account.status == "open"</code></pre>
+            <p>Run the checked-in scenario example:</p>
+            <pre><code>python -m gwtlang test examples/scenarios.gwt</code></pre>
+            <p>
+              This is the spec-as-code loop: examples are readable enough to
+              review and precise enough to run in CI.
+            </p>
+          </section>
+
+          <section id="request" class="walk-step">
+            <p class="step-kicker">Step 6</p>
+            <h2>Expose A Named Request</h2>
+            <p>
+              A <code>REQUEST</code> is the public entry point a host
+              application can call. Its body declares caller input, request-local
+              setup, execution steps, output shape, and optional postconditions.
+            </p>
+            <pre><code>PROGRAM cart pricing
+
+RECORD Cart
+  subtotal: number
+  shipping: number
+  total: number
+
+REQUEST price cart
+  GIVEN cart is Cart
+
+  WHEN price cart
+
+  OUTPUT cart is Cart
+
+  THEN cart.total &gt;= cart.subtotal
+
+WHEN price &lt;cart&gt;
+  GIVEN cart is Cart
+  IF cart.subtotal &gt;= 100
+    set cart.shipping to 0
+  ELSE
+    set cart.shipping to 8
+  set cart.total to cart.subtotal + cart.shipping</code></pre>
+            <p>
+              A GWT request file can provide input state, invoke the public
+              request, and make assertions about the result.
+            </p>
+            <pre><code>GIVEN cart is Cart
+  subtotal: 84
+  shipping: 0
+  total: 0
+
+REQUEST price cart
+
+THEN cart.total == 92</code></pre>
+            <pre><code>python -m gwtlang run pricing.gwt --input request.gwt --json</code></pre>
+            <p>
+              Request files do not redeclare the program. The program file owns
+              the records and behavior; the request file supplies state and calls
+              the named request.
+            </p>
+          </section>
+
+          <section id="json" class="walk-step">
+            <p class="step-kicker">Step 7</p>
+            <h2>Call The Same Request With JSON</h2>
+            <p>
+              Host applications usually send JSON instead of a GWT request file.
+              The same <code>REQUEST</code> contract validates that input before
+              behavior runs.
+            </p>
+            <pre><code>{
+  "cart": {
+    "subtotal": 84,
+    "shipping": 0,
+    "total": 0
+  }
+}</code></pre>
+            <pre><code>python -m gwtlang run pricing.gwt \
+  --json-input request.json \
+  --request "price cart" \
+  --json</code></pre>
+            <p>
+              The stable JSON envelope puts declared outputs under
+              <code>result</code> and keeps the complete final state under
+              <code>state</code>.
+            </p>
+            <pre><code>{
+  "ok": true,
+  "result": {
+    "cart": {
+      "subtotal": 84,
+      "shipping": 8,
+      "total": 92
+    }
+  },
+  "state": {
+    "cart": {
+      "subtotal": 84,
+      "shipping": 8,
+      "total": 92
+    }
+  }
+}</code></pre>
+          </section>
+
+          <section id="next" class="walk-step next-steps">
+            <p class="step-kicker">Next</p>
+            <h2>Where To Go After This</h2>
+            <p>
+              The checkout example is the same idea with customer membership,
+              subtotal calculation, shipping, discounts, scenario coverage, a
+              GWT request file, and JSON input.
+            </p>
+            <div class="link-list">
+              <a href="https://github.com/georgemclaughlin/gwt/tree/main/examples/checkout">
+                Read the checkout example
+              </a>
+              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">
+                Continue to the language guide
+              </a>
+              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">
+                Open the v0.2 spec
+              </a>
+            </div>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>GWT v0.2</span>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
+    </footer>
+  </body>
+</html>
