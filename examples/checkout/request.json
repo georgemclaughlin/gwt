@@ -1,0 +1,12 @@
+{
+  "customer": {
+    "member": true
+  },
+  "cart": {
+    "items": [20, 35, 45],
+    "subtotal": 0,
+    "shipping": 0,
+    "discount": 0,
+    "total": 0
+  }
+}

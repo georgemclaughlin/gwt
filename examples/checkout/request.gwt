@@ -10,10 +10,7 @@ GIVEN cart is Cart
   discount: 0
   total: 0
 
-GIVEN order is Order
-  status: "new"
-
-WHEN checkout cart
+REQUEST checkout cart
 
 THEN cart is
   subtotal: 100
