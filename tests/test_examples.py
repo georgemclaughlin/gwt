@@ -10,7 +10,7 @@ from gwtlang.service import analyze_file
 
 
 PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
-    Path("examples/v01_language_tour/rules.gwt"),
+    Path("examples/language_tour/rules.gwt"),
     Path("examples/order_fulfillment/rules.gwt"),
     Path("examples/loan_underwriting/rules.gwt"),
     Path("examples/inventory_allocation_spike/rules.gwt"),
@@ -30,9 +30,9 @@ class ExampleProgramTests(unittest.TestCase):
                 self.assertRegex(source, r"(?m)^SCENARIO ")
                 self.assertRegex(source, r"(?m)^THEN ")
 
-    def test_v01_language_tour_example_runs_scenario_and_request(self):
-        program = Path("examples/v01_language_tour/rules.gwt")
-        request = Path("examples/v01_language_tour/request.gwt")
+    def test_language_tour_example_runs_scenario_and_request(self):
+        program = Path("examples/language_tour/rules.gwt")
+        request = Path("examples/language_tour/request.gwt")
 
         analysis = analyze_file(program)
         self.assertEqual(analysis.diagnostics, [])
@@ -50,8 +50,8 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(request_result.state["decision"]["line_count"], 4)
         self.assertEqual(request_result.state["decision"]["violation_description"], "monitor")
 
-    def test_v01_language_tour_approves_when_no_policy_violation_exists(self):
-        program = Path("examples/v01_language_tour/rules.gwt")
+    def test_language_tour_approves_when_no_policy_violation_exists(self):
+        program = Path("examples/language_tour/rules.gwt")
         request = """
         GIVEN report is ExpenseReport
           employee: "Ada"

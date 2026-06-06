@@ -989,7 +989,7 @@ feature. A reasonable path is:
 
    - `examples/inventory_allocation_spike`
    - `examples/order_fulfillment`
-   - `examples/v01_language_tour`
+   - `examples/language_tour`
    - `examples/vendor_onboarding`
    - smaller examples only after the model is stable
 

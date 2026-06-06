@@ -23,9 +23,9 @@ the package first:
 
 ```sh
 python -m gwtlang run examples/hello.gwt --json
-python -m gwtlang test examples/v01_language_tour/rules.gwt
-python -m gwtlang check examples/v01_language_tour/rules.gwt
-python -m gwtlang format examples/v01_language_tour/rules.gwt --check
+python -m gwtlang test examples/language_tour/rules.gwt
+python -m gwtlang check examples/language_tour/rules.gwt
+python -m gwtlang format examples/language_tour/rules.gwt --check
 ```
 
 After `python -m pip install -e .`, the equivalent `gwt` command is available.
@@ -39,7 +39,7 @@ python -m unittest discover
 find examples -name '*.gwt' -print0 | while IFS= read -r -d '' file; do python -m gwtlang format "$file" --check >/dev/null || exit 1; done
 for file in examples/*.gwt; do python -m gwtlang check "$file" >/dev/null || exit 1; done
 python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/order_fulfillment/request.gwt --json >/tmp/gwt-order.json
-python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json >/tmp/gwt-tour.json
+python -m gwtlang run examples/language_tour/rules.gwt --input examples/language_tour/request.gwt --json >/tmp/gwt-tour.json
 (cd vscode-gwt && npm run check)
 git diff --check
 ```
@@ -92,7 +92,7 @@ plus `git diff --check`.
 Use examples to teach new language features:
 
 - `examples/hello.gwt`: smallest runnable program.
-- `examples/v01_language_tour/`: compact current-language tour.
+- `examples/language_tour/`: compact current-language tour.
 - `examples/order_fulfillment/`: larger state-transition workflow.
 - `examples/loan_underwriting/`: larger rules/workflow sample.
 - `examples/minilang_spec/`: executable spec pressure test for tokens, AST

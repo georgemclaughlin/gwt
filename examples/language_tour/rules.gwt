@@ -1,4 +1,4 @@
-PROGRAM v0.1 language tour
+PROGRAM language tour
 
 RECORD ExpenseLine
   description: text

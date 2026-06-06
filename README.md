@@ -268,18 +268,18 @@ Conditions can also check containment, such as
 check.
 
 The fuller version lives in
-[`examples/v01_language_tour`](examples/v01_language_tour).
+[`examples/language_tour`](examples/language_tour).
 
 Run it as embedded regression coverage:
 
 ```sh
-python -m gwtlang test examples/v01_language_tour/rules.gwt
+python -m gwtlang test examples/language_tour/rules.gwt
 ```
 
 Run it like an app would, with a separate request file:
 
 ```sh
-python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
+python -m gwtlang run examples/language_tour/rules.gwt --input examples/language_tour/request.gwt --json
 ```
 
 Production callers can also provide JSON state and an explicit request name:
@@ -416,7 +416,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
 | [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, named request, and Python host example |
-| [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of the current language |
+| [`examples/language_tour`](examples/language_tour) | A compact tour of the current language |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
 | [`examples/inventory_allocation_spike`](examples/inventory_allocation_spike) | List-shaped inventory pressure test |
@@ -568,7 +568,7 @@ npm install
 
 Open the repository root in VS Code, choose **Run GWT VS Code Extension** in the
 Run and Debug panel, then press `F5`. In the Extension Development Host window,
-open a `.gwt` file such as `examples/v01_language_tour/rules.gwt`.
+open a `.gwt` file such as `examples/language_tour/rules.gwt`.
 
 ## Specs And Tests
 

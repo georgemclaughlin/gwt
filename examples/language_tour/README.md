@@ -1,8 +1,8 @@
-# v0.1 Language Tour
+# Language Tour
 
-This example is a small expense reimbursement workflow. It remains named for
-the original v0.1 tour, but now tracks the current language surface without the
-size of the larger order fulfillment sample.
+This example is a small expense reimbursement workflow. It shows the current
+language surface in one place without the size of the larger order fulfillment
+sample.
 
 - `rules.gwt` declares records, a named request with `OUTPUT`, reusable behavior,
   and an embedded regression scenario.
@@ -24,26 +24,26 @@ The workflow computes a reimbursement decision from expense lines. It uses:
 Format check:
 
 ```sh
-python -m gwtlang format examples/v01_language_tour/rules.gwt --check
-python -m gwtlang format examples/v01_language_tour/request.gwt --check
+python -m gwtlang format examples/language_tour/rules.gwt --check
+python -m gwtlang format examples/language_tour/request.gwt --check
 ```
 
 Static check:
 
 ```sh
-python -m gwtlang check examples/v01_language_tour/rules.gwt
+python -m gwtlang check examples/language_tour/rules.gwt
 ```
 
 Run embedded regression coverage:
 
 ```sh
-python -m gwtlang test examples/v01_language_tour/rules.gwt
+python -m gwtlang test examples/language_tour/rules.gwt
 ```
 
 Run like an application would:
 
 ```sh
-python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
+python -m gwtlang run examples/language_tour/rules.gwt --input examples/language_tour/request.gwt --json
 ```
 
 Excerpt from the JSON output:
