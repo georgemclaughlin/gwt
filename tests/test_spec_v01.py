@@ -1,25 +1,27 @@
 import unittest
 
-from gwtlang import GwtError, check_text, format_text, run_text
+from gwtlang import GwtError, check_text, format_text, run_json_text, run_text
 
 
 class SpecV01Tests(unittest.TestCase):
     def test_request_contract_validates_after_givens_before_whens(self):
         with self.assertRaisesRegex(GwtError, "record Account missing field: account.status"):
-            run_text(
+            run_json_text(
                 """
                 RECORD Account
                   balance: number
                   status: text
 
-                REQUEST account is Account
+                REQUEST repair account
+                  GIVEN account is Account
+
+                  WHEN repair account
 
                 WHEN repair <account>
                   set account.status to "open"
-
-                GIVEN account.balance is 100
-                WHEN repair account
-                """
+                """,
+                {"account": {"balance": 100}},
+                request="repair account",
             )
 
     def test_builtin_behavior_names_are_reserved(self):

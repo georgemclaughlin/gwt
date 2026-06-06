@@ -11,11 +11,12 @@ shipping details.
 - `request.json` is the same production request as JSON state for host
   integrations.
 
-The rules declare a host-facing interface with `REQUEST order`,
-`REQUEST inventory`, `REQUEST fulfillment`, and `OUTPUT fulfillment` /
-`OUTPUT inventory`. JSON/API runs return a stable envelope whose `result`
-contains only the declared outputs while the full `state` remains available to
-tests and debuggers.
+The rules declare a host-facing named request, `REQUEST fulfill order`. Its
+caller-provided inputs are `order` and `inventory`; it creates request-local
+`fulfillment` state and returns `fulfillment` plus the updated `inventory`.
+JSON/API runs return a stable envelope whose `result` contains only those
+declared outputs while the full `state` remains available to tests and
+debuggers.
 
 The order lines use a GWT data table:
 
@@ -61,7 +62,7 @@ Run like a JSON-speaking host application would:
 ```sh
 python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --json-input examples/order_fulfillment/request.json \
-  --entry "fulfill order from inventory into fulfillment" \
+  --request "fulfill order" \
   --json
 ```
 

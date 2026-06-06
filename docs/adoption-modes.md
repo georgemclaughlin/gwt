@@ -46,8 +46,8 @@ python -m gwtlang validate rules/main.gwt \
 `gwt validate` checks imports, parser/checker diagnostics, canonical formatting,
 and embedded scenarios when the file has scenario content. Use `gwt inspect
 rules/main.gwt --json` when CI, review tools, or agents need a versioned
-manifest of records, contracts, behaviors, entry candidates, scenarios, and the
-program hash without executing a host application.
+manifest of records, named requests, behaviors, scenarios, and the program hash
+without executing a host application.
 
 Compile once at application startup as a final safety gate:
 
@@ -66,7 +66,7 @@ Run with host-owned DTO mapping:
 ```python
 execution = rules.run_json(
     request_state,
-    entry="review request into decision",
+    request="review request",
 )
 decision = execution.as_payload()["result"]["decision"]
 ```

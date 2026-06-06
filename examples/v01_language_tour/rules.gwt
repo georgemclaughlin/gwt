@@ -22,10 +22,23 @@ RECORD ExpenseDecision
   status: "new" | "approved" | "needs_review"
   reason: "new" | "within_policy" | "line_over_policy_limit"
 
-REQUEST report is ExpenseReport
-AND decision is ExpenseDecision
+REQUEST review expense report
+  GIVEN report is ExpenseReport
 
-OUTPUT decision is ExpenseDecision
+  GIVEN decision is ExpenseDecision
+    line_count: 0
+    submitted_total: 0
+    approved_total: 0
+    approved_descriptions: []
+    has_violation: false
+    violation_description: ""
+    violation_amount: 0
+    status: "new"
+    reason: "new"
+
+  WHEN review report into decision
+
+  OUTPUT decision is ExpenseDecision
 
 WHEN review <report> into <decision>
   GIVEN report is ExpenseReport
@@ -63,18 +76,7 @@ GIVEN report.lines are ExpenseLine
   | "monitor"      | 225    | "equipment" | true         |
   | "gift card"    | 12     | "gift"      | false        |
 
-GIVEN decision is ExpenseDecision
-  line_count: 0
-  submitted_total: 0
-  approved_total: 0
-  approved_descriptions: []
-  has_violation: false
-  violation_description: ""
-  violation_amount: 0
-  status: "new"
-  reason: "new"
-
-WHEN review report into decision
+REQUEST review expense report
 
 THEN decision.line_count == 4
 AND decision.submitted_total == 297

@@ -82,7 +82,7 @@ Run with production-style JSON input:
 ```sh
 python -m gwtlang run examples/minilang2_vm/rules.gwt \
   --json-input examples/minilang2_vm/request.json \
-  --entry "execute program source through front_end with resolver and bytecode on vm under debugger using repl" \
+  --request "execute mini2 source" \
   --json
 ```
 

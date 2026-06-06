@@ -1,6 +1,6 @@
 # Input Normalization Example
 
-This example shows the recommended v0.1 pattern for JSON payloads that may
+This example shows the recommended pattern for JSON payloads that may
 contain null values.
 
 GWT does not have a source-level `null` literal. Instead of passing nullable
@@ -53,7 +53,7 @@ Run with JSON input:
 ```sh
 python -m gwtlang run examples/input_normalization/rules.gwt \
   --json-input examples/input_normalization/request.json \
-  --entry "normalize raw into profile" \
+  --request "normalize contact profile" \
   --json
 ```
 

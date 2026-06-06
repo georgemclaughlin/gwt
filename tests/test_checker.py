@@ -1,7 +1,7 @@
 import unittest
 
 from gwtlang.checker import check_program
-from gwtlang.runtime import parse_program
+from gwtlang.runtime import GwtError, parse_program
 
 
 def check_messages(source: str) -> list[str]:
@@ -164,7 +164,8 @@ class CheckerTests(unittest.TestCase):
             RECORD Cart
               total: number
 
-            REQUEST cart is Cart
+            GIVEN cart is Cart
+              total: 0
 
             WHEN add "bad" to cart.total
             """
@@ -178,7 +179,8 @@ class CheckerTests(unittest.TestCase):
             RECORD Cart
               status: text
 
-            REQUEST cart is Cart
+            GIVEN cart is Cart
+              status: "open"
 
             WHEN subtract 1 from cart.status
             """
@@ -304,14 +306,18 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("unknown contract type: MissingCart", messages)
 
-    def test_accepts_request_and_output_contracts(self):
+    def test_accepts_named_request_input_and_output_contracts(self):
         messages = check_messages(
             """
             RECORD Cart
               total: number
 
-            REQUEST cart is Cart
-            OUTPUT cart is Cart
+            REQUEST checkout cart
+              GIVEN cart is Cart
+
+              WHEN checkout cart
+
+              OUTPUT cart is Cart
 
             WHEN checkout <cart>
               GIVEN cart is Cart
@@ -321,11 +327,53 @@ class CheckerTests(unittest.TestCase):
 
         self.assertEqual(messages, [])
 
+    def test_reports_missing_request_input_for_request_call(self):
+        messages = check_messages(
+            """
+            RECORD Cart
+              total: number
+
+            REQUEST checkout cart
+              GIVEN cart is Cart
+              WHEN print cart.total
+
+            SCENARIO missing cart
+            REQUEST checkout cart
+            """
+        )
+
+        self.assertIn("request input cart is missing; expected Cart", messages)
+
+    def test_reports_malformed_dotted_request_input_for_request_call(self):
+        messages = check_messages(
+            """
+            RECORD Cart
+              subtotal: number
+              total: number
+
+            REQUEST checkout cart
+              GIVEN cart is Cart
+              WHEN print cart.total
+
+            SCENARIO bad cart
+            GIVEN cart.subtotal is 1
+            AND cart.total is "bad"
+
+            REQUEST checkout cart
+            """
+        )
+
+        self.assertIn("request input cart.total expected number, got text", messages)
+
     def test_reports_unknown_request_output_contract_type(self):
         messages = check_messages(
             """
-            REQUEST cart is MissingCart
-            OUTPUT result is MissingResult
+            REQUEST bad request
+              GIVEN cart is MissingCart
+
+              WHEN print "bad"
+
+              OUTPUT result is MissingResult
             """
         )
 
@@ -335,8 +383,11 @@ class CheckerTests(unittest.TestCase):
     def test_reports_overlapping_request_contract_paths(self):
         messages = check_messages(
             """
-            REQUEST x is text
-            AND x.y is number
+            REQUEST bad request
+              GIVEN x is text
+              AND x.y is number
+
+              WHEN print "bad"
             """
         )
 
@@ -345,8 +396,11 @@ class CheckerTests(unittest.TestCase):
     def test_reports_overlapping_request_contract_paths_when_ancestor_comes_second(self):
         messages = check_messages(
             """
-            REQUEST x.y is number
-            AND x is text
+            REQUEST bad request
+              GIVEN x.y is number
+              AND x is text
+
+              WHEN print "bad"
             """
         )
 
@@ -355,8 +409,11 @@ class CheckerTests(unittest.TestCase):
     def test_reports_overlapping_output_contract_paths(self):
         messages = check_messages(
             """
-            OUTPUT result is text
-            AND result.value is number
+            REQUEST bad request
+              WHEN print "bad"
+
+              OUTPUT result is text
+              AND result.value is number
             """
         )
 
@@ -371,8 +428,12 @@ class CheckerTests(unittest.TestCase):
             RECORD Cart
               total: number
 
-            REQUEST cart is Cart
-            OUTPUT cart.total is number
+            REQUEST checkout cart
+              GIVEN cart is Cart
+
+              WHEN set cart.total to 1
+
+              OUTPUT cart.total is number
             """
         )
 
@@ -569,16 +630,40 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("branch value 1 cannot match decimal", messages)
         self.assertIn("duplicate value branch: 1", messages)
 
-    def test_reports_unresolved_export(self):
-        messages = check_messages(
-            """
-            REQUEST count is integer
+    def test_rejects_export_form(self):
+        with self.assertRaisesRegex(GwtError, "EXPORT is no longer a public interface form"):
+            parse_program(
+                """
+                EXPORT increment_count_v1 as increment count
+                """
+            )
 
-            EXPORT increment_count_v1 as increment count
+    def test_rejects_old_top_level_request_contract_form(self):
+        with self.assertRaisesRegex(GwtError, "top-level REQUEST contracts were removed"):
+            parse_program(
+                """
+                REQUEST cart is Cart
+                """
+            )
+
+    def test_allows_request_name_with_is_phrase(self):
+        program = parse_program(
+            """
+            REQUEST cart is ready
+              GIVEN cart is any
+              WHEN print cart
             """
         )
 
-        self.assertIn("no behavior matches: increment count", messages)
+        self.assertIn("cart is ready", program.requests)
+
+    def test_rejects_old_top_level_output_contract_form(self):
+        with self.assertRaisesRegex(GwtError, "OUTPUT must appear inside a named REQUEST block"):
+            parse_program(
+                """
+                OUTPUT cart is Cart
+                """
+            )
 
     def test_accepts_collection_helpers_and_for_where(self):
         messages = check_messages(
@@ -627,8 +712,6 @@ class CheckerTests(unittest.TestCase):
               status: text
               tags: list<text>
 
-            REQUEST cart is Cart
-
             WHEN summarize cart
               GIVEN cart is Cart
               count cart.total into cart.status
@@ -658,8 +741,6 @@ class CheckerTests(unittest.TestCase):
 
             RECORD Invoice
               items: list<LineItem>
-
-            REQUEST invoice is Invoice
 
             WHEN mark <invoice>
               GIVEN invoice is Invoice
@@ -704,8 +785,6 @@ class CheckerTests(unittest.TestCase):
             '''
             RECORD Decision
               status: "new" | "approved"
-
-            REQUEST decision is Decision
 
             WHEN break <decision>
               GIVEN decision is Decision

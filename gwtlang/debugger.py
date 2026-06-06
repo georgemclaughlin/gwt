@@ -16,6 +16,7 @@ from .runtime import (
     MatchBlock,
     PathRef,
     Program,
+    RequestCall,
     Runtime,
     StackFrame,
     TableAssignment,
@@ -176,6 +177,8 @@ def executable_lines(program: Program) -> list[DebugLine]:
             add(statement.line)
         elif isinstance(statement, Line):
             add(statement)
+        elif isinstance(statement, RequestCall):
+            add(statement.line)
         elif isinstance(statement, IfBlock):
             add(statement.condition)
             collect_body(statement.then_body)
@@ -200,11 +203,19 @@ def executable_lines(program: Program) -> list[DebugLine]:
     for action in program.actions:
         collect_body(action.body)
 
+    for request in program.requests.values():
+        for statement in request.givens:
+            collect_statement(statement)
+        for line in request.whens:
+            add(line)
+        for line in request.thens:
+            add(line)
+
     for scenario in [program.background, *program.scenarios]:
         for statement in scenario.givens:
             collect_statement(statement)
         for line in scenario.whens:
-            add(line)
+            collect_statement(line)
         for line in scenario.thens:
             add(line)
 

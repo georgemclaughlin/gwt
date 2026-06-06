@@ -129,15 +129,25 @@ def build_symbol_table(program: Program) -> SymbolTable:
                     )
                 )
 
-    for binding in [*program.inputs.values(), *program.outputs.values()]:
+    for request in program.requests.values():
         symbols.append(
             Symbol(
-                binding.path,
-                "contract",
-                _line_range(binding.line),
-                detail=f"{binding.kind.upper()} {binding.path} is {binding.value_type}",
+                request.name,
+                "request",
+                _line_range(request.line),
+                detail=f"REQUEST {request.name}",
             )
         )
+        for binding in [*request.inputs.values(), *request.outputs.values()]:
+            symbols.append(
+                Symbol(
+                    binding.path,
+                    "contract",
+                    _line_range(binding.line),
+                    detail=f"{binding.kind.upper()} {binding.path} is {binding.value_type}",
+                    container=request.name,
+                )
+            )
 
     for action in program.actions:
         symbols.append(

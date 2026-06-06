@@ -35,12 +35,30 @@ RECORD FulfillmentState
   status: "new" | "held" | "authorized" | "backordered" | "partial" | "ready"
   reason: "new" | "payment_required" | "fraud_review" | "authorized" | "no_inventory" | "partial_inventory" | "ready_to_ship" | "unknown_sku"
 
-REQUEST order is OrderRequest
-AND inventory is InventoryState
-AND fulfillment is FulfillmentState
+REQUEST fulfill order
+  GIVEN order is OrderRequest
+  AND inventory is InventoryState
 
-OUTPUT fulfillment is FulfillmentState
-AND inventory is InventoryState
+  GIVEN fulfillment is FulfillmentState
+    requested_units: 0
+    reserved_units: 0
+    backordered_units: 0
+    widget_reserved: 0
+    gadget_reserved: 0
+    cable_reserved: 0
+    widget_backordered: 0
+    gadget_backordered: 0
+    cable_backordered: 0
+    unknown_sku_count: 0
+    package_count: 0
+    shipping_fee: 0
+    status: "new"
+    reason: "new"
+
+  WHEN fulfill order from inventory into fulfillment
+
+  OUTPUT fulfillment is FulfillmentState
+  AND inventory is InventoryState
 
 WHEN reset_fulfillment <fulfillment>
   GIVEN fulfillment is FulfillmentState
@@ -233,23 +251,7 @@ GIVEN inventory is InventoryState
   gadget_reserved: 0
   cable_reserved: 0
 
-GIVEN fulfillment is FulfillmentState
-  requested_units: 0
-  reserved_units: 0
-  backordered_units: 0
-  widget_reserved: 0
-  gadget_reserved: 0
-  cable_reserved: 0
-  widget_backordered: 0
-  gadget_backordered: 0
-  cable_backordered: 0
-  unknown_sku_count: 0
-  package_count: 0
-  shipping_fee: 0
-  status: "new"
-  reason: "new"
-
-WHEN fulfill order from inventory into fulfillment
+REQUEST fulfill order
 
 THEN fulfillment.status == <status>
 AND fulfillment.reason == <reason>

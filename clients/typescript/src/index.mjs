@@ -34,8 +34,8 @@ export class GwtClient {
   }
 
   async runJson(input, options) {
-    if (!options?.entry) {
-      throw new TypeError("runJson requires an entry behavior");
+    if (!options?.request) {
+      throw new TypeError("runJson requires a request name");
     }
     const result = await this.#run(
       [
@@ -44,8 +44,8 @@ export class GwtClient {
         ...this.#importPolicyArgs(options),
         "--json-input",
         "-",
-        "--entry",
-        options.entry,
+        "--request",
+        options.request,
         "--json",
       ],
       {
@@ -102,14 +102,14 @@ export class GwtSpec {
   constructor(options, specOptions = {}) {
     if (options instanceof GwtClient) {
       this.client = options;
-      this.entry = specOptions.entry;
+      this.request = specOptions.request;
       this.checkBeforeRun = specOptions.checkBeforeRun ?? true;
       return;
     }
 
     const normalized = typeof options === "string" ? { file: options } : { ...options };
     this.client = new GwtClient(normalized);
-    this.entry = specOptions.entry ?? normalized.entry;
+    this.request = specOptions.request ?? normalized.request;
     this.checkBeforeRun = specOptions.checkBeforeRun ?? normalized.checkBeforeRun ?? true;
   }
 
@@ -137,14 +137,14 @@ export class GwtSpec {
   }
 
   async runJson(input, options = {}) {
-    const entry = options.entry ?? this.entry;
-    if (!entry) {
-      throw new TypeError("GwtSpec.runJson requires an entry behavior");
+    const request = options.request ?? this.request;
+    if (!request) {
+      throw new TypeError("GwtSpec.runJson requires a request name");
     }
     if (this.checkBeforeRun) {
       await this.checkOnce(options);
     }
-    return this.client.runJson(input, { ...options, entry });
+    return this.client.runJson(input, { ...options, request });
   }
 
   async runRequest(requestFile, options = {}) {
@@ -171,14 +171,14 @@ export async function checkFile(file, options = {}) {
 }
 
 export async function runFile(file, options) {
-  if (!options?.requestFile && (!options?.entry || options.input === undefined)) {
-    throw new TypeError("runFile requires either requestFile or input with entry");
+  if (!options?.requestFile && (!options?.request || options.input === undefined)) {
+    throw new TypeError("runFile requires either requestFile or input with request");
   }
   const client = new GwtClient({ ...options, file });
   if (options?.requestFile) {
     return client.runRequest(options.requestFile);
   }
-  return client.runJson(options.input, { entry: options.entry });
+  return client.runJson(options.input, { request: options.request });
 }
 
 function runProcess(command, args, options = {}) {

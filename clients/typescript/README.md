@@ -5,7 +5,7 @@ Node/TypeScript client for running GWT programs through the GWT CLI.
 This package is intentionally small. It wraps the process runner protocol:
 
 ```sh
-gwt run rules.gwt --json-input - --entry "review vendor into decision" --json
+gwt run rules.gwt --json-input - --request "review vendor" --json
 ```
 
 The client writes a JSON request object to stdin and parses the stable GWT JSON
@@ -28,8 +28,8 @@ if (!check.ok) {
 }
 
 const result = await client.runJson(
-  { vendor, decision },
-  { entry: "review vendor into decision" },
+  { vendor },
+  { request: "review vendor" },
 );
 
 console.log(result.result.decision);
@@ -53,20 +53,20 @@ gwt types rules.gwt --language typescript --output rules.d.ts
 ```
 
 The generated file includes record interfaces, one-of record unions,
-`GwtRequest`, `GwtOutput`, and `GwtEntry` declarations that can be imported by
-host application code.
+per-request input/output interfaces, `GwtRequestName`, `GwtRequest`, and
+`GwtOutput` declarations that can be imported by host application code.
 
 Use those generated types as client generics:
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
 
-const input: GwtRequest = { vendor, decision };
-const entry: GwtEntry = "review vendor into decision";
+const input: GwtRequest = { vendor };
+const request: GwtRequestName = "review vendor";
 const client = new GwtClient("rules.gwt");
 const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
-  entry,
+  request,
 });
 
 console.log(execution.result.decision.status);
@@ -82,22 +82,22 @@ workflow.
 ## Test Fixtures
 
 For TypeScript test suites, `createGwtSpec` wraps the same client with a cached
-`check()` and an optional default entry. It is test-framework agnostic, so it can
-be used from Vitest, Mocha, or Node's built-in test runner:
+`check()` and an optional default request. It is test-framework agnostic, so it
+can be used from Vitest, Mocha, or Node's built-in test runner:
 
 ```ts
 import { beforeAll, expect, it } from "vitest";
 import { createGwtSpec } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
 
 const rules = createGwtSpec<
   GwtRequest,
   GwtOutput,
   Record<string, unknown>,
-  GwtEntry
+  GwtRequestName
 >({
   file: "rules.gwt",
-  entry: "review vendor into decision",
+  request: "review vendor",
   importRoots: ["rules"],
   allowAbsoluteImports: false,
 });
@@ -105,8 +105,8 @@ const rules = createGwtSpec<
 beforeAll(() => rules.checkOnce());
 
 it("reviews a vendor request", async () => {
-  const request: GwtRequest = { vendor, decision };
-  const execution = await rules.runJson(request);
+  const input: GwtRequest = { vendor };
+  const execution = await rules.runJson(input);
 
   expect(execution.result.decision.status).toBe("approved");
 });
@@ -126,7 +126,7 @@ should mirror CI import confinement.
 - `new GwtClient(fileOrOptions)`
 - `client.check()`
 - `client.test()`
-- `client.runJson<TInput, TResult>(input, { entry })`
+- `client.runJson<TInput, TResult>(input, { request })`
 - `client.runRequest(requestFile)`
 - `createGwtSpec<TInput, TResult>(fileOrOptions)`
 - `spec.checkOnce()`

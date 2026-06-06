@@ -103,12 +103,17 @@ class CompiledProgram:
         self,
         json_state: dict[str, Any],
         *,
-        entry: str,
+        request: str,
         json_file: str | Path | None = None,
     ) -> ExecutionResult:
         self._raise_if_not_ok()
         return ExecutionResult(
-            Runtime(self.program).run_json(json_state, entry),
+            Runtime(self.program).run_json(
+                json_state,
+                request,
+                request_filename="<request>",
+                json_filename=str(json_file) if json_file is not None else None,
+            ),
             self.file,
             str(json_file) if json_file is not None else None,
         )
@@ -117,56 +122,22 @@ class CompiledProgram:
         self,
         json_state: dict[str, Any],
         *,
-        entry: str,
+        request: str,
         json_file: str | Path | None = None,
     ) -> ExecutionResult:
-        """Run prevalidated JSON input without REQUEST/OUTPUT boundary checks."""
-        self._raise_if_not_ok()
-        return ExecutionResult(
-            Runtime(self.program).run_json(json_state, entry, validate_contracts=False),
-            self.file,
-            str(json_file) if json_file is not None else None,
-        )
-
-    def call_json(
-        self,
-        export_name: str,
-        json_state: dict[str, Any],
-        *,
-        json_file: str | Path | None = None,
-    ) -> ExecutionResult:
-        """Run a host-facing exported entry by stable export name."""
-        self._raise_if_not_ok()
-        return ExecutionResult(
-            Runtime(self.program).run_json(json_state, self._export_entry(export_name)),
-            self.file,
-            str(json_file) if json_file is not None else None,
-        )
-
-    def call_trusted_json(
-        self,
-        export_name: str,
-        json_state: dict[str, Any],
-        *,
-        json_file: str | Path | None = None,
-    ) -> ExecutionResult:
-        """Run an exported entry for JSON state that the host has already validated."""
+        """Run prevalidated JSON input without request boundary checks."""
         self._raise_if_not_ok()
         return ExecutionResult(
             Runtime(self.program).run_json(
                 json_state,
-                self._export_entry(export_name),
+                request,
+                request_filename="<request>",
+                json_filename=str(json_file) if json_file is not None else None,
                 validate_contracts=False,
             ),
             self.file,
             str(json_file) if json_file is not None else None,
         )
-
-    def _export_entry(self, export_name: str) -> str:
-        exported = self.program.exports.get(export_name)
-        if exported is None:
-            raise GwtError(f"unknown export: {export_name}")
-        return exported.entry
 
     def _raise_if_not_ok(self) -> None:
         if self.ok:
@@ -207,7 +178,7 @@ class GwtClient:
         self,
         json_state: dict[str, Any],
         *,
-        entry: str,
+        request: str,
         json_file: str | Path | None = None,
         import_roots: Iterable[str | Path] | None = None,
         allow_absolute_imports: bool = True,
@@ -215,31 +186,17 @@ class GwtClient:
         return run_json_file(
             self.path,
             json_state,
-            entry=entry,
+            request=request,
             json_file=json_file,
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         )
 
-    def call_json(
-        self,
-        export_name: str,
-        json_state: dict[str, Any],
-        *,
-        json_file: str | Path | None = None,
-        import_roots: Iterable[str | Path] | None = None,
-        allow_absolute_imports: bool = True,
-    ) -> ExecutionResult:
-        return self.compile(
-            import_roots=import_roots,
-            allow_absolute_imports=allow_absolute_imports,
-        ).call_json(export_name, json_state, json_file=json_file)
-
     def run_trusted_json(
         self,
         json_state: dict[str, Any],
         *,
-        entry: str,
+        request: str,
         json_file: str | Path | None = None,
         import_roots: Iterable[str | Path] | None = None,
         allow_absolute_imports: bool = True,
@@ -247,21 +204,7 @@ class GwtClient:
         return self.compile(
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
-        ).run_trusted_json(json_state, entry=entry, json_file=json_file)
-
-    def call_trusted_json(
-        self,
-        export_name: str,
-        json_state: dict[str, Any],
-        *,
-        json_file: str | Path | None = None,
-        import_roots: Iterable[str | Path] | None = None,
-        allow_absolute_imports: bool = True,
-    ) -> ExecutionResult:
-        return self.compile(
-            import_roots=import_roots,
-            allow_absolute_imports=allow_absolute_imports,
-        ).call_trusted_json(export_name, json_state, json_file=json_file)
+        ).run_trusted_json(json_state, request=request, json_file=json_file)
 
     def compile(
         self,
@@ -491,7 +434,7 @@ def run_json_file(
     path: str | Path,
     json_state: dict[str, Any],
     *,
-    entry: str,
+    request: str,
     json_file: str | Path | None = None,
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
@@ -500,8 +443,10 @@ def run_json_file(
     result = run_json_request(
         program_path.read_text(),
         json_state,
-        entry=entry,
+        request=request,
         filename=str(program_path),
+        request_filename="<request>",
+        json_filename=str(json_file) if json_file is not None else None,
         import_policy=_import_policy(import_roots, allow_absolute_imports),
     )
     return ExecutionResult(
@@ -543,9 +488,9 @@ def run_json_text(
     source: str,
     json_state: dict[str, Any],
     *,
-    entry: str,
+    request: str,
     filename: str = "<source>",
-    entry_filename: str = "<entry>",
+    request_filename: str = "<request>",
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
 ) -> ExecutionResult:
@@ -553,9 +498,10 @@ def run_json_text(
         run_json_request(
             source,
             json_state,
-            entry=entry,
+            request=request,
             filename=filename,
-            entry_filename=entry_filename,
+            request_filename=request_filename,
+            json_filename=None,
             import_policy=_import_policy(import_roots, allow_absolute_imports),
         ),
         filename,

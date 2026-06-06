@@ -29,8 +29,10 @@ RECORD Cart
   shipping: number
   total: number
 
-REQUEST cart is Cart
-OUTPUT cart is Cart
+REQUEST checkout cart
+  GIVEN cart is Cart
+  WHEN checkout cart
+  OUTPUT cart is Cart
 
 WHEN checkout <cart>
   GIVEN cart is Cart
@@ -42,7 +44,7 @@ WHEN checkout <cart>
   const check = await client.check();
   const result = await client.runJson(
     { cart: { subtotal: 84, shipping: 8, total: 0 } },
-    { entry: "checkout cart" },
+    { request: "checkout cart" },
   );
 
   assert.equal(check.ok, true);
@@ -74,13 +76,24 @@ THEN count == 2
   );
 });
 
-test("GwtSpec caches check and runs JSON input with a default entry", async () => {
+test("GwtSpec caches check and runs JSON input with a default request", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "gwt-client-"));
   const file = path.join(dir, "checkout.gwt");
   await writeFile(
     file,
     `
+RECORD Cart
+  subtotal: number
+  shipping: number
+  total: number
+
+REQUEST checkout cart
+  GIVEN cart is Cart
+  WHEN checkout cart
+  OUTPUT cart is Cart
+
 WHEN checkout <cart>
+  GIVEN cart is Cart
   set cart.total to cart.subtotal + cart.shipping
 `,
   );
@@ -90,7 +103,7 @@ WHEN checkout <cart>
     command: "python",
     commandArgs: ["-m", "gwtlang"],
     cwd: repoRoot,
-    entry: "checkout cart",
+    request: "checkout cart",
   });
   const firstCheck = await spec.checkOnce();
   const secondCheck = await spec.checkOnce();
@@ -117,7 +130,7 @@ WHEN checkout <cart>
     command: "python",
     commandArgs: ["-m", "gwtlang"],
     cwd: repoRoot,
-    entry: "checkout cart",
+    request: "checkout cart",
   });
 
   await assert.rejects(
@@ -154,7 +167,7 @@ USE "${moduleFile}"
     command: "python",
     commandArgs: ["-m", "gwtlang"],
     cwd: repoRoot,
-    entry: "touch count",
+    request: "touch count",
   });
   const defaultCheck = await spec.checkOnce();
 
@@ -176,7 +189,18 @@ test("runFile helper can run JSON input with the same runner options", async () 
   await writeFile(
     file,
     `
+RECORD Cart
+  subtotal: number
+  shipping: number
+  total: number
+
+REQUEST checkout cart
+  GIVEN cart is Cart
+  WHEN checkout cart
+  OUTPUT cart is Cart
+
 WHEN checkout <cart>
+  GIVEN cart is Cart
   set cart.total to cart.subtotal + cart.shipping
 `,
   );
@@ -186,7 +210,7 @@ WHEN checkout <cart>
     commandArgs: ["-m", "gwtlang"],
     cwd: repoRoot,
     input: { cart: { subtotal: 84, shipping: 8, total: 0 } },
-    entry: "checkout cart",
+    request: "checkout cart",
   });
 
   assert.equal(result.result.cart.total, 92);
@@ -199,6 +223,11 @@ test("runFile helper can run a GWT request file", async () => {
   await writeFile(
     file,
     `
+REQUEST checkout cart
+  GIVEN cart is any
+  WHEN checkout cart
+  OUTPUT cart is any
+
 WHEN checkout cart
   set cart.total to cart.subtotal + cart.shipping
 `,
@@ -209,7 +238,7 @@ WHEN checkout cart
 GIVEN cart.subtotal is 84
 AND cart.shipping is 8
 
-WHEN checkout cart
+REQUEST checkout cart
 `,
   );
 
@@ -223,12 +252,12 @@ WHEN checkout cart
   assert.equal(result.result.cart.total, 92);
 });
 
-test("runFile helper requires either requestFile or input with entry", async () => {
+test("runFile helper requires either requestFile or input with request", async () => {
   await assert.rejects(
     () => runFile("rules.gwt", {}),
     error => {
       assert.equal(error instanceof TypeError, true);
-      assert.match(error.message, /requires either requestFile or input with entry/);
+      assert.match(error.message, /requires either requestFile or input with request/);
       return true;
     },
   );
@@ -243,7 +272,10 @@ test("runJson exposes GWT failures as client errors", async () => {
 RECORD Cart
   subtotal: number
 
-REQUEST cart is Cart
+REQUEST checkout cart
+  GIVEN cart is Cart
+  WHEN checkout cart
+  OUTPUT cart is Cart
 
 WHEN checkout <cart>
   GIVEN cart is Cart
@@ -254,7 +286,7 @@ WHEN checkout <cart>
   const client = repoClient(file);
 
   await assert.rejects(
-    () => client.runJson({}, { entry: "checkout cart" }),
+    () => client.runJson({}, { request: "checkout cart" }),
     error => {
       assert.equal(error instanceof GwtClientError, true);
       assert.equal(error.exitCode, 1);

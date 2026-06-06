@@ -17,7 +17,7 @@ from .runtime import (
 )
 from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -33,8 +33,7 @@ class Analysis:
             "schemaVersion": SCHEMA_VERSION,
             "file": self.filename,
             "program": self.program.name if self.program is not None else None,
-            "inputs": len(self.program.inputs) if self.program is not None else 0,
-            "outputs": len(self.program.outputs) if self.program is not None else 0,
+            "requests": len(self.program.requests) if self.program is not None else 0,
             "dtos": len(self.program.dtos) if self.program is not None else 0,
             "behaviors": len(self.program.actions) if self.program is not None else 0,
             "scenarios": len(self.program.scenarios) if self.program is not None else 0,
@@ -107,6 +106,12 @@ def definition_at(analysis: Analysis, line: int, character: int) -> SourceRange 
     if analysis.program is None:
         return None
 
+    request_text = _request_text_at(analysis.source, line)
+    if request_text is not None:
+        request = analysis.program.requests.get(request_text)
+        if request is not None:
+            return SourceRange(request.line.filename, request.line.number, request.line.column, request.line.length)
+
     call_text = _call_text_at(analysis.source, line)
     if call_text is not None:
         action = _matching_action(analysis.program.actions, call_text)
@@ -124,7 +129,7 @@ def completion_items(analysis: Analysis) -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
     seen: set[tuple[str, str]] = set()
     for symbol in analysis.symbols.symbols:
-        if symbol.kind not in {"behavior", "dto", "dto_field", "parameter", "local", "contract"}:
+        if symbol.kind not in {"behavior", "request", "dto", "dto_field", "parameter", "local", "contract"}:
             continue
         key = (symbol.name, symbol.kind)
         if key in seen:
@@ -200,7 +205,7 @@ def _hover_text(symbol: Symbol) -> str:
 
 def _find_named_symbol(analysis: Analysis, name: str) -> Symbol | None:
     for symbol in analysis.symbols.symbols:
-        if symbol.name == name and symbol.kind in {"behavior", "dto", "dto_field", "parameter", "local", "contract"}:
+        if symbol.name == name and symbol.kind in {"behavior", "request", "dto", "dto_field", "parameter", "local", "contract"}:
             return symbol
     return None
 
@@ -250,6 +255,17 @@ def _call_text_at(source: str, line: int) -> str | None:
     return text
 
 
+def _request_text_at(source: str, line: int) -> str | None:
+    lines = source.splitlines()
+    if line < 0 or line >= len(lines):
+        return None
+    text = lines[line].split("#", 1)[0].strip()
+    if not text.startswith("REQUEST "):
+        return None
+    name = text.removeprefix("REQUEST ").strip()
+    return name or None
+
+
 def _matching_action(actions: list[Action], call_text: str) -> Action | None:
     try:
         call = _tokens(call_text, "<source>", 1)
@@ -268,6 +284,7 @@ def _signature_matches(signature: list[str], call: list[str]) -> bool:
 def _completion_kind(symbol_kind: str) -> int:
     return {
         "behavior": 3,
+        "request": 2,
         "dto": 7,
         "dto_field": 5,
         "parameter": 6,

@@ -13,8 +13,8 @@ export interface GwtClientOptions {
   allowAbsoluteImports?: boolean;
 }
 
-export interface GwtRunJsonOptions<TEntry extends string = string> extends GwtImportPolicyOptions {
-  entry: TEntry;
+export interface GwtRunJsonOptions<TRequest extends string = string> extends GwtImportPolicyOptions {
+  request: TRequest;
   cwd?: string;
   env?: Record<string, string | undefined>;
 }
@@ -34,13 +34,13 @@ export interface GwtCheckOptions extends GwtImportPolicyOptions {
   env?: Record<string, string | undefined>;
 }
 
-export interface GwtSpecOptions<TEntry extends string = string> extends GwtClientOptions {
-  entry?: TEntry;
+export interface GwtSpecOptions<TRequest extends string = string> extends GwtClientOptions {
+  request?: TRequest;
   checkBeforeRun?: boolean;
 }
 
-export interface GwtSpecRuntimeOptions<TEntry extends string = string> {
-  entry?: TEntry;
+export interface GwtSpecRuntimeOptions<TRequest extends string = string> {
+  request?: TRequest;
   checkBeforeRun?: boolean;
 }
 
@@ -81,11 +81,11 @@ export interface GwtSingleExecutionEnvelope<
 }
 
 export interface GwtCheckPayload extends GwtPayload {
+  schemaVersion: number;
   ok: boolean;
   file: string;
   program: string | null;
-  inputs: number;
-  outputs: number;
+  requests: number;
   dtos: number;
   behaviors: number;
   scenarios: number;
@@ -115,10 +115,10 @@ export class GwtClient {
     TInput extends object = GwtPayload,
     TResult extends object = GwtPayload,
     TState extends object = GwtPayload,
-    TEntry extends string = string,
+    TRequest extends string = string,
   >(
     input: TInput,
-    options: GwtRunJsonOptions<TEntry>,
+    options: GwtRunJsonOptions<TRequest>,
   ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;
   runRequest<TResult extends object = GwtPayload, TState extends object = GwtPayload>(
     requestFile: string,
@@ -133,22 +133,22 @@ export class GwtSpec<
   TInput extends object = GwtPayload,
   TResult extends object = GwtPayload,
   TState extends object = GwtPayload,
-  TEntry extends string = string,
+  TRequest extends string = string,
 > {
   constructor(
-    options: string | GwtClient | GwtSpecOptions<TEntry>,
-    specOptions?: GwtSpecRuntimeOptions<TEntry>,
+    options: string | GwtClient | GwtSpecOptions<TRequest>,
+    specOptions?: GwtSpecRuntimeOptions<TRequest>,
   );
 
   client: GwtClient;
-  entry?: TEntry;
+  request?: TRequest;
   checkBeforeRun: boolean;
 
   checkOnce(options?: GwtCheckOptions): Promise<GwtCheckPayload>;
   resetCheck(): void;
   runJson(
     input: TInput,
-    options?: Partial<GwtRunJsonOptions<TEntry>>,
+    options?: Partial<GwtRunJsonOptions<TRequest>>,
   ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;
   runRequest(
     requestFile: string,
@@ -161,11 +161,11 @@ export function createGwtSpec<
   TInput extends object = GwtPayload,
   TResult extends object = GwtPayload,
   TState extends object = GwtPayload,
-  TEntry extends string = string,
+  TRequest extends string = string,
 >(
-  options: string | GwtClient | GwtSpecOptions<TEntry>,
-  specOptions?: GwtSpecRuntimeOptions<TEntry>,
-): GwtSpec<TInput, TResult, TState, TEntry>;
+  options: string | GwtClient | GwtSpecOptions<TRequest>,
+  specOptions?: GwtSpecRuntimeOptions<TRequest>,
+): GwtSpec<TInput, TResult, TState, TRequest>;
 
 export function checkFile(
   file: string,
@@ -176,12 +176,12 @@ export function runFile<
   TInput extends object = GwtPayload,
   TResult extends object = GwtPayload,
   TState extends object = GwtPayload,
-  TEntry extends string = string,
+  TRequest extends string = string,
 >(
   file: string,
   options: Omit<GwtClientOptions, "file"> & {
     input: TInput;
-    entry: TEntry;
+    request: TRequest;
     requestFile?: never;
   },
 ): Promise<GwtSingleExecutionEnvelope<TResult, TState>>;
@@ -191,6 +191,6 @@ export function runFile<TResult extends object = GwtPayload, TState extends obje
   options: Omit<GwtClientOptions, "file"> & {
     requestFile: string;
     input?: never;
-    entry?: never;
+    request?: never;
   },
 ): Promise<GwtExecutionEnvelope<TResult, TState>>;

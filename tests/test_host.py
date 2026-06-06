@@ -19,11 +19,17 @@ RECORD FormatDecision
   status: "new" | "passed" | "failed"
   reason: text
 
-REQUEST case is FormatCase
-AND observation is FormatObservation
-AND decision is FormatDecision
+REQUEST review format case
+  GIVEN case is FormatCase
+  AND observation is FormatObservation
 
-OUTPUT decision is FormatDecision
+  GIVEN decision is FormatDecision
+    status: "new"
+    reason: "new"
+
+  WHEN review case using observation into decision
+
+  OUTPUT decision is FormatDecision
 
 WHEN review <case> using <observation> into <decision>
   GIVEN case is FormatCase
@@ -73,13 +79,12 @@ class HostAdapterTests(unittest.TestCase):
 
         adapter = GwtHostAdapter.from_text(
             FORMAT_RULES,
-            entry="review case using observation into decision",
+            request="review format case",
             observations=[HostObservation("observation", observe_format)],
         )
         execution = adapter.run_json(
             {
                 "case": FormatCase("print(1)  ", "print(1)\n"),
-                "decision": {"status": "new", "reason": ""},
             }
         )
 
@@ -95,13 +100,17 @@ class HostAdapterTests(unittest.TestCase):
               amount: decimal
               total: decimal
 
-            REQUEST price is Price
-            OUTPUT price is Price
+            REQUEST double price
+              GIVEN price is Price
+
+              WHEN double price
+
+              OUTPUT price is Price
 
             WHEN double price
               set price.total to price.amount * 2
             """,
-            entry="double price",
+            request="double price",
         )
 
         execution = adapter.run_json({"price": Price(Decimal("12.30"), Decimal("0.00"))})
@@ -111,7 +120,7 @@ class HostAdapterTests(unittest.TestCase):
     def test_adapter_can_add_observations_fluently(self):
         adapter = GwtHostAdapter.from_text(
             FORMAT_RULES,
-            entry="review case using observation into decision",
+            request="review format case",
         ).with_observation(
             "observation",
             lambda context: {
@@ -124,7 +133,6 @@ class HostAdapterTests(unittest.TestCase):
         execution = adapter.run_json(
             {
                 "case": {"source": "print(2)\n", "expected": "print(2)\n"},
-                "decision": {"status": "new", "reason": ""},
             }
         )
 
@@ -136,7 +144,7 @@ class HostAdapterTests(unittest.TestCase):
 
         adapter = GwtHostAdapter.from_text(
             FORMAT_RULES,
-            entry="review case using observation into decision",
+            request="review format case",
             observations=[HostObservation("observation", observe_format)],
         )
 
@@ -147,7 +155,6 @@ class HostAdapterTests(unittest.TestCase):
             adapter.run_json(
                 {
                     "case": {"source": "x", "expected": "x"},
-                    "decision": {"status": "new", "reason": ""},
                 }
             )
 

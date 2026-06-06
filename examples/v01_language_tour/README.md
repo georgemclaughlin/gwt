@@ -1,10 +1,10 @@
 # v0.1 Language Tour
 
-This example is a small expense reimbursement workflow. It is meant to show the
-current v0.1 language surface in one place without the size of the larger order
-fulfillment sample.
+This example is a small expense reimbursement workflow. It remains named for
+the original v0.1 tour, but now tracks the current language surface without the
+size of the larger order fulfillment sample.
 
-- `rules.gwt` declares records, `REQUEST` / `OUTPUT` contracts, reusable behavior,
+- `rules.gwt` declares records, a named request with `OUTPUT`, reusable behavior,
   and an embedded regression scenario.
 - `request.gwt` is an app-style input file. It provides data and runs the
   behavior, but it does not hardcode expected output.

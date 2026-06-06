@@ -35,8 +35,8 @@ GWT removes the semantic handoff for deterministic domain behavior:
 - `GIVEN` setup is runtime state, not prose about state.
 - `WHEN` behavior is executable logic, not a step name backed by separate code.
 - `THEN` assertions are regression checks, not suggestions.
-- `REQUEST` and `OUTPUT` contracts are host-facing runtime boundaries.
-- `EXPORT` names are stable host-facing entry points.
+- named `REQUEST` blocks are host-facing callable units.
+- `OUTPUT` declares response shape; `THEN` declares assertions.
 
 GWT does not remove all product ambiguity. It forces behavior ambiguity to be
 resolved before the spec becomes executable.
@@ -51,13 +51,16 @@ The current Python package is the reference client API. Other host-language
 clients can wrap the same runtime contract:
 
 ```text
-host app -> JSON request object -> GWT entry behavior -> typed result envelope
+host app -> JSON request object -> GWT named request -> typed result envelope
 ```
 
-Programs can expose stable entry names for host code:
+Programs expose stable request names for host code:
 
 ```gwt
-EXPORT review_vendor_v1 as review vendor into decision
+REQUEST review vendor
+  GIVEN vendor is VendorRequest
+  WHEN review vendor into decision
+  OUTPUT decision is VendorDecision
 ```
 
 The CLI also supports a portable runner protocol for early clients in .NET,
@@ -66,7 +69,7 @@ Java, TypeScript, Go, Ruby, or any language that can spawn a process:
 ```sh
 printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
   --json-input - \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json
 ```
 
@@ -103,7 +106,7 @@ Run the same workflow with a JSON request, as a host application would:
 ```sh
 python -m gwtlang run examples/vendor_onboarding/rules.gwt \
   --json-input examples/vendor_onboarding/request.json \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json
 ```
 
@@ -130,6 +133,7 @@ For a quick public review, start with:
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
+| [`docs/program-interface-boundary.md`](docs/program-interface-boundary.md) | Clarifying note on public entries, helper behaviors, scenarios, request files, and CLI JSON execution |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
 | [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
 
@@ -198,10 +202,10 @@ GIVEN account is Account
   status: "open"
 ```
 
-Program contracts define the host-facing interface. Use `integer` for exact
-whole numbers, `decimal` for finite exact base-10 values, and `number` for
-legacy broad numeric values. Decimal JSON input should use strings such as
-`"12.30"`; decimal values serialize as strings in JSON/API payloads.
+Named requests define the host-facing interface. Use `integer` for exact whole
+numbers, `decimal` for finite exact base-10 values, and `number` for legacy
+broad numeric values. Decimal JSON input should use strings such as `"12.30"`;
+decimal values serialize as strings in JSON/API payloads.
 
 ```gwt
 RECORD LineItem
@@ -209,19 +213,25 @@ RECORD LineItem
   unit_price: decimal
 ```
 
-Request/output contracts declare the boundary paths:
+Request input and output contracts live inside the named request:
 
 ```gwt
-REQUEST report is ExpenseReport
-AND decision is ExpenseDecision
+REQUEST review expense report
+  GIVEN report is ExpenseReport
 
-OUTPUT decision is ExpenseDecision
+  GIVEN decision is ExpenseDecision
+    submitted_total: 0
+    status: "new"
+
+  WHEN review report into decision
+
+  OUTPUT decision is ExpenseDecision
 ```
 
-`REQUEST` contracts are validated after setup and before execution. `OUTPUT`
-contracts are validated after execution. When outputs are declared, JSON/API
-payloads put only those paths under `result`; the full final state stays under
-`state`.
+Caller-provided `GIVEN` inputs validate before request execution. Request-local
+`GIVEN` setup creates internal state. `OUTPUT` validates after execution. JSON/API
+payloads put only declared output paths under `result`; the full final state
+stays under `state`.
 
 ## Collections And Tables
 
@@ -272,12 +282,12 @@ Run it like an app would, with a separate request file:
 python -m gwtlang run examples/v01_language_tour/rules.gwt --input examples/v01_language_tour/request.gwt --json
 ```
 
-Production callers can also provide JSON state and an explicit entry behavior:
+Production callers can also provide JSON state and an explicit request name:
 
 ```sh
 python -m gwtlang run examples/order_fulfillment/rules.gwt \
   --json-input examples/order_fulfillment/request.json \
-  --entry "fulfill order from inventory into fulfillment" \
+  --request "fulfill order" \
   --json
 ```
 
@@ -345,7 +355,7 @@ The CLI currently supports:
 
 ```sh
 gwt run examples/bank.gwt
-gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --entry "fulfill order from inventory into fulfillment" --json
+gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt test examples/checkout_scenarios.gwt
 gwt check examples/checkout_app.gwt
@@ -365,9 +375,8 @@ for editor tooling.
 
 `gwt inspect file.gwt --json` emits a versioned machine-readable manifest for
 tools, agents, and CI. It includes the program hash, direct imports, records,
-request/output contracts, behaviors, inferred entry candidates, scenarios, and
-diagnostics. This is intentionally an inspection surface, not a separate graph
-or alternate source format.
+named requests, behaviors, scenarios, and diagnostics. This is intentionally an
+inspection surface, not a separate graph or alternate source format.
 
 `gwt validate file.gwt` is the standard local/CI gate. It checks the program,
 verifies canonical formatting, and runs embedded scenarios when the file has
@@ -375,7 +384,7 @@ scenario content, without waiting for a host application to boot. Use
 `--skip-format` or `--skip-test` only while rolling the workflow into an
 existing project.
 
-`gwt format file.gwt` rewrites valid source to the canonical v0.1 layout.
+`gwt format file.gwt` rewrites valid source to the canonical current layout.
 `gwt format file.gwt --check` is intended for CI.
 
 `gwt types file.gwt --language typescript` generates host TypeScript
@@ -406,8 +415,8 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/record_contracts.gwt`](examples/record_contracts.gwt) | Record validation |
 | [`examples/typed_contracts.gwt`](examples/typed_contracts.gwt) | Behavior parameter and return contracts |
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
-| [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, exported host entry, and Python host example |
-| [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of v0.1 |
+| [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, named request, and Python host example |
+| [`examples/v01_language_tour`](examples/v01_language_tour) | A compact tour of the current language |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |
 | [`examples/order_fulfillment`](examples/order_fulfillment) | Larger state-transition workflow |
 | [`examples/inventory_allocation_spike`](examples/inventory_allocation_spike) | List-shaped inventory pressure test |
@@ -434,7 +443,7 @@ if not check.ok:
 request = json.loads(open("examples/order_fulfillment/request.json").read())
 execution = client.run_json(
     request,
-    entry="fulfill order from inventory into fulfillment",
+    request="fulfill order",
 )
 payload = execution.as_payload()
 print(payload["result"]["fulfillment"]["status"])
@@ -465,7 +474,7 @@ rules = compile_file(
 
 execution = rules.run_json(
     request,
-    entry="fulfill order from inventory into fulfillment",
+    request="fulfill order",
 )
 ```
 
@@ -478,16 +487,15 @@ The lower-level `check_file`, `run_file`, `run_json_file`, `run_text`, and
 client object. `GwtClient.inspect()` exposes the same manifest as
 `gwt inspect`, and `GwtClient.validate()` exposes the local/CI validation
 workflow from Python. `GwtClient.compile()` is the equivalent compile-once API
-for a client object. Compiled programs can call exports with
-`call_json("review_vendor_v1", state)`. For already-prevalidated internal
-loops, `run_trusted_json()` and `call_trusted_json()` skip only `REQUEST` and
-`OUTPUT` boundary validation. `GwtClient.typescript_types()` and
+for a client object. For already-prevalidated internal loops,
+`run_trusted_json()` skips only named-request input and output boundary
+validation. `GwtClient.typescript_types()` and
 `generate_typescript_file()` generate TypeScript declarations from checked GWT
 contracts.
 
 A fuller runnable Python host example lives in
 [`examples/exact_pricing/host_app.py`](examples/exact_pricing/host_app.py).
-It validates, inspects, compiles, calls an exported entry, rejects accidental
+It validates, inspects, compiles, calls a named request, rejects accidental
 float input for `decimal`, and demonstrates trusted prevalidated execution.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
@@ -509,18 +517,18 @@ release, use the repository example or a local `file:` dependency.
 
 ```ts
 import { GwtClient } from "@gwtlang/client";
-import type { GwtEntry, GwtOutput, GwtRequest } from "./rules.js";
+import type { GwtOutput, GwtRequest, GwtRequestName } from "./rules.js";
 
-const request: GwtRequest = { vendor, decision };
-const entry: GwtEntry = "review vendor into decision";
+const input: GwtRequest = { vendor };
+const request: GwtRequestName = "review vendor";
 const client = new GwtClient("examples/vendor_onboarding/rules.gwt");
 const check = await client.check();
 if (!check.ok) {
   throw new Error(JSON.stringify(check.diagnostics));
 }
 
-const execution = await client.runJson<GwtRequest, GwtOutput>(request, {
-  entry,
+const execution = await client.runJson<GwtRequest, GwtOutput>(input, {
+  request,
 });
 
 console.log(execution.result.decision.status);
@@ -564,7 +572,7 @@ open a `.gwt` file such as `examples/v01_language_tour/rules.gwt`.
 
 ## Specs And Tests
 
-The versioned language spec starts at [`docs/spec/v0.1.md`](docs/spec/v0.1.md).
+The current versioned language spec is [`docs/spec/v0.2.md`](docs/spec/v0.2.md).
 The longer language guide is [`docs/language.md`](docs/language.md), and the
 EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
 language-shape guardrails live in

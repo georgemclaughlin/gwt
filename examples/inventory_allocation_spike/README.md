@@ -49,7 +49,7 @@ Run with production-style JSON input:
 ```sh
 python -m gwtlang run examples/inventory_allocation_spike/rules.gwt \
   --json-input examples/inventory_allocation_spike/request.json \
-  --entry "fulfill order from inventory into fulfillment" \
+  --request "fulfill order" \
   --json
 ```
 

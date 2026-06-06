@@ -29,12 +29,24 @@ RECORD FulfillmentState
   status: "new" | "held" | "authorized" | "backordered" | "partial" | "ready"
   reason: "new" | "payment_required" | "fraud_review" | "authorized" | "no_inventory" | "partial_inventory" | "ready_to_ship" | "unknown_sku"
 
-REQUEST order is OrderRequest
-AND inventory is InventoryState
-AND fulfillment is FulfillmentState
+REQUEST fulfill order
+  GIVEN order is OrderRequest
+  AND inventory is InventoryState
 
-OUTPUT fulfillment is FulfillmentState
-AND inventory is InventoryState
+  GIVEN fulfillment is FulfillmentState
+    requested_units: 0
+    reserved_units: 0
+    backordered_units: 0
+    unknown_sku_count: 0
+    package_count: 0
+    shipping_fee: 0
+    status: "new"
+    reason: "new"
+
+  WHEN fulfill order from inventory into fulfillment
+
+  OUTPUT fulfillment is FulfillmentState
+  AND inventory is InventoryState
 
 WHEN reset_fulfillment <fulfillment>
   GIVEN fulfillment is FulfillmentState
@@ -185,17 +197,7 @@ GIVEN inventory.items are InventoryItem
   | "gadget" | 1         | 0        |
   | "cable"  | 5         | 0        |
 
-GIVEN fulfillment is FulfillmentState
-  requested_units: 0
-  reserved_units: 0
-  backordered_units: 0
-  unknown_sku_count: 0
-  package_count: 0
-  shipping_fee: 0
-  status: "new"
-  reason: "new"
-
-WHEN fulfill order from inventory into fulfillment
+REQUEST fulfill order
 WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
 WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "gadget" into gadget_inventory
 WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "cable" into cable_inventory
@@ -234,17 +236,7 @@ GIVEN inventory.items are InventoryItem
   | sku      | available | reserved |
   | "widget" | 3         | 0        |
 
-GIVEN fulfillment is FulfillmentState
-  requested_units: 0
-  reserved_units: 0
-  backordered_units: 0
-  unknown_sku_count: 0
-  package_count: 0
-  shipping_fee: 0
-  status: "new"
-  reason: "new"
-
-WHEN fulfill order from inventory into fulfillment
+REQUEST fulfill order
 WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
 
 THEN fulfillment.status == "partial"
@@ -274,17 +266,7 @@ GIVEN inventory.items are InventoryItem
   | sku      | available | reserved |
   | "widget" | 5         | 0        |
 
-GIVEN fulfillment is FulfillmentState
-  requested_units: 0
-  reserved_units: 0
-  backordered_units: 0
-  unknown_sku_count: 0
-  package_count: 0
-  shipping_fee: 0
-  status: "new"
-  reason: "new"
-
-WHEN fulfill order from inventory into fulfillment
+REQUEST fulfill order
 WHEN find inventory_item in inventory.items WHERE inventory_item.sku == "widget" into widget_inventory
 
 THEN fulfillment.status == "held"

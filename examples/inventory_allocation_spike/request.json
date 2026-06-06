@@ -1,14 +1,4 @@
 {
-  "fulfillment": {
-    "backordered_units": 0,
-    "package_count": 0,
-    "reason": "new",
-    "requested_units": 0,
-    "reserved_units": 0,
-    "shipping_fee": 0,
-    "status": "new",
-    "unknown_sku_count": 0
-  },
   "inventory": {
     "items": [
       {

@@ -7,10 +7,12 @@ RECORD Cart
   total: decimal
   status: text
 
-REQUEST cart is Cart
-OUTPUT cart is Cart
+REQUEST price cart
+  GIVEN cart is Cart
 
-EXPORT price_cart_v1 as price cart
+  WHEN price cart
+
+  OUTPUT cart is Cart
 
 WHEN price <cart>
   GIVEN cart is Cart
@@ -29,7 +31,7 @@ GIVEN cart is Cart
   total: 0.00
   status: "pending"
 
-WHEN price cart
+REQUEST price cart
 
 THEN cart.total == 24.60
 AND cart.status == "reserved"

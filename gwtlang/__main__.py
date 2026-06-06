@@ -68,8 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to a JSON object containing initial state for REQUEST contracts, or '-' for stdin.",
     )
     run_parser.add_argument(
-        "--entry",
-        help="Behavior call to execute after loading --json-input state.",
+        "--request",
+        help="Named REQUEST to execute after loading --json-input state.",
     )
     run_parser.add_argument(
         "--json",
@@ -212,11 +212,11 @@ def add_import_policy_arguments(parser: argparse.ArgumentParser) -> None:
 def run_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     request_source = args.input.read_text() if args.input else None
-    if args.json_input is not None and not args.entry:
-        print("gwt: --entry is required with --json-input", file=sys.stderr)
+    if args.json_input is not None and not args.request:
+        print("gwt: --request is required with --json-input", file=sys.stderr)
         return 2
-    if args.entry and args.json_input is None:
-        print("gwt: --entry requires --json-input", file=sys.stderr)
+    if args.request and args.json_input is None:
+        print("gwt: --request requires --json-input", file=sys.stderr)
         return 2
 
     try:
@@ -225,7 +225,7 @@ def run_command(args: argparse.Namespace) -> int:
             execution = run_json_file(
                 args.file,
                 json_state,
-                entry=args.entry,
+                request=args.request,
                 json_file=args.json_input,
                 import_roots=args.import_root,
                 allow_absolute_imports=not args.no_absolute_imports,
@@ -238,8 +238,8 @@ def run_command(args: argparse.Namespace) -> int:
                 allow_absolute_imports=not args.no_absolute_imports,
             )
     except GwtError as exc:
-        if args.json_input is not None and str(exc).startswith("<entry>:"):
-            print(format_error(exc, f"{args.entry}\n", "<entry>"), file=sys.stderr)
+        if args.json_input is not None and str(exc).startswith("<request>:"):
+            print(format_error(exc, f"{args.request}\n", "<request>"), file=sys.stderr)
         else:
             diagnostic_source = request_source if request_source is not None else source
             diagnostic_file = str(args.input) if args.input else str(args.file)
@@ -326,7 +326,8 @@ def check_command(args: argparse.Namespace) -> int:
             )
         print(
             f"OK {args.file} "
-            f"({payload['dtos']} records, {payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
+            f"({payload['dtos']} records, {payload['requests']} requests, "
+            f"{payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0
 

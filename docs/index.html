@@ -49,10 +49,12 @@
 }</code></pre>
             <pre data-title="rules.gwt"><code><span class="tok-kw">RECORD</span> <span class="tok-type">Account</span>
   <span class="tok-key">balance</span>: <span class="tok-type">number</span>
-  <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
-<span class="tok-kw">REQUEST</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
-<span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-type">number</span>
-<span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
+    <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
+<span class="tok-kw">REQUEST</span> withdraw from account
+  <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
+  <span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-type">number</span>
+  <span class="tok-kw">WHEN</span> withdraw amount from account
+  <span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
 <span class="tok-kw">WHEN</span> withdraw <span class="tok-param">&lt;amount&gt;</span> from <span class="tok-param">&lt;account&gt;</span>
   <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
   <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
@@ -188,12 +190,12 @@
           <article class="command-item">
             <div class="command-copy">
               <h3>Call It Like An App</h3>
-              <p>Send JSON state to a named behavior and receive the stable result envelope.</p>
+              <p>Send JSON state to a named request and receive the stable result envelope.</p>
             </div>
             <pre><code>python -m gwtlang run \
   examples/vendor_onboarding/rules.gwt \
   --json-input examples/vendor_onboarding/request.json \
-  --entry "review vendor into decision" \
+  --request "review vendor" \
   --json</code></pre>
           </article>
           <article class="command-item">

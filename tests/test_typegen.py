@@ -11,7 +11,7 @@ class TypeGenerationTests(unittest.TestCase):
 
         self.assertEqual(fixture.read_text(), generated.source)
 
-    def test_typescript_generation_emits_inferred_entry_union(self):
+    def test_typescript_generation_emits_named_request_types(self):
         result = generate_typescript_text(
             """
             RECORD Vendor
@@ -20,10 +20,15 @@ class TypeGenerationTests(unittest.TestCase):
             RECORD Decision
               status: text
 
-            REQUEST vendor is Vendor
-            AND decision is Decision
+            REQUEST review vendor
+              GIVEN vendor is Vendor
 
-            OUTPUT decision is Decision
+              GIVEN decision is Decision
+                status: "new"
+
+              WHEN review vendor into decision
+
+              OUTPUT decision is Decision
 
             WHEN review <vendor> into <decision>
               GIVEN vendor is Vendor
@@ -40,24 +45,27 @@ class TypeGenerationTests(unittest.TestCase):
         )
 
         self.assertIn(
-            'export type GwtEntry =\n'
-            '  | "review vendor into decision"\n'
-            '  | "reset decision";',
+            'export type GwtRequestName = "review vendor";',
             result.source,
         )
+        self.assertIn('"review vendor": ReviewVendorRequest;', result.source)
+        self.assertIn('"review vendor": ReviewVendorOutput;', result.source)
+        self.assertNotIn("reset decision", result.source)
         self.assertNotIn("ignore other", result.source)
 
-    def test_typescript_generation_emits_exact_numeric_types_and_exports(self):
+    def test_typescript_generation_emits_exact_numeric_types_and_request_name(self):
         result = generate_typescript_text(
             """
             RECORD Price
               quantity: integer
               amount: decimal
 
-            REQUEST price is Price
-            OUTPUT price is Price
+            REQUEST price order
+              GIVEN price is Price
 
-            EXPORT price_order_v1 as price order price
+              WHEN price order price
+
+              OUTPUT price is Price
 
             WHEN price order <price>
               GIVEN price is Price
@@ -67,14 +75,44 @@ class TypeGenerationTests(unittest.TestCase):
 
         self.assertIn("quantity: number;", result.source)
         self.assertIn("amount: string;", result.source)
-        self.assertIn('export type GwtEntry = "price_order_v1";', result.source)
+        self.assertIn('export type GwtRequestName = "price order";', result.source)
+
+    def test_typescript_generation_avoids_record_and_reserved_request_type_collisions(self):
+        result = generate_typescript_text(
+            """
+            RECORD CartRequest
+              total: number
+
+            RECORD Cart
+              total: number
+
+            REQUEST cart
+              GIVEN cart is Cart
+              WHEN print cart.total
+              OUTPUT cart is Cart
+
+            REQUEST gwt
+              GIVEN cart is Cart
+              WHEN print cart.total
+              OUTPUT cart is Cart
+            """
+        )
+
+        self.assertIn("export interface CartRequest {", result.source)
+        self.assertIn("export interface CartRequest2 {", result.source)
+        self.assertIn("export interface GwtRequest2 {", result.source)
+        self.assertIn('"cart": CartRequest2;', result.source)
+        self.assertIn('"gwt": GwtRequest2;', result.source)
 
     def test_typescript_generation_rejects_overlapping_contract_paths(self):
         with self.assertRaisesRegex(GwtError, "REQUEST contract path x\\.y overlaps x"):
             generate_typescript_text(
                 """
-                REQUEST x is text
-                AND x.y is number
+                REQUEST bad request
+                  GIVEN x is text
+                  AND x.y is number
+
+                  WHEN print "bad"
                 """
             )
 
@@ -85,8 +123,6 @@ class TypeGenerationTests(unittest.TestCase):
                 RECORD Foo
                   x: text
                     y: number
-
-                REQUEST foo is Foo
                 """
             )
 

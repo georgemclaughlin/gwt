@@ -5,7 +5,7 @@ This example shows a small host-facing pricing workflow:
 - `integer` for counts
 - `decimal` for exact base-10 values
 - scalar `DEPENDING ON` for cart mode
-- `EXPORT price_cart_v1 as price cart` as the stable host entry name
+- `REQUEST price cart` as the stable host-facing request
 - Python `compile` once / call many times flow
 
 Run the embedded GWT scenario:
@@ -20,10 +20,10 @@ Run the fuller Python host example:
 python examples/exact_pricing/host_app.py
 ```
 
-The Python example validates the rules file, inspects the public export,
-executes `price_cart_v1`, prints the JSON payload, shows the runtime
-`Decimal`, rejects accidental JSON float input, and demonstrates
-`call_trusted_json()` for already-prevalidated internal state.
+The Python example validates the rules file, inspects the public request,
+executes `price cart`, prints the JSON payload, shows the runtime `Decimal`,
+rejects accidental JSON float input, and demonstrates `run_trusted_json()` for
+already-prevalidated internal state.
 
 For host JSON boundaries, send decimals as strings:
 
