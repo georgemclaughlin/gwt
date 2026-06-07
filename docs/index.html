@@ -29,6 +29,7 @@
           </p>
           <div class="actions" aria-label="Primary links">
             <a class="button primary" href="getting-started.html">Getting Started</a>
+            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/vendor_onboarding">Flagship Demo</a>
             <a class="button secondary" href="#run">Run The Examples</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">Read The Guide</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec-is-code.md">Spec Is Code</a>
@@ -191,11 +192,13 @@
         <div class="command-grid">
           <article class="command-item">
             <div class="command-copy">
-              <h3>Run Scenario Coverage</h3>
-              <p>Execute the embedded vendor onboarding examples as regression tests.</p>
+              <h3>Validate The Module</h3>
+              <p>Check syntax, contracts, formatting, and embedded scenarios before host code runs.</p>
             </div>
-            <pre><code>python -m gwtlang test \
-  examples/vendor_onboarding/rules.gwt</code></pre>
+            <pre><code>python -m gwtlang validate \
+  examples/vendor_onboarding/rules.gwt \
+  --import-root examples/vendor_onboarding \
+  --no-absolute-imports</code></pre>
           </article>
           <article class="command-item">
             <div class="command-copy">
@@ -220,11 +223,10 @@
           </article>
           <article class="command-item">
             <div class="command-copy">
-              <h3>Try The Larger Stress Test</h3>
-              <p>Run the MiniLang VM example that exercises records, lists, errors, and debugger state.</p>
+              <h3>Run A Typed Host</h3>
+              <p>Use the generated Python client wrapper to call the same named request.</p>
             </div>
-            <pre><code>python -m gwtlang test \
-  examples/minilang2_vm/rules.gwt</code></pre>
+            <pre><code>python examples/vendor_onboarding/host_app.py</code></pre>
           </article>
         </div>
       </section>

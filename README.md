@@ -25,6 +25,32 @@ SpecFlow/Reqnroll, and BDD examples. New features should stay
 behavior-oriented and should not drift toward broad query syntax or invisible
 policy evaluation.
 
+## Flagship Demo
+
+Start with [`examples/vendor_onboarding`](examples/vendor_onboarding). It is the
+clearest end-to-end GWT path: one executable rules file, embedded scenarios, a
+named JSON request, generated Python and TypeScript host types, and host app
+calls that consume a typed decision.
+
+```sh
+python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
+  --import-root examples/vendor_onboarding \
+  --no-absolute-imports
+
+python -m gwtlang run examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor" \
+  --json
+
+python examples/vendor_onboarding/host_app.py
+```
+
+Expected decision:
+
+```txt
+typed decision: needs_review (manual_review_required)
+```
+
 ## Spec Is Code
 
 BMAD, GitHub Spec Kit, and OpenSpec are useful signs of the same shift: humans
@@ -91,8 +117,10 @@ example in
 
 ## Quick Start
 
-For a concept-by-concept introduction, start with the
-[Getting Started walkthrough](docs/getting-started.html). It builds from a
+For the realistic integration path, start with the
+[vendor onboarding flagship demo](examples/vendor_onboarding). For a
+concept-by-concept introduction, use the
+[Getting Started walkthrough](docs/getting-started.html), which builds from a
 single `GIVEN / WHEN / THEN` program up through records, scenarios, named
 requests, and JSON input.
 
