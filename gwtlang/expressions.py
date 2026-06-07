@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from .errors import GwtError
 
@@ -122,16 +122,20 @@ def _coerce_mixed_float_decimal(left: Any, right: Any) -> tuple[Any, Any]:
     return left, right
 
 
-def _equal_values(left: Any, right: Any) -> bool:
+def _equal_values(left: object, right: object) -> bool:
     if isinstance(left, list) and isinstance(right, list):
-        return len(left) == len(right) and all(
+        left_items = cast(list[object], left)
+        right_items = cast(list[object], right)
+        return len(left_items) == len(right_items) and all(
             _equal_values(left_item, right_item)
-            for left_item, right_item in zip(left, right)
+            for left_item, right_item in zip(left_items, right_items)
         )
     if isinstance(left, dict) and isinstance(right, dict):
-        return left.keys() == right.keys() and all(
-            _equal_values(left[key], right[key])
-            for key in left
+        left_items = cast(dict[object, object], left)
+        right_items = cast(dict[object, object], right)
+        return left_items.keys() == right_items.keys() and all(
+            _equal_values(left_items[key], right_items[key])
+            for key in left_items
         )
     left, right = _coerce_mixed_float_decimal(left, right)
     return left == right
