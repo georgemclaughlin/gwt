@@ -556,8 +556,8 @@ The Python package includes a `py.typed` marker and typed payload aliases for
 the public host boundary. The scoped Pyright gate in
 [`pyrightconfig.json`](pyrightconfig.json) runs in strict mode for
 `gwtlang/api.py`, the host observation adapter, generated host type support,
-analysis/editor payload support, the public validation/inspection payload
-builders, and the Python host examples:
+analysis service payloads, completion items, LSP response helpers, the public
+validation/inspection payload builders, and the Python host examples:
 
 ```sh
 npx --yes pyright@1.1.410 --project pyrightconfig.json
@@ -668,6 +668,6 @@ python -m unittest discover
 
 The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 runs the standard validation gate, strict Pyright checking for the Python host
-boundary, generated TypeScript and Python vendor host fixture checks, Python and
-TypeScript client tests, VS Code extension checks, and whitespace verification
-with `git diff --check`.
+boundary and editor helper payloads, generated TypeScript and Python vendor
+host fixture checks, Python and TypeScript client tests, VS Code extension
+checks, and whitespace verification with `git diff --check`.
