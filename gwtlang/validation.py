@@ -2,25 +2,31 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NotRequired, TypedDict
 
 from .checker import Diagnostic
 from .formatter import format_text
 from .inspection import SCHEMA_VERSION
+from .payloads import ValidationPayload, ValidationPhasePayload
 from .runtime import GwtError, ImportPolicy, Program, Scenario, run_source
 from .service import Analysis, analyze_file, diagnostic_from_error
+
+
+class _InternalPhasePayload(ValidationPhasePayload, total=False):
+    _diagnostics: NotRequired[list[Diagnostic]]
 
 
 @dataclass(frozen=True)
 class ValidationResult:
     analysis: Analysis
     diagnostics: list[Diagnostic]
-    phases: dict[str, dict[str, object]]
+    phases: dict[str, ValidationPhasePayload]
 
     @property
     def ok(self) -> bool:
         return not any(diagnostic.severity == "error" for diagnostic in self.diagnostics)
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> ValidationPayload:
         return {
             "schemaVersion": SCHEMA_VERSION,
             "ok": self.ok,
@@ -46,7 +52,7 @@ def validate_file(
     filename = str(file_path)
     analysis = analyze_file(file_path, import_policy=import_policy)
     diagnostics = list(analysis.diagnostics)
-    phases: dict[str, dict[str, object]] = {
+    phases: dict[str, ValidationPhasePayload] = {
         "check": _check_phase(analysis),
     }
 
@@ -95,7 +101,7 @@ def _scenario_has_steps(scenario: Scenario) -> bool:
     return bool(scenario.givens or scenario.whens or scenario.thens or scenario.examples)
 
 
-def _check_phase(analysis: Analysis) -> dict[str, object]:
+def _check_phase(analysis: Analysis) -> ValidationPhasePayload:
     errors = [
         diagnostic
         for diagnostic in analysis.diagnostics
@@ -111,7 +117,7 @@ def _check_phase(analysis: Analysis) -> dict[str, object]:
     }
 
 
-def _format_phase(source: str, filename: str) -> dict[str, object]:
+def _format_phase(source: str, filename: str) -> _InternalPhasePayload:
     try:
         formatted = format_text(source, filename=filename)
     except GwtError as exc:
@@ -162,7 +168,7 @@ def _test_phase(
     source: str,
     filename: str,
     import_policy: ImportPolicy | None,
-) -> dict[str, object]:
+) -> _InternalPhasePayload:
     try:
         result = run_source(source, filename=filename, import_policy=import_policy)
     except GwtError as exc:

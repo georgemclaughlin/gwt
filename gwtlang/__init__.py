@@ -29,6 +29,17 @@ from .api import (
 from .checker import check_program
 from .formatter import FormatResult, format_file, format_text, is_formatted
 from .host import GwtHostAdapter, HostContext, HostObservation
+from .payloads import (
+    AnalysisPayload,
+    CheckPayload,
+    CompiledProgramPayload,
+    DiagnosticPayload,
+    ExecutionPayload,
+    InspectionPayload,
+    JsonObject,
+    JsonValue,
+    ValidationPayload,
+)
 from .runtime import (
     GwtError,
     ImportPolicy,
@@ -42,18 +53,27 @@ from .symbols import build_symbol_table
 
 __all__ = [
     "CheckResult",
+    "CheckPayload",
     "CompiledProgram",
+    "CompiledProgramPayload",
+    "DiagnosticPayload",
     "ExecutionResult",
+    "ExecutionPayload",
     "FormatResult",
     "GwtClient",
     "GwtError",
     "GwtHostAdapter",
     "HostContext",
     "HostObservation",
+    "InspectionPayload",
     "InspectionResult",
     "ImportPolicy",
+    "JsonObject",
+    "JsonValue",
     "PythonTypesResult",
     "TypeScriptTypesResult",
+    "AnalysisPayload",
+    "ValidationPayload",
     "ValidationResult",
     "analyze_file",
     "analyze_source",

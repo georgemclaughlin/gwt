@@ -14,3 +14,6 @@ gwt = "gwtlang.__main__:main"
 
 [tool.setuptools]
 packages = ["gwtlang"]
+
+[tool.setuptools.package-data]
+gwtlang = ["py.typed"]

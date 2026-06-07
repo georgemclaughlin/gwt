@@ -31,6 +31,9 @@ jobs:
       - name: Run Python tests
         run: python -m unittest discover
 
+      - name: Type-check Python host boundary
+        run: npx --yes pyright@1.1.410 --project pyrightconfig.json
+
       - name: Check example formatting
         run: |
           find examples -name '*.gwt' -print0 | while IFS= read -r -d '' file; do

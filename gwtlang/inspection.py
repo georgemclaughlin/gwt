@@ -5,6 +5,17 @@ import hashlib
 import re
 from pathlib import Path
 
+from .payloads import (
+    BehaviorPayload,
+    ContractPayload,
+    ImportPayload,
+    InspectionPayload,
+    OneOfRecordPayload,
+    RecordFieldPayload,
+    RecordPayload,
+    RequestPayload,
+    ScenarioInspectionPayload,
+)
 from .runtime import (
     Action,
     ContractBinding,
@@ -31,10 +42,10 @@ class InspectionResult:
             diagnostic.severity == "error" for diagnostic in self.analysis.diagnostics
         )
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> InspectionPayload:
         analysis = self.analysis
         program = analysis.program
-        payload: dict[str, object] = {
+        payload: InspectionPayload = {
             "schemaVersion": SCHEMA_VERSION,
             "ok": self.ok,
             "file": analysis.filename,
@@ -121,8 +132,8 @@ def _program_hash(source: str) -> str:
     return f"sha256:{hashlib.sha256(source.encode('utf-8')).hexdigest()}"
 
 
-def _direct_imports(source: str, filename: str) -> list[dict[str, object]]:
-    imports: list[dict[str, object]] = []
+def _direct_imports(source: str, filename: str) -> list[ImportPayload]:
+    imports: list[ImportPayload] = []
     base = Path(filename).parent if filename != "<source>" else Path.cwd()
     for line_number, raw_line in enumerate(source.splitlines(), start=1):
         stripped = raw_line.strip()
@@ -149,7 +160,7 @@ def _direct_imports(source: str, filename: str) -> list[dict[str, object]]:
     return imports
 
 
-def _record_payload(dto: DtoDefinition, fallback_filename: str) -> dict[str, object]:
+def _record_payload(dto: DtoDefinition, fallback_filename: str) -> RecordPayload:
     return {
         "name": dto.name,
         "kind": "record",
@@ -163,7 +174,7 @@ def _record_payload(dto: DtoDefinition, fallback_filename: str) -> dict[str, obj
     }
 
 
-def _variant_payload(variant: VariantDefinition, fallback_filename: str) -> dict[str, object]:
+def _variant_payload(variant: VariantDefinition, fallback_filename: str) -> OneOfRecordPayload:
     return {
         "name": variant.name,
         "kind": "oneOfRecord",
@@ -196,7 +207,7 @@ def _record_field_payload(
     value_type: str,
     field_lines: dict[str, Line],
     fallback_filename: str,
-) -> dict[str, object]:
+) -> RecordFieldPayload:
     line = field_lines.get(field)
     return {
         "path": field,
@@ -210,7 +221,7 @@ def _record_field_payload(
 def _contract_payload(
     binding: ContractBinding,
     fallback_filename: str,
-) -> dict[str, object]:
+) -> ContractPayload:
     return {
         "path": binding.path,
         "type": binding.value_type,
@@ -220,7 +231,7 @@ def _contract_payload(
     }
 
 
-def _behavior_payload(action: Action, fallback_filename: str) -> dict[str, object]:
+def _behavior_payload(action: Action, fallback_filename: str) -> BehaviorPayload:
     return {
         "name": action.name,
         "signature": list(action.signature),
@@ -237,7 +248,7 @@ def _behavior_payload(action: Action, fallback_filename: str) -> dict[str, objec
     }
 
 
-def _request_payload(request: NamedRequest, fallback_filename: str) -> dict[str, object]:
+def _request_payload(request: NamedRequest, fallback_filename: str) -> RequestPayload:
     line = request.line
     return {
         "name": request.name,
@@ -259,7 +270,7 @@ def _request_payload(request: NamedRequest, fallback_filename: str) -> dict[str,
     }
 
 
-def _scenario_payload(scenario: Scenario, fallback_filename: str) -> dict[str, object]:
+def _scenario_payload(scenario: Scenario, fallback_filename: str) -> ScenarioInspectionPayload:
     return {
         "name": scenario.name,
         "file": scenario.filename or fallback_filename,

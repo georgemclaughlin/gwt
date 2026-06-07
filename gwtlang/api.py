@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 import hashlib
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .checker import Diagnostic, check_program
 from .runtime import (
@@ -24,6 +24,13 @@ from .inspection import (
     InspectionResult,
     inspect_file as _inspect_file,
     inspect_source as _inspect_source,
+)
+from .payloads import (
+    CheckPayload,
+    CompiledProgramPayload,
+    ExecutionPayload,
+    JsonValue,
+    ScenarioExecutionPayload,
 )
 from .service import Analysis, analyze_file, analyze_source
 from .typegen import (
@@ -53,11 +60,11 @@ class CheckResult:
     def diagnostics(self) -> list[Diagnostic]:
         return self.analysis.diagnostics
 
-    def as_payload(self) -> dict[str, object]:
-        return {
+    def as_payload(self) -> CheckPayload:
+        return cast(CheckPayload, {
             "ok": self.ok,
             **self.analysis.as_payload(),
-        }
+        })
 
 
 @dataclass(frozen=True)
@@ -78,7 +85,7 @@ class ExecutionResult:
     def output(self) -> list[str]:
         return self.result.output
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> ExecutionPayload:
         return run_result_payload(self.result, file=self.file, request_file=self.request_file)
 
 
@@ -96,7 +103,7 @@ class CompiledProgram:
     def ok(self) -> bool:
         return not any(diagnostic.severity == "error" for diagnostic in self.diagnostics)
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> CompiledProgramPayload:
         return {
             "ok": self.ok,
             "file": self.file,
@@ -265,9 +272,9 @@ def run_result_payload(
     *,
     file: str | None = None,
     request_file: str | None = None,
-) -> dict[str, object]:
+) -> ExecutionPayload:
     scenarios = [_scenario_payload(scenario) for scenario in result.scenarios]
-    payload: dict[str, object] = {
+    payload: ExecutionPayload = {
         "ok": True,
         "file": file,
         "request_file": request_file,
@@ -284,7 +291,7 @@ def run_result_payload(
     return payload
 
 
-def _scenario_payload(scenario: ScenarioResult) -> dict[str, object]:
+def _scenario_payload(scenario: ScenarioResult) -> ScenarioExecutionPayload:
     result = scenario.returned_state if scenario.returned_state is not None else scenario.state
     return {
         "name": scenario.name,
@@ -294,14 +301,19 @@ def _scenario_payload(scenario: ScenarioResult) -> dict[str, object]:
     }
 
 
-def _jsonable(value: Any) -> Any:
+def _jsonable(value: Any) -> JsonValue:
     if isinstance(value, Decimal):
         return str(value)
     if isinstance(value, list):
-        return [_jsonable(item) for item in value]
+        return [_jsonable(item) for item in cast(list[Any], value)]
     if isinstance(value, dict):
-        return {key: _jsonable(item) for key, item in value.items()}
-    return value
+        return {
+            str(key): _jsonable(item)
+            for key, item in cast(dict[object, Any], value).items()
+        }
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    return cast(JsonValue, value)
 
 
 def check_file(

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .checker import Diagnostic, check_program
 from .errors import GwtError
+from .payloads import AnalysisPayload
 from .runtime import (
     Action,
     ImportPolicy,
@@ -28,7 +29,7 @@ class Analysis:
     diagnostics: list[Diagnostic]
     symbols: SymbolTable
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> AnalysisPayload:
         return {
             "schemaVersion": SCHEMA_VERSION,
             "file": self.filename,
