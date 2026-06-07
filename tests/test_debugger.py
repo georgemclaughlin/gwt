@@ -140,6 +140,30 @@ EXAMPLES
         self.assertNotIn(16, line_numbers)
         self.assertNotIn(18, line_numbers)
 
+    def test_debug_lines_include_decide_branches(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "decision.gwt"
+            program.write_text(
+                """
+WHEN classify score into decision
+  DECIDE
+    WHEN score >= 10
+      set decision.status to "high"
+    ELSE
+      set decision.status to "low"
+
+GIVEN score is 12
+GIVEN decision.status is "new"
+WHEN classify score into decision
+THEN decision.status == "high"
+""".lstrip()
+            )
+
+            lines = debug_lines_for_file(program)
+
+        line_numbers = {line.line for line in lines}
+        self.assertEqual(line_numbers, {2, 3, 4, 5, 6, 8, 9, 10, 11})
+
 
 if __name__ == "__main__":
     unittest.main()

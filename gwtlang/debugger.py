@@ -8,6 +8,7 @@ from typing import Any, TextIO
 
 from .errors import GwtError
 from .runtime import (
+    DecisionBlock,
     DtoValidation,
     FindBlock,
     ForBlock,
@@ -189,6 +190,13 @@ def executable_lines(program: Program) -> list[DebugLine]:
         elif isinstance(statement, FindBlock):
             add(statement.header_line or statement.name_line or statement.iterable)
             collect_body(statement.body)
+            collect_body(statement.else_body)
+        elif isinstance(statement, DecisionBlock):
+            add(statement.header_line)
+            for branch in statement.branches:
+                add(branch.condition)
+                collect_body(branch.body)
+            add(statement.else_line)
             collect_body(statement.else_body)
         elif isinstance(statement, MatchBlock):
             add(statement.header_line or statement.expression)

@@ -6,6 +6,7 @@ from typing import Any
 from .errors import GwtError
 from .runtime import (
     Action,
+    DecisionBlock,
     FindBlock,
     ForBlock,
     IfBlock,
@@ -244,6 +245,10 @@ def _collect_body_symbols(symbols: list[Symbol], body: list[Any], container: str
             _collect_body_symbols(symbols, statement.else_body, container)
         elif isinstance(statement, IfBlock):
             _collect_body_symbols(symbols, statement.then_body, container)
+            _collect_body_symbols(symbols, statement.else_body, container)
+        elif isinstance(statement, DecisionBlock):
+            for branch in statement.branches:
+                _collect_body_symbols(symbols, branch.body, container)
             _collect_body_symbols(symbols, statement.else_body, container)
         elif isinstance(statement, MatchBlock):
             for case in statement.cases:

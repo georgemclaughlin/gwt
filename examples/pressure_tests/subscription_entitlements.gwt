@@ -1,0 +1,232 @@
+PROGRAM subscription entitlements pressure test
+
+RECORD Invoice
+  invoice_id: text
+  status: "paid" | "past_due" | "void"
+  days_overdue: number
+
+RECORD FeatureOverride
+  feature: text
+  active: boolean
+  reason: text
+
+RECORD AccountRequest
+  account_id: text
+  plan: "free" | "pro" | "enterprise"
+  requested_feature: text
+  active_users: number
+  seat_limit: number
+  invoices: list<Invoice>
+  overrides: list<FeatureOverride>
+
+RECORD EntitlementDecision
+  allowed: boolean
+  matched_override: boolean
+  has_past_due_invoice: boolean
+  seat_limit_exceeded: boolean
+  plan_rank: number
+  required_plan_rank: number
+  reasons: list<text>
+  status: "new" | "allowed" | "blocked" | "needs_review"
+  reason: "new" | "manual_override" | "past_due_invoice" | "seat_limit_exceeded" | "feature_in_plan" | "feature_requires_upgrade" | "unknown_feature"
+
+REQUEST decide entitlement
+  GIVEN account is AccountRequest
+
+  GIVEN decision is EntitlementDecision
+    allowed: false
+    matched_override: false
+    has_past_due_invoice: false
+    seat_limit_exceeded: false
+    plan_rank: 0
+    required_plan_rank: 0
+    reasons: []
+    status: "new"
+    reason: "new"
+
+  WHEN decide entitlement for account into decision
+
+  OUTPUT decision is EntitlementDecision
+
+WHEN plan rank for <plan>
+  GIVEN plan is text
+  THEN returns number
+  IF plan == "free"
+    RETURN 1
+  ELSE
+    IF plan == "pro"
+      RETURN 2
+    ELSE
+      RETURN 3
+
+WHEN required rank for <feature>
+  GIVEN feature is text
+  THEN returns number
+  IF feature == "projects"
+    RETURN 1
+  ELSE
+    IF feature == "automations"
+      RETURN 2
+    ELSE
+      IF feature == "audit_log"
+        RETURN 3
+      ELSE
+        RETURN 99
+
+WHEN reset <decision>
+  GIVEN decision is EntitlementDecision
+  set decision.allowed to false
+  set decision.matched_override to false
+  set decision.has_past_due_invoice to false
+  set decision.seat_limit_exceeded to false
+  set decision.plan_rank to 0
+  set decision.required_plan_rank to 0
+  set decision.reasons to []
+  set decision.status to "new"
+  set decision.reason to "new"
+
+WHEN collect account facts from <account> into <decision>
+  GIVEN account is AccountRequest
+  AND decision is EntitlementDecision
+  LET plan_rank be plan rank for account.plan
+  LET required_rank be required rank for account.requested_feature
+  set decision.plan_rank to plan_rank
+  set decision.required_plan_rank to required_rank
+  exists invoice in account.invoices where invoice.status == "past_due" into decision.has_past_due_invoice
+  IF account.active_users > account.seat_limit
+    set decision.seat_limit_exceeded to true
+
+WHEN apply override from <account> into <decision>
+  GIVEN account is AccountRequest
+  AND decision is EntitlementDecision
+  FIND override in account.overrides WHERE override.feature == account.requested_feature
+    IF override.active
+      set decision.matched_override to true
+      append override.reason to decision.reasons
+  ELSE
+    PASS
+
+WHEN classify entitlement for <account> into <decision>
+  GIVEN account is AccountRequest
+  AND decision is EntitlementDecision
+  IF decision.matched_override
+    set decision.allowed to true
+    set decision.status to "allowed"
+    set decision.reason to "manual_override"
+  ELSE
+    IF decision.has_past_due_invoice
+      set decision.status to "blocked"
+      set decision.reason to "past_due_invoice"
+      append "invoice_must_be_paid" to decision.reasons
+    ELSE
+      IF decision.seat_limit_exceeded
+        set decision.status to "blocked"
+        set decision.reason to "seat_limit_exceeded"
+        append "reduce_users_or_buy_seats" to decision.reasons
+      ELSE
+        IF decision.required_plan_rank == 99
+          set decision.status to "needs_review"
+          set decision.reason to "unknown_feature"
+          append "feature_catalog_missing" to decision.reasons
+        ELSE
+          IF decision.plan_rank >= decision.required_plan_rank
+            set decision.allowed to true
+            set decision.status to "allowed"
+            set decision.reason to "feature_in_plan"
+          ELSE
+            set decision.status to "blocked"
+            set decision.reason to "feature_requires_upgrade"
+            append "upgrade_plan" to decision.reasons
+
+WHEN decide entitlement for <account> into <decision>
+  GIVEN account is AccountRequest
+  AND decision is EntitlementDecision
+  reset decision
+  collect account facts from account into decision
+  apply override from account into decision
+  classify entitlement for account into decision
+
+SCENARIO pro plan can use automations
+GIVEN account is AccountRequest
+  account_id: "acct_ok"
+  plan: "pro"
+  requested_feature: "automations"
+  active_users: 4
+  seat_limit: 5
+  invoices: []
+  overrides: []
+
+REQUEST decide entitlement
+
+THEN decision.allowed == true
+AND decision.status == "allowed"
+AND decision.reason == "feature_in_plan"
+AND decision.plan_rank == 2
+AND decision.required_plan_rank == 2
+AND decision.reasons == []
+
+SCENARIO pro plan needs enterprise for audit log
+GIVEN account is AccountRequest
+  account_id: "acct_upgrade"
+  plan: "pro"
+  requested_feature: "audit_log"
+  active_users: 2
+  seat_limit: 5
+  invoices: []
+  overrides: []
+
+REQUEST decide entitlement
+
+THEN decision.allowed == false
+AND decision.status == "blocked"
+AND decision.reason == "feature_requires_upgrade"
+AND decision.required_plan_rank == 3
+AND decision.reasons == ["upgrade_plan"]
+
+SCENARIO past due invoice blocks otherwise valid access
+GIVEN account is AccountRequest
+  account_id: "acct_past_due"
+  plan: "enterprise"
+  requested_feature: "audit_log"
+  active_users: 7
+  seat_limit: 10
+  invoices: []
+  overrides: []
+
+GIVEN account.invoices are Invoice
+  | invoice_id | status     | days_overdue |
+  | "inv_1"    | "past_due" | 11           |
+
+REQUEST decide entitlement
+
+THEN decision.allowed == false
+AND decision.status == "blocked"
+AND decision.reason == "past_due_invoice"
+AND decision.has_past_due_invoice == true
+AND decision.reasons == ["invoice_must_be_paid"]
+
+SCENARIO active override bypasses account blockers
+GIVEN account is AccountRequest
+  account_id: "acct_override"
+  plan: "free"
+  requested_feature: "audit_log"
+  active_users: 12
+  seat_limit: 3
+  invoices: []
+  overrides: []
+
+GIVEN account.invoices are Invoice
+  | invoice_id | status     | days_overdue |
+  | "inv_2"    | "past_due" | 30           |
+
+GIVEN account.overrides are FeatureOverride
+  | feature     | active | reason              |
+  | "audit_log" | true   | "migration_support" |
+
+REQUEST decide entitlement
+
+THEN decision.allowed == true
+AND decision.status == "allowed"
+AND decision.reason == "manual_override"
+AND decision.matched_override == true
+AND decision.reasons == ["migration_support"]

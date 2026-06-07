@@ -237,8 +237,12 @@ def _call_text_at(source: str, line: int) -> str | None:
     lines = source.splitlines()
     if line < 0 or line >= len(lines):
         return None
-    text = lines[line].split("#", 1)[0].strip()
+    raw = lines[line].split("#", 1)[0]
+    indent = len(raw) - len(raw.lstrip(" "))
+    text = raw.strip()
     if not text:
+        return None
+    if indent >= 4 and text.startswith("WHEN "):
         return None
     if text.startswith("WHEN "):
         return text.removeprefix("WHEN ").strip()
@@ -248,9 +252,11 @@ def _call_text_at(source: str, line: int) -> str | None:
         return text.removeprefix("RETURN ").strip()
     if text == "PASS":
         return None
-    if text.startswith(("REQUIRE ", "IF ", "FOR ", "FIND ", "GIVEN ", "THEN ", "REQUEST ", "OUTPUT ")):
+    if text == "DECIDE":
         return None
-    if _is_builtin_statement(_tokens(text), text):
+    if text.startswith(("REQUIRE ", "IF ", "FOR ", "FIND ", "DECIDE ", "GIVEN ", "THEN ", "REQUEST ", "OUTPUT ")):
+        return None
+    if _is_builtin_statement(_tokens(text, "<source>", line + 1), text):
         return None
     return text
 

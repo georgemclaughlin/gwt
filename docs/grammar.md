@@ -75,6 +75,7 @@ behavior_statement
               | if_block
               | for_block
               | find_block
+              | decide_block
               | depending_block
               | return
               | pass
@@ -88,6 +89,8 @@ if_block       = "IF" condition, behavior_block, ("ELSE", behavior_block)? ;
 for_block      = "FOR" name "in" expression, ("WHERE" condition)?, behavior_block ;
 find_block     = "FIND" name "in" expression "WHERE" condition,
                  behavior_block, "ELSE", behavior_block ;
+decide_block   = "DECIDE", decide_branch+, "ELSE", behavior_block ;
+decide_branch  = "WHEN" condition, behavior_block ;
 depending_block
               = "DEPENDING ON" expression, depending_branch+, ("ELSE", behavior_block)? ;
 depending_branch
@@ -148,8 +151,11 @@ Indentation is significant:
 
 - Top-level forms start at column 1.
 - Behavior block statements are indented by two spaces.
-- Nested `IF`, `ELSE`, `FOR`, and `FIND` bodies add two spaces per level.
+- Nested `IF`, `ELSE`, `FOR`, `FIND`, and `DECIDE` bodies add two spaces per
+  level.
 - Record blocks also add two spaces per level.
+- `DECIDE` branches use `WHEN condition` at the branch indent and require an
+  `ELSE` block.
 - `DEPENDING ON` branches use `WHEN the kind is name` or
   `WHEN the value is literal` at the branch indent. A block cannot mix kind and
   value branches.

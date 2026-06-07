@@ -10,6 +10,7 @@ from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_
 from .runtime import (
     Action,
     ContractBinding,
+    DecisionBlock,
     DtoValidation,
     DTO_TYPES,
     FindBlock,
@@ -480,6 +481,8 @@ class Checker:
                 self._check_for(statement, scope, expected_return)
             elif isinstance(statement, FindBlock):
                 self._check_find_block(statement, scope, expected_return)
+            elif isinstance(statement, DecisionBlock):
+                self._check_decision_block(statement, scope, expected_return)
             elif isinstance(statement, MatchBlock):
                 self._check_match_block(statement, scope, expected_return)
             else:
@@ -527,6 +530,17 @@ class Checker:
             find_scope.types[statement.name] = "any"
         self._check_condition_with_scope(statement.condition, find_scope)
         self._check_body(statement.body, find_scope, expected_return)
+        self._check_body(statement.else_body, scope.copy(), expected_return)
+
+    def _check_decision_block(
+        self,
+        statement: DecisionBlock,
+        scope: Scope,
+        expected_return: str | None = None,
+    ) -> None:
+        for branch in statement.branches:
+            self._check_condition_with_scope(branch.condition, scope)
+            self._check_body(branch.body, scope.copy(), expected_return)
         self._check_body(statement.else_body, scope.copy(), expected_return)
 
     def _check_match_block(self, statement: MatchBlock, scope: Scope, expected_return: str | None = None) -> None:
@@ -1306,6 +1320,11 @@ def _body_has_return(body: list[Any]) -> bool:
             return True
         elif isinstance(statement, FindBlock):
             if _body_has_return(statement.body) or _body_has_return(statement.else_body):
+                return True
+        elif isinstance(statement, DecisionBlock):
+            if any(_body_has_return(branch.body) for branch in statement.branches) or _body_has_return(
+                statement.else_body
+            ):
                 return True
         elif isinstance(statement, MatchBlock):
             if any(_body_has_return(case.body) for case in statement.cases) or _body_has_return(statement.else_body):

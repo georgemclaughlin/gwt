@@ -416,6 +416,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/records.gwt`](examples/records.gwt) | Record-shaped state |
 | [`examples/let.gwt`](examples/let.gwt) | Local bindings |
 | [`examples/control_flow.gwt`](examples/control_flow.gwt) | `IF` / `ELSE` |
+| [`examples/decide.gwt`](examples/decide.gwt) | First-matching priority decisions with `DECIDE` |
 | [`examples/return_values.gwt`](examples/return_values.gwt) | Returning values from behavior |
 | [`examples/scenarios.gwt`](examples/scenarios.gwt) | Multiple named scenarios with shared background |
 | [`examples/examples_table.gwt`](examples/examples_table.gwt) | Scenario examples tables |

@@ -1,0 +1,85 @@
+PROGRAM decide example
+
+RECORD RiskRequest
+  amount: number
+  verified: boolean
+  prior_failures: number
+
+RECORD RiskDecision
+  status: "new" | "approved" | "needs_review" | "blocked"
+  reason: "new" | "trusted_request" | "large_amount" | "unverified_large_amount" | "too_many_failures"
+
+REQUEST review risk
+  GIVEN request is RiskRequest
+
+  GIVEN decision is RiskDecision
+    status: "new"
+    reason: "new"
+
+  WHEN review risk request into decision
+
+  OUTPUT decision is RiskDecision
+
+WHEN approve with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is RiskDecision
+  set decision.status to "approved"
+  set decision.reason to reason
+
+WHEN send to review with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is RiskDecision
+  set decision.status to "needs_review"
+  set decision.reason to reason
+
+WHEN block with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is RiskDecision
+  set decision.status to "blocked"
+  set decision.reason to reason
+
+WHEN review risk <request> into <decision>
+  GIVEN request is RiskRequest
+  AND decision is RiskDecision
+  DECIDE
+    WHEN request.prior_failures >= 3
+      block with too_many_failures into decision
+    WHEN request.amount >= 1000 and request.verified == false
+      send to review with unverified_large_amount into decision
+    WHEN request.amount >= 1000
+      send to review with large_amount into decision
+    ELSE
+      approve with trusted_request into decision
+
+SCENARIO small verified request is approved
+GIVEN request is RiskRequest
+  amount: 75
+  verified: true
+  prior_failures: 0
+
+REQUEST review risk
+
+THEN decision.status == "approved"
+AND decision.reason == "trusted_request"
+
+SCENARIO unverified large request needs review
+GIVEN request is RiskRequest
+  amount: 1250
+  verified: false
+  prior_failures: 0
+
+REQUEST review risk
+
+THEN decision.status == "needs_review"
+AND decision.reason == "unverified_large_amount"
+
+SCENARIO failures block before amount review
+GIVEN request is RiskRequest
+  amount: 2000
+  verified: false
+  prior_failures: 3
+
+REQUEST review risk
+
+THEN decision.status == "blocked"
+AND decision.reason == "too_many_failures"
