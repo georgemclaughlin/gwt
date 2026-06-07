@@ -119,6 +119,8 @@ Use real workflows to decide whether the current language is enough.
 Candidate work:
 
 - run at least one pilot using the [pilot evaluation guide](pilot-evaluation.md)
+- start with the [release readiness pilot](release-readiness-pilot.md) unless a
+  better real workflow is available
 - record awkwardness as before/after GWT snippets, not as abstract feature wish
   lists
 - classify findings as documentation, diagnostics, host integration, or syntax
