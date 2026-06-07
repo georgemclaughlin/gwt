@@ -556,9 +556,10 @@ The Python package includes a `py.typed` marker and typed payload aliases for
 the public host boundary. The scoped Pyright gate in
 [`pyrightconfig.json`](pyrightconfig.json) runs in strict mode for
 `gwtlang/api.py`, the host observation adapter, generated host type support,
-analysis service payloads, completion items, LSP response helpers, the CLI
-entrypoint, formatter helpers, debugger line payloads, the public
-validation/inspection payload builders, and the Python host examples:
+the package re-export surface, the base error type, analysis service payloads,
+completion items, LSP response helpers, the CLI entrypoint, formatter helpers,
+debugger line payloads, the public validation/inspection payload builders, and
+the Python host examples:
 
 ```sh
 npx --yes pyright@1.1.410 --project pyrightconfig.json
