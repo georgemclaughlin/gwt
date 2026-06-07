@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Hashable
 from dataclasses import dataclass, field
 from decimal import Decimal
 import re
-from typing import Any
+from typing import Any, cast
 
 from .errors import GwtError
 from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_expression
@@ -75,7 +76,7 @@ class Diagnostic:
     def as_payload(self, fallback_filename: str) -> DiagnosticPayload:
         source_range = SourceRange(self.filename, self.line, self.column, self.length).as_payload(fallback_filename)
         filename = self.filename or fallback_filename
-        payload: dict[str, object] = {
+        payload: DiagnosticPayload = {
             **source_range,
             "code": self.code,
             "severity": self.severity,
@@ -110,7 +111,7 @@ def _diagnostic_category(code: str, message: str) -> str:
 @dataclass
 class Scope:
     names: set[str]
-    types: dict[str, str] = field(default_factory=dict)
+    types: dict[str, str] = field(default_factory=lambda: {})
 
     def copy(self) -> Scope:
         return Scope(set(self.names), dict(self.types))
@@ -408,7 +409,7 @@ class Checker:
             self._check_condition_with_scope(line, background_scope)
 
     def _check_scenario(self, scenario: Scenario) -> None:
-        example_headers = set(scenario.examples[0]) if scenario.examples else set()
+        example_headers: set[str] = set(scenario.examples[0]) if scenario.examples else set()
         for line in scenario.givens:
             if isinstance(line, TableAssignment):
                 self._check_table_placeholders(line, example_headers)
@@ -599,10 +600,10 @@ class Checker:
                 "GWT016",
             )
 
-        seen: set[tuple[type[Any], Any]] = set()
+        seen: set[tuple[type[object], Hashable]] = set()
         for case in statement.cases:
-            literal = case.literal
-            key = (type(literal), literal)
+            literal: object = case.literal
+            key = (type(literal), cast(Hashable, literal))
             if key in seen:
                 self._add_line(case.line, f"duplicate value branch: {_literal_value_text(literal)}", "GWT014")
             seen.add(key)
@@ -1371,7 +1372,12 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
         if expression.operator in {"+", "-", "*", "/"}:
             left_type = _infer_expression_type(expression.left, scope)
             right_type = _infer_expression_type(expression.right, scope)
-            if _is_numeric_type(left_type) and _is_numeric_type(right_type):
+            if (
+                left_type is not None
+                and right_type is not None
+                and _is_numeric_type(left_type)
+                and _is_numeric_type(right_type)
+            ):
                 return _numeric_result_type(left_type, right_type, expression.operator)
             if expression.operator == "+" and left_type == right_type == "text":
                 return "text"
