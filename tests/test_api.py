@@ -222,7 +222,10 @@ class PublicApiTests(unittest.TestCase):
         result = compiled.run_json({"cart": {"subtotal": 84, "total": 0}}, request="price cart")
 
         self.assertEqual(result.as_payload()["result"]["cart"]["total"], 84)
-        with self.assertRaisesRegex(GwtError, "unknown request: missing"):
+        with self.assertRaisesRegex(
+            GwtError,
+            "unknown request: missing; available requests: price cart",
+        ):
             compiled.run_json({"cart": {"subtotal": 84, "total": 0}}, request="missing")
 
     def test_run_json_file_accepts_request_name(self):

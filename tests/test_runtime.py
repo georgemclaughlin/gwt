@@ -1472,6 +1472,23 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(GwtError, "direct WHEN is not allowed: checkout cart"):
             run_request(program, request)
 
+    def test_runtime_unknown_behavior_call_lists_available_signature(self):
+        source = '''
+        WHEN review <report> into <decision>
+          print report
+
+        GIVEN report.status is "ready"
+        GIVEN decision.status is "new"
+
+        WHEN review report
+        '''
+
+        with self.assertRaisesRegex(
+            GwtError,
+            "no action matches: review report; available signatures: review <report> into <decision>",
+        ):
+            run_source(source)
+
     def test_run_request_rejects_program_declarations_in_request_files(self):
         program = '''
         REQUEST checkout cart

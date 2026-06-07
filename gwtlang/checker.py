@@ -39,6 +39,7 @@ from .runtime import (
     _parse_find_statement,
     _parse_sum_projection,
     _resolve_type_alias,
+    _action_mismatch_message,
     _signature_matches as _runtime_signature_matches,
     _signature_has_explicit_parameters,
     _signature_parameter_name,
@@ -46,6 +47,7 @@ from .runtime import (
     _signature_shape as _runtime_signature_shape,
     _split_required,
     _tokens,
+    _unknown_request_message,
     _value_matches_literal,
     _variant_kind_type,
 )
@@ -336,7 +338,11 @@ class Checker:
     def _check_request_call(self, call: RequestCall, scope: Scope) -> None:
         request = self.program.requests.get(call.name)
         if request is None:
-            self._add_line(call.line, f"unknown request: {call.name}", "GWT001")
+            self._add_line(
+                call.line,
+                _unknown_request_message(call.name, self.program.requests.keys()),
+                "GWT001",
+            )
             return
         for binding in request.inputs.values():
             actual_type = scope.types.get(binding.path)
@@ -1282,7 +1288,11 @@ class Checker:
             return None
         matches = self._matching_actions(tokens)
         if not matches:
-            self._add_line(line, f"no behavior matches: {' '.join(tokens)}", "GWT001")
+            self._add_line(
+                line,
+                _action_mismatch_message("no behavior matches", tokens, self.actions_by_name),
+                "GWT001",
+            )
             return None
         type_errors = [self._behavior_call_type_errors(action, tokens, line, scope) for action in matches]
         if type_errors and all(errors for errors in type_errors):

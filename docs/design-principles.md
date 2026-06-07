@@ -10,7 +10,7 @@ should read like a concrete specification of state, behavior, and expected
 outcomes.
 
 This document is non-normative. The implemented language surface is specified
-in [spec/v0.1.md](spec/v0.1.md), but new syntax and runtime features should be
+in [spec/v0.2.md](spec/v0.2.md), but new syntax and runtime features should be
 judged against these principles before they are added.
 
 ## Influences
