@@ -6,21 +6,26 @@ RECORD ExpenseLine
   category: text
   reimbursable: boolean
 
+TYPE ExpenseLines is list<ExpenseLine>
+TYPE ApprovedDescriptions is list<text>
+TYPE ExpenseStatus is "new" | "approved" | "needs_review"
+TYPE DecisionReason is "new" | "within_policy" | "line_over_policy_limit"
+
 RECORD ExpenseReport
   employee: text
   policy_limit: number
-  lines: list<ExpenseLine>
+  lines: ExpenseLines
 
 RECORD ExpenseDecision
   line_count: number
   submitted_total: number
   approved_total: number
-  approved_descriptions: list<text>
+  approved_descriptions: ApprovedDescriptions
   has_violation: boolean
   violation_description: text
   violation_amount: number
-  status: "new" | "approved" | "needs_review"
-  reason: "new" | "within_policy" | "line_over_policy_limit"
+  status: ExpenseStatus
+  reason: DecisionReason
 
 REQUEST review expense report
   GIVEN report is ExpenseReport
