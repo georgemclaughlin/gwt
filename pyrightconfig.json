@@ -12,6 +12,7 @@
     "gwtlang/inspection.py",
     "gwtlang/lsp.py",
     "gwtlang/payloads.py",
+    "gwtlang/runtime.py",
     "gwtlang/service.py",
     "gwtlang/symbols.py",
     "gwtlang/typegen.py",
@@ -24,6 +25,7 @@
   "exclude": [
     "**/__pycache__"
   ],
+  "reportUnusedFunction": "none",
   "reportUnusedImport": "none",
   "reportPrivateUsage": "none"
 }

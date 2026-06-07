@@ -420,10 +420,9 @@ public host boundary. The repository's Pyright gate is intentionally scoped:
 strict checking covers `gwtlang/api.py`, the host observation adapter,
 generated host type support, the package re-export surface, the base error
 type, analysis service payloads, completion items, checker/type-analysis logic,
-expression parsing/evaluation, LSP response helpers, the CLI entrypoint,
-formatter helpers, debugger line payloads, validation and inspection payload
-builders, and the Python host examples before it expands into parser/runtime
-internals.
+expression parsing/evaluation, runtime/parser execution, LSP response helpers,
+the CLI entrypoint, formatter helpers, debugger line payloads, validation and
+inspection payload builders, and the Python host examples.
 
 GWT performs runtime request/output contract validation itself. Pydantic can be
 useful in a host application before values reach GWT, but it should remain an
