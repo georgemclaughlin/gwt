@@ -5,6 +5,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import cast
 
 from .api import (
     generate_python_file,
@@ -18,7 +19,8 @@ from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
 from .inspection import inspect_file
 from .lsp import run_stdio_server
-from .runtime import GwtError, ImportPolicy, run_source
+from .payloads import JsonObject, ValidationPayload
+from .runtime import GwtError, ImportPolicy, RunResult, run_source
 from .service import analyze_file
 from .validation import validate_file
 
@@ -259,7 +261,7 @@ def run_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _load_json_input(path: Path) -> dict[str, object]:
+def _load_json_input(path: Path) -> JsonObject:
     if path == Path("-"):
         raw = sys.stdin.read()
         try:
@@ -270,7 +272,7 @@ def _load_json_input(path: Path) -> dict[str, object]:
             ) from exc
         if not isinstance(payload, dict):
             raise GwtError("stdin JSON input must be an object")
-        return payload
+        return cast(JsonObject, payload)
 
     try:
         payload = json.loads(path.read_text())
@@ -278,7 +280,7 @@ def _load_json_input(path: Path) -> dict[str, object]:
         raise GwtError(f"{path}:{exc.lineno}:{exc.colno}: invalid JSON: {exc.msg}") from exc
     if not isinstance(payload, dict):
         raise GwtError(f"{path}: JSON input must be an object")
-    return payload
+    return cast(JsonObject, payload)
 
 
 def test_command(args: argparse.Namespace) -> int:
@@ -377,15 +379,11 @@ def validate_command(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
-def _validate_summary(payload: dict[str, object]) -> str:
-    phases = payload.get("phases", {})
-    if not isinstance(phases, dict):
-        return "validated"
-
+def _validate_summary(payload: ValidationPayload) -> str:
     labels: list[str] = []
     for name in ("check", "format", "test"):
-        phase = phases.get(name)
-        if not isinstance(phase, dict) or not phase.get("checked"):
+        phase = payload["phases"].get(name)
+        if phase is None or not phase.get("checked"):
             continue
         if name == "test":
             scenario_count = phase.get("scenario_count", 0)
@@ -475,7 +473,7 @@ def debug_lines_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def print_run_result(result: object) -> None:
+def print_run_result(result: RunResult) -> None:
     scenarios = result.scenarios
     if len(scenarios) == 1:
         print(f"PASS {scenarios[0].name}")
