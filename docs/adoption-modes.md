@@ -5,6 +5,10 @@ JSON-shaped inputs and outputs. It should not own UI rendering, persistence,
 network side effects, hardware timing, audio/display latency, or real-time
 embedded paths.
 
+Use [Pilot Evaluation](pilot-evaluation.md) when testing a real workflow. It
+captures the artifact shape, shadow-mode posture, and criteria for deciding
+whether a workflow should influence future language work.
+
 ## Executable Spec Mode
 
 Use this mode when a `.gwt` file is executable documentation and regression

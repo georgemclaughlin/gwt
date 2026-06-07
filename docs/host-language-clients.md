@@ -213,18 +213,21 @@ language:
 | Long-running runner | A host app wants lower overhead without embedding | Requires a local protocol and lifecycle management |
 | HTTP/gRPC service | Multiple apps or languages share one deployed rules service | Operationally heavier, but language-neutral |
 
-The first production-quality client should probably be Python, because it is
-already the implementation language. The next most valuable clients are likely
-TypeScript, .NET, and Java because they represent common application hosts.
+The current reference client is Python, because it is already the
+implementation language. The first non-Python client is the CLI-backed
+TypeScript package in [`clients/typescript`](../clients/typescript). The next
+valuable client targets are likely .NET and Java because they represent common
+application hosts.
 
-## Near-Term Chunks
+## Client Contract Chunks
 
-Client work should land in small compatibility-preserving chunks. The first
-goal is a stable integration contract, not a large fleet of clients.
+Client work should continue to land in small compatibility-preserving chunks.
+The goal is a stable integration contract, not a large fleet of clients.
 
 ### 1. Reference Contract And Python Client
 
-Harden the current Python API and the process runner as one reference contract:
+Keep hardening the current Python API and the process runner as one reference
+contract:
 
 - document the runner protocol: stdin JSON, explicit `--request`, stdout envelope,
   stderr diagnostics, and exit codes
@@ -239,8 +242,8 @@ used by any host language while native integrations mature.
 
 ### 2. TypeScript Client
 
-Build the first non-Python client as a CLI-backed TypeScript package. It should
-spawn `gwt`, send JSON through stdin, parse the execution envelope, and expose a
+The first non-Python client is a CLI-backed TypeScript package. It spawns
+`gwt`, sends JSON through stdin, parses the execution envelope, and exposes a
 small API such as:
 
 ```ts
@@ -253,7 +256,7 @@ const result = await runFile("rules.gwt", {
 ```
 
 This proves the runner protocol from a real external ecosystem without needing
-to port the runtime. The initial package lives in
+to port the runtime. The package lives in
 [`clients/typescript`](../clients/typescript) and uses zero runtime
 dependencies: Node spawns the configured GWT command, writes stdin JSON, and
 returns the parsed envelope.
@@ -335,7 +338,8 @@ payloads.
 
 ### 3. Generated Host Types
 
-Add type generation after the client contract is stable. Start with TypeScript:
+Keep generated host types aligned with the stable client contract. TypeScript
+and Python generation currently follow these rules:
 
 - `TYPE` declarations become type aliases
 - `RECORD` declarations become interfaces
@@ -344,10 +348,10 @@ Add type generation after the client contract is stable. Start with TypeScript:
 - named request outputs become the result type
 
 Python `TypedDict` generation follows the same request boundary and also emits a
-program-specific client wrapper. .NET and Java clients can start as CLI-backed
-wrappers before they need generated classes.
+program-specific client wrapper. Future .NET and Java clients can start as
+CLI-backed wrappers before they need generated classes.
 
-The initial command is:
+The command shape is:
 
 ```sh
 gwt types rules.gwt --language typescript > rules.d.ts

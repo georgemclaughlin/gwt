@@ -20,3 +20,8 @@ toward SQL-like query syntax.
 The broader product thesis is in [../spec-is-code.md](../spec-is-code.md):
 natural language may describe intent, but executable GWT defines normative
 behavior for deterministic workflows.
+
+Forward-looking stabilization work is tracked in
+[../roadmap-v0.3.md](../roadmap-v0.3.md). Real workflow trials should use
+[../pilot-evaluation.md](../pilot-evaluation.md) so syntax pressure is grounded
+in executable examples.

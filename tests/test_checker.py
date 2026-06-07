@@ -19,6 +19,24 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("no behavior matches: missing count", messages)
 
+    def test_unknown_behavior_call_suggests_similar_signature(self):
+        messages = check_messages(
+            """
+            WHEN review <report> into <decision>
+              print report
+
+            GIVEN report.status is "ready"
+            GIVEN decision.status is "new"
+
+            WHEN review report
+            """
+        )
+
+        self.assertIn(
+            "no behavior matches: review report; available signatures: review <report> into <decision>",
+            messages,
+        )
+
     def test_reports_behavior_shape_mismatch(self):
         messages = check_messages(
             """
@@ -30,7 +48,28 @@ class CheckerTests(unittest.TestCase):
             """
         )
 
-        self.assertIn("no behavior matches: touch count by 1", messages)
+        self.assertIn(
+            "no behavior matches: touch count by 1; available signatures: touch count",
+            messages,
+        )
+
+    def test_unknown_behavior_call_suggests_close_behavior_name(self):
+        messages = check_messages(
+            """
+            WHEN fulfill <order> into <decision>
+              print order
+
+            GIVEN order.id is "1"
+            GIVEN decision.status is "new"
+
+            WHEN fullfil order into decision
+            """
+        )
+
+        self.assertIn(
+            "no behavior matches: fullfil order into decision; did you mean fulfill <order> into <decision>?",
+            messages,
+        )
 
     def test_reports_duplicate_behavior_signature_in_same_file(self):
         messages = check_messages(
@@ -379,6 +418,22 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.assertIn("request input cart is missing; expected Cart", messages)
+
+    def test_unknown_request_call_suggests_available_request(self):
+        messages = check_messages(
+            """
+            REQUEST review vendor
+              WHEN print "review"
+
+            SCENARIO typo
+            REQUEST review vender
+            """
+        )
+
+        self.assertIn(
+            "unknown request: review vender; did you mean review vendor?",
+            messages,
+        )
 
     def test_reports_malformed_dotted_request_input_for_request_call(self):
         messages = check_messages(

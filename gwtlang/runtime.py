@@ -3,11 +3,12 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
+from difflib import get_close_matches
 from pathlib import Path
 import re
 import shlex
 import textwrap
-from typing import Any, TypeGuard, cast
+from typing import Any, Iterable, TypeGuard, cast
 
 from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
@@ -839,7 +840,10 @@ class Runtime:
     ) -> None:
         request = self.program.requests.get(name)
         if request is None:
-            raise _with_line_context(line, GwtError(f"unknown request: {name}"))
+            raise _with_line_context(
+                line,
+                GwtError(_unknown_request_message(name, self.program.requests.keys())),
+            )
 
         self._before_line(line, {})
         previous_path_types = self.path_types
@@ -1302,7 +1306,10 @@ class Runtime:
                     return self._run_body(action.body, env)
                 finally:
                     self.call_stack.pop()
-        raise GwtError(f"line {line.number}: no action matches: {' '.join(call)}")
+        raise GwtError(
+            f"line {line.number}: "
+            f"{_action_mismatch_message('no action matches', call, self.actions)}"
+        )
 
     def _run_body(self, body: list[Any], env: dict[str, Any]) -> BehaviorReturn | None:
         for statement in body:
@@ -2855,6 +2862,60 @@ def _signature_matches(signature: list[str], call: list[str]) -> bool:
         if _signature_parameter_name(signature, index, pattern) is None and pattern != actual:
             return False
     return True
+
+
+def _unknown_request_message(name: str, request_names: Iterable[str]) -> str:
+    available = sorted(request_names)
+    message = f"unknown request: {name}"
+    if not available:
+        return f"{message}; no named REQUESTs are defined"
+
+    close = get_close_matches(name, available, n=1, cutoff=0.72)
+    if close:
+        return f"{message}; did you mean {close[0]}?"
+
+    return f"{message}; available requests: {_format_limited_list(available)}"
+
+
+def _action_mismatch_message(
+    prefix: str,
+    call: list[str],
+    actions_by_name: dict[str, list[Action]],
+) -> str:
+    call_text = " ".join(call)
+    message = f"{prefix}: {call_text}"
+    if not call:
+        return message
+
+    candidates = actions_by_name.get(call[0], [])
+    if candidates:
+        return f"{message}; available signatures: {_format_action_signatures(candidates)}"
+
+    close = get_close_matches(call[0], sorted(actions_by_name), n=1, cutoff=0.72)
+    if close:
+        return f"{message}; did you mean {_format_action_signatures(actions_by_name[close[0]])}?"
+
+    return message
+
+
+def _format_action_signatures(actions: list[Action]) -> str:
+    signatures: list[str] = []
+    seen: set[str] = set()
+    for action in actions:
+        signature = action.signature_text or " ".join(action.signature)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        signatures.append(signature)
+    return _format_limited_list(signatures)
+
+
+def _format_limited_list(values: list[str], *, limit: int = 5) -> str:
+    shown = values[:limit]
+    rendered = ", ".join(shown)
+    if len(values) > limit:
+        rendered = f"{rendered}, ..."
+    return rendered
 
 
 def _signature_parameter_name(signature: list[str], index: int, token: str) -> str | None:

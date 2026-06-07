@@ -40,6 +40,6 @@ Possible directions:
 - better predicate support for existing `FIND` / `FIND ... ELSE` forms
 - example-specific refactors that prove the need before syntax is added
 
-This should wait until the current `DECIDE` cleanup and type-alias work have
-settled. If examples still show repeated guard-state patterns afterward, write
-a design note with pressure-test before/after code before implementing syntax.
+This should now wait for v0.3 pilot evidence. If multiple realistic examples
+still show repeated guard-state patterns, write a design note with pressure-test
+before/after code before implementing syntax.

@@ -175,6 +175,8 @@ For a quick public review, start with:
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
+| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Proposed stabilization roadmap for the next language/tooling milestone |
+| [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md) | Template for testing GWT against real workflows before adding syntax |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
 | [`docs/program-interface-boundary.md`](docs/program-interface-boundary.md) | Clarifying note on public entries, helper behaviors, scenarios, request files, and CLI JSON execution |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
@@ -679,7 +681,10 @@ EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
 language-shape guardrails live in
 [`docs/design-principles.md`](docs/design-principles.md). The current
 variant/match design pressure from MiniLang is captured in
-[`docs/variant-match-design.md`](docs/variant-match-design.md).
+[`docs/variant-match-design.md`](docs/variant-match-design.md). Proposed
+stabilization work is tracked in
+[`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md), and real-workflow evaluation
+should use [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md).
 
 Run tests:
 

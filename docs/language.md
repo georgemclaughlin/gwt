@@ -647,7 +647,7 @@ Supported values:
 - lists: `[10, 20, 30]`
 - paths: `account.balance`, `count`
 
-There is no `null` source literal in v0.1. Model missing, unknown, or
+There is no `null` source literal in GWT source. Model missing, unknown, or
 not-applicable values explicitly instead of writing null-like placeholders.
 
 ## State
@@ -1066,7 +1066,7 @@ account.balance >= amount
 
 ## The Role Of WHEN
 
-In version 1, `WHEN` has two forms.
+In current GWT, `WHEN` has two forms.
 
 Block-form `WHEN` defines behavior:
 

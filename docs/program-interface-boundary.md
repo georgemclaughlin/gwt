@@ -6,8 +6,9 @@ This note records the design discussion that led to the v0.2 public interface:
 named `REQUEST` blocks are the callable unit. Some earlier sections describe
 the old v0.1 shape for contrast.
 
-This note names the issue succinctly so it can be debated before more language
-surface is added.
+This note is historical design rationale. The issue was named before the v0.2
+interface was implemented so the tradeoffs could be debated before more
+language surface was added.
 
 ## The Issue
 
@@ -15,7 +16,7 @@ The core question is:
 
 > What exactly is externally callable from a GWT program, and by what name?
 
-Today, the answer is split across multiple mechanisms:
+Before v0.2, the answer was split across multiple mechanisms:
 
 - `REQUEST` and `OUTPUT` define external state shape.
 - Block-form `WHEN` defines reusable behavior.
@@ -50,7 +51,7 @@ prove behavior, but they are not themselves the host-facing API.
 execution and what state is returned after execution. They do not, by
 themselves, choose which behavior is the public workflow.
 
-`EXPORT` is the closest current concept to a public entrypoint:
+`EXPORT` was the closest v0.1 concept to a public entrypoint:
 
 ```gwt
 EXPORT price_cart_v1 as price cart
@@ -828,7 +829,7 @@ Use these terms when discussing the design:
   named request.
 - Scenario: executable spec coverage inside a program file; it may call public
   requests with single-line `REQUEST` or helper behavior with `WHEN`.
-- Request file: a `.gwt` input script containing `GIVEN`, `WHEN`, and optional
+- Request file: a `.gwt` input script containing `GIVEN`, `REQUEST`, and optional
   `THEN` steps, run against a program file.
 - JSON boundary run: host-style execution that selects a named request.
 - Behavior: any block-form `WHEN` definition.
@@ -837,9 +838,9 @@ Use these terms when discussing the design:
 - External alias: an optional host-adapter name for a public request, not the
   primary source-level interface.
 
-## Open Design Questions
+## Settled Design Questions
 
-These are the basics to settle before adding more language surface:
+These were the basics to settle before adding more language surface:
 
 1. Should a named `REQUEST` require at least one `WHEN`, or may pure setup/output
    requests be valid?
@@ -858,9 +859,9 @@ These are the basics to settle before adding more language surface:
 8. Should stable machine names live outside GWT source in host adapter config,
    or should GWT provide optional alias metadata for named requests?
 
-## Leading Direction
+## Implemented Direction
 
-The leading direction from this discussion is:
+The implemented v0.2 direction from this discussion is:
 
 - `SCENARIO` / `EXAMPLES` are for executable specification.
 - `.gwt` request files are for language-native request scripts and local
@@ -885,10 +886,10 @@ The leading direction from this discussion is:
 This keeps GWT's public interface in natural BDD-shaped language while making
 external callability explicit instead of inferred.
 
-## Plan
+## Implementation Plan
 
-This should be approached as a language-interface cleanup, not as a small parser
-feature. A reasonable path is:
+This was approached as a language-interface cleanup, not as a small parser
+feature. The path was:
 
 1. Freeze the named-request shape in a design note before implementing it:
 
