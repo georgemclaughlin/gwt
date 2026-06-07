@@ -417,9 +417,9 @@ of truth. The `.gwt` contracts remain normative.
 
 The Python package ships a `py.typed` marker and typed payload aliases for the
 public host boundary. The repository's Pyright gate is intentionally scoped:
-strict checking covers `gwtlang/api.py`, validation and inspection payload
-builders, and the Python host examples before it expands into parser/runtime
-internals.
+strict checking covers `gwtlang/api.py`, generated host type support,
+validation and inspection payload builders, and the Python host examples before
+it expands into parser/runtime internals.
 
 GWT performs runtime request/output contract validation itself. Pydantic can be
 useful in a host application before values reach GWT, but it should remain an
