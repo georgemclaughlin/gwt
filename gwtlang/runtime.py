@@ -1034,7 +1034,10 @@ class Runtime:
                 normalized = self._validate_value_type(binding.path, value, binding.value_type, binding.line)
                 self._set_path(binding.path, normalized, {}, binding.line)
             except GwtError as exc:
-                raise _with_line_context(binding.line, GwtError(f"{label} contract failed for {binding.path}: {exc}")) from exc
+                raise _with_line_context(
+                    binding.line,
+                    GwtError(_contract_failure_message(label, binding, exc)),
+                ) from exc
 
     def _declared_output_state(self, request: NamedRequest) -> dict[str, Any]:
         if not request.outputs:
@@ -2875,6 +2878,17 @@ def _unknown_request_message(name: str, request_names: Iterable[str]) -> str:
         return f"{message}; did you mean {close[0]}?"
 
     return f"{message}; available requests: {_format_limited_list(available)}"
+
+
+def _contract_failure_message(label: str, binding: ContractBinding, error: GwtError) -> str:
+    detail = str(error)
+    if detail == f"unknown path: {binding.path}":
+        role = "input" if label == "REQUEST" else "output"
+        return (
+            f"{label} contract failed for {binding.path}: "
+            f"missing required {role}; expected {binding.value_type}"
+        )
+    return f"{label} contract failed for {binding.path}: {detail}"
 
 
 def _action_mismatch_message(

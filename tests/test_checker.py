@@ -606,7 +606,7 @@ class CheckerTests(unittest.TestCase):
             """
         )
 
-        self.assertIn("GIVEN table field 'quantity' expected number, got text", messages)
+        self.assertIn("GIVEN table row 1 field 'quantity' expected number, got text", messages)
 
     def test_accepts_one_of_record_setup_and_depending_on(self):
         messages = check_messages(

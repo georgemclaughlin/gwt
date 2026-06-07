@@ -835,7 +835,7 @@ class Checker:
         if extra:
             self._add_line(statement.line, f"GIVEN table for {statement.item_type} has unknown field: {extra[0]}", "GWT014")
 
-        for row in statement.rows:
+        for row_index, row in enumerate(statement.rows, start=1):
             for field, value in row.items():
                 expected_type = record.fields.get(field)
                 if expected_type is None or _has_placeholder(value):
@@ -847,14 +847,14 @@ class Checker:
                     if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
                         self._add_line(
                             statement.line,
-                            f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
+                            f"GIVEN table row {row_index} field '{field}' expected {expected_type}, got {actual_type}",
                             "GWT016",
                         )
                     continue
                 if actual_type is not None and not self._assignable(actual_type, expected_type):
                     self._add_line(
                         statement.line,
-                        f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
+                        f"GIVEN table row {row_index} field '{field}' expected {expected_type}, got {actual_type}",
                         "GWT016",
                     )
 
