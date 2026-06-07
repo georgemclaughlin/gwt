@@ -3,6 +3,7 @@
     "gwtlang/api.py",
     "gwtlang/__main__.py",
     "gwtlang/debugger.py",
+    "gwtlang/formatter.py",
     "gwtlang/host.py",
     "gwtlang/inspection.py",
     "gwtlang/lsp.py",
