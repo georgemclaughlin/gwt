@@ -8,7 +8,9 @@ one implemented language surface.
 - [v0.1](v0.1.md) records the previous program-contract/entry-boundary model.
 
 The formatter targets the current spec's source layout rules. Grammar-only
-changes should update both the versioned spec and [../grammar.md](../grammar.md).
+changes should update the versioned spec, [../grammar.md](../grammar.md), and
+the v0.2 conformance tests in
+[`../../tests/test_spec_v02.py`](../../tests/test_spec_v02.py).
 
 Non-normative design guidance lives in
 [../design-principles.md](../design-principles.md). Use it when evaluating new

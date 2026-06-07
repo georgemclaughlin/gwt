@@ -19,9 +19,10 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
-record         = ("RECORD" | "DTO") name, record_block ;
-record_block   = record_field+ ;
-record_field   = name ":" type | name ":", record_block ;
+record         = ("RECORD" | "DTO") name, record_definition_block ;
+record_definition_block
+               = record_field+ ;
+record_field   = name ":" type | name ":", record_definition_block ;
 one_of_record  = "RECORD" name "is one of", one_of_kind+ ;
 one_of_kind    = name ":", one_of_field+ ;
 one_of_field   = name ":" type ;
@@ -114,15 +115,19 @@ print          = "print" expression ;
 
 assignment_or_record
               = path "is" expression
-              | path "is", record_block
-              | path "is" name, record_block
-              | path "contains" ("a" | "an") name "of kind" name, record_block
+              | path "is", record_value_block
+              | path "is" name, record_value_block
+              | path "contains" ("a" | "an") name "of kind" name, record_value_block
               | path "are", table
               | path "are" name, table ;
+record_value_block
+              = record_value_field+ ;
+record_value_field
+              = name ":" expression | name ":", record_value_block ;
 
 condition_or_record
               = condition
-              | path "is", record_block ;
+              | path "is", record_value_block ;
 
 condition      = expression
               | expression "does not contain" expression
@@ -153,7 +158,9 @@ Indentation is significant:
 - Behavior block statements are indented by two spaces.
 - Nested `IF`, `ELSE`, `FOR`, `FIND`, and `DECIDE` bodies add two spaces per
   level.
-- Record blocks also add two spaces per level.
+- Record definition blocks contain `name: type` fields. Record value blocks in
+  `GIVEN` and `THEN` setup/assertion forms contain `name: expression` fields.
+  Both add two spaces per nested level.
 - `DECIDE` branches use `WHEN condition` at the branch indent and require an
   `ELSE` block.
 - `DEPENDING ON` branches use `WHEN the kind is name` or

@@ -100,6 +100,18 @@ Expected final line:
 typed decision: needs_review (manual_review_required)
 ```
 
+## CI And Editor Coverage
+
+The repository treats this example as the typed executable-spec module fixture.
+CI validates `rules.gwt`, runs the Python host app, verifies the generated
+Python and TypeScript host types are current, checks the TypeScript host
+client, runs strict Pyright over the Python package and host examples, and
+checks the VS Code extension.
+
+That means the flagship path stays covered across local validation, host
+language integration, generated contracts, strict Python typing, and editor
+support.
+
 ## Shadow Mode
 
 Before replacing an existing production rule, run GWT beside the legacy path and
@@ -147,6 +159,9 @@ promoting GWT as the source of truth.
 - typed JSON-shaped host input
 - generated TypeScript host types, including `GwtRequestName`
 - generated Python `TypedDict` contracts and request-specific client wrapper
+- `gwt validate` as the local and CI validation gate
+- strict Pyright coverage for the Python package and host examples
+- TypeScript client and VS Code extension checks in CI
 - typed tables for documents and risk signals
 - explicit missing and expired document handling
 - first-matching decision classification with `DECIDE`

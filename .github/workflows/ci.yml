@@ -31,7 +31,7 @@ jobs:
       - name: Run Python tests
         run: python -m unittest discover
 
-      - name: Type-check Python host boundary
+      - name: Type-check Python package and host examples
         run: npx --yes pyright@1.1.410 --project pyrightconfig.json
 
       - name: Check example formatting
