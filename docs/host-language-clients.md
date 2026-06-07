@@ -201,6 +201,24 @@ JSON Schemas for the stable command payloads live in
 should treat them as additive contracts: new optional fields may appear, while
 incompatible shape changes should bump the payload `schemaVersion`.
 
+## OpenAPI Projection
+
+For hosts that already consume HTTP API contracts, `gwt openapi` projects named
+`REQUEST` blocks into an OpenAPI 3.1 document:
+
+```sh
+python -m gwtlang openapi rules.gwt --json
+```
+
+The generated document turns caller-provided `GIVEN` bindings into request
+body schemas and declared `OUTPUT` bindings into response body schemas. This is
+the first step toward a deployable HTTP service, and it improves
+interoperability with generated clients, API gateways, Swagger UI, Postman,
+and contract-test tooling without adding new GWT syntax.
+
+See [HTTP Service And OpenAPI](http-service-design.md) for the service design
+direction and deferred auth boundary.
+
 ## Runtime Shapes
 
 GWT can support several client implementation strategies without changing the

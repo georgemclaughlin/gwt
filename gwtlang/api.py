@@ -25,6 +25,11 @@ from .inspection import (
     inspect_file as _inspect_file,
     inspect_source as _inspect_source,
 )
+from .openapi import (
+    OpenApiResult,
+    generate_openapi_file as _generate_openapi_file,
+    generate_openapi_text as _generate_openapi_text,
+)
 from .payloads import (
     CheckPayload,
     CompiledProgramPayload,
@@ -238,6 +243,18 @@ class GwtClient:
     def python_types(self) -> PythonTypesResult:
         return generate_python_file(self.path)
 
+    def openapi(
+        self,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> OpenApiResult:
+        return generate_openapi_file(
+            self.path,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
+
     def inspect(
         self,
         *,
@@ -375,6 +392,32 @@ def validate_file(
         check_format=check_format,
         run_tests=run_tests,
         lint=lint,
+    )
+
+
+def generate_openapi_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> OpenApiResult:
+    return _generate_openapi_file(
+        path,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def generate_openapi_text(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> OpenApiResult:
+    return _generate_openapi_text(
+        source,
+        filename,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
     )
 
 

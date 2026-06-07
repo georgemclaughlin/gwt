@@ -1,0 +1,62 @@
+PROGRAM support ticket api
+
+TYPE TicketPriority is "low" | "medium" | "high"
+TYPE TicketStatus is "new" | "accepted" | "escalated"
+
+RECORD TicketRequest
+  customer_id: text
+  subject: text
+  severity: TicketPriority
+  account_value: number
+  has_outage: boolean
+
+RECORD TicketDecision
+  status: TicketStatus
+  queue: text
+  reason: text
+  sla_hours: integer
+
+REQUEST triage ticket
+  GIVEN ticket is TicketRequest
+
+  GIVEN decision is TicketDecision
+    status: "new"
+    queue: "standard"
+    reason: "new"
+    sla_hours: 24
+
+  WHEN triage ticket into decision
+
+  OUTPUT decision is TicketDecision
+
+WHEN triage <ticket> into <decision>
+  GIVEN ticket is TicketRequest
+  AND decision is TicketDecision
+  set decision.status to "accepted"
+  set decision.queue to "standard"
+  set decision.reason to "normal_priority"
+  set decision.sla_hours to 24
+  IF ticket.severity == "high"
+    set decision.status to "escalated"
+    set decision.queue to "priority"
+    set decision.reason to "high_severity"
+    set decision.sla_hours to 4
+  IF ticket.has_outage
+    set decision.status to "escalated"
+    set decision.queue to "incident"
+    set decision.reason to "active_outage"
+    set decision.sla_hours to 1
+
+SCENARIO outage routes to incident queue
+GIVEN ticket is TicketRequest
+  customer_id: "C-100"
+  subject: "checkout unavailable"
+  severity: "medium"
+  account_value: 5000
+  has_outage: true
+
+REQUEST triage ticket
+
+THEN decision.status == "escalated"
+AND decision.queue == "incident"
+AND decision.sla_hours == 1

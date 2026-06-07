@@ -12,7 +12,8 @@ and BDD examples. See [spec-is-code.md](spec-is-code.md) for the product thesis
 behind making behavior specs executable instead of agent-interpreted handoff
 documents. See [host-language-clients.md](host-language-clients.md) for the
 client-library model for Python, .NET, Java, TypeScript, and other host
-languages.
+languages, and [http-service-design.md](http-service-design.md) for OpenAPI and
+future HTTP service direction.
 
 ## Program Shape
 
