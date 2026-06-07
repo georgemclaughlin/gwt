@@ -52,7 +52,7 @@ class Symbol:
     container: str | None = None
 
     def as_payload(self, fallback_filename: str) -> SymbolPayload:
-        payload = {
+        payload: SymbolPayload = {
             "name": self.name,
             "kind": self.kind,
             **self.source_range.as_payload(fallback_filename),
