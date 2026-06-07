@@ -1,13 +1,12 @@
 # Vendor Onboarding Review
 
-This example is a practical GWT workflow for reviewing a vendor before
-onboarding. It is intentionally business-readable: the request provides vendor
-facts, documents, and risk signals; the output is a typed decision record.
+This is the flagship GWT demo. It shows a practical vendor review workflow as
+one executable spec module: readable rules, embedded scenarios, a named JSON
+request boundary, generated host types, and Python/TypeScript host calls.
 
-This is a workflow/spec demo, not a policy decision point demo. GWT is not
-trying to replace Open Policy Agent or Rego-style policy evaluation. The point
-is to keep a deterministic review workflow, scenarios, typed boundaries, and
-observable output in one executable artifact.
+The request provides vendor facts, documents, and risk signals. The result is a
+typed decision record with status, reason, tier, risk points, and missing
+requirements.
 
 ```txt
 vendor request
@@ -23,19 +22,24 @@ The public named request is:
 REQUEST review vendor
 ```
 
-The output decision includes:
+For the included Cloud Ledger request, the expected decision is:
 
-```txt
-decision.status == "approved" | "needs_review" | "rejected"
-decision.reason
-decision.risk_points
-decision.missing_requirements
-decision.data_review_required
+```json
+{
+  "status": "needs_review",
+  "reason": "manual_review_required",
+  "tier": "critical",
+  "risk_points": 10,
+  "missing_requirements": [
+    "insurance_expired",
+    "security_questionnaire"
+  ]
+}
 ```
 
-## Commands
+## Four-Command Path
 
-Production-style local/CI validation:
+1. Validate the executable spec module:
 
 ```sh
 python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
@@ -43,19 +47,13 @@ python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
   --no-absolute-imports
 ```
 
-Static check only:
+Expected:
 
-```sh
-python -m gwtlang check examples/vendor_onboarding/rules.gwt
+```txt
+OK examples/vendor_onboarding/rules.gwt (check, format, test; 3 scenarios)
 ```
 
-Run embedded scenarios:
-
-```sh
-python -m gwtlang test examples/vendor_onboarding/rules.gwt
-```
-
-Run with JSON input:
+2. Run the same workflow through JSON, as a host application would:
 
 ```sh
 python -m gwtlang run examples/vendor_onboarding/rules.gwt \
@@ -64,37 +62,58 @@ python -m gwtlang run examples/vendor_onboarding/rules.gwt \
   --json
 ```
 
-Generate TypeScript host declarations:
+Expected result excerpt:
+
+```json
+{
+  "result": {
+    "decision": {
+      "status": "needs_review",
+      "reason": "manual_review_required",
+      "risk_points": 10
+    }
+  }
+}
+```
+
+3. Refresh generated host types when contracts change:
 
 ```sh
 python -m gwtlang types examples/vendor_onboarding/rules.gwt \
   --language typescript \
   --output clients/typescript/examples/vendor-onboarding.generated.d.ts
-```
 
-Use those declarations from a TypeScript host app:
-[`clients/typescript/examples/vendor-onboarding.ts`](../../clients/typescript/examples/vendor-onboarding.ts).
-
-Generate Python host helpers:
-
-```sh
 python -m gwtlang types examples/vendor_onboarding/rules.gwt \
   --language python \
   --output examples/vendor_onboarding/rules_types.py
 ```
 
-Run the Python host app:
+4. Run the typed Python host app:
 
 ```sh
 python examples/vendor_onboarding/host_app.py
 ```
 
-The Python app validates the GWT module, inspects the public request manifest,
-compiles the rules once, and calls `review vendor` through the generated
-`VendorOnboardingClient`.
+Expected final line:
+
+```txt
+typed decision: needs_review (manual_review_required)
+```
+
+## Host Examples
+
+- Python host app:
+  [`examples/vendor_onboarding/host_app.py`](host_app.py)
+- Generated Python helpers:
+  [`examples/vendor_onboarding/rules_types.py`](rules_types.py)
+- TypeScript host app:
+  [`clients/typescript/examples/vendor-onboarding.ts`](../../clients/typescript/examples/vendor-onboarding.ts)
+- Generated TypeScript declarations:
+  [`clients/typescript/examples/vendor-onboarding.generated.d.ts`](../../clients/typescript/examples/vendor-onboarding.generated.d.ts)
 
 ## What This Demonstrates
 
+- one `.gwt` file as the durable behavior artifact
 - typed named request inputs and outputs
 - typed JSON-shaped host input
 - generated TypeScript host types, including `GwtRequestName`
