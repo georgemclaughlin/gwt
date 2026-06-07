@@ -1,6 +1,7 @@
 {
   "include": [
     "gwtlang/api.py",
+    "gwtlang/host.py",
     "gwtlang/inspection.py",
     "gwtlang/payloads.py",
     "gwtlang/typegen.py",
