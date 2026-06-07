@@ -1155,7 +1155,7 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.state["order"]["items"], [{"sku": "widget", "quantity": 2}])
 
-    def test_given_typed_table_rejects_missing_dto_field(self):
+    def test_given_typed_table_rejects_missing_record_field(self):
         with self.assertRaisesRegex(GwtError, "record OrderItem missing field: order.items\\[1\\].quantity"):
             run_source(
                 '''
@@ -1169,7 +1169,7 @@ class RuntimeTests(unittest.TestCase):
                 '''
             )
 
-    def test_given_typed_table_rejects_wrong_dto_field_type(self):
+    def test_given_typed_table_rejects_wrong_record_field_type(self):
         with self.assertRaisesRegex(GwtError, "expected order.items\\[1\\].quantity to be number, got text"):
             run_source(
                 '''

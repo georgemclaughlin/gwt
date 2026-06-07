@@ -19,7 +19,7 @@ from .payloads import (
 from .runtime import (
     Action,
     ContractBinding,
-    DtoDefinition,
+    RecordDefinition,
     ImportPolicy,
     Line,
     NamedRequest,
@@ -72,7 +72,7 @@ class InspectionResult:
         if program is None:
             return payload
 
-        records = [_record_payload(dto, analysis.filename) for dto in program.dtos.values()]
+        records = [_record_payload(record, analysis.filename) for record in program.records.values()]
         variants = [
             _variant_payload(variant, analysis.filename)
             for variant in program.variants.values()
@@ -160,16 +160,16 @@ def _direct_imports(source: str, filename: str) -> list[ImportPayload]:
     return imports
 
 
-def _record_payload(dto: DtoDefinition, fallback_filename: str) -> RecordPayload:
+def _record_payload(record: RecordDefinition, fallback_filename: str) -> RecordPayload:
     return {
-        "name": dto.name,
+        "name": record.name,
         "kind": "record",
-        "file": dto.filename or fallback_filename,
-        "line": dto.line,
-        "column": dto.column,
+        "file": record.filename or fallback_filename,
+        "line": record.line,
+        "column": record.column,
         "fields": [
-            _record_field_payload(field, value_type, dto.field_lines, fallback_filename)
-            for field, value_type in dto.fields.items()
+            _record_field_payload(field, value_type, record.field_lines, fallback_filename)
+            for field, value_type in record.fields.items()
         ],
     }
 

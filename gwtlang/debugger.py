@@ -10,7 +10,7 @@ from .errors import GwtError
 from .payloads import DebugLinePayload, JsonValue
 from .runtime import (
     DecisionBlock,
-    DtoValidation,
+    RecordValidation,
     FindBlock,
     ForBlock,
     IfBlock,
@@ -171,7 +171,7 @@ def executable_lines(program: Program) -> list[DebugLine]:
         lines.append(DebugLine(filename, line.number, line.column, line.text))
 
     def collect_statement(statement: Any) -> None:
-        if isinstance(statement, DtoValidation):
+        if isinstance(statement, RecordValidation):
             add(statement.line)
         elif isinstance(statement, TableAssignment):
             add(statement.line)

@@ -24,7 +24,7 @@ class _FormattedLine:
 
 
 KEYWORD_PATTERN = re.compile(
-    r"^(PROGRAM|USE|RECORD|DTO|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|FIND|DEPENDING|DECIDE|RETURN|PASS)\b(.*)$"
+    r"^(PROGRAM|USE|RECORD|REQUEST|OUTPUT|BACKGROUND|SCENARIO|GIVEN|WHEN|THEN|AND|EXAMPLES|LET|REQUIRE|IF|ELSE|FOR|FIND|DEPENDING|DECIDE|RETURN|PASS)\b(.*)$"
 )
 BUILTIN_PATTERN = re.compile(r"^(set|add|subtract|append|count|sum|find|exists|print)\b(.*)$")
 FIELD_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:(.*)$")
@@ -33,9 +33,9 @@ FIELD_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:(.*)$")
 def format_text(source: str, filename: str = "<source>") -> str:
     """Return canonical GWT source text, or raise GwtError for invalid input."""
     normalized = _normalize_newlines(textwrap.dedent(source))
-    parse_program(normalized, filename=filename, allow_unknown_dtos=True)
+    parse_program(normalized, filename=filename, allow_unknown_records=True)
     formatted = _format_lines(normalized)
-    parse_program(formatted, filename=filename, allow_unknown_dtos=True)
+    parse_program(formatted, filename=filename, allow_unknown_records=True)
     return formatted
 
 
@@ -102,8 +102,6 @@ def _normalize_statement(statement: str) -> str:
     keyword_match = KEYWORD_PATTERN.match(statement)
     if keyword_match is not None:
         keyword, rest = keyword_match.groups()
-        if keyword == "DTO":
-            keyword = "RECORD"
         rest = rest.strip()
         if keyword == "WHEN":
             rest = _normalize_builtin_start(rest)

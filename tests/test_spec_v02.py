@@ -23,7 +23,7 @@ class SpecV02ConformanceTests(unittest.TestCase):
             PROGRAM   canonical
 
             # comments survive
-            DTO   Item
+            RECORD   Item
               sku:   text
 
             GIVEN   items are Item
@@ -297,6 +297,9 @@ GIVEN items are Item
         self.assertIn("REVIEW_VENDOR_REQUEST: GwtRequestName = 'review vendor'", python)
 
     def test_removed_v01_boundary_forms_are_rejected(self):
+        with self.assertRaisesRegex(GwtError, "unknown top-level form: DTO Account"):
+            run_text("DTO Account\n  balance: number\n")
+
         with self.assertRaisesRegex(GwtError, "top-level REQUEST contracts were removed"):
             run_text("REQUEST account is Account\n")
 

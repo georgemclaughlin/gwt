@@ -68,7 +68,7 @@ class AnalysisPayload(TypedDict):
     file: str
     program: str | None
     requests: int
-    dtos: int
+    records: int
     behaviors: int
     scenarios: int
     diagnostics: list[DiagnosticPayload]

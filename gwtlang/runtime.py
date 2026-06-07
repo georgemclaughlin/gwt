@@ -13,7 +13,7 @@ from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
-DTO_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
+RECORD_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
 LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
 SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
 RESERVED_BEHAVIOR_NAMES = {
@@ -175,7 +175,7 @@ class MatchBlock:
 
 
 @dataclass(frozen=True)
-class DtoDefinition:
+class RecordDefinition:
     name: str
     fields: dict[str, str]
     line: int
@@ -207,9 +207,9 @@ class VariantDefinition:
 
 
 @dataclass(frozen=True)
-class DtoValidation:
+class RecordValidation:
     path: str
-    dto_name: str
+    record_name: str
     line: Line
 
 
@@ -278,7 +278,7 @@ class NamedRequest:
 class Program:
     name: str | None = None
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
-    dtos: dict[str, DtoDefinition] = field(default_factory=lambda: {})
+    records: dict[str, RecordDefinition] = field(default_factory=lambda: {})
     variants: dict[str, VariantDefinition] = field(default_factory=lambda: {})
     actions: list[Action] = field(default_factory=lambda: [])
     requests: dict[str, NamedRequest] = field(default_factory=lambda: {})
@@ -347,7 +347,7 @@ def run_request(
     request = parse_program(
         request_source,
         request_filename,
-        initial_dtos=program.dtos,
+        initial_records=program.records,
         initial_variants=program.variants,
         import_policy=import_policy,
     )
@@ -364,7 +364,7 @@ def run_request(
             whens=[*program.background.whens, *request.background.whens],
             thens=[*program.background.thens, *request.background.thens],
         ),
-        dtos={**program.dtos, **request.dtos},
+        records={**program.records, **request.records},
         variants={**program.variants, **request.variants},
         actions=[*program.actions, *request.actions],
         requests={**program.requests, **request.requests},
@@ -447,15 +447,15 @@ def parse_program(
     source: str,
     filename: str = "<source>",
     importing: set[Path] | None = None,
-    initial_dtos: dict[str, DtoDefinition] | None = None,
+    initial_records: dict[str, RecordDefinition] | None = None,
     initial_variants: dict[str, VariantDefinition] | None = None,
-    allow_unknown_dtos: bool = False,
+    allow_unknown_records: bool = False,
     import_policy: ImportPolicy | None = None,
 ) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
-    if initial_dtos:
-        program.dtos.update(initial_dtos)
+    if initial_records:
+        program.records.update(initial_records)
     if initial_variants:
         program.variants.update(initial_variants)
     importing = set() if importing is None else importing
@@ -504,7 +504,7 @@ def parse_program(
 
         if text.startswith("USE "):
             imported = _parse_import(text, line, filename, importing, import_policy)
-            program.dtos.update(imported.dtos)
+            program.records.update(imported.records)
             program.variants.update(imported.variants)
             program.actions.extend(imported.actions)
             duplicate_requests = sorted(set(program.requests) & set(imported.requests))
@@ -514,17 +514,17 @@ def parse_program(
             index += 1
             continue
 
-        if text == "RECORD" or text.startswith("RECORD ") or text == "DTO" or text.startswith("DTO "):
+        if text == "RECORD" or text.startswith("RECORD "):
             if _is_record_one_of_header(text):
                 variant, index = _parse_variant(lines, index, filename)
-                if variant.name in program.dtos or variant.name in program.variants:
+                if variant.name in program.records or variant.name in program.variants:
                     raise GwtError(f"{filename}:{line.number}: type already defined: {variant.name}")
                 program.variants[variant.name] = variant
             else:
-                dto, index = _parse_dto(lines, index, filename)
-                if dto.name in program.dtos or dto.name in program.variants:
-                    raise GwtError(f"{filename}:{line.number}: type already defined: {dto.name}")
-                program.dtos[dto.name] = dto
+                record, index = _parse_record(lines, index, filename)
+                if record.name in program.records or record.name in program.variants:
+                    raise GwtError(f"{filename}:{line.number}: type already defined: {record.name}")
+                program.records[record.name] = record
             last_top_keyword = None
             continue
 
@@ -555,8 +555,8 @@ def parse_program(
                     lines,
                     index,
                     filename,
-                    program.dtos,
-                    allow_unknown_dtos=allow_unknown_dtos,
+                    program.records,
+                    allow_unknown_records=allow_unknown_records,
                 )
                 if named_request.name in program.requests:
                     raise GwtError(f"{filename}:{line.number}: REQUEST already declares: {named_request.name}")
@@ -593,8 +593,8 @@ def parse_program(
                     lines,
                     index,
                     filename,
-                    program.dtos,
-                    allow_unknown_dtos=allow_unknown_dtos,
+                    program.records,
+                    allow_unknown_records=allow_unknown_records,
                 )
                 current.givens.extend(expanded)
                 current.givens.append(validation)
@@ -772,9 +772,9 @@ class Runtime:
 
     def _run_givens(self, givens: list[Any]) -> None:
         for line in givens:
-            if isinstance(line, DtoValidation):
+            if isinstance(line, RecordValidation):
                 self._before_line(line.line, {})
-                self._validate_dto(line)
+                self._validate_record(line)
             elif isinstance(line, TableAssignment):
                 self._run_table_assignment(line)
             elif isinstance(line, VariantAssignment):
@@ -827,11 +827,11 @@ class Runtime:
         target = self.path_types if path_types is None else path_types
         target[path] = value_type
 
-        dto = self.program.dtos.get(value_type)
-        if dto is not None:
-            for field, field_type in dto.fields.items():
+        record = self.program.records.get(value_type)
+        if record is not None:
+            for field, field_type in record.fields.items():
                 target[f"{path}.{field}"] = field_type
-                if field_type in self.program.dtos or field_type in self.program.variants:
+                if field_type in self.program.records or field_type in self.program.variants:
                     self._register_path_type(f"{path}.{field}", field_type, target)
             return
 
@@ -859,40 +859,40 @@ class Runtime:
         validation_line = line or Line(0, path)
         return self._validate_value_type(path, value, expected_type, validation_line)
 
-    def _validate_dto(self, validation: DtoValidation) -> None:
-        dto = self.program.dtos.get(validation.dto_name)
-        variant = self.program.variants.get(validation.dto_name)
-        if dto is None and variant is None:
-            raise GwtError(f"line {validation.line.number}: unknown record: {validation.dto_name}")
+    def _validate_record(self, validation: RecordValidation) -> None:
+        record = self.program.records.get(validation.record_name)
+        variant = self.program.variants.get(validation.record_name)
+        if record is None and variant is None:
+            raise GwtError(f"line {validation.line.number}: unknown record: {validation.record_name}")
         try:
             value = self._get_path(validation.path, {})
             if variant is not None:
                 self._validate_variant_value(validation.path, value, variant, validation.line)
-                self._register_path_type(validation.path, validation.dto_name)
+                self._register_path_type(validation.path, validation.record_name)
                 return
             if not isinstance(value, dict):
                 raise GwtError(f"expected {validation.path} to be a record")
-            assert dto is not None
-            record = cast(dict[str, Any], value)
-            self._validate_dto_fields(validation.path, record, dto, validation.line)
-            self._register_path_type(validation.path, validation.dto_name)
+            assert record is not None
+            record_value = cast(dict[str, Any], value)
+            self._validate_record_fields(validation.path, record_value, record, validation.line)
+            self._register_path_type(validation.path, validation.record_name)
         except GwtError as exc:
             raise _with_line_context(validation.line, exc) from exc
 
-    def _validate_dto_fields(self, base_path: str, value: dict[str, Any], dto: DtoDefinition, line: Line) -> None:
+    def _validate_record_fields(self, base_path: str, value: dict[str, Any], record: RecordDefinition, line: Line) -> None:
         flat_value = _flatten_record(value)
-        expected_fields = set(dto.fields)
+        expected_fields = set(record.fields)
         actual_fields = set(flat_value)
 
         missing = sorted(expected_fields - actual_fields)
         if missing:
-            raise GwtError(f"record {dto.name} missing field: {base_path}.{missing[0]}")
+            raise GwtError(f"record {record.name} missing field: {base_path}.{missing[0]}")
 
         extra = sorted(actual_fields - expected_fields)
         if extra:
-            raise GwtError(f"record {dto.name} unknown field: {base_path}.{extra[0]}")
+            raise GwtError(f"record {record.name} unknown field: {base_path}.{extra[0]}")
 
-        for field, expected_type in dto.fields.items():
+        for field, expected_type in record.fields.items():
             field_value = flat_value[field]
             normalized = self._validate_value_type(f"{base_path}.{field}", field_value, expected_type, line)
             _set_flat_record_value(value, field, normalized)
@@ -904,7 +904,7 @@ class Runtime:
         if literal_values is not None:
             candidate = value
             base_type = _value_type_name(literal_values[0])
-            if base_type in DTO_TYPES:
+            if base_type in RECORD_TYPES:
                 normalized = _normalize_primitive_value(value, base_type)
                 if normalized is not _INVALID_TYPE:
                     candidate = normalized
@@ -914,7 +914,7 @@ class Runtime:
                     f"got {_literal_value_text(value)}"
                 )
             return candidate
-        if expected_type in DTO_TYPES:
+        if expected_type in RECORD_TYPES:
             normalized = _normalize_primitive_value(value, expected_type)
             if normalized is _INVALID_TYPE:
                 raise GwtError(
@@ -931,13 +931,13 @@ class Runtime:
                 items[index - 1] = self._validate_value_type(f"{path}[{index}]", item, item_type, line)
             return items
 
-        dto = self.program.dtos.get(expected_type)
-        if dto is not None:
+        record = self.program.records.get(expected_type)
+        if record is not None:
             if not isinstance(value, dict):
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
-            record = cast(dict[str, Any], value)
-            self._validate_dto_fields(path, record, dto, line)
-            return record
+            record_value = cast(dict[str, Any], value)
+            self._validate_record_fields(path, record_value, record, line)
+            return record_value
 
         variant = self.program.variants.get(expected_type)
         if variant is not None:
@@ -1011,13 +1011,13 @@ class Runtime:
                 for row in table.rows
             ]
             if table.item_type is not None:
-                dto = self.program.dtos.get(table.item_type)
-                if dto is None:
+                record = self.program.records.get(table.item_type)
+                if record is None:
                     if table.item_type in self.program.variants:
                         raise GwtError(f"GIVEN table cannot construct one-of record: {table.item_type}")
                     raise GwtError(f"unknown record: {table.item_type}")
                 for index, row in enumerate(rows, start=1):
-                    self._validate_dto_fields(f"{table.path}[{index}]", row, dto, table.line)
+                    self._validate_record_fields(f"{table.path}[{index}]", row, record, table.line)
                 self._register_path_type(table.path, f"list<{table.item_type}>")
             self._set_path(table.path, rows, {}, table.line)
         except GwtError as exc:
@@ -1618,7 +1618,7 @@ def _looks_like_removed_request_contract(statement: str) -> bool:
 def _looks_like_type_name(value_type: str) -> bool:
     if not _is_type_syntax(value_type):
         return False
-    if value_type in DTO_TYPES or value_type.startswith("list<"):
+    if value_type in RECORD_TYPES or value_type.startswith("list<"):
         return True
     if "|" in value_type:
         return True
@@ -1629,9 +1629,9 @@ def _parse_named_request(
     lines: list[Line],
     index: int,
     filename: str,
-    dtos: dict[str, DtoDefinition],
+    records: dict[str, RecordDefinition],
     *,
-    allow_unknown_dtos: bool = False,
+    allow_unknown_records: bool = False,
 ) -> tuple[NamedRequest, int]:
     header = lines[index]
     name = header.text.removeprefix("REQUEST ").strip()
@@ -1656,8 +1656,8 @@ def _parse_named_request(
         request,
         body_lines,
         filename,
-        dtos,
-        allow_unknown_dtos=allow_unknown_dtos,
+        records,
+        allow_unknown_records=allow_unknown_records,
     )
     if not request.whens:
         raise GwtError(f"{filename}:{header.number}: REQUEST {name} requires at least one WHEN")
@@ -1673,9 +1673,9 @@ def _parse_named_request_body(
     request: NamedRequest,
     lines: list[Line],
     filename: str,
-    dtos: dict[str, DtoDefinition],
+    records: dict[str, RecordDefinition],
     *,
-    allow_unknown_dtos: bool = False,
+    allow_unknown_records: bool = False,
 ) -> None:
     index = 0
     last_keyword: str | None = None
@@ -1696,8 +1696,8 @@ def _parse_named_request_body(
                 lines,
                 index,
                 filename,
-                dtos,
-                allow_unknown_dtos=allow_unknown_dtos,
+                records,
+                allow_unknown_records=allow_unknown_records,
             )
             last_keyword = "GIVEN"
             continue
@@ -1747,9 +1747,9 @@ def _parse_request_given(
     lines: list[Line],
     index: int,
     filename: str,
-    dtos: dict[str, DtoDefinition],
+    records: dict[str, RecordDefinition],
     *,
-    allow_unknown_dtos: bool = False,
+    allow_unknown_records: bool = False,
 ) -> int:
     line = lines[index]
     statement = text.removeprefix("GIVEN ").strip()
@@ -1776,8 +1776,8 @@ def _parse_request_given(
                 lines,
                 index,
                 filename,
-                dtos,
-                allow_unknown_dtos=allow_unknown_dtos,
+                records,
+                allow_unknown_records=allow_unknown_records,
             )
             request.givens.extend(expanded)
             request.givens.append(validation)
@@ -2093,19 +2093,19 @@ def _parse_depending_case_header(text: str, filename: str, line_number: int) -> 
     )
 
 
-def _parse_dto(lines: list[Line], index: int, filename: str) -> tuple[DtoDefinition, int]:
+def _parse_record(lines: list[Line], index: int, filename: str) -> tuple[RecordDefinition, int]:
     header = lines[index]
     tokens = _tokens(header.text, filename, header.number)
     if len(tokens) != 2:
         raise GwtError(f"{filename}:{header.number}: RECORD expects one name")
     keyword = tokens[0]
-    if keyword not in {"RECORD", "DTO"}:
+    if keyword != "RECORD":
         raise GwtError(f"{filename}:{header.number}: RECORD expects one name")
     name = tokens[1]
-    if not _is_dto_name(name):
+    if not _is_record_type_name(name):
         raise GwtError(f"{filename}:{header.number}: RECORD name must start with an uppercase letter")
-    fields, field_lines, index = _parse_dto_fields(lines, index + 1, filename, header.number)
-    return DtoDefinition(
+    fields, field_lines, index = _parse_record_fields(lines, index + 1, filename, header.number)
+    return RecordDefinition(
         name,
         fields,
         header.number,
@@ -2209,11 +2209,11 @@ def _parse_variant_case_fields(
     return fields, field_lines, index
 
 
-def _parse_dto_fields(
-    lines: list[Line], index: int, filename: str, dto_line: int
+def _parse_record_fields(
+    lines: list[Line], index: int, filename: str, record_line: int
 ) -> tuple[dict[str, str], dict[str, Line], int]:
     if index >= len(lines) or not lines[index].text.startswith("  "):
-        raise GwtError(f"{filename}:{dto_line}: RECORD requires fields")
+        raise GwtError(f"{filename}:{record_line}: RECORD requires fields")
 
     fields: dict[str, str] = {}
     field_lines: dict[str, Line] = {}
@@ -2257,7 +2257,7 @@ def _parse_dto_fields(
         index += 1
 
     if not fields:
-        raise GwtError(f"{filename}:{dto_line}: RECORD requires typed fields")
+        raise GwtError(f"{filename}:{record_line}: RECORD requires typed fields")
     return fields, field_lines, index
 
 
@@ -2401,7 +2401,7 @@ def _parse_table_header(header: str, filename: str, line_number: int) -> tuple[s
     if match is None:
         raise GwtError(f"{filename}:{line_number}: table assignment expects 'path are' or 'path are RecordName'")
     item_type = match.group("item_type")
-    if item_type is not None and not _is_dto_name(item_type):
+    if item_type is not None and not _is_record_type_name(item_type):
         raise GwtError(f"{filename}:{line_number}: GIVEN table type must be a record name")
     return match.group("path"), item_type
 
@@ -2437,7 +2437,7 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
         return lines
     substituted: list[Any] = []
     for line in lines:
-        if isinstance(line, DtoValidation):
+        if isinstance(line, RecordValidation):
             substituted.append(line)
         elif isinstance(line, RequestCall):
             substituted.append(
@@ -2610,18 +2610,18 @@ def _expand_typed_record_block(
     lines: list[Line],
     index: int,
     filename: str,
-    dtos: dict[str, DtoDefinition],
+    records: dict[str, RecordDefinition],
     *,
-    allow_unknown_dtos: bool = False,
-) -> tuple[list[Line], int, DtoValidation]:
+    allow_unknown_records: bool = False,
+) -> tuple[list[Line], int, RecordValidation]:
     header_line = lines[index - 1]
-    path, dto_name = header.split(" is ", 1)
+    path, record_name = header.split(" is ", 1)
     path = path.strip()
-    dto_name = dto_name.strip()
-    if dto_name not in dtos and not allow_unknown_dtos:
-        raise GwtError(f"{filename}:{header_line.number}: unknown record: {dto_name}")
+    record_name = record_name.strip()
+    if record_name not in records and not allow_unknown_records:
+        raise GwtError(f"{filename}:{header_line.number}: unknown record: {record_name}")
     expanded, index = _expand_record_block(f"{path} is", lines, index, filename)
-    return expanded, index, DtoValidation(path, dto_name, header_line)
+    return expanded, index, RecordValidation(path, record_name, header_line)
 
 
 def _expand_record_block(
@@ -2687,19 +2687,19 @@ def _is_path(text: str) -> bool:
     return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$", text))
 
 
-def _is_dto_name(text: str) -> bool:
+def _is_record_type_name(text: str) -> bool:
     return bool(re.match(r"^[A-Z][A-Za-z0-9_]*$", text))
 
 
 def _is_type_syntax(value_type: str) -> bool:
-    if value_type in DTO_TYPES or _is_dto_name(value_type):
+    if value_type in RECORD_TYPES or _is_record_type_name(value_type):
         return True
     if _literal_union_values(value_type) is not None:
         return True
     item_type = _list_item_type(value_type)
     if item_type is None:
         return False
-    return item_type in DTO_TYPES or _is_dto_name(item_type)
+    return item_type in RECORD_TYPES or _is_record_type_name(item_type)
 
 
 def _list_item_type(value_type: str) -> str | None:

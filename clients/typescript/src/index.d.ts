@@ -109,7 +109,7 @@ export interface GwtCheckPayload extends GwtPayload {
   file: string;
   program: string | null;
   requests: number;
-  dtos: number;
+  records: number;
   behaviors: number;
   scenarios: number;
   diagnostics: GwtDiagnosticPayload[];

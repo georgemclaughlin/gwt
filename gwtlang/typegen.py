@@ -11,7 +11,7 @@ import re
 from .errors import GwtError
 from .runtime import (
     ContractBinding,
-    DtoDefinition,
+    RecordDefinition,
     Program,
     VariantDefinition,
     _list_item_type,
@@ -96,8 +96,8 @@ def _checked_program(source: str, filename: str) -> Program:
 def _emit_typescript(program: Program, filename: str) -> str:
     lines = [f"// Generated from {filename}. Do not edit by hand.", ""]
 
-    for dto in program.dtos.values():
-        lines.extend(_emit_dto(dto))
+    for record in program.records.values():
+        lines.extend(_emit_record(record))
         lines.append("")
 
     for variant in program.variants.values():
@@ -112,9 +112,9 @@ def _emit_typescript(program: Program, filename: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _emit_dto(dto: DtoDefinition) -> list[str]:
-    root = _build_property_tree(dto.fields.items())
-    lines = [f"export interface {dto.name} {{"]
+def _emit_record(record: RecordDefinition) -> list[str]:
+    root = _build_property_tree(record.fields.items())
+    lines = [f"export interface {record.name} {{"]
     lines.extend(_emit_properties(root.children, 2))
     lines.append("}")
     return lines
@@ -149,7 +149,7 @@ def _emit_named_request_types(program: Program) -> list[str]:
     lines: list[str] = []
     names: dict[str, tuple[str, str]] = {}
     used_names = {
-        *program.dtos,
+        *program.records,
         *program.variants,
         "GwtRequestName",
         "GwtRequests",
@@ -322,8 +322,8 @@ class _PythonEmitter:
             "compile_file",
         }
         self.type_names: dict[str, str] = {}
-        for dto_name in program.dtos:
-            self.type_names[dto_name] = self._unique_type_name(_python_type_name(dto_name))
+        for record_name in program.records:
+            self.type_names[record_name] = self._unique_type_name(_python_type_name(record_name))
         for variant_name in program.variants:
             self.type_names[variant_name] = self._unique_type_name(_python_type_name(variant_name))
 
@@ -340,8 +340,8 @@ class _PythonEmitter:
             "",
         ]
 
-        for dto in self.program.dtos.values():
-            lines.extend(self._emit_dto(dto))
+        for record in self.program.records.values():
+            lines.extend(self._emit_record(record))
             lines.append("")
 
         for variant in self.program.variants.values():
@@ -355,10 +355,10 @@ class _PythonEmitter:
 
         return "\n".join(lines).rstrip() + "\n"
 
-    def _emit_dto(self, dto: DtoDefinition) -> list[str]:
-        root = _build_property_tree(dto.fields.items())
+    def _emit_record(self, record: RecordDefinition) -> list[str]:
+        root = _build_property_tree(record.fields.items())
         nested: list[str] = []
-        name = self.type_names[dto.name]
+        name = self.type_names[record.name]
         fields = self._python_fields(root.children, name, nested)
         return [*nested, *self._emit_typed_dict(name, fields)]
 
