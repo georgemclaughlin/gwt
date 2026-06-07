@@ -7,7 +7,8 @@ approach. For broader fit guidance, see [Adoption Modes](adoption-modes.md) and
 the [Spec Is Code](spec-is-code.md) thesis.
 
 The first recommended pilot is the
-[Release Readiness Pilot](release-readiness-pilot.md).
+[Release Readiness Pilot](release-readiness-pilot.md), implemented at
+[`examples/release_readiness`](../examples/release_readiness).
 
 ## Choose A Good Pilot
 

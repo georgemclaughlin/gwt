@@ -1,0 +1,403 @@
+PROGRAM release readiness
+
+TYPE ReleaseEnvironment is "staging" | "production"
+TYPE ReleaseStatus is "new" | "approved" | "needs_review" | "blocked"
+TYPE ReleaseReason is "new" | "ready" | "failing_checks" | "missing_evidence" | "missing_approval" | "missing_rollback" | "active_incident" | "risky_flags"
+TYPE CheckStatus is "passed" | "failed" | "skipped"
+TYPE ApprovalStatus is "approved" | "missing"
+
+RECORD ReleaseCheck
+  name: text
+  required: boolean
+  status: CheckStatus
+
+RECORD ReleaseApproval
+  name: text
+  required: boolean
+  status: ApprovalStatus
+
+RECORD FeatureFlag
+  name: text
+  enabled: boolean
+  risky: boolean
+
+RECORD ReleaseRequest
+  version: text
+  environment: ReleaseEnvironment
+  rollback_plan_present: boolean
+  active_incident_count: integer
+  checks: list<ReleaseCheck>
+  approvals: list<ReleaseApproval>
+  feature_flags: list<FeatureFlag>
+
+RECORD ReleaseDecision
+  status: ReleaseStatus
+  reason: ReleaseReason
+  blockers: list<text>
+  warnings: list<text>
+  ready_checks: integer
+  failed_checks: integer
+  missing_approval_count: integer
+
+REQUEST review release
+  GIVEN release is ReleaseRequest
+
+  GIVEN decision is ReleaseDecision
+    status: "new"
+    reason: "new"
+    blockers: []
+    warnings: []
+    ready_checks: 0
+    failed_checks: 0
+    missing_approval_count: 0
+
+  WHEN review release into decision
+
+  OUTPUT decision is ReleaseDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
+WHEN reset release decision <decision>
+  GIVEN decision is ReleaseDecision
+  set decision.status to "new"
+  set decision.reason to "new"
+  set decision.blockers to []
+  set decision.warnings to []
+  set decision.ready_checks to 0
+  set decision.failed_checks to 0
+  set decision.missing_approval_count to 0
+
+WHEN collect check evidence from <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  FIND required_check in release.checks WHERE required_check.required == true
+    PASS
+  ELSE
+    append "missing_required_checks" to decision.blockers
+  FOR check in release.checks WHERE check.required == true and check.status == "passed"
+    add 1 to decision.ready_checks
+  FOR check in release.checks WHERE check.required == true and check.status == "failed"
+    add 1 to decision.failed_checks
+    append "failed_check_" + check.name to decision.blockers
+  FOR check in release.checks WHERE check.required == true and check.status == "skipped"
+    add 1 to decision.failed_checks
+    append "skipped_check_" + check.name to decision.blockers
+
+WHEN collect approval evidence from <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  FIND required_approval in release.approvals WHERE required_approval.required == true
+    PASS
+  ELSE
+    append "missing_required_approvals" to decision.blockers
+  FOR approval in release.approvals WHERE approval.required == true and approval.status == "missing"
+    add 1 to decision.missing_approval_count
+    append "missing_approval_" + approval.name to decision.blockers
+
+WHEN collect incident evidence from <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  IF release.environment == "production" and release.active_incident_count > 0
+    append "active_production_incident" to decision.blockers
+
+WHEN collect rollback evidence from <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  IF release.rollback_plan_present == false
+    append "missing_rollback_plan" to decision.blockers
+
+WHEN collect flag evidence from <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  FOR flag in release.feature_flags WHERE flag.enabled == true and flag.risky == true
+    append "risky_flag_" + flag.name to decision.warnings
+
+WHEN block release with <reason> into <decision>
+  GIVEN reason is ReleaseReason
+  AND decision is ReleaseDecision
+  set decision.status to "blocked"
+  set decision.reason to reason
+
+WHEN send release to review with <reason> into <decision>
+  GIVEN reason is ReleaseReason
+  AND decision is ReleaseDecision
+  set decision.status to "needs_review"
+  set decision.reason to reason
+
+WHEN approve release into <decision>
+  GIVEN decision is ReleaseDecision
+  set decision.status to "approved"
+  set decision.reason to "ready"
+
+WHEN classify <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  DECIDE
+    WHEN release.environment == "production" and release.active_incident_count > 0
+      block release with "active_incident" into decision
+    WHEN decision.failed_checks > 0
+      block release with "failing_checks" into decision
+    WHEN decision.blockers contains "missing_required_checks" or decision.blockers contains "missing_required_approvals"
+      send release to review with "missing_evidence" into decision
+    WHEN decision.missing_approval_count > 0
+      send release to review with "missing_approval" into decision
+    WHEN release.rollback_plan_present == false
+      send release to review with "missing_rollback" into decision
+    WHEN decision.warnings != []
+      send release to review with "risky_flags" into decision
+    ELSE
+      approve release into decision
+
+WHEN review <release> into <decision>
+  GIVEN release is ReleaseRequest
+  AND decision is ReleaseDecision
+  reset release decision decision
+  collect check evidence from release into decision
+  collect approval evidence from release into decision
+  collect incident evidence from release into decision
+  collect rollback evidence from release into decision
+  collect flag evidence from release into decision
+  classify release into decision
+
+SCENARIO clean release is approved
+GIVEN release is ReleaseRequest
+  version: "2026.06.01"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "passed" |
+  | "load_test"         | false    | "failed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "approved" |
+
+GIVEN release.feature_flags are FeatureFlag
+  | name           | enabled | risky |
+  | "new_checkout" | false   | true  |
+
+REQUEST review release
+
+THEN decision.status == "approved"
+AND decision.reason == "ready"
+AND decision.ready_checks == 2
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 0
+AND decision.blockers == []
+AND decision.warnings == []
+
+SCENARIO failing required check blocks release
+GIVEN release is ReleaseRequest
+  version: "2026.06.02"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "failed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "approved" |
+
+REQUEST review release
+
+THEN decision.status == "blocked"
+AND decision.reason == "failing_checks"
+AND decision.ready_checks == 1
+AND decision.failed_checks == 1
+AND decision.missing_approval_count == 0
+AND decision.blockers == ["failed_check_integration_tests"]
+AND decision.warnings == []
+
+SCENARIO missing required approval needs review
+GIVEN release is ReleaseRequest
+  version: "2026.06.03"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "passed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "missing"  |
+
+REQUEST review release
+
+THEN decision.status == "needs_review"
+AND decision.reason == "missing_approval"
+AND decision.ready_checks == 2
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 1
+AND decision.blockers == ["missing_approval_security"]
+AND decision.warnings == []
+
+SCENARIO missing rollback plan needs review
+GIVEN release is ReleaseRequest
+  version: "2026.06.04"
+  environment: "production"
+  rollback_plan_present: false
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "passed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "approved" |
+
+REQUEST review release
+
+THEN decision.status == "needs_review"
+AND decision.reason == "missing_rollback"
+AND decision.ready_checks == 2
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 0
+AND decision.blockers == ["missing_rollback_plan"]
+AND decision.warnings == []
+
+SCENARIO active production incident blocks release
+GIVEN release is ReleaseRequest
+  version: "2026.06.05"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 1
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "passed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "approved" |
+
+REQUEST review release
+
+THEN decision.status == "blocked"
+AND decision.reason == "active_incident"
+AND decision.ready_checks == 2
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 0
+AND decision.blockers == ["active_production_incident"]
+AND decision.warnings == []
+
+SCENARIO missing required evidence needs review
+GIVEN release is ReleaseRequest
+  version: "2026.06.06"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+REQUEST review release
+
+THEN decision.status == "needs_review"
+AND decision.reason == "missing_evidence"
+AND decision.ready_checks == 0
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 0
+AND decision.blockers == ["missing_required_checks", "missing_required_approvals"]
+AND decision.warnings == []
+
+SCENARIO risky enabled feature flag needs review
+GIVEN release is ReleaseRequest
+  version: "2026.06.07"
+  environment: "production"
+  rollback_plan_present: true
+  active_incident_count: 0
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "unit_tests"        | true     | "passed" |
+  | "integration_tests" | true     | "passed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status     |
+  | "product"  | true     | "approved" |
+  | "security" | true     | "approved" |
+
+GIVEN release.feature_flags are FeatureFlag
+  | name           | enabled | risky |
+  | "new_checkout" | true    | true  |
+  | "dark_mode"    | true    | false |
+
+REQUEST review release
+
+THEN decision.status == "needs_review"
+AND decision.reason == "risky_flags"
+AND decision.ready_checks == 2
+AND decision.failed_checks == 0
+AND decision.missing_approval_count == 0
+AND decision.blockers == []
+AND decision.warnings == ["risky_flag_new_checkout"]
+
+SCENARIO active incident remains primary when multiple issues exist
+GIVEN release is ReleaseRequest
+  version: "2026.06.08"
+  environment: "production"
+  rollback_plan_present: false
+  active_incident_count: 1
+  checks: []
+  approvals: []
+  feature_flags: []
+
+GIVEN release.checks are ReleaseCheck
+  | name                | required | status   |
+  | "integration_tests" | true     | "failed" |
+
+GIVEN release.approvals are ReleaseApproval
+  | name       | required | status    |
+  | "security" | true     | "missing" |
+
+GIVEN release.feature_flags are FeatureFlag
+  | name           | enabled | risky |
+  | "new_checkout" | true    | true  |
+
+REQUEST review release
+
+THEN decision.status == "blocked"
+AND decision.reason == "active_incident"
+AND decision.ready_checks == 0
+AND decision.failed_checks == 1
+AND decision.missing_approval_count == 1
+AND decision.blockers == ["failed_check_integration_tests", "missing_approval_security", "active_production_incident", "missing_rollback_plan"]
+AND decision.warnings == ["risky_flag_new_checkout"]

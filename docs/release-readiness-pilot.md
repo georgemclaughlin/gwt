@@ -1,8 +1,9 @@
 # Release Readiness Pilot
 
-Status: proposed pilot.
+Status: implemented in
+[`examples/release_readiness`](../examples/release_readiness).
 
-This pilot should test GWT against a boring, deterministic, host-facing
+This pilot tests GWT against a boring, deterministic, host-facing
 workflow: deciding whether a software release is ready to proceed. The point is
 to pressure the current v0.2 language without adding syntax during the first
 pass.
