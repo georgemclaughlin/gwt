@@ -199,6 +199,41 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn('"mismatches": 1', completed.stdout)
         self.assertIn('"promotion_ready": false', completed.stdout)
 
+    def test_vendor_onboarding_flagship_demo_is_documented_and_ci_guarded(self):
+        root_readme = Path("README.md").read_text()
+        demo_readme = Path("examples/vendor_onboarding/README.md").read_text()
+        ci = Path(".github/workflows/ci.yml").read_text()
+        pyright_config = json.loads(Path("pyrightconfig.json").read_text())
+
+        self.assertIn("examples/vendor_onboarding", root_readme)
+        self.assertIn("generated Python and TypeScript host types", root_readme)
+        self.assertIn("strict Pyright", root_readme)
+        self.assertIn("VS Code extension", root_readme)
+
+        for expected in [
+            "This is the flagship GWT demo",
+            "typed executable-spec module fixture",
+            "python -m gwtlang validate examples/vendor_onboarding/rules.gwt",
+            "python examples/vendor_onboarding/host_app.py",
+            "clients/typescript/examples/vendor-onboarding.ts",
+            "strict Pyright",
+            "VS Code extension",
+        ]:
+            self.assertIn(expected, demo_readme)
+
+        for expected in [
+            "Validate typed module fixture",
+            "Verify generated host types",
+            "Check TypeScript client",
+            "Check VS Code extension",
+            "pyrightconfig.json",
+            "examples/vendor_onboarding/host_app.py",
+        ]:
+            self.assertIn(expected, ci)
+
+        self.assertEqual(pyright_config["typeCheckingMode"], "strict")
+        self.assertIn("examples/vendor_onboarding", pyright_config["include"])
+
     def test_loan_underwriting_example_runs_scenarios_and_request(self):
         program = Path("examples/loan_underwriting/rules.gwt")
         request = Path("examples/loan_underwriting/request.gwt")

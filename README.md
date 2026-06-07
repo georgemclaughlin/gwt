@@ -30,7 +30,10 @@ policy evaluation.
 Start with [`examples/vendor_onboarding`](examples/vendor_onboarding). It is the
 clearest end-to-end GWT path: one executable rules file, embedded scenarios, a
 named JSON request, generated Python and TypeScript host types, and host app
-calls that consume a typed decision.
+calls that consume a typed decision. CI keeps this path current by validating
+the module, running the host apps, diffing generated host type fixtures, running
+strict Pyright checks, checking the TypeScript client, and checking the VS Code
+extension.
 
 ```sh
 python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
@@ -670,7 +673,8 @@ python -m unittest discover
 ```
 
 The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-runs the standard validation gate, strict Pyright checking for the Python host
-boundary and editor helper payloads, generated TypeScript and Python vendor
-host fixture checks, Python and TypeScript client tests, VS Code extension
-checks, and whitespace verification with `git diff --check`.
+runs the standard validation gate, v0.2 conformance tests as part of the Python
+suite, strict Pyright checking for the full Python package plus host examples,
+generated TypeScript and Python vendor host fixture checks, Python and
+TypeScript client tests, VS Code extension checks, and whitespace verification
+with `git diff --check`.
