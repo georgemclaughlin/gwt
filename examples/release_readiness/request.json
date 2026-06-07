@@ -1,0 +1,21 @@
+{
+  "release": {
+    "version": "2026.06.07",
+    "environment": "production",
+    "rollback_plan_present": true,
+    "active_incident_count": 0,
+    "checks": [
+      { "name": "unit_tests", "required": true, "status": "passed" },
+      { "name": "integration_tests", "required": true, "status": "passed" },
+      { "name": "load_test", "required": false, "status": "failed" }
+    ],
+    "approvals": [
+      { "name": "product", "required": true, "status": "approved" },
+      { "name": "security", "required": true, "status": "missing" }
+    ],
+    "feature_flags": [
+      { "name": "new_checkout", "enabled": true, "risky": true },
+      { "name": "dark_mode", "enabled": true, "risky": false }
+    ]
+  }
+}

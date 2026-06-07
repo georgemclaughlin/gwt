@@ -491,6 +491,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/input_normalization`](examples/input_normalization) | JSON boundary normalization and explicit missing/null behavior |
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Bytecode VM pressure test with modules, closures, stack traces, debugger state, and REPL-like execution |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical typed workflow demo with embedded scenario assertions and JSON request execution |
+| [`examples/release_readiness`](examples/release_readiness) | Pilot evidence example for deterministic release decisions, public request invariants, and generated Python host types |
 
 ## Python API
 

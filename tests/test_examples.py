@@ -19,6 +19,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/minilang2_vm/rules.gwt"),
     Path("examples/input_normalization/rules.gwt"),
     Path("examples/vendor_onboarding/rules.gwt"),
+    Path("examples/release_readiness/rules.gwt"),
     Path("examples/exact_pricing/rules.gwt"),
     Path("examples/type_aliases.gwt"),
 ]
@@ -191,6 +192,19 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn('"status": "needs_review"', completed.stdout)
         self.assertIn('"reason": "manual_review_required"', completed.stdout)
         self.assertIn("typed decision: needs_review (manual_review_required)", completed.stdout)
+
+    def test_release_readiness_python_host_example_runs(self):
+        completed = subprocess.run(
+            [sys.executable, "examples/release_readiness/host_app.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn('"review release"', completed.stdout)
+        self.assertIn('"status": "needs_review"', completed.stdout)
+        self.assertIn('"reason": "missing_approval"', completed.stdout)
+        self.assertIn("typed decision: needs_review (missing_approval)", completed.stdout)
 
     def test_vendor_onboarding_shadow_mode_example_runs(self):
         completed = subprocess.run(
@@ -482,6 +496,68 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(decision["risk_points"], 10)
         self.assertEqual(decision["tier"], "critical")
         self.assertEqual(decision["missing_requirements"], ["insurance_expired", "security_questionnaire"])
+
+    def test_release_readiness_runs_scenarios_and_json_request(self):
+        program = Path("examples/release_readiness/rules.gwt")
+        request = Path("examples/release_readiness/request.json")
+
+        analysis = analyze_file(program)
+        self.assertEqual(analysis.diagnostics, [])
+
+        result = run_source(program.read_text(), filename=str(program))
+        scenarios = {scenario.name: scenario for scenario in result.scenarios}
+        self.assertEqual(
+            {
+                name: scenario.state["decision"]["reason"]
+                for name, scenario in scenarios.items()
+            },
+            {
+                "clean release is approved": "ready",
+                "failing required check blocks release": "failing_checks",
+                "missing required approval needs review": "missing_approval",
+                "missing rollback plan needs review": "missing_rollback",
+                "active production incident blocks release": "active_incident",
+                "missing required evidence needs review": "missing_evidence",
+                "risky enabled feature flag needs review": "risky_flags",
+                "active incident remains primary when multiple issues exist": "active_incident",
+            },
+        )
+        self.assertEqual(
+            scenarios["missing required evidence needs review"].state["decision"][
+                "blockers"
+            ],
+            ["missing_required_checks", "missing_required_approvals"],
+        )
+        self.assertEqual(
+            scenarios["active incident remains primary when multiple issues exist"].state[
+                "decision"
+            ]["blockers"],
+            [
+                "failed_check_integration_tests",
+                "missing_approval_security",
+                "active_production_incident",
+                "missing_rollback_plan",
+            ],
+        )
+
+        request_result = run_json_file(
+            program,
+            json.loads(request.read_text()),
+            request="review release",
+            json_file=request,
+        )
+        payload = request_result.as_payload()
+        self.assertEqual(sorted(payload["result"].keys()), ["decision"])
+        self.assertNotIn("release", payload["result"])
+
+        decision = payload["result"]["decision"]
+        self.assertEqual(decision["status"], "needs_review")
+        self.assertEqual(decision["reason"], "missing_approval")
+        self.assertEqual(decision["ready_checks"], 2)
+        self.assertEqual(decision["failed_checks"], 0)
+        self.assertEqual(decision["missing_approval_count"], 1)
+        self.assertEqual(decision["blockers"], ["missing_approval_security"])
+        self.assertEqual(decision["warnings"], ["risky_flag_new_checkout"])
 
     def test_output_contract_failure_is_reported(self):
         with self.assertRaisesRegex(GwtError, "OUTPUT contract failed for decision"):

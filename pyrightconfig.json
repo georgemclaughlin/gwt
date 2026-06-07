@@ -18,6 +18,7 @@
     "gwtlang/typegen.py",
     "gwtlang/validation.py",
     "examples/vendor_onboarding",
+    "examples/release_readiness",
     "examples/exact_pricing"
   ],
   "typeCheckingMode": "strict",
