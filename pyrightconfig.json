@@ -3,6 +3,7 @@
     "gwtlang/api.py",
     "gwtlang/host.py",
     "gwtlang/inspection.py",
+    "gwtlang/lsp.py",
     "gwtlang/payloads.py",
     "gwtlang/service.py",
     "gwtlang/symbols.py",

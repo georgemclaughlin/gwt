@@ -75,6 +75,12 @@ class AnalysisPayload(TypedDict):
     symbols: list[SymbolPayload]
 
 
+class CompletionItemPayload(TypedDict):
+    label: str
+    kind: int
+    detail: NotRequired[str]
+
+
 class CheckPayload(AnalysisPayload):
     ok: bool
 

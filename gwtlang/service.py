@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .checker import Diagnostic, check_program
 from .errors import GwtError
-from .payloads import AnalysisPayload
+from .payloads import AnalysisPayload, CompletionItemPayload
 from .runtime import (
     Action,
     ImportPolicy,
@@ -126,8 +126,8 @@ def definition_at(analysis: Analysis, line: int, character: int) -> SourceRange 
     return symbol.source_range if symbol is not None else None
 
 
-def completion_items(analysis: Analysis) -> list[dict[str, object]]:
-    items: list[dict[str, object]] = []
+def completion_items(analysis: Analysis) -> list[CompletionItemPayload]:
+    items: list[CompletionItemPayload] = []
     seen: set[tuple[str, str]] = set()
     for symbol in analysis.symbols.symbols:
         if symbol.kind not in {"behavior", "request", "dto", "dto_field", "parameter", "local", "contract"}:
@@ -136,7 +136,7 @@ def completion_items(analysis: Analysis) -> list[dict[str, object]]:
         if key in seen:
             continue
         seen.add(key)
-        item: dict[str, object] = {
+        item: CompletionItemPayload = {
             "label": symbol.name,
             "kind": _completion_kind(symbol.kind),
         }

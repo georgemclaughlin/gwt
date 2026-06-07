@@ -3,14 +3,73 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Literal, TypedDict
 from urllib.parse import unquote, urlparse
 
+from .payloads import CompletionItemPayload, RangePayload
 from .service import Analysis, analyze_source, completion_items, definition_at, hover_at
-from .symbols import SourceRange, Symbol
+from .symbols import SourceRange
 
 
 TEXT_DOCUMENT_SYNC_FULL = 1
+
+
+class LspDiagnosticPayload(TypedDict):
+    range: RangePayload
+    severity: int
+    code: str
+    source: Literal["gwt"]
+    message: str
+
+
+class LspDocumentSymbolPayload(TypedDict):
+    name: str
+    kind: int
+    detail: str
+    range: RangePayload
+    selectionRange: RangePayload
+
+
+class _LspMarkupContentPayload(TypedDict):
+    kind: Literal["markdown"]
+    value: str
+
+
+class LspHoverPayload(TypedDict):
+    contents: _LspMarkupContentPayload
+    range: RangePayload
+
+
+class LspDefinitionPayload(TypedDict):
+    uri: str
+    range: RangePayload
+
+
+class LspCompletionListPayload(TypedDict):
+    isIncomplete: bool
+    items: list[CompletionItemPayload]
+
+
+class _LspCompletionOptionsPayload(TypedDict):
+    resolveProvider: bool
+
+
+class _LspServerCapabilitiesPayload(TypedDict):
+    textDocumentSync: int
+    documentSymbolProvider: bool
+    hoverProvider: bool
+    definitionProvider: bool
+    completionProvider: _LspCompletionOptionsPayload
+
+
+class _LspServerInfoPayload(TypedDict):
+    name: str
+    version: str
+
+
+class _LspInitializeResultPayload(TypedDict):
+    capabilities: _LspServerCapabilitiesPayload
+    serverInfo: _LspServerInfoPayload
 
 
 class LspServer:
@@ -128,7 +187,7 @@ def run_stdio_server() -> int:
     return LspServer(sys.stdin.buffer, sys.stdout.buffer).run()
 
 
-def lsp_diagnostics(analysis: Analysis) -> list[dict[str, object]]:
+def lsp_diagnostics(analysis: Analysis) -> list[LspDiagnosticPayload]:
     return [
         {
             "range": _lsp_range(diagnostic.line, diagnostic.column, diagnostic.length),
@@ -141,7 +200,7 @@ def lsp_diagnostics(analysis: Analysis) -> list[dict[str, object]]:
     ]
 
 
-def lsp_document_symbols(analysis: Analysis) -> list[dict[str, object]]:
+def lsp_document_symbols(analysis: Analysis) -> list[LspDocumentSymbolPayload]:
     return [
         {
             "name": symbol.name,
@@ -154,7 +213,7 @@ def lsp_document_symbols(analysis: Analysis) -> list[dict[str, object]]:
     ]
 
 
-def lsp_hover(analysis: Analysis, line: int, character: int) -> dict[str, object] | None:
+def lsp_hover(analysis: Analysis, line: int, character: int) -> LspHoverPayload | None:
     hover = hover_at(analysis, line, character)
     if hover is None:
         return None
@@ -164,14 +223,14 @@ def lsp_hover(analysis: Analysis, line: int, character: int) -> dict[str, object
     }
 
 
-def lsp_definition(analysis: Analysis, line: int, character: int) -> dict[str, object] | None:
+def lsp_definition(analysis: Analysis, line: int, character: int) -> LspDefinitionPayload | None:
     source_range = definition_at(analysis, line, character)
     if source_range is None:
         return None
     return {"uri": filename_to_uri(source_range.filename or analysis.filename), "range": _range_payload(source_range)}
 
 
-def lsp_completion(analysis: Analysis) -> dict[str, object]:
+def lsp_completion(analysis: Analysis) -> LspCompletionListPayload:
     return {"isIncomplete": False, "items": completion_items(analysis)}
 
 
@@ -186,7 +245,7 @@ def uri_to_filename(uri: str) -> str:
     return unquote(parsed.path)
 
 
-def _initialize_result() -> dict[str, object]:
+def _initialize_result() -> _LspInitializeResultPayload:
     return {
         "capabilities": {
             "textDocumentSync": TEXT_DOCUMENT_SYNC_FULL,
@@ -215,11 +274,11 @@ def _symbol_kind(kind: str) -> int:
     }.get(kind, 13)
 
 
-def _range_payload(source_range: SourceRange) -> dict[str, dict[str, int]]:
+def _range_payload(source_range: SourceRange) -> RangePayload:
     return _lsp_range(source_range.line, source_range.column, source_range.length)
 
 
-def _lsp_range(line: int, column: int, length: int) -> dict[str, dict[str, int]]:
+def _lsp_range(line: int, column: int, length: int) -> RangePayload:
     start_line = max(0, line - 1)
     start_character = max(0, column - 1)
     return {
