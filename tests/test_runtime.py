@@ -1659,7 +1659,10 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result.state["cart"]["total"], 42)
 
     def test_request_contract_requires_declared_input_state(self):
-        with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
+        with self.assertRaisesRegex(
+            GwtError,
+            "REQUEST contract failed for cart: missing required input; expected Cart",
+        ):
             run_json_request(
                 '''
                 RECORD Cart

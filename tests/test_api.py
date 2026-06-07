@@ -894,7 +894,10 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(result.as_payload()["result"], {})
 
     def test_run_json_text_validates_missing_request_contract(self):
-        with self.assertRaisesRegex(GwtError, "REQUEST contract failed for cart: unknown path: cart"):
+        with self.assertRaisesRegex(
+            GwtError,
+            "REQUEST contract failed for cart: missing required input; expected Cart",
+        ):
             run_json_text(
                 """
                 RECORD Cart
@@ -907,6 +910,27 @@ class PublicApiTests(unittest.TestCase):
                 """,
                 {},
                 request="checkout cart",
+            )
+
+    def test_run_json_text_reports_missing_output_contract(self):
+        with self.assertRaisesRegex(
+            GwtError,
+            "OUTPUT contract failed for decision: missing required output; expected Decision",
+        ):
+            run_json_text(
+                """
+                RECORD Decision
+                  status: text
+
+                REQUEST review item
+                  GIVEN item is text
+
+                  WHEN print item
+
+                  OUTPUT decision is Decision
+                """,
+                {"item": "abc"},
+                request="review item",
             )
 
     def test_run_json_text_reports_null_for_typed_contract_mismatch(self):
