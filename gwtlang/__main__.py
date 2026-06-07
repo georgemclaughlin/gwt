@@ -334,7 +334,7 @@ def check_command(args: argparse.Namespace) -> int:
             )
         print(
             f"OK {args.file} "
-            f"({payload['dtos']} records, {payload['requests']} requests, "
+            f"({payload['records']} records, {payload['requests']} requests, "
             f"{payload['behaviors']} behaviors, {payload['scenarios']} scenarios)"
         )
     return 0

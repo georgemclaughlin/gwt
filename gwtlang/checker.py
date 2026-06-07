@@ -12,8 +12,8 @@ from .runtime import (
     Action,
     ContractBinding,
     DecisionBlock,
-    DtoValidation,
-    DTO_TYPES,
+    RecordValidation,
+    RECORD_TYPES,
     FindBlock,
     ForBlock,
     IfBlock,
@@ -129,7 +129,7 @@ class Checker:
         self.actions_by_name = self._index_actions(program.actions)
 
     def check(self) -> list[Diagnostic]:
-        self._check_dto_field_types()
+        self._check_record_field_types()
         self._check_behavior_signatures()
         for action in self.program.actions:
             self._check_action(action)
@@ -140,13 +140,13 @@ class Checker:
             self._check_scenario(scenario)
         return self.diagnostics
 
-    def _check_dto_field_types(self) -> None:
-        for dto in self.program.dtos.values():
-            self._check_record_field_path_overlaps(dto.name, dto.fields, dto.field_lines)
-            for field, value_type in dto.fields.items():
+    def _check_record_field_types(self) -> None:
+        for record in self.program.records.values():
+            self._check_record_field_path_overlaps(record.name, record.fields, record.field_lines)
+            for field, value_type in record.fields.items():
                 if not self._is_known_type(value_type):
                     self._add_line(
-                        dto.field_lines[field],
+                        record.field_lines[field],
                         f"unknown record field type: {value_type}",
                         "GWT014",
                     )
@@ -244,12 +244,12 @@ class Checker:
         if binding.value_type == "any" and _has_descendant_path(scope, binding.path):
             return True
 
-        dto = self.program.dtos.get(binding.value_type)
-        if dto is None:
+        record = self.program.records.get(binding.value_type)
+        if record is None:
             return False
 
         saw_descendant = False
-        for field, expected_type in dto.fields.items():
+        for field, expected_type in record.fields.items():
             field_path = f"{binding.path}.{field}"
             actual_type = scope.types.get(field_path)
             if actual_type is None:
@@ -440,8 +440,8 @@ class Checker:
     def _scope_from_givens(self, givens: list[Any], base: Scope | None = None) -> Scope:
         scope = base.copy() if base is not None else Scope(set())
         for given in givens:
-            if isinstance(given, DtoValidation):
-                self._add_typed_name(scope, given.path, given.dto_name)
+            if isinstance(given, RecordValidation):
+                self._add_typed_name(scope, given.path, given.record_name)
             elif isinstance(given, TableAssignment):
                 scope.names.add(given.path)
                 scope.types[given.path] = f"list<{given.item_type}>" if given.item_type is not None else "list"
@@ -464,9 +464,9 @@ class Checker:
     def _add_typed_name(self, scope: Scope, name: str, value_type: str) -> None:
         scope.names.add(name)
         scope.types[name] = value_type
-        dto = self.program.dtos.get(value_type)
-        if dto is not None:
-            for field_name, field_type in dto.fields.items():
+        record = self.program.records.get(value_type)
+        if record is not None:
+            for field_name, field_type in record.fields.items():
                 scope.types[f"{name}.{field_name}"] = field_type
             return
         variant = self.program.variants.get(value_type)
@@ -653,9 +653,9 @@ class Checker:
             scope.types[f"{name}.{field}"] = value_type
 
     def _check_given(self, statement: Any) -> None:
-        if isinstance(statement, DtoValidation):
-            if statement.dto_name not in self.program.dtos and statement.dto_name not in self.program.variants:
-                self._add_line(statement.line, f"unknown record: {statement.dto_name}", "GWT014")
+        if isinstance(statement, RecordValidation):
+            if statement.record_name not in self.program.records and statement.record_name not in self.program.variants:
+                self._add_line(statement.line, f"unknown record: {statement.record_name}", "GWT014")
             return
         if isinstance(statement, TableAssignment):
             self._check_path(statement.path, statement.line)
@@ -684,8 +684,8 @@ class Checker:
     def _check_table_type(self, statement: TableAssignment) -> None:
         if statement.item_type is None:
             return
-        dto = self.program.dtos.get(statement.item_type)
-        if dto is None:
+        record = self.program.records.get(statement.item_type)
+        if record is None:
             if statement.item_type in self.program.variants:
                 self._add_line(
                     statement.line,
@@ -699,7 +699,7 @@ class Checker:
             return
 
         actual_fields = set(statement.rows[0])
-        expected_fields = set(dto.fields)
+        expected_fields = set(record.fields)
         missing = sorted(expected_fields - actual_fields)
         if missing:
             self._add_line(statement.line, f"GIVEN table for {statement.item_type} missing field: {missing[0]}", "GWT014")
@@ -709,7 +709,7 @@ class Checker:
 
         for row in statement.rows:
             for field, value in row.items():
-                expected_type = dto.fields.get(field)
+                expected_type = record.fields.get(field)
                 if expected_type is None or _has_placeholder(value):
                     continue
                 expression = self._check_expression(value, statement.line)
@@ -1205,8 +1205,8 @@ class Checker:
         if not _is_type_syntax(value_type):
             return False
         if (
-            value_type in DTO_TYPES
-            or value_type in self.program.dtos
+            value_type in RECORD_TYPES
+            or value_type in self.program.records
             or value_type in self.program.variants
             or _literal_union_values(value_type) is not None
         ):
@@ -1214,7 +1214,7 @@ class Checker:
         item_type = _list_item_type(value_type)
         if item_type is None:
             return False
-        return item_type in DTO_TYPES or item_type in self.program.dtos or item_type in self.program.variants
+        return item_type in RECORD_TYPES or item_type in self.program.records or item_type in self.program.variants
 
     def _check_expression(self, text: str, line: Line) -> Expr | None:
         if _has_placeholder(text):

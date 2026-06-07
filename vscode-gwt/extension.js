@@ -684,7 +684,7 @@ function sourceLineKind(sourcePath, line) {
     if (/^OUTPUT\b/.test(stripped)) {
       return "contract";
     }
-    if (/^(PROGRAM|BACKGROUND|SCENARIO|USE|RECORD|DTO)\b/.test(stripped)) {
+    if (/^(PROGRAM|BACKGROUND|SCENARIO|USE|RECORD)\b/.test(stripped)) {
       return "declaration";
     }
     if (/^THEN returns\b/.test(stripped)) {

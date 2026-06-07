@@ -439,10 +439,10 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         payload = json.loads(stdout.getvalue())
-        self.assertEqual(payload["dtos"], 0)
+        self.assertEqual(payload["records"], 0)
         self.assertEqual(payload["behaviors"], 1)
         self.assertEqual(payload["scenarios"], 1)
-        self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["schemaVersion"], 3)
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["diagnostics"], [])
         self.assertTrue(any(symbol["kind"] == "behavior" for symbol in payload["symbols"]))

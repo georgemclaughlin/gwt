@@ -19,7 +19,7 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
-record         = ("RECORD" | "DTO") name, record_definition_block ;
+record         = "RECORD" name, record_definition_block ;
 record_definition_block
                = record_field+ ;
 record_field   = name ":" type | name ":", record_definition_block ;

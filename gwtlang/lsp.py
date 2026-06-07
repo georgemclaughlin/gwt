@@ -264,8 +264,8 @@ def _diagnostic_severity(severity: str) -> int:
 
 def _symbol_kind(kind: str) -> int:
     return {
-        "dto": 5,
-        "dto_field": 8,
+        "record": 5,
+        "record_field": 8,
         "behavior": 12,
         "parameter": 13,
         "local": 13,

@@ -571,7 +571,7 @@ npx --yes pyright@1.1.410 --project pyrightconfig.json
 
 GWT validates named request inputs and outputs at runtime, so Pydantic is not a
 required dependency for ordinary host integration. Add host-side Pydantic models
-only when an application needs its own pre-GWT DTO validation layer.
+only when an application needs its own pre-GWT request validation layer.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 

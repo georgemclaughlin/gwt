@@ -61,7 +61,7 @@ rules = compile_file(
 )
 ```
 
-Run with host-owned DTO mapping:
+Run with host-owned request mapping:
 
 ```python
 execution = rules.run_json(

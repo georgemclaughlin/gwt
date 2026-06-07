@@ -75,26 +75,26 @@ class SymbolTable:
 def build_symbol_table(program: Program) -> SymbolTable:
     symbols: list[Symbol] = []
 
-    for dto in program.dtos.values():
+    for record in program.records.values():
         symbols.append(
             Symbol(
-                dto.name,
-                "dto",
-                SourceRange(dto.filename, dto.line, dto.column, dto.length),
-                detail=f"RECORD {dto.name}",
+                record.name,
+                "record",
+                SourceRange(record.filename, record.line, record.column, record.length),
+                detail=f"RECORD {record.name}",
             )
         )
-        for field_name, field_type in dto.fields.items():
-            field_line = dto.field_lines.get(field_name)
+        for field_name, field_type in record.fields.items():
+            field_line = record.field_lines.get(field_name)
             if field_line is None:
                 continue
             symbols.append(
                 Symbol(
                     field_name,
-                    "dto_field",
+                    "record_field",
                     _line_range(field_line),
                     detail=field_type,
-                    container=dto.name,
+                    container=record.name,
                 )
             )
 
@@ -102,7 +102,7 @@ def build_symbol_table(program: Program) -> SymbolTable:
         symbols.append(
             Symbol(
                 variant.name,
-                "dto",
+                "record",
                 SourceRange(variant.filename, variant.line, variant.column, variant.length),
                 detail=f"RECORD {variant.name} is one of",
             )
@@ -111,7 +111,7 @@ def build_symbol_table(program: Program) -> SymbolTable:
             symbols.append(
                 Symbol(
                     case.name,
-                    "dto_field",
+                    "record_field",
                     SourceRange(case.filename, case.line, case.column, case.length),
                     detail="kind",
                     container=variant.name,
@@ -124,7 +124,7 @@ def build_symbol_table(program: Program) -> SymbolTable:
                 symbols.append(
                     Symbol(
                         field_name,
-                        "dto_field",
+                        "record_field",
                         _line_range(field_line),
                         detail=field_type,
                         container=f"{variant.name}.{case.name}",

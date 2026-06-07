@@ -18,7 +18,7 @@ from .runtime import (
 )
 from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class Analysis:
             "file": self.filename,
             "program": self.program.name if self.program is not None else None,
             "requests": len(self.program.requests) if self.program is not None else 0,
-            "dtos": len(self.program.dtos) if self.program is not None else 0,
+            "records": len(self.program.records) if self.program is not None else 0,
             "behaviors": len(self.program.actions) if self.program is not None else 0,
             "scenarios": len(self.program.scenarios) if self.program is not None else 0,
             "diagnostics": [diagnostic.as_payload(self.filename) for diagnostic in self.diagnostics],
@@ -130,7 +130,7 @@ def completion_items(analysis: Analysis) -> list[CompletionItemPayload]:
     items: list[CompletionItemPayload] = []
     seen: set[tuple[str, str]] = set()
     for symbol in analysis.symbols.symbols:
-        if symbol.kind not in {"behavior", "request", "dto", "dto_field", "parameter", "local", "contract"}:
+        if symbol.kind not in {"behavior", "request", "record", "record_field", "parameter", "local", "contract"}:
             continue
         key = (symbol.name, symbol.kind)
         if key in seen:
@@ -195,7 +195,7 @@ def _range_contains(source_range: SourceRange, line: int, character: int) -> boo
 
 
 def _hover_text(symbol: Symbol) -> str:
-    label = "record" if symbol.kind == "dto" else symbol.kind.replace("_", " ")
+    label = "record" if symbol.kind == "record" else symbol.kind.replace("_", " ")
     parts = [f"{label}: {symbol.name}"]
     if symbol.detail:
         parts.append(symbol.detail)
@@ -206,7 +206,7 @@ def _hover_text(symbol: Symbol) -> str:
 
 def _find_named_symbol(analysis: Analysis, name: str) -> Symbol | None:
     for symbol in analysis.symbols.symbols:
-        if symbol.name == name and symbol.kind in {"behavior", "request", "dto", "dto_field", "parameter", "local", "contract"}:
+        if symbol.name == name and symbol.kind in {"behavior", "request", "record", "record_field", "parameter", "local", "contract"}:
             return symbol
     return None
 
@@ -292,8 +292,8 @@ def _completion_kind(symbol_kind: str) -> int:
     return {
         "behavior": 3,
         "request": 2,
-        "dto": 7,
-        "dto_field": 5,
+        "record": 7,
+        "record_field": 5,
         "parameter": 6,
         "local": 6,
         "contract": 6,

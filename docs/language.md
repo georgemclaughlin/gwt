@@ -180,9 +180,8 @@ RECORD Account
     name: text # invalid: owner.name overlaps owner
 ```
 
-Records are contracts only; they do not define behavior or methods. `DTO` is
-accepted as a legacy alias for `RECORD`; `gwt format` emits the canonical
-`RECORD` spelling.
+Records are contracts only; they do not define behavior or methods. `RECORD`
+is the only source spelling for record contracts.
 
 Records can also describe values that are one of several named kinds:
 

@@ -143,7 +143,7 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("expected 'set path to value'", messages)
 
-    def test_reports_set_type_mismatch_for_known_dto_field(self):
+    def test_reports_set_type_mismatch_for_known_record_field(self):
         messages = check_messages(
             """
             RECORD Cart
@@ -158,7 +158,7 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("set cart.total expected number, got text", messages)
 
-    def test_reports_add_type_mismatch_for_known_dto_field(self):
+    def test_reports_add_type_mismatch_for_known_record_field(self):
         messages = check_messages(
             """
             RECORD Cart
@@ -173,7 +173,7 @@ class CheckerTests(unittest.TestCase):
 
         self.assertIn("add to cart.total expected number, got text", messages)
 
-    def test_reports_subtract_type_mismatch_for_known_dto_field(self):
+    def test_reports_subtract_type_mismatch_for_known_record_field(self):
         messages = check_messages(
             """
             RECORD Cart
@@ -439,7 +439,7 @@ class CheckerTests(unittest.TestCase):
 
         self.assertEqual(messages, [])
 
-    def test_reports_unknown_dto_field_type(self):
+    def test_reports_unknown_record_field_type(self):
         messages = check_messages(
             """
             RECORD Order
