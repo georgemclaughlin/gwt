@@ -95,6 +95,31 @@ class TypeGenerationTests(unittest.TestCase):
         self.assertIn("amount: string;", result.source)
         self.assertIn('export type GwtRequestName = "price order";', result.source)
 
+    def test_generation_emits_type_aliases(self):
+        source = """
+        TYPE DecisionStatus is "new" | "approved"
+        TYPE DecisionHistory is list<DecisionStatus>
+
+        RECORD Decision
+          status: DecisionStatus
+          history: DecisionHistory
+
+        REQUEST review decision
+          GIVEN decision is Decision
+          WHEN print decision.status
+          OUTPUT decision is Decision
+        """
+
+        typescript = generate_typescript_text(source).source
+        python = generate_python_text(source).source
+
+        self.assertIn('export type DecisionStatus = "new" | "approved";', typescript)
+        self.assertIn("export type DecisionHistory = DecisionStatus[];", typescript)
+        self.assertIn("status: DecisionStatus;", typescript)
+        self.assertIn("DecisionStatus: TypeAlias = Literal['new', 'approved']", python)
+        self.assertIn("DecisionHistory: TypeAlias = list[DecisionStatus]", python)
+        self.assertIn("status: DecisionStatus", python)
+
     def test_python_generation_emits_exact_numeric_types_request_constant_and_client(self):
         result = generate_python_text(
             """

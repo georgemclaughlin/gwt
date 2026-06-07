@@ -109,8 +109,8 @@ printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
   --json
 ```
 
-GWT can also generate TypeScript declaration files from `RECORD`, `REQUEST`, and
-`OUTPUT` contracts:
+GWT can also generate TypeScript declaration files from `TYPE`, `RECORD`,
+`REQUEST`, and `OUTPUT` contracts:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
@@ -118,9 +118,9 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript \
 ```
 
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
-client-library model and boundary rules. The first CLI-backed Node/TypeScript
-client lives in [`clients/typescript`](clients/typescript), with a typed host
-example in
+client-library model and boundary rules. JSON Schemas for CLI/API payloads live
+in [`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
+lives in [`clients/typescript`](clients/typescript), with a typed host example in
 [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
 
 ## Quick Start
@@ -193,6 +193,21 @@ THEN greeting == "hello world"
 ```
 
 `GIVEN` creates state, `WHEN` does something, and `THEN` checks the result.
+
+## Type Aliases
+
+Use `TYPE` to name reusable domain states and collection item types:
+
+```gwt
+TYPE DecisionStatus is "new" | "approved" | "needs_review"
+TYPE DecisionHistory is list<DecisionStatus>
+
+RECORD Decision
+  status: DecisionStatus
+  history: DecisionHistory
+```
+
+Aliases are type contracts only; they do not create runtime values.
 
 ## Reusable Behavior
 
@@ -431,10 +446,10 @@ existing project.
 `gwt format file.gwt --check` is intended for CI.
 
 `gwt types file.gwt --language typescript` generates host TypeScript
-declarations from `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
-`--language python` to generate Python `TypedDict` request/output shapes plus a
-program-specific client wrapper. The generated types are integration helpers;
-the `.gwt` file remains the source of truth.
+declarations from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
+`--language python` to generate Python `TypeAlias`, `TypedDict` request/output
+shapes plus a program-specific client wrapper. The generated types are
+integration helpers; the `.gwt` file remains the source of truth.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
@@ -542,8 +557,8 @@ for a client object. For already-prevalidated internal loops,
 validation. `GwtClient.typescript_types()` and `generate_typescript_file()`
 generate TypeScript declarations from checked GWT contracts.
 `GwtClient.python_types()` and `generate_python_file()` generate Python helper
-modules with `TypedDict` records, request/output aliases, request-name
-constants, and a request-specific client wrapper.
+modules with `TypeAlias` declarations, `TypedDict` records, request/output
+aliases, request-name constants, and a request-specific client wrapper.
 
 Runnable Python host examples live in
 [`examples/vendor_onboarding/host_app.py`](examples/vendor_onboarding/host_app.py)

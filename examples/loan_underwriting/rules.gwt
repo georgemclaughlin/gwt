@@ -53,44 +53,41 @@ WHEN ratios <application> into <decision>
 WHEN credit <score>
   GIVEN score is number
   THEN returns number
-  IF score >= 760
-    RETURN 0
-  ELSE
-    IF score >= 700
+  DECIDE
+    WHEN score >= 760
+      RETURN 0
+    WHEN score >= 700
       RETURN 1
+    WHEN score >= 660
+      RETURN 2
     ELSE
-      IF score >= 660
-        RETURN 2
-      ELSE
-        RETURN 5
+      RETURN 5
 
 WHEN dti <ratio>
   GIVEN ratio is number
   THEN returns number
-  IF ratio <= 0.36
-    RETURN 0
-  ELSE
-    IF ratio <= 0.43
+  DECIDE
+    WHEN ratio <= 0.36
+      RETURN 0
+    WHEN ratio <= 0.43
       RETURN 1
+    WHEN ratio <= 0.50
+      RETURN 3
     ELSE
-      IF ratio <= 0.50
-        RETURN 3
-      ELSE
-        RETURN 6
+      RETURN 6
 
 WHEN ltv <ratio>
   GIVEN ratio is number
   THEN returns number
-  IF ratio <= 0.80
-    RETURN 0
-  ELSE
-    IF ratio <= 0.90
+  DECIDE
+    WHEN ratio <= 0.80
+      RETURN 0
+    WHEN ratio <= 0.90
       RETURN 1
+    WHEN ratio <= 0.97
+      RETURN 3
     ELSE
-      IF ratio <= 0.97
-        RETURN 3
-      ELSE
-        RETURN 5
+      RETURN 5
 
 WHEN bankruptcy <count>
   GIVEN count is number
@@ -133,30 +130,28 @@ WHEN history <application> into <decision>
 WHEN classify <application> into <decision>
   GIVEN application is LoanApplication
   AND decision is LoanDecision
-  IF application.bankruptcies > 0 and application.credit_score < 700
-    set decision.status to "denied"
-    set decision.reason to "recent_bankruptcy"
-  ELSE
-    IF decision.risk_points <= 4 and decision.dti <= 0.43 and decision.ltv <= 0.90 and decision.reserve_months >= 3
+  DECIDE
+    WHEN application.bankruptcies > 0 and application.credit_score < 700
+      set decision.status to "denied"
+      set decision.reason to "recent_bankruptcy"
+    WHEN decision.risk_points <= 4 and decision.dti <= 0.43 and decision.ltv <= 0.90 and decision.reserve_months >= 3
       set decision.status to "approved"
       set decision.reason to "strong_application"
+    WHEN decision.risk_points <= 8 and decision.dti <= 0.50 and decision.ltv <= 0.97 and decision.reserve_months >= 1
+      set decision.status to "manual_review"
+      set decision.reason to "compensating_factors"
     ELSE
-      IF decision.risk_points <= 8 and decision.dti <= 0.50 and decision.ltv <= 0.97 and decision.reserve_months >= 1
-        set decision.status to "manual_review"
-        set decision.reason to "compensating_factors"
-      ELSE
-        set decision.status to "denied"
-        set decision.reason to "risk_too_high"
+      set decision.status to "denied"
+      set decision.reason to "risk_too_high"
 
 WHEN price <decision>
   GIVEN decision is LoanDecision
-  IF decision.status == "approved"
-    IF decision.risk_points <= 2
+  DECIDE
+    WHEN decision.status == "approved" and decision.risk_points <= 2
       set decision.interest_rate to 6.25
-    ELSE
+    WHEN decision.status == "approved"
       set decision.interest_rate to 6.5
-  ELSE
-    IF decision.status == "manual_review"
+    WHEN decision.status == "manual_review"
       set decision.interest_rate to 7.25
     ELSE
       set decision.interest_rate to 0

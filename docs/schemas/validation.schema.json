@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/validation.schema.json",
+  "title": "GWT Validation Payload",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "file", "program", "phases", "diagnostics"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "ok": { "type": "boolean" },
+    "file": { "type": "string" },
+    "program": { "type": ["string", "null"] },
+    "phases": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/phase" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "diagnostic.schema.json" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "required": ["checked", "ok"],
+      "properties": {
+        "checked": { "type": "boolean" },
+        "ok": { "type": "boolean" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "diagnostic.schema.json" }
+        },
+        "changed": { "type": ["boolean", "null"] },
+        "skipped": { "type": "string" },
+        "scenario_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

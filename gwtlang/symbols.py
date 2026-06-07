@@ -131,6 +131,16 @@ def build_symbol_table(program: Program) -> SymbolTable:
                     )
                 )
 
+    for alias in program.type_aliases.values():
+        symbols.append(
+            Symbol(
+                alias.name,
+                "type_alias",
+                SourceRange(alias.filename, alias.line, alias.column, alias.length),
+                detail=alias.value_type,
+            )
+        )
+
     for request in program.requests.values():
         symbols.append(
             Symbol(

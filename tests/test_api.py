@@ -13,6 +13,7 @@ from gwtlang import (
     generate_python_text,
     generate_typescript_text,
     inspect_file,
+    inspect_source,
     run_file,
     run_json_file,
     run_json_text,
@@ -517,9 +518,10 @@ class PublicApiTests(unittest.TestCase):
             payload = result.as_payload()
 
         self.assertTrue(result.ok)
-        self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["schemaVersion"], 3)
         self.assertEqual(payload["requests"][0]["name"], "checkout cart")
         self.assertEqual(payload["counts"]["requests"], 1)
+        self.assertEqual(payload["counts"]["typeAliases"], 0)
 
     def test_inspect_file_reports_request_contracts(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -545,6 +547,20 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(request["name"], "classify review")
         self.assertEqual(request["inputs"][0]["path"], "status")
         self.assertEqual(request["outputs"][0]["path"], "status")
+
+    def test_inspect_file_reports_type_aliases(self):
+        payload = inspect_source(
+            """
+            TYPE DecisionStatus is "new" | "approved"
+
+            RECORD Decision
+              status: DecisionStatus
+            """
+        ).as_payload()
+
+        self.assertEqual(payload["typeAliases"][0]["name"], "DecisionStatus")
+        self.assertEqual(payload["typeAliases"][0]["type"], '"new" | "approved"')
+        self.assertEqual(payload["counts"]["typeAliases"], 1)
 
     def test_inspect_file_accepts_public_import_policy_options(self):
         with tempfile.TemporaryDirectory() as temp_dir:

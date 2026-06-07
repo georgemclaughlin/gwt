@@ -1,0 +1,37 @@
+PROGRAM type aliases
+
+TYPE DecisionStatus is "new" | "approved" | "needs_review"
+TYPE DecisionHistory is list<DecisionStatus>
+TYPE ReviewReasons is list<"ready" | "manual_review">
+
+RECORD Decision
+  status: DecisionStatus
+  history: DecisionHistory
+  reasons: ReviewReasons
+
+REQUEST review decision
+  GIVEN decision is Decision
+
+  WHEN approve decision
+
+  OUTPUT decision is Decision
+
+  THEN decision.status == "approved"
+
+WHEN approve <decision>
+  GIVEN decision is Decision
+  set decision.status to "approved"
+  append "approved" to decision.history
+  append "ready" to decision.reasons
+
+SCENARIO approved decision records history
+GIVEN decision is Decision
+  status: "new"
+  history: []
+  reasons: []
+
+REQUEST review decision
+
+THEN decision.status == "approved"
+AND decision.history == ["approved"]
+AND decision.reasons == ["ready"]

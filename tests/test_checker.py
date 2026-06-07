@@ -57,6 +57,42 @@ class CheckerTests(unittest.TestCase):
 
         self.assertTrue(any(diagnostic.code == "GWT018" and diagnostic.severity == "warning" for diagnostic in diagnostics))
 
+    def test_lint_warnings_are_opt_in(self):
+        program = parse_program(
+            """
+            RECORD Cart
+              items: list
+              total: number
+
+            REQUEST price cart
+              GIVEN cart is Cart
+
+              WHEN price cart
+
+              OUTPUT cart is Cart
+
+            WHEN price <cart>
+              set cart.total to 1
+            """
+        )
+
+        default_codes = {diagnostic.code for diagnostic in check_program(program)}
+        lint_diagnostics = check_program(program, lint=True)
+        lint_codes = {diagnostic.code for diagnostic in lint_diagnostics}
+
+        self.assertNotIn("GWT101", default_codes)
+        self.assertIn("GWT101", lint_codes)
+        self.assertIn("GWT102", lint_codes)
+        self.assertIn("GWT103", lint_codes)
+        self.assertIn("GWT104", lint_codes)
+        self.assertTrue(
+            all(
+                diagnostic.severity == "warning"
+                for diagnostic in lint_diagnostics
+                if diagnostic.code.startswith("GWT1")
+            )
+        )
+
     def test_accepts_explicit_signature_parameters(self):
         messages = check_messages(
             """

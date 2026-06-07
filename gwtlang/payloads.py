@@ -69,6 +69,7 @@ class AnalysisPayload(TypedDict):
     program: str | None
     requests: int
     records: int
+    typeAliases: int
     behaviors: int
     scenarios: int
     diagnostics: list[DiagnosticPayload]
@@ -122,6 +123,15 @@ class RecordPayload(TypedDict):
     line: int
     column: int
     fields: list[RecordFieldPayload]
+
+
+class TypeAliasPayload(TypedDict):
+    name: str
+    kind: Literal["typeAlias"]
+    type: str
+    file: str
+    line: int
+    column: int
 
 
 class OneOfRecordCasePayload(TypedDict):
@@ -192,6 +202,7 @@ class ScenarioInspectionPayload(TypedDict):
 
 class InspectionCountsPayload(TypedDict):
     records: int
+    typeAliases: int
     oneOfRecords: int
     requests: int
     behaviors: int
@@ -207,6 +218,7 @@ class InspectionPayload(TypedDict):
     imports: list[ImportPayload]
     diagnostics: list[DiagnosticPayload]
     records: list[RecordPayload]
+    typeAliases: list[TypeAliasPayload]
     oneOfRecords: list[OneOfRecordPayload]
     requests: list[RequestPayload]
     behaviors: list[BehaviorPayload]

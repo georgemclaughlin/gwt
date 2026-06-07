@@ -191,6 +191,10 @@ The current design is documented in
 is that kind-based branching should remain a behavior-body step over domain
 state, not a general-purpose pattern matching expression system.
 
+Deferred ideas that need more pressure before syntax, including explicit
+initialization helpers and first-match collection, are tracked in
+[`deferred-language-ideas.md`](deferred-language-ideas.md).
+
 ## Missing Values
 
 GWT should treat missing, unknown, and not-applicable values as domain states,

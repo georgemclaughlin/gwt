@@ -447,6 +447,43 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["diagnostics"], [])
         self.assertTrue(any(symbol["kind"] == "behavior" for symbol in payload["symbols"]))
 
+    def test_check_command_lint_reports_opt_in_warnings(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                """
+                RECORD Cart
+                  items: list
+                  total: number
+
+                REQUEST price cart
+                  GIVEN cart is Cart
+
+                  WHEN price cart
+
+                  OUTPUT cart is Cart
+
+                WHEN price <cart>
+                  set cart.total to 1
+                """
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["check", str(program_path), "--lint", "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        codes = {diagnostic["code"] for diagnostic in payload["diagnostics"]}
+        categories = {diagnostic["category"] for diagnostic in payload["diagnostics"]}
+
+        self.assertEqual(status, 0)
+        self.assertTrue(payload["ok"])
+        self.assertIn("GWT101", codes)
+        self.assertIn("GWT102", codes)
+        self.assertIn("GWT103", codes)
+        self.assertIn("GWT104", codes)
+        self.assertEqual(categories, {"lint"})
+
     def test_check_command_reports_static_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path = Path(temp_dir) / "workflow.gwt"
@@ -540,12 +577,13 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         payload = json.loads(stdout.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["schemaVersion"], 3)
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["program"], "checkout")
         self.assertTrue(payload["programHash"].startswith("sha256:"))
         self.assertEqual(payload["imports"][0]["path"], "./types.gwt")
         self.assertEqual(payload["counts"]["records"], 1)
+        self.assertEqual(payload["counts"]["typeAliases"], 0)
         self.assertEqual(payload["records"][0]["name"], "Cart")
         self.assertEqual(payload["requests"][0]["name"], "checkout cart")
         self.assertEqual(payload["behaviors"][0]["parameters"], ["cart"])
@@ -589,6 +627,33 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertTrue(payload["phases"]["format"]["ok"])
         self.assertTrue(payload["phases"]["test"]["ok"])
         self.assertEqual(payload["phases"]["test"]["scenario_count"], 1)
+
+    def test_validate_command_lint_includes_check_phase_warnings(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "workflow.gwt"
+            program_path.write_text(
+                "REQUEST increment count\n"
+                "  GIVEN count is number\n"
+                "\n"
+                "  WHEN increment count\n"
+                "\n"
+                "  OUTPUT count is number\n"
+                "\n"
+                "WHEN increment <count>\n"
+                "  add 1 to count\n"
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["validate", str(program_path), "--lint", "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        codes = {diagnostic["code"] for diagnostic in payload["diagnostics"]}
+
+        self.assertEqual(status, 0)
+        self.assertTrue(payload["ok"])
+        self.assertIn("GWT101", codes)
+        self.assertIn("GWT103", codes)
 
     def test_validate_command_skips_test_for_host_rules_without_scenarios(self):
         with tempfile.TemporaryDirectory() as temp_dir:

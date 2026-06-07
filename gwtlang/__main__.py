@@ -102,6 +102,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print check result as JSON.",
     )
+    check_parser.add_argument(
+        "--lint",
+        action="store_true",
+        help="Include opt-in lint warnings.",
+    )
 
     inspect_parser = subparsers.add_parser(
         "inspect",
@@ -135,6 +140,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-test",
         action="store_true",
         help="Skip embedded scenario execution.",
+    )
+    validate_parser.add_argument(
+        "--lint",
+        action="store_true",
+        help="Include opt-in lint warnings in the check phase.",
     )
 
     format_parser = subparsers.add_parser("format", help="Format a GWT file.")
@@ -304,7 +314,7 @@ def test_command(args: argparse.Namespace) -> int:
 
 
 def check_command(args: argparse.Namespace) -> int:
-    analysis = analyze_file(args.file, import_policy=import_policy_from_args(args))
+    analysis = analyze_file(args.file, import_policy=import_policy_from_args(args), lint=args.lint)
     source = analysis.source
     errors = [diagnostic for diagnostic in analysis.diagnostics if diagnostic.severity == "error"]
     payload = {"ok": not errors, **analysis.as_payload()}
@@ -357,6 +367,7 @@ def validate_command(args: argparse.Namespace) -> int:
         import_policy=import_policy_from_args(args),
         check_format=not args.skip_format,
         run_tests=not args.skip_test,
+        lint=args.lint,
     )
     payload = result.as_payload()
     if args.json:

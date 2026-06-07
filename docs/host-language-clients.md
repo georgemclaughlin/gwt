@@ -195,6 +195,12 @@ The process contract is intentionally small:
 Native clients can later replace the process call with an embedded runtime or a
 service call while preserving the same public API.
 
+JSON Schemas for the stable command payloads live in
+[`docs/schemas`](schemas/). They cover diagnostics, execution envelopes,
+`check --json`, `inspect --json`, and `validate --json`. Client libraries
+should treat them as additive contracts: new optional fields may appear, while
+incompatible shape changes should bump the payload `schemaVersion`.
+
 ## Runtime Shapes
 
 GWT can support several client implementation strategies without changing the
@@ -331,7 +337,8 @@ payloads.
 
 Add type generation after the client contract is stable. Start with TypeScript:
 
-- `RECORD` declarations become interfaces or type aliases
+- `TYPE` declarations become type aliases
+- `RECORD` declarations become interfaces
 - literal unions become string literal unions
 - named request inputs become the input type
 - named request outputs become the result type
@@ -356,12 +363,13 @@ Client libraries become more useful when host types can be generated from GWT
 contracts:
 
 - `RECORD` declarations map to host DTOs/classes/interfaces.
+- `TYPE` declarations map to host type aliases.
 - named request input bindings map to the required input object.
 - named request output bindings map to the result object.
 - Literal unions map to enums or string literal unions when the host supports
   them.
 
-For TypeScript, GWT emits declarations for records, one-of records,
+For TypeScript, GWT emits declarations for type aliases, records, one-of records,
 `GwtRequestName`, `GwtRequests`, `GwtOutputs`, `GwtRequest`, and `GwtOutput`:
 
 ```sh
@@ -392,9 +400,10 @@ Generated TypeScript uses nested object shape for dotted contract paths. Lower
 level CLI JSON may still provide state through dotted path keys such as
 `"cart.total"`, or through nested objects that produce the same state.
 
-For Python, GWT emits `TypedDict` records, one-of record unions, per-request
-request/output shapes, request-name constants, `GwtRequestName`, `GwtRequest`,
-`GwtOutput`, and a program-specific client wrapper:
+For Python, GWT emits `TypeAlias` declarations, `TypedDict` records, one-of
+record unions, per-request request/output shapes, request-name constants,
+`GwtRequestName`, `GwtRequest`, `GwtOutput`, and a program-specific client
+wrapper:
 
 ```sh
 gwt types examples/exact_pricing/rules.gwt --language python \

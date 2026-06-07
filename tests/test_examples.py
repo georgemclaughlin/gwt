@@ -20,6 +20,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/input_normalization/rules.gwt"),
     Path("examples/vendor_onboarding/rules.gwt"),
     Path("examples/exact_pricing/rules.gwt"),
+    Path("examples/type_aliases.gwt"),
 ]
 
 
@@ -59,6 +60,12 @@ class ExampleProgramTests(unittest.TestCase):
             with self.subTest(program=str(program)):
                 result = check_file(program)
                 self.assertTrue(result.ok, result.as_payload())
+
+    def test_json_schema_files_are_valid_json(self):
+        for schema in Path("docs/schemas").glob("*.schema.json"):
+            with self.subTest(schema=str(schema)):
+                payload = json.loads(schema.read_text())
+                self.assertEqual(payload["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
     def test_all_example_programs_run(self):
         for program in example_program_files():

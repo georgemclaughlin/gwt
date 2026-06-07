@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/check.schema.json",
+  "title": "GWT Check Payload",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "file", "program", "requests", "records", "typeAliases", "behaviors", "scenarios", "diagnostics", "symbols"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "ok": { "type": "boolean" },
+    "file": { "type": "string" },
+    "program": { "type": ["string", "null"] },
+    "requests": { "type": "integer", "minimum": 0 },
+    "records": { "type": "integer", "minimum": 0 },
+    "typeAliases": { "type": "integer", "minimum": 0 },
+    "behaviors": { "type": "integer", "minimum": 0 },
+    "scenarios": { "type": "integer", "minimum": 0 },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "diagnostic.schema.json" }
+    },
+    "symbols": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/symbol" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sourceRange": {
+      "type": "object",
+      "required": ["file", "line", "column", "length", "range"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "length": { "type": "integer", "minimum": 1 },
+        "range": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "$ref": "#/$defs/position" },
+            "end": { "$ref": "#/$defs/position" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "position": {
+      "type": "object",
+      "required": ["line", "character"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 0 },
+        "character": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "symbol": {
+      "allOf": [
+        { "$ref": "#/$defs/sourceRange" },
+        {
+          "type": "object",
+          "required": ["name", "kind"],
+          "properties": {
+            "name": { "type": "string" },
+            "kind": { "type": "string" },
+            "detail": { "type": "string" },
+            "container": { "type": "string" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

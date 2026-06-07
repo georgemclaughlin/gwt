@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/diagnostic.schema.json",
+  "title": "GWT Diagnostic",
+  "type": "object",
+  "required": ["file", "line", "column", "length", "range", "code", "severity", "source", "path", "category", "message"],
+  "properties": {
+    "file": { "type": "string" },
+    "line": { "type": "integer", "minimum": 1 },
+    "column": { "type": "integer", "minimum": 1 },
+    "length": { "type": "integer", "minimum": 1 },
+    "range": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "$ref": "#/$defs/position" },
+        "end": { "$ref": "#/$defs/position" }
+      },
+      "additionalProperties": false
+    },
+    "code": { "type": "string" },
+    "severity": { "enum": ["error", "warning", "information", "hint"] },
+    "source": { "type": "string" },
+    "path": { "type": "string" },
+    "category": { "type": "string" },
+    "message": { "type": "string" },
+    "expected": { "type": "string" },
+    "actual": { "type": "string" },
+    "help": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "position": {
+      "type": "object",
+      "required": ["line", "character"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 0 },
+        "character": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

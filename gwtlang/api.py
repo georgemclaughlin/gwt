@@ -171,8 +171,8 @@ class GwtClient:
 
     path: str | Path
 
-    def check(self) -> CheckResult:
-        return check_file(self.path)
+    def check(self, *, lint: bool = False) -> CheckResult:
+        return check_file(self.path, lint=lint)
 
     def run(
         self,
@@ -257,6 +257,7 @@ class GwtClient:
         allow_absolute_imports: bool = True,
         check_format: bool = True,
         run_tests: bool = True,
+        lint: bool = False,
     ) -> ValidationResult:
         return validate_file(
             self.path,
@@ -264,6 +265,7 @@ class GwtClient:
             allow_absolute_imports=allow_absolute_imports,
             check_format=check_format,
             run_tests=run_tests,
+            lint=lint,
         )
 
 
@@ -321,11 +323,13 @@ def check_file(
     *,
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
+    lint: bool = False,
 ) -> CheckResult:
     return CheckResult(
         analyze_file(
             path,
             import_policy=_import_policy(import_roots, allow_absolute_imports),
+            lint=lint,
         )
     )
 
@@ -363,12 +367,14 @@ def validate_file(
     allow_absolute_imports: bool = True,
     check_format: bool = True,
     run_tests: bool = True,
+    lint: bool = False,
 ) -> ValidationResult:
     return _validate_file(
         path,
         import_policy=_import_policy(import_roots, allow_absolute_imports),
         check_format=check_format,
         run_tests=run_tests,
+        lint=lint,
     )
 
 
@@ -378,12 +384,14 @@ def check_text(
     *,
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
+    lint: bool = False,
 ) -> CheckResult:
     return CheckResult(
         analyze_source(
             source,
             filename,
             import_policy=_import_policy(import_roots, allow_absolute_imports),
+            lint=lint,
         )
     )
 

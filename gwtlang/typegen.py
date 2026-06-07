@@ -96,6 +96,10 @@ def _checked_program(source: str, filename: str) -> Program:
 def _emit_typescript(program: Program, filename: str) -> str:
     lines = [f"// Generated from {filename}. Do not edit by hand.", ""]
 
+    for alias in program.type_aliases.values():
+        lines.extend(_emit_typescript_alias(alias.name, alias.value_type))
+        lines.append("")
+
     for record in program.records.values():
         lines.extend(_emit_record(record))
         lines.append("")
@@ -110,6 +114,10 @@ def _emit_typescript(program: Program, filename: str) -> str:
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _emit_typescript_alias(name: str, value_type: str) -> list[str]:
+    return [f"export type {name} = {_typescript_type(value_type)};"]
 
 
 def _emit_record(record: RecordDefinition) -> list[str]:
@@ -149,6 +157,7 @@ def _emit_named_request_types(program: Program) -> list[str]:
     lines: list[str] = []
     names: dict[str, tuple[str, str]] = {}
     used_names = {
+        *program.type_aliases,
         *program.records,
         *program.variants,
         "GwtRequestName",
@@ -322,6 +331,8 @@ class _PythonEmitter:
             "compile_file",
         }
         self.type_names: dict[str, str] = {}
+        for alias_name in program.type_aliases:
+            self.type_names[alias_name] = self._unique_type_name(_python_type_name(alias_name))
         for record_name in program.records:
             self.type_names[record_name] = self._unique_type_name(_python_type_name(record_name))
         for variant_name in program.variants:
@@ -339,6 +350,10 @@ class _PythonEmitter:
             "from gwtlang import CompiledProgram, ExecutionResult, compile_file",
             "",
         ]
+
+        for alias in self.program.type_aliases.values():
+            lines.append(f"{self.type_names[alias.name]}: TypeAlias = {self._python_type(alias.value_type)}")
+            lines.append("")
 
         for record in self.program.records.values():
             lines.extend(self._emit_record(record))

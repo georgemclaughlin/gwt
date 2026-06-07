@@ -38,6 +38,7 @@ from .runtime import (
     _parse_exists_statement,
     _parse_find_statement,
     _parse_sum_projection,
+    _resolve_type_alias,
     _signature_matches as _runtime_signature_matches,
     _signature_has_explicit_parameters,
     _signature_parameter_name,
@@ -103,6 +104,8 @@ def _diagnostic_category(code: str, message: str) -> str:
         return "format"
     if code == "GWT800":
         return "runtime"
+    if code.startswith("GWT1"):
+        return "lint"
     if code.startswith("GWT"):
         return "check"
     return "unknown"
@@ -117,19 +120,21 @@ class Scope:
         return Scope(set(self.names), dict(self.types))
 
 
-def check_program(program: Program) -> list[Diagnostic]:
-    checker = Checker(program)
+def check_program(program: Program, *, lint: bool = False) -> list[Diagnostic]:
+    checker = Checker(program, lint=lint)
     return checker.check()
 
 
 class Checker:
-    def __init__(self, program: Program) -> None:
+    def __init__(self, program: Program, *, lint: bool = False) -> None:
         self.program = program
+        self.lint = lint
         self.diagnostics: list[Diagnostic] = []
         self.actions_by_name = self._index_actions(program.actions)
 
     def check(self) -> list[Diagnostic]:
         self._check_record_field_types()
+        self._check_type_aliases()
         self._check_behavior_signatures()
         for action in self.program.actions:
             self._check_action(action)
@@ -138,6 +143,8 @@ class Checker:
         self._check_background()
         for scenario in self.program.scenarios:
             self._check_scenario(scenario)
+        if self.lint:
+            self._check_lints()
         return self.diagnostics
 
     def _check_record_field_types(self) -> None:
@@ -159,6 +166,114 @@ class Checker:
                             f"unknown record field type: {value_type}",
                             "GWT014",
                         )
+
+    def _check_type_aliases(self) -> None:
+        for alias in self.program.type_aliases.values():
+            try:
+                resolved_type = self._resolve_type(alias.name)
+            except GwtError as exc:
+                self._add(
+                    alias.filename,
+                    alias.line,
+                    str(exc),
+                    "GWT014",
+                    alias.column,
+                    alias.length,
+                )
+                continue
+            if not self._is_known_resolved_type(resolved_type):
+                self._add(
+                    alias.filename,
+                    alias.line,
+                    f"unknown TYPE target: {alias.value_type}",
+                    "GWT014",
+                    alias.column,
+                    alias.length,
+                )
+
+    def _check_lints(self) -> None:
+        request_calls = self._scenario_request_calls()
+        for request in self.program.requests.values():
+            if request.name not in request_calls:
+                self._add_line_warning(
+                    request.line,
+                    f"public REQUEST has no scenario evidence: {request.name}",
+                    "GWT101",
+                )
+            if request.outputs and not request.thens:
+                self._add_line_warning(
+                    request.line,
+                    f"REQUEST {request.name} declares OUTPUT but no request-level THEN invariant",
+                    "GWT103",
+                )
+            for binding in [*request.inputs.values(), *request.outputs.values()]:
+                if binding.value_type == "list":
+                    self._add_line_warning(
+                        binding.line,
+                        f"{binding.kind.upper()} contract uses bare list; prefer list<Type>",
+                        "GWT102",
+                    )
+
+        for record in self.program.records.values():
+            for field, value_type in record.fields.items():
+                if value_type == "list":
+                    self._add_line_warning(
+                        record.field_lines[field],
+                        f"record field {record.name}.{field} uses bare list; prefer list<Type>",
+                        "GWT102",
+                    )
+        for variant in self.program.variants.values():
+            for case in variant.cases.values():
+                for field, value_type in case.fields.items():
+                    if value_type == "list":
+                        self._add_line_warning(
+                            case.field_lines[field],
+                            f"one-of field {variant.name}.{case.name}.{field} uses bare list; prefer list<Type>",
+                            "GWT102",
+                        )
+        for alias in self.program.type_aliases.values():
+            if alias.value_type == "list":
+                self._add(
+                    alias.filename,
+                    alias.line,
+                    f"TYPE {alias.name} aliases bare list; prefer list<Type>",
+                    "GWT102",
+                    alias.column,
+                    alias.length,
+                    severity="warning",
+                )
+
+        for action in self.program.actions:
+            for parameter in _signature_parameters(action.signature):
+                if parameter not in action.contract.inputs:
+                    self._add(
+                        action.filename,
+                        action.line,
+                        f"behavior parameter <{parameter}> has no GIVEN contract",
+                        "GWT104",
+                        action.column,
+                        action.length,
+                        severity="warning",
+                    )
+            for name, value_type in action.contract.inputs.items():
+                if value_type == "list":
+                    line = action.contract.input_lines[name]
+                    self._add_line_warning(
+                        line,
+                        f"behavior contract {name} uses bare list; prefer list<Type>",
+                        "GWT102",
+                    )
+
+    def _scenario_request_calls(self) -> set[str]:
+        calls: set[str] = set()
+        for step in self.program.background.whens:
+            if isinstance(step, RequestCall):
+                calls.add(step.name)
+        for scenario in self.program.scenarios:
+            for step in scenario.whens:
+                if isinstance(step, RequestCall):
+                    calls.add(step.name)
+        return calls
 
     def _check_record_field_path_overlaps(
         self,
@@ -233,7 +348,7 @@ class Checker:
                     f"request input {binding.path} is missing; expected {binding.value_type}",
                     "GWT016",
                 )
-            elif not _assignable(actual_type, binding.value_type):
+            elif not self._assignable(actual_type, binding.value_type):
                 self._add_line(
                     call.line,
                     f"request input {binding.path} expected {binding.value_type}, got {actual_type}",
@@ -244,7 +359,7 @@ class Checker:
         if binding.value_type == "any" and _has_descendant_path(scope, binding.path):
             return True
 
-        record = self.program.records.get(binding.value_type)
+        record = self.program.records.get(self._resolve_type_or_original(binding.value_type))
         if record is None:
             return False
 
@@ -262,7 +377,7 @@ class Checker:
                     return True
                 return False
             saw_descendant = True
-            if not _assignable(actual_type, expected_type):
+            if not self._assignable(actual_type, expected_type):
                 self._add_line(
                     call.line,
                     f"request input {field_path} expected {expected_type}, got {actual_type}",
@@ -464,12 +579,13 @@ class Checker:
     def _add_typed_name(self, scope: Scope, name: str, value_type: str) -> None:
         scope.names.add(name)
         scope.types[name] = value_type
-        record = self.program.records.get(value_type)
+        resolved_type = self._resolve_type_or_original(value_type)
+        record = self.program.records.get(resolved_type)
         if record is not None:
             for field_name, field_type in record.fields.items():
                 scope.types[f"{name}.{field_name}"] = field_type
             return
-        variant = self.program.variants.get(value_type)
+        variant = self.program.variants.get(resolved_type)
         if variant is not None:
             scope.types[f"{name}.kind"] = _variant_kind_type(variant)
 
@@ -498,11 +614,11 @@ class Checker:
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
             self._add_line(statement.iterable, "FOR requires a list", "GWT013")
-        elif iterable_type is not None and not _is_collection_type(iterable_type):
+        elif iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(statement.iterable, "FOR requires a list", "GWT013")
 
         loop_scope = scope.copy()
-        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        item_type = self._list_item_type(iterable_type) if iterable_type is not None else None
         if item_type is not None:
             self._add_typed_name(loop_scope, statement.name, item_type)
         else:
@@ -520,11 +636,11 @@ class Checker:
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
             self._add_line(statement.iterable, "FIND requires a list", "GWT013")
-        elif iterable_type is not None and not _is_collection_type(iterable_type):
+        elif iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(statement.iterable, "FIND requires a list", "GWT013")
 
         find_scope = scope.copy()
-        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        item_type = self._list_item_type(iterable_type) if iterable_type is not None else None
         if item_type is not None:
             self._add_typed_name(find_scope, statement.name, item_type)
         else:
@@ -556,7 +672,12 @@ class Checker:
             self._check_scalar_match_block(statement, scope, expected_return, expression_type)
             return
 
-        variant = self.program.variants.get(expression_type) if expression_type is not None else None
+        resolved_expression_type = (
+            self._resolve_type_or_original(expression_type)
+            if expression_type is not None
+            else None
+        )
+        variant = self.program.variants.get(resolved_expression_type) if resolved_expression_type is not None else None
         if expression_type is not None and variant is None and expression_type != "any":
             self._add_line(statement.expression, f"DEPENDING ON expected one-of record, got {expression_type}", "GWT016")
 
@@ -593,7 +714,7 @@ class Checker:
         expected_return: str | None = None,
         expression_type: str | None = None,
         ) -> None:
-        if expression_type is not None and not _is_scalar_match_type(expression_type):
+        if expression_type is not None and not self._is_scalar_match_type(expression_type):
             self._add_line(
                 statement.expression,
                 f"DEPENDING ON value expected scalar, got {expression_type}",
@@ -611,7 +732,7 @@ class Checker:
             literal_type = _literal_type_name(literal)
             if (
                 expression_type is not None
-                and not _case_literal_matches_expression_type(literal, literal_type, expression_type)
+                and not self._case_literal_matches_expression_type(literal, literal_type, expression_type)
             ):
                 self._add_line(
                     case.line,
@@ -620,7 +741,7 @@ class Checker:
                 )
             self._check_body(case.body, scope.copy(), expected_return)
 
-        literal_values = _literal_union_values(expression_type) if expression_type is not None else None
+        literal_values = self._literal_union_values(expression_type) if expression_type is not None else None
         if literal_values is not None:
             missing = [
                 literal
@@ -654,7 +775,8 @@ class Checker:
 
     def _check_given(self, statement: Any) -> None:
         if isinstance(statement, RecordValidation):
-            if statement.record_name not in self.program.records and statement.record_name not in self.program.variants:
+            record_name = self._resolve_type_or_original(statement.record_name)
+            if record_name not in self.program.records and record_name not in self.program.variants:
                 self._add_line(statement.line, f"unknown record: {statement.record_name}", "GWT014")
             return
         if isinstance(statement, TableAssignment):
@@ -684,7 +806,7 @@ class Checker:
     def _check_table_type(self, statement: TableAssignment) -> None:
         if statement.item_type is None:
             return
-        record = self.program.records.get(statement.item_type)
+        record = self.program.records.get(self._resolve_type_or_original(statement.item_type))
         if record is None:
             if statement.item_type in self.program.variants:
                 self._add_line(
@@ -714,7 +836,7 @@ class Checker:
                     continue
                 expression = self._check_expression(value, statement.line)
                 actual_type = _infer_expression_type(expression, Scope(set())) if expression is not None else None
-                literal_values = _literal_union_values(expected_type)
+                literal_values = self._literal_union_values(expected_type)
                 if literal_values is not None and isinstance(expression, Literal):
                     if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
                         self._add_line(
@@ -723,7 +845,7 @@ class Checker:
                             "GWT016",
                         )
                     continue
-                if actual_type is not None and not _assignable(actual_type, expected_type):
+                if actual_type is not None and not self._assignable(actual_type, expected_type):
                     self._add_line(
                         statement.line,
                         f"GIVEN table field '{field}' expected {expected_type}, got {actual_type}",
@@ -732,7 +854,7 @@ class Checker:
 
     def _check_variant_assignment(self, statement: VariantAssignment) -> None:
         self._check_path(statement.path, statement.line)
-        variant = self.program.variants.get(statement.variant_name)
+        variant = self.program.variants.get(self._resolve_type_or_original(statement.variant_name))
         if variant is None:
             self._add_line(statement.line, f"unknown one-of record: {statement.variant_name}", "GWT014")
             return
@@ -756,7 +878,7 @@ class Checker:
                 continue
             expression = self._check_expression(value, statement.field_lines.get(field, statement.line))
             actual_type = _infer_expression_type(expression, Scope(set())) if expression is not None else None
-            literal_values = _literal_union_values(expected_type)
+            literal_values = self._literal_union_values(expected_type)
             if literal_values is not None and isinstance(expression, Literal):
                 if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
                     self._add_line(
@@ -765,7 +887,7 @@ class Checker:
                         "GWT016",
                     )
                 continue
-            if actual_type is not None and not _assignable(actual_type, expected_type):
+            if actual_type is not None and not self._assignable(actual_type, expected_type):
                 self._add_line(
                     statement.field_lines.get(field, statement.line),
                     f"GIVEN {variant.name} field '{field}' expected {expected_type}, got {actual_type}",
@@ -798,7 +920,7 @@ class Checker:
                 self._add_line(line, "RETURN requires a value", "GWT009")
                 return
             actual_type = self._check_expression_or_action(expression, line, scope, require_return_value=True)
-            if expected_return is not None and actual_type is not None and not _assignable(actual_type, expected_return):
+            if expected_return is not None and actual_type is not None and not self._assignable(actual_type, expected_return):
                 self._add_line(line, f"RETURN expected {expected_return}, got {actual_type}", "GWT016")
             return
 
@@ -929,7 +1051,7 @@ class Checker:
             path = path.strip()
             parsed = self._check_expression(value.strip(), line)
             value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
-            if value_type is not None and not _is_collection_type(value_type):
+            if value_type is not None and not self._is_collection_type(value_type):
                 self._add_line(line, f"count requires a list, got {value_type}", "GWT016")
             self._check_path(path, line)
             self._check_assignment_type("count into", path, "integer", line, scope)
@@ -951,7 +1073,7 @@ class Checker:
             path = path.strip()
             parsed = self._check_expression(value.strip(), line)
             value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
-            if value_type is not None and not _is_collection_type(value_type):
+            if value_type is not None and not self._is_collection_type(value_type):
                 self._add_line(line, f"sum requires a list, got {value_type}", "GWT016")
             elif value_type is not None:
                 self._check_sum_item_type(value_type, line)
@@ -986,43 +1108,43 @@ class Checker:
         expected_type = scope.types.get(path)
         if expected_type is None or actual_type is None:
             return
-        literal_values = _literal_union_values(expected_type)
+        literal_values = self._literal_union_values(expected_type)
         if literal_values is not None and isinstance(expression, Literal):
             if not any(_value_matches_literal(expression.value, literal) for literal in literal_values):
                 self._add_line(line, f"{command} {path} expected {expected_type}, got {actual_type}", "GWT016")
             return
-        if not _assignable(actual_type, expected_type):
+        if not self._assignable(actual_type, expected_type):
             self._add_line(line, f"{command} {path} expected {expected_type}, got {actual_type}", "GWT016")
 
     def _check_add_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
         expected_type = scope.types.get(path)
         if expected_type is None or actual_type is None:
             return
-        if not _assignable(actual_type, expected_type):
+        if not self._assignable(actual_type, expected_type):
             self._add_line(line, f"add to {path} expected {expected_type}, got {actual_type}", "GWT016")
 
     def _check_append_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
         expected_type = scope.types.get(path)
         if expected_type is None:
             return
-        item_type = _list_item_type(expected_type)
+        item_type = self._list_item_type(expected_type)
         if expected_type != "list" and item_type is None:
             self._add_line(line, f"append to {path} expected list, got {expected_type}", "GWT016")
             return
-        if item_type is not None and actual_type is not None and not _assignable(actual_type, item_type):
+        if item_type is not None and actual_type is not None and not self._assignable(actual_type, item_type):
             self._add_line(line, f"append to {path} expected {item_type}, got {actual_type}", "GWT016")
 
     def _check_subtract_type(self, path: str, actual_type: str | None, line: Line, scope: Scope) -> None:
         expected_type = scope.types.get(path)
-        if expected_type is not None and not _is_numeric_type(expected_type) and expected_type != "any":
+        if expected_type is not None and not self._is_numeric_type(expected_type) and expected_type != "any":
             self._add_line(line, f"subtract from {path} expected numeric, got {expected_type}", "GWT016")
             return
-        if actual_type is not None and not _is_numeric_type(actual_type) and actual_type != "any":
+        if actual_type is not None and not self._is_numeric_type(actual_type) and actual_type != "any":
             self._add_line(line, f"subtract value expected numeric, got {actual_type}", "GWT016")
 
     def _check_sum_item_type(self, value_type: str, line: Line) -> None:
-        item_type = _list_item_type(value_type)
-        if item_type is None or item_type == "any" or _is_numeric_type(item_type):
+        item_type = self._list_item_type(value_type)
+        if item_type is None or item_type == "any" or self._is_numeric_type(item_type):
             return
         self._add_line(line, f"sum requires a list of numbers, got {value_type}", "GWT016")
 
@@ -1035,11 +1157,11 @@ class Checker:
         projection_text, name, iterable_text, path = projection
         expression = self._check_expression(iterable_text.strip(), line)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
-        if iterable_type is not None and not _is_collection_type(iterable_type):
+        if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"sum requires a list, got {iterable_type}", "GWT016")
 
         projection_scope = scope.copy()
-        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        item_type = self._list_item_type(iterable_type) if iterable_type is not None else None
         if item_type is not None:
             self._add_typed_name(projection_scope, name, item_type)
         else:
@@ -1048,7 +1170,7 @@ class Checker:
 
         projected = self._check_expression(projection_text, line)
         projected_type = _infer_expression_type(projected, projection_scope) if projected is not None else None
-        if projected_type is not None and projected_type != "any" and not _is_numeric_type(projected_type):
+        if projected_type is not None and projected_type != "any" and not self._is_numeric_type(projected_type):
             self._add_line(line, f"sum projection expected number, got {projected_type}", "GWT016")
         self._check_path(path, line)
         result_type = _sum_result_type(f"list<{projected_type}>") if projected_type is not None else None
@@ -1062,11 +1184,11 @@ class Checker:
         _optional, name, iterable_text, condition, path = parsed
         expression = self._check_expression(iterable_text.strip(), line)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
-        if iterable_type is not None and not _is_collection_type(iterable_type):
+        if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"find requires a list, got {iterable_type}", "GWT016")
 
         find_scope = scope.copy()
-        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        item_type = self._list_item_type(iterable_type) if iterable_type is not None else None
         if item_type is not None:
             self._add_typed_name(find_scope, name, item_type)
         else:
@@ -1085,11 +1207,11 @@ class Checker:
         name, iterable_text, condition, path = parsed
         expression = self._check_expression(iterable_text.strip(), line)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
-        if iterable_type is not None and not _is_collection_type(iterable_type):
+        if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"exists requires a list, got {iterable_type}", "GWT016")
 
         exists_scope = scope.copy()
-        item_type = _list_item_type(iterable_type) if iterable_type is not None else None
+        item_type = self._list_item_type(iterable_type) if iterable_type is not None else None
         if item_type is not None:
             self._add_typed_name(exists_scope, name, item_type)
         else:
@@ -1187,7 +1309,7 @@ class Checker:
             if expected_type is None:
                 continue
             actual_type = self._argument_type(actual, line, scope)
-            if actual_type is not None and not _assignable(actual_type, expected_type):
+            if actual_type is not None and not self._assignable(actual_type, expected_type):
                 errors.append(f"behavior argument '{parameter_name}' expected {expected_type}, got {actual_type}")
         return errors
 
@@ -1204,6 +1326,13 @@ class Checker:
     def _is_known_type(self, value_type: str) -> bool:
         if not _is_type_syntax(value_type):
             return False
+        try:
+            resolved_type = self._resolve_type(value_type)
+        except GwtError:
+            return False
+        return self._is_known_resolved_type(resolved_type)
+
+    def _is_known_resolved_type(self, value_type: str) -> bool:
         if (
             value_type in RECORD_TYPES
             or value_type in self.program.records
@@ -1214,7 +1343,54 @@ class Checker:
         item_type = _list_item_type(value_type)
         if item_type is None:
             return False
-        return item_type in RECORD_TYPES or item_type in self.program.records or item_type in self.program.variants
+        return self._is_known_resolved_type(item_type)
+
+    def _resolve_type(self, value_type: str) -> str:
+        return _resolve_type_alias(value_type, self.program.type_aliases)
+
+    def _resolve_type_or_original(self, value_type: str) -> str:
+        try:
+            return self._resolve_type(value_type)
+        except GwtError:
+            return value_type
+
+    def _literal_union_values(self, value_type: str) -> tuple[Any, ...] | None:
+        return _literal_union_values(self._resolve_type_or_original(value_type))
+
+    def _list_item_type(self, value_type: str | None) -> str | None:
+        if value_type is None:
+            return None
+        return _list_item_type(self._resolve_type_or_original(value_type))
+
+    def _is_collection_type(self, value_type: str) -> bool:
+        resolved_type = self._resolve_type_or_original(value_type)
+        return _is_collection_type(resolved_type)
+
+    def _is_numeric_type(self, value_type: str | None) -> bool:
+        if value_type is None:
+            return False
+        return _is_numeric_type(self._resolve_type_or_original(value_type))
+
+    def _assignable(self, actual_type: str, expected_type: str) -> bool:
+        return _assignable(
+            self._resolve_type_or_original(actual_type),
+            self._resolve_type_or_original(expected_type),
+        )
+
+    def _is_scalar_match_type(self, value_type: str) -> bool:
+        return _is_scalar_match_type(self._resolve_type_or_original(value_type))
+
+    def _case_literal_matches_expression_type(
+        self,
+        literal: Any,
+        literal_type: str | None,
+        expression_type: str,
+    ) -> bool:
+        return _case_literal_matches_expression_type(
+            literal,
+            literal_type,
+            self._resolve_type_or_original(expression_type),
+        )
 
     def _check_expression(self, text: str, line: Line) -> Expr | None:
         if _has_placeholder(text):
@@ -1267,6 +1443,9 @@ class Checker:
 
     def _add_line(self, line: Line, message: str, code: str = "GWT000") -> None:
         self._add(line.filename, line.number, message, code, line.column, line.length)
+
+    def _add_line_warning(self, line: Line, message: str, code: str) -> None:
+        self._add(line.filename, line.number, message, code, line.column, line.length, severity="warning")
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:

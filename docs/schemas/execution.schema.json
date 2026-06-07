@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/execution.schema.json",
+  "title": "GWT Execution Payload",
+  "type": "object",
+  "required": ["ok", "file", "request_file", "scenario_count", "scenarios", "state", "result", "output"],
+  "properties": {
+    "ok": { "const": true },
+    "file": { "type": ["string", "null"] },
+    "request_file": { "type": ["string", "null"] },
+    "scenario_count": { "type": "integer", "minimum": 0 },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "state", "result", "output"],
+        "properties": {
+          "name": { "type": "string" },
+          "state": true,
+          "result": true,
+          "output": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "state": true,
+    "result": true,
+    "output": true
+  },
+  "additionalProperties": false
+}
