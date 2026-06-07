@@ -3,6 +3,7 @@
     "gwtlang/__init__.py",
     "gwtlang/api.py",
     "gwtlang/__main__.py",
+    "gwtlang/checker.py",
     "gwtlang/debugger.py",
     "gwtlang/errors.py",
     "gwtlang/expressions.py",
