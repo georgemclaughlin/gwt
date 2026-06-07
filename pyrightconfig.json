@@ -4,6 +4,8 @@
     "gwtlang/host.py",
     "gwtlang/inspection.py",
     "gwtlang/payloads.py",
+    "gwtlang/service.py",
+    "gwtlang/symbols.py",
     "gwtlang/typegen.py",
     "gwtlang/validation.py",
     "examples/vendor_onboarding",
