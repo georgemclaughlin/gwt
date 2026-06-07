@@ -6,10 +6,13 @@ const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
 
 let client;
 let debugFactory;
+let outputChannel;
 
 function activate(context) {
   const config = vscode.workspace.getConfiguration("gwt");
   const serverOptions = serverOptionsFromConfig(context, config);
+  outputChannel = vscode.window.createOutputChannel("GWT");
+  context.subscriptions.push(outputChannel);
 
   const clientOptions = {
     documentSelector: [{ scheme: "file", language: "gwt" }],
@@ -26,6 +29,26 @@ function activate(context) {
   context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("gwt", new GwtDebugConfigurationProvider()));
   context.subscriptions.push(
     vscode.commands.registerCommand("gwt.debugCurrentFile", () => debugCurrentFile())
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gwt.validateCurrentFile", () =>
+      runGwtCurrentFile(context, "validate", [], "GWT validation passed.")
+    )
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gwt.testCurrentFile", () =>
+      runGwtCurrentFile(context, "test", [], "GWT scenarios passed.")
+    )
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gwt.runCurrentFile", () =>
+      runGwtCurrentFile(context, "run", ["--json"], "GWT run completed.")
+    )
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gwt.formatCurrentFile", () =>
+      runGwtCurrentFile(context, "format", [], "GWT formatting completed.")
+    )
   );
 }
 
@@ -142,6 +165,60 @@ function debugCurrentFile() {
     program: editor.document.uri.fsPath,
     cwd: folder?.uri.fsPath || path.dirname(editor.document.uri.fsPath),
   });
+}
+
+async function runGwtCurrentFile(context, subcommand, extraArgs, successMessage) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== "gwt") {
+    vscode.window.showErrorMessage("Open a .gwt file before running a GWT command.");
+    return;
+  }
+
+  if (editor.document.isDirty) {
+    await editor.document.save();
+  }
+
+  const file = editor.document.uri.fsPath;
+  const folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  const cwd = folder?.uri.fsPath || path.dirname(file);
+  const processOptions = gwtProcessOptions(context, cwd);
+  const commandArgs = [...processOptions.baseArgs, subcommand, file, ...extraArgs];
+  await runGwtCommand(processOptions, commandArgs, successMessage);
+}
+
+function runGwtCommand(processOptions, commandArgs, successMessage) {
+  return new Promise((resolve) => {
+    const commandLine = `${processOptions.command} ${commandArgs.map(quoteArg).join(" ")}`;
+    outputChannel.show(true);
+    outputChannel.appendLine(`> ${commandLine}`);
+
+    const child = childProcess.spawn(processOptions.command, commandArgs, {
+      cwd: processOptions.cwd,
+      env: processOptions.env,
+      shell: false,
+    });
+
+    child.stdout.on("data", (data) => outputChannel.append(data.toString()));
+    child.stderr.on("data", (data) => outputChannel.append(data.toString()));
+    child.on("error", (error) => {
+      outputChannel.appendLine(error.message);
+      vscode.window.showErrorMessage(`GWT command failed: ${error.message}`);
+      resolve();
+    });
+    child.on("close", (code) => {
+      outputChannel.appendLine(`GWT exited with code ${code ?? 0}`);
+      if ((code ?? 0) === 0) {
+        vscode.window.showInformationMessage(successMessage);
+      } else {
+        vscode.window.showErrorMessage(`GWT exited with code ${code ?? 0}. See the GWT output channel.`);
+      }
+      resolve();
+    });
+  });
+}
+
+function quoteArg(value) {
+  return /\s/.test(value) ? JSON.stringify(value) : value;
 }
 
 class GwtDebugAdapterFactory {

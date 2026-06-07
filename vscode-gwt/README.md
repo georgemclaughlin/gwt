@@ -37,6 +37,11 @@ Expected behavior:
 - hover shows record, behavior, parameter, local, and field information.
 - go-to-definition works for behavior calls.
 - completion offers known GWT symbols.
+- **GWT: Validate Current File** saves the active file and runs `gwt validate`.
+- **GWT: Test Current File** saves the active file and runs `gwt test`.
+- **GWT: Run Current File** saves the active file and runs `gwt run --json`.
+- **GWT: Format Current File** saves the active file and runs `gwt format`.
+- command output streams to the **GWT** output channel.
 - pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter.
 - line breakpoints pause execution before matching executable GWT lines.
 - breakpoint markers are verified against executable GWT lines before launch.

@@ -35,7 +35,15 @@ decision.data_review_required
 
 ## Commands
 
-Static check:
+Production-style local/CI validation:
+
+```sh
+python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
+  --import-root examples/vendor_onboarding \
+  --no-absolute-imports
+```
+
+Static check only:
 
 ```sh
 python -m gwtlang check examples/vendor_onboarding/rules.gwt
@@ -67,12 +75,32 @@ python -m gwtlang types examples/vendor_onboarding/rules.gwt \
 Use those declarations from a TypeScript host app:
 [`clients/typescript/examples/vendor-onboarding.ts`](../../clients/typescript/examples/vendor-onboarding.ts).
 
+Generate Python host helpers:
+
+```sh
+python -m gwtlang types examples/vendor_onboarding/rules.gwt \
+  --language python \
+  --output examples/vendor_onboarding/rules_types.py
+```
+
+Run the Python host app:
+
+```sh
+python examples/vendor_onboarding/host_app.py
+```
+
+The Python app validates the GWT module, inspects the public request manifest,
+compiles the rules once, and calls `review vendor` through the generated
+`VendorOnboardingClient`.
+
 ## What This Demonstrates
 
 - typed named request inputs and outputs
 - typed JSON-shaped host input
 - generated TypeScript host types, including `GwtRequestName`
+- generated Python `TypedDict` contracts and request-specific client wrapper
 - typed tables for documents and risk signals
 - explicit missing and expired document handling
+- first-matching decision classification with `DECIDE`
 - deterministic status and reason output
 - embedded scenarios for approved, review, and rejected outcomes

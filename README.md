@@ -1,5 +1,7 @@
 # GWT
 
+[![CI](https://github.com/georgemclaughlin/gwt/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/georgemclaughlin/gwt/actions/workflows/ci.yml)
+
 GWT is a small experimental programming language built around executable
 `GIVEN / WHEN / THEN` programs. It is for deterministic workflows, rules,
 examples, and typed request/response programs where the spec is also the
@@ -507,12 +509,15 @@ generate TypeScript declarations from checked GWT contracts.
 modules with `TypedDict` records, request/output aliases, request-name
 constants, and a request-specific client wrapper.
 
-A fuller runnable Python host example lives in
-[`examples/exact_pricing/host_app.py`](examples/exact_pricing/host_app.py).
-It validates, inspects, compiles, calls a named request through generated Python
-types in [`examples/exact_pricing/rules_types.py`](examples/exact_pricing/rules_types.py),
-rejects accidental float input for `decimal`, and demonstrates trusted
-prevalidated execution.
+Runnable Python host examples live in
+[`examples/vendor_onboarding/host_app.py`](examples/vendor_onboarding/host_app.py)
+and [`examples/exact_pricing/host_app.py`](examples/exact_pricing/host_app.py).
+The vendor onboarding host is the typed executable-spec module path: it
+validates the GWT file, inspects the public request manifest, compiles once,
+and calls `review vendor` through generated Python types in
+[`examples/vendor_onboarding/rules_types.py`](examples/vendor_onboarding/rules_types.py).
+The exact-pricing host additionally shows exact `decimal` handling, float input
+rejection, and trusted prevalidated execution.
 
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 
@@ -585,6 +590,18 @@ Open the repository root in VS Code, choose **Run GWT VS Code Extension** in the
 Run and Debug panel, then press `F5`. In the Extension Development Host window,
 open a `.gwt` file such as `examples/language_tour/rules.gwt`.
 
+The extension contributes Command Palette actions for the active `.gwt` file:
+
+- `GWT: Validate Current File`
+- `GWT: Test Current File`
+- `GWT: Run Current File`
+- `GWT: Format Current File`
+- `GWT: Debug Current File`
+
+The command output is streamed to the `GWT` output channel. During repository
+development the extension runs `python -m gwtlang` with the repo on
+`PYTHONPATH`; installed extensions fall back to the `gwt` command.
+
 ## Specs And Tests
 
 The current versioned language spec is [`docs/spec/v0.2.md`](docs/spec/v0.2.md).
@@ -600,3 +617,8 @@ Run tests:
 ```sh
 python -m unittest discover
 ```
+
+The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+runs the standard validation gate, checks generated TypeScript and Python
+vendor host fixtures, runs the Python and TypeScript client tests, checks the
+VS Code extension, and verifies whitespace with `git diff --check`.
