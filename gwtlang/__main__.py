@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 from .api import (
+    generate_openapi_file,
     generate_python_file,
     generate_typescript_file,
     run_file,
@@ -44,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
         return format_command(args)
     if args.command == "types":
         return types_command(args)
+    if args.command == "openapi":
+        return openapi_command(args)
     if args.command == "lsp":
         return lsp_command(args)
     if args.command == "debug":
@@ -175,6 +178,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         help="Write generated types to a file instead of stdout.",
+    )
+
+    openapi_parser = subparsers.add_parser(
+        "openapi",
+        help="Generate OpenAPI JSON from named REQUEST contracts.",
+    )
+    add_file_arguments(openapi_parser)
+    add_import_policy_arguments(openapi_parser)
+    openapi_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print OpenAPI as JSON. This is currently the only stdout mode.",
+    )
+    openapi_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write generated OpenAPI JSON to a file instead of stdout.",
     )
 
     subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
@@ -459,6 +479,28 @@ def types_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def openapi_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        result = generate_openapi_file(
+            args.file,
+            import_roots=args.import_root,
+            allow_absolute_imports=not args.no_absolute_imports,
+        )
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    rendered = json.dumps(result.as_payload(), indent=2, sort_keys=True) + "\n"
+    if args.output is not None:
+        args.output.write_text(rendered)
+        print(f"Wrote {args.output}")
+        return 0
+
+    print(rendered, end="")
+    return 0
+
+
 def lsp_command(args: argparse.Namespace) -> int:
     return run_stdio_server()
 
@@ -504,6 +546,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "validate",
         "format",
         "types",
+        "openapi",
         "lsp",
         "debug",
         "debug-lines",

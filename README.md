@@ -117,11 +117,20 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript \
   --output vendor-onboarding.d.ts
 ```
 
+For hosts that consume standard HTTP contracts, GWT can project the same named
+request boundary into OpenAPI:
+
+```sh
+gwt openapi examples/deployable_api/rules.gwt --json
+```
+
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
-client-library model and boundary rules. JSON Schemas for CLI/API payloads live
-in [`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
-lives in [`clients/typescript`](clients/typescript), with a typed host example in
-[`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
+client-library model and boundary rules, and
+[`docs/http-service-design.md`](docs/http-service-design.md) for the OpenAPI
+and future HTTP service direction. JSON Schemas for CLI/API payloads live in
+[`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
+lives in [`clients/typescript`](clients/typescript), with a typed host example
+in [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
 
 ## Quick Start
 
@@ -417,6 +426,7 @@ The CLI currently supports:
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
+gwt openapi examples/deployable_api/rules.gwt --json
 gwt test examples/checkout/scenarios.gwt
 gwt check examples/checkout/rules.gwt
 gwt inspect examples/vendor_onboarding/rules.gwt --json
@@ -453,6 +463,10 @@ declarations from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
 shapes plus a program-specific client wrapper. The generated types are
 integration helpers; the `.gwt` file remains the source of truth.
 
+`gwt openapi file.gwt` generates an OpenAPI 3.1 document from named `REQUEST`
+contracts. Caller-provided `GIVEN` bindings become request body schemas, and
+declared `OUTPUT` bindings become response body schemas.
+
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
 behavior calls, and completions for known language symbols.
@@ -482,6 +496,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/typed_tables.gwt`](examples/typed_tables.gwt) | Typed tables and collection helpers |
 | [`examples/use_import`](examples/use_import) | Paired `USE` import example with an importer and imported module |
 | [`examples/checkout`](examples/checkout) | Checkout workflow split into rules, scenarios, and request-mode input |
+| [`examples/deployable_api`](examples/deployable_api) | Small named-request API example used for OpenAPI generation |
 | [`examples/exact_pricing`](examples/exact_pricing) | Exact decimals, integer counts, scalar branching, named request, and Python host example |
 | [`examples/language_tour`](examples/language_tour) | A compact tour of the current language |
 | [`examples/loan_underwriting`](examples/loan_underwriting) | Larger rules/workflow sample |

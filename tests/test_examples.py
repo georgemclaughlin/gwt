@@ -21,6 +21,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/vendor_onboarding/rules.gwt"),
     Path("examples/release_readiness/rules.gwt"),
     Path("examples/exact_pricing/rules.gwt"),
+    Path("examples/deployable_api/rules.gwt"),
     Path("examples/type_aliases.gwt"),
 ]
 

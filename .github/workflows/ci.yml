@@ -84,6 +84,22 @@ jobs:
           diff -u examples/release_readiness/rules_types.py \
             /tmp/release-readiness.rules_types.py
 
+      - name: Verify generated OpenAPI
+        run: |
+          python -m gwtlang openapi examples/deployable_api/rules.gwt \
+            --output /tmp/gwt-openapi.json
+          python -m json.tool /tmp/gwt-openapi.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          document = json.loads(Path("/tmp/gwt-openapi.json").read_text())
+          assert document["openapi"] == "3.1.0"
+          assert "/requests/triage-ticket" in document["paths"]
+          assert "TriageTicketRequest" in document["components"]["schemas"]
+          assert "TriageTicketOutput" in document["components"]["schemas"]
+          PY
+
       - name: Install TypeScript client dependencies
         working-directory: clients/typescript
         run: npm install

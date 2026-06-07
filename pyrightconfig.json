@@ -11,6 +11,7 @@
     "gwtlang/host.py",
     "gwtlang/inspection.py",
     "gwtlang/lsp.py",
+    "gwtlang/openapi.py",
     "gwtlang/payloads.py",
     "gwtlang/runtime.py",
     "gwtlang/service.py",
