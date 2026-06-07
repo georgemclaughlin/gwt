@@ -519,6 +519,20 @@ and calls `review vendor` through generated Python types in
 The exact-pricing host additionally shows exact `decimal` handling, float input
 rejection, and trusted prevalidated execution.
 
+The Python package includes a `py.typed` marker and typed payload aliases for
+the public host boundary. The scoped Pyright gate in
+[`pyrightconfig.json`](pyrightconfig.json) runs in strict mode for
+`gwtlang/api.py`, the public validation/inspection payload builders, and the
+Python host examples:
+
+```sh
+npx --yes pyright@1.1.410 --project pyrightconfig.json
+```
+
+GWT validates named request inputs and outputs at runtime, so Pydantic is not a
+required dependency for ordinary host integration. Add host-side Pydantic models
+only when an application needs its own pre-GWT DTO validation layer.
+
 `.gwt` request files remain useful for examples and assertion-heavy tests:
 
 ```python
@@ -619,6 +633,7 @@ python -m unittest discover
 ```
 
 The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-runs the standard validation gate, checks generated TypeScript and Python
-vendor host fixtures, runs the Python and TypeScript client tests, checks the
-VS Code extension, and verifies whitespace with `git diff --check`.
+runs the standard validation gate, strict Pyright checking for the Python host
+boundary, generated TypeScript and Python vendor host fixture checks, Python and
+TypeScript client tests, VS Code extension checks, and whitespace verification
+with `git diff --check`.

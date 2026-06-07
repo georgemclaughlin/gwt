@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .errors import GwtError
+from .payloads import SourceRangePayload, SymbolPayload
 from .runtime import (
     Action,
     DecisionBlock,
@@ -26,7 +27,7 @@ class SourceRange:
     column: int
     length: int
 
-    def as_payload(self, fallback_filename: str) -> dict[str, object]:
+    def as_payload(self, fallback_filename: str) -> SourceRangePayload:
         filename = self.filename or fallback_filename
         start_character = max(0, self.column - 1)
         end_character = start_character + max(1, self.length)
@@ -50,7 +51,7 @@ class Symbol:
     detail: str | None = None
     container: str | None = None
 
-    def as_payload(self, fallback_filename: str) -> dict[str, object]:
+    def as_payload(self, fallback_filename: str) -> SymbolPayload:
         payload = {
             "name": self.name,
             "kind": self.kind,
@@ -67,7 +68,7 @@ class Symbol:
 class SymbolTable:
     symbols: list[Symbol]
 
-    def as_payload(self, fallback_filename: str) -> list[dict[str, object]]:
+    def as_payload(self, fallback_filename: str) -> list[SymbolPayload]:
         return [symbol.as_payload(fallback_filename) for symbol in self.symbols]
 
 

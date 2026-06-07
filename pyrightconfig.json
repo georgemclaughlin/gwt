@@ -1,0 +1,17 @@
+{
+  "include": [
+    "gwtlang/api.py",
+    "gwtlang/inspection.py",
+    "gwtlang/payloads.py",
+    "gwtlang/validation.py",
+    "examples/vendor_onboarding",
+    "examples/exact_pricing"
+  ],
+  "typeCheckingMode": "strict",
+  "pythonVersion": "3.11",
+  "exclude": [
+    "**/__pycache__"
+  ],
+  "reportUnusedImport": "none",
+  "reportPrivateUsage": "none"
+}

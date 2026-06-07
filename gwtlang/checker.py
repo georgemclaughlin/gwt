@@ -48,6 +48,7 @@ from .runtime import (
     _variant_kind_type,
 )
 from .symbols import SourceRange
+from .payloads import DiagnosticPayload
 
 PLACEHOLDER_PATTERN = re.compile(r"<([A-Za-z_][A-Za-z0-9_]*)>")
 PATH_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
@@ -71,7 +72,7 @@ class Diagnostic:
         filename = self.filename or fallback_filename
         return f"{filename}:{self.line}:{self.column}: {self.code} {self.message}"
 
-    def as_payload(self, fallback_filename: str) -> dict[str, object]:
+    def as_payload(self, fallback_filename: str) -> DiagnosticPayload:
         source_range = SourceRange(self.filename, self.line, self.column, self.length).as_payload(fallback_filename)
         filename = self.filename or fallback_filename
         payload: dict[str, object] = {
