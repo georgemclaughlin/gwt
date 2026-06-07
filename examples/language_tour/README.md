@@ -13,6 +13,7 @@ The workflow computes a reimbursement decision from expense lines. It uses:
 
 - explicit behavior parameters: `WHEN review <report> into <decision>`
 - record-backed request and output contracts
+- `TYPE` aliases for reusable list and literal-union contracts
 - `count` and projected `sum` for list summaries
 - `FOR ... WHERE` and `append` for approved line descriptions
 - `exists` and `find` for optional policy violations
