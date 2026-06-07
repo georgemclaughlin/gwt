@@ -81,6 +81,13 @@ class CompletionItemPayload(TypedDict):
     detail: NotRequired[str]
 
 
+class DebugLinePayload(TypedDict):
+    file: str
+    line: int
+    column: int
+    text: str
+
+
 class CheckPayload(AnalysisPayload):
     ok: bool
 
