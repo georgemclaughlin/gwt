@@ -4,9 +4,10 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import sys
-from typing import Any, TextIO
+from typing import Any, TextIO, cast
 
 from .errors import GwtError
+from .payloads import DebugLinePayload, JsonValue
 from .runtime import (
     DecisionBlock,
     DtoValidation,
@@ -39,7 +40,7 @@ class DebugLine:
     column: int
     text: str
 
-    def as_payload(self) -> dict[str, object]:
+    def as_payload(self) -> DebugLinePayload:
         return {
             "file": self.filename,
             "line": self.line,
@@ -258,13 +259,15 @@ def _debug_filename(filename: str | None) -> str | None:
     return str(Path(filename).resolve())
 
 
-def _debug_value(value: Any) -> Any:
+def _debug_value(value: object) -> JsonValue:
     if isinstance(value, PathRef):
         return {"pathRef": value.path}
     if isinstance(value, dict):
-        return {str(key): _debug_value(item) for key, item in value.items()}
+        items = cast(dict[object, object], value)
+        return {str(key): _debug_value(item) for key, item in items.items()}
     if isinstance(value, list):
-        return [_debug_value(item) for item in value]
+        items = cast(list[object], value)
+        return [_debug_value(item) for item in items]
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
     return repr(value)
