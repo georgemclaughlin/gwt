@@ -14,7 +14,7 @@ from .expressions import Literal, evaluate_expression, parse_expression
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 RECORD_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
-LIST_TYPE_PATTERN = re.compile(r"^list<([A-Za-z_][A-Za-z0-9_]*)>$")
+LIST_TYPE_PATTERN = re.compile(r"^list<(.+)>$")
 SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
 RESERVED_BEHAVIOR_NAMES = {
     "set",
@@ -207,6 +207,16 @@ class VariantDefinition:
 
 
 @dataclass(frozen=True)
+class TypeAliasDefinition:
+    name: str
+    value_type: str
+    line: int
+    filename: str | None = None
+    column: int = 1
+    length: int = 1
+
+
+@dataclass(frozen=True)
 class RecordValidation:
     path: str
     record_name: str
@@ -280,6 +290,7 @@ class Program:
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
     records: dict[str, RecordDefinition] = field(default_factory=lambda: {})
     variants: dict[str, VariantDefinition] = field(default_factory=lambda: {})
+    type_aliases: dict[str, TypeAliasDefinition] = field(default_factory=lambda: {})
     actions: list[Action] = field(default_factory=lambda: [])
     requests: dict[str, NamedRequest] = field(default_factory=lambda: {})
     scenarios: list[Scenario] = field(default_factory=lambda: [])
@@ -349,6 +360,7 @@ def run_request(
         request_filename,
         initial_records=program.records,
         initial_variants=program.variants,
+        initial_type_aliases=program.type_aliases,
         import_policy=import_policy,
     )
     _validate_external_request_file(request, request_filename)
@@ -366,6 +378,7 @@ def run_request(
         ),
         records={**program.records, **request.records},
         variants={**program.variants, **request.variants},
+        type_aliases={**program.type_aliases, **request.type_aliases},
         actions=[*program.actions, *request.actions],
         requests={**program.requests, **request.requests},
         scenarios=request.scenarios,
@@ -449,6 +462,7 @@ def parse_program(
     importing: set[Path] | None = None,
     initial_records: dict[str, RecordDefinition] | None = None,
     initial_variants: dict[str, VariantDefinition] | None = None,
+    initial_type_aliases: dict[str, TypeAliasDefinition] | None = None,
     allow_unknown_records: bool = False,
     import_policy: ImportPolicy | None = None,
 ) -> Program:
@@ -458,6 +472,8 @@ def parse_program(
         program.records.update(initial_records)
     if initial_variants:
         program.variants.update(initial_variants)
+    if initial_type_aliases:
+        program.type_aliases.update(initial_type_aliases)
     importing = set() if importing is None else importing
     current = Scenario("Main", 0)
     in_background = False
@@ -504,8 +520,23 @@ def parse_program(
 
         if text.startswith("USE "):
             imported = _parse_import(text, line, filename, importing, import_policy)
+            duplicate_types = sorted(
+                (
+                    set(program.records)
+                    | set(program.variants)
+                    | set(program.type_aliases)
+                )
+                & (
+                    set(imported.records)
+                    | set(imported.variants)
+                    | set(imported.type_aliases)
+                )
+            )
+            if duplicate_types:
+                raise GwtError(f"{filename}:{line.number}: type already defined: {duplicate_types[0]}")
             program.records.update(imported.records)
             program.variants.update(imported.variants)
+            program.type_aliases.update(imported.type_aliases)
             program.actions.extend(imported.actions)
             duplicate_requests = sorted(set(program.requests) & set(imported.requests))
             if duplicate_requests:
@@ -517,14 +548,23 @@ def parse_program(
         if text == "RECORD" or text.startswith("RECORD "):
             if _is_record_one_of_header(text):
                 variant, index = _parse_variant(lines, index, filename)
-                if variant.name in program.records or variant.name in program.variants:
+                if variant.name in program.records or variant.name in program.variants or variant.name in program.type_aliases:
                     raise GwtError(f"{filename}:{line.number}: type already defined: {variant.name}")
                 program.variants[variant.name] = variant
             else:
                 record, index = _parse_record(lines, index, filename)
-                if record.name in program.records or record.name in program.variants:
+                if record.name in program.records or record.name in program.variants or record.name in program.type_aliases:
                     raise GwtError(f"{filename}:{line.number}: type already defined: {record.name}")
                 program.records[record.name] = record
+            last_top_keyword = None
+            continue
+
+        if text.startswith("TYPE "):
+            alias = _parse_type_alias(line, filename)
+            if alias.name in program.records or alias.name in program.variants or alias.name in program.type_aliases:
+                raise GwtError(f"{filename}:{line.number}: type already defined: {alias.name}")
+            program.type_aliases[alias.name] = alias
+            index += 1
             last_top_keyword = None
             continue
 
@@ -556,6 +596,7 @@ def parse_program(
                     index,
                     filename,
                     program.records,
+                    program.type_aliases,
                     allow_unknown_records=allow_unknown_records,
                 )
                 if named_request.name in program.requests:
@@ -594,6 +635,7 @@ def parse_program(
                     index,
                     filename,
                     program.records,
+                    program.type_aliases,
                     allow_unknown_records=allow_unknown_records,
                 )
                 current.givens.extend(expanded)
@@ -827,17 +869,22 @@ class Runtime:
         target = self.path_types if path_types is None else path_types
         target[path] = value_type
 
-        record = self.program.records.get(value_type)
+        resolved_type = self._resolve_type_alias(value_type)
+        record = self.program.records.get(resolved_type)
         if record is not None:
             for field, field_type in record.fields.items():
                 target[f"{path}.{field}"] = field_type
-                if field_type in self.program.records or field_type in self.program.variants:
+                resolved_field_type = self._resolve_type_alias(field_type)
+                if resolved_field_type in self.program.records or resolved_field_type in self.program.variants:
                     self._register_path_type(f"{path}.{field}", field_type, target)
             return
 
-        variant = self.program.variants.get(value_type)
+        variant = self.program.variants.get(resolved_type)
         if variant is not None:
             target[f"{path}.kind"] = _variant_kind_type(variant)
+
+    def _resolve_type_alias(self, value_type: str) -> str:
+        return _resolve_type_alias(value_type, self.program.type_aliases)
 
     def _apply_action_contract(self, action: Action, env: dict[str, Any], line: Line) -> None:
         for name, value_type in action.contract.inputs.items():
@@ -860,8 +907,9 @@ class Runtime:
         return self._validate_value_type(path, value, expected_type, validation_line)
 
     def _validate_record(self, validation: RecordValidation) -> None:
-        record = self.program.records.get(validation.record_name)
-        variant = self.program.variants.get(validation.record_name)
+        record_name = self._resolve_type_alias(validation.record_name)
+        record = self.program.records.get(record_name)
+        variant = self.program.variants.get(record_name)
         if record is None and variant is None:
             raise GwtError(f"line {validation.line.number}: unknown record: {validation.record_name}")
         try:
@@ -898,6 +946,7 @@ class Runtime:
             _set_flat_record_value(value, field, normalized)
 
     def _validate_value_type(self, path: str, value: Any, expected_type: str, line: Line) -> Any:
+        expected_type = self._resolve_type_alias(expected_type)
         if expected_type == "any":
             return value
         literal_values = _literal_union_values(expected_type)
@@ -1011,9 +1060,10 @@ class Runtime:
                 for row in table.rows
             ]
             if table.item_type is not None:
-                record = self.program.records.get(table.item_type)
+                resolved_item_type = self._resolve_type_alias(table.item_type)
+                record = self.program.records.get(resolved_item_type)
                 if record is None:
-                    if table.item_type in self.program.variants:
+                    if resolved_item_type in self.program.variants:
                         raise GwtError(f"GIVEN table cannot construct one-of record: {table.item_type}")
                     raise GwtError(f"unknown record: {table.item_type}")
                 for index, row in enumerate(rows, start=1):
@@ -1026,7 +1076,8 @@ class Runtime:
     def _run_variant_assignment(self, assignment: VariantAssignment) -> None:
         self._before_line(assignment.line, {})
         try:
-            variant = self.program.variants.get(assignment.variant_name)
+            variant_name = self._resolve_type_alias(assignment.variant_name)
+            variant = self.program.variants.get(variant_name)
             if variant is None:
                 raise GwtError(f"unknown one-of record: {assignment.variant_name}")
             if assignment.case_name not in variant.cases:
@@ -1630,6 +1681,7 @@ def _parse_named_request(
     index: int,
     filename: str,
     records: dict[str, RecordDefinition],
+    type_aliases: dict[str, TypeAliasDefinition],
     *,
     allow_unknown_records: bool = False,
 ) -> tuple[NamedRequest, int]:
@@ -1657,6 +1709,7 @@ def _parse_named_request(
         body_lines,
         filename,
         records,
+        type_aliases,
         allow_unknown_records=allow_unknown_records,
     )
     if not request.whens:
@@ -1674,6 +1727,7 @@ def _parse_named_request_body(
     lines: list[Line],
     filename: str,
     records: dict[str, RecordDefinition],
+    type_aliases: dict[str, TypeAliasDefinition],
     *,
     allow_unknown_records: bool = False,
 ) -> None:
@@ -1697,6 +1751,7 @@ def _parse_named_request_body(
                 index,
                 filename,
                 records,
+                type_aliases,
                 allow_unknown_records=allow_unknown_records,
             )
             last_keyword = "GIVEN"
@@ -1748,6 +1803,7 @@ def _parse_request_given(
     index: int,
     filename: str,
     records: dict[str, RecordDefinition],
+    type_aliases: dict[str, TypeAliasDefinition],
     *,
     allow_unknown_records: bool = False,
 ) -> int:
@@ -1777,6 +1833,7 @@ def _parse_request_given(
                 index,
                 filename,
                 records,
+                type_aliases,
                 allow_unknown_records=allow_unknown_records,
             )
             request.givens.extend(expanded)
@@ -2114,6 +2171,26 @@ def _parse_record(lines: list[Line], index: int, filename: str) -> tuple[RecordD
         len(name),
         field_lines,
     ), index
+
+
+def _parse_type_alias(line: Line, filename: str) -> TypeAliasDefinition:
+    match = re.match(r"^TYPE\s+([A-Z][A-Za-z0-9_]*)\s+is\s+(.+)$", line.text)
+    if match is None:
+        raise GwtError(f"{filename}:{line.number}: TYPE expects 'TYPE Name is Type'")
+    name = match.group(1)
+    value_type = match.group(2).strip()
+    if not _is_type_syntax(value_type):
+        raise GwtError(f"{filename}:{line.number}: invalid TYPE target: {value_type}")
+    if value_type == name:
+        raise GwtError(f"{filename}:{line.number}: TYPE cannot alias itself: {name}")
+    return TypeAliasDefinition(
+        name,
+        value_type,
+        line.number,
+        line.filename,
+        line.column + len("TYPE "),
+        len(name),
+    )
 
 
 def _parse_variant(lines: list[Line], index: int, filename: str) -> tuple[VariantDefinition, int]:
@@ -2611,6 +2688,7 @@ def _expand_typed_record_block(
     index: int,
     filename: str,
     records: dict[str, RecordDefinition],
+    type_aliases: dict[str, TypeAliasDefinition],
     *,
     allow_unknown_records: bool = False,
 ) -> tuple[list[Line], int, RecordValidation]:
@@ -2618,7 +2696,8 @@ def _expand_typed_record_block(
     path, record_name = header.split(" is ", 1)
     path = path.strip()
     record_name = record_name.strip()
-    if record_name not in records and not allow_unknown_records:
+    resolved_name = _resolve_type_alias(record_name, type_aliases)
+    if resolved_name not in records and not allow_unknown_records:
         raise GwtError(f"{filename}:{header_line.number}: unknown record: {record_name}")
     expanded, index = _expand_record_block(f"{path} is", lines, index, filename)
     return expanded, index, RecordValidation(path, record_name, header_line)
@@ -2692,6 +2771,7 @@ def _is_record_type_name(text: str) -> bool:
 
 
 def _is_type_syntax(value_type: str) -> bool:
+    value_type = value_type.strip()
     if value_type in RECORD_TYPES or _is_record_type_name(value_type):
         return True
     if _literal_union_values(value_type) is not None:
@@ -2699,14 +2779,33 @@ def _is_type_syntax(value_type: str) -> bool:
     item_type = _list_item_type(value_type)
     if item_type is None:
         return False
-    return item_type in RECORD_TYPES or _is_record_type_name(item_type)
+    return _is_type_syntax(item_type)
 
 
 def _list_item_type(value_type: str) -> str | None:
-    match = LIST_TYPE_PATTERN.match(value_type)
+    match = LIST_TYPE_PATTERN.match(value_type.strip())
     if match is None:
         return None
-    return match.group(1)
+    item_type = match.group(1).strip()
+    return item_type or None
+
+
+def _resolve_type_alias(
+    value_type: str,
+    aliases: dict[str, TypeAliasDefinition],
+    seen: set[str] | None = None,
+) -> str:
+    seen = set() if seen is None else seen
+    current = value_type.strip()
+    while current in aliases:
+        if current in seen:
+            raise GwtError(f"cyclic TYPE alias: {current}")
+        seen.add(current)
+        current = aliases[current].value_type
+    item_type = _list_item_type(current)
+    if item_type is not None:
+        return f"list<{_resolve_type_alias(item_type, aliases, seen)}>"
+    return current
 
 
 def _is_builtin_statement(tokens: list[str], text: str) -> bool:

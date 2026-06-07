@@ -46,11 +46,12 @@ def validate_file(
     import_policy: ImportPolicy | None = None,
     check_format: bool = True,
     run_tests: bool = True,
+    lint: bool = False,
 ) -> ValidationResult:
     file_path = Path(path)
     source = file_path.read_text()
     filename = str(file_path)
-    analysis = analyze_file(file_path, import_policy=import_policy)
+    analysis = analyze_file(file_path, import_policy=import_policy, lint=lint)
     diagnostics = list(analysis.diagnostics)
     phases: dict[str, ValidationPhasePayload] = {
         "check": _check_phase(analysis),

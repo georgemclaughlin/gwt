@@ -9,6 +9,7 @@ blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 program        = top_level* ;
 top_level      = program_header
                | use
+               | type_alias
                | record
                | one_of_record
                | named_request
@@ -19,6 +20,7 @@ top_level      = program_header
                | examples ;
 program_header = "PROGRAM" text ;
 use            = "USE" string ;
+type_alias     = "TYPE" name "is" type ;
 record         = "RECORD" name, record_definition_block ;
 record_definition_block
                = record_field+ ;
@@ -26,9 +28,8 @@ record_field   = name ":" type | name ":", record_definition_block ;
 one_of_record  = "RECORD" name "is one of", one_of_kind+ ;
 one_of_kind    = name ":", one_of_field+ ;
 one_of_field   = name ":" type ;
-type           = primitive_type | name | "list<", type_name, ">" | literal_union ;
+type           = primitive_type | name | "list<", type, ">" | literal_union ;
 primitive_type = "number" | "integer" | "decimal" | "text" | "boolean" | "list" | "any" ;
-type_name      = primitive_type | name ;
 literal_union  = literal, "|", literal, ("|", literal)* ;
 
 named_request  = "REQUEST" text, request_body ;
@@ -166,6 +167,10 @@ Indentation is significant:
 - `DEPENDING ON` branches use `WHEN the kind is name` or
   `WHEN the value is literal` at the branch indent. A block cannot mix kind and
   value branches.
+
+`TYPE Name is Type` declares a named alias for an existing type expression, such
+as a literal union or typed list. Type aliases are contracts only; they do not
+create runtime values.
 
 `REQUEST path is Type` is no longer a top-level program contract. At the top
 level, `REQUEST name` with an indented body declares a public callable request.

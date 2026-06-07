@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/inspect.schema.json",
+  "title": "GWT Inspect Payload",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "file", "program", "programHash", "imports", "diagnostics", "records", "typeAliases", "oneOfRecords", "requests", "behaviors", "scenarios", "counts"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "ok": { "type": "boolean" },
+    "file": { "type": "string" },
+    "program": { "type": ["string", "null"] },
+    "programHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "imports": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/import" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "diagnostic.schema.json" }
+    },
+    "records": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/record" }
+    },
+    "typeAliases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/typeAlias" }
+    },
+    "oneOfRecords": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/oneOfRecord" }
+    },
+    "requests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/request" }
+    },
+    "behaviors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/behavior" }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenario" }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["records", "typeAliases", "oneOfRecords", "requests", "behaviors", "scenarios"],
+      "properties": {
+        "records": { "type": "integer", "minimum": 0 },
+        "typeAliases": { "type": "integer", "minimum": 0 },
+        "oneOfRecords": { "type": "integer", "minimum": 0 },
+        "requests": { "type": "integer", "minimum": 0 },
+        "behaviors": { "type": "integer", "minimum": 0 },
+        "scenarios": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "import": {
+      "type": "object",
+      "required": ["path", "resolved", "file", "line", "column"],
+      "properties": {
+        "path": { "type": "string" },
+        "resolved": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "required": ["path", "type", "file", "line", "column"],
+      "properties": {
+        "path": { "type": "string" },
+        "type": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "record": {
+      "type": "object",
+      "required": ["name", "kind", "file", "line", "column", "fields"],
+      "properties": {
+        "name": { "type": "string" },
+        "kind": { "const": "record" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "fields": { "type": "array", "items": { "$ref": "#/$defs/field" } }
+      },
+      "additionalProperties": false
+    },
+    "typeAlias": {
+      "type": "object",
+      "required": ["name", "kind", "type", "file", "line", "column"],
+      "properties": {
+        "name": { "type": "string" },
+        "kind": { "const": "typeAlias" },
+        "type": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "oneOfRecord": {
+      "type": "object",
+      "required": ["name", "kind", "file", "line", "column", "cases"],
+      "properties": {
+        "name": { "type": "string" },
+        "kind": { "const": "oneOfRecord" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "file", "line", "column", "fields"],
+            "properties": {
+              "name": { "type": "string" },
+              "file": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 },
+              "column": { "type": "integer", "minimum": 1 },
+              "fields": { "type": "array", "items": { "$ref": "#/$defs/field" } }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "required": ["path", "type", "file", "line", "column"],
+      "properties": {
+        "path": { "type": "string" },
+        "type": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "type": "object",
+      "required": ["name", "file", "line", "column", "length", "inputs", "outputs", "givens", "whens", "thens"],
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "length": { "type": "integer", "minimum": 1 },
+        "inputs": { "type": "array", "items": { "$ref": "#/$defs/contract" } },
+        "outputs": { "type": "array", "items": { "$ref": "#/$defs/contract" } },
+        "givens": { "type": "integer", "minimum": 0 },
+        "whens": { "type": "integer", "minimum": 0 },
+        "thens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "behavior": {
+      "type": "object",
+      "required": ["name", "signature", "signatureText", "parameters", "contracts", "file", "line", "column", "length"],
+      "properties": {
+        "name": { "type": "string" },
+        "signature": { "type": "array", "items": { "type": "string" } },
+        "signatureText": { "type": "string" },
+        "parameters": { "type": "array", "items": { "type": "string" } },
+        "contracts": {
+          "type": "object",
+          "required": ["inputs", "returns"],
+          "properties": {
+            "inputs": { "type": "object", "additionalProperties": { "type": "string" } },
+            "returns": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "length": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["name", "file", "line", "column", "examples", "givens", "whens", "thens"],
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 1 },
+        "examples": { "type": "integer", "minimum": 0 },
+        "givens": { "type": "integer", "minimum": 0 },
+        "whens": { "type": "integer", "minimum": 0 },
+        "thens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

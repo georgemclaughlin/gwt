@@ -21,9 +21,11 @@ PROGRAM name
 
 USE "./module.gwt"
 
+TYPE AccountStatus is "open" | "closed"
+
 RECORD Account
   balance: number
-  status: text
+  status: AccountStatus
 
 REQUEST review account
   GIVEN account is Account
@@ -151,9 +153,11 @@ GIVEN cart is Cart
 
 Record validation requires all declared fields, rejects unknown fields, and checks
 primitive value types. Supported record field types are `number`, `integer`,
-`decimal`, `text`, `boolean`, `list`, `any`, declared record names, typed
-collections such as `list<CartItem>`, and literal unions such as
-`"new" | "approved" | "denied"`.
+`decimal`, `text`, `boolean`, `list`, `any`, declared record names, declared
+type aliases, typed collections such as `list<CartItem>` or
+`list<DecisionStatus>`, and literal unions such as
+`"new" | "approved" | "denied"`. Typed collections can also use inline literal
+unions such as `list<"ready" | "manual_review">`.
 
 `integer` is an exact whole number. `decimal` is a finite exact base-10 decimal value.
 `number` is the legacy broad numeric type. `integer` can be assigned to
@@ -182,6 +186,26 @@ RECORD Account
 
 Records are contracts only; they do not define behavior or methods. `RECORD`
 is the only source spelling for record contracts.
+
+## TYPE Aliases
+
+`TYPE` gives a reusable name to an existing type expression:
+
+```gwt
+TYPE DecisionStatus is "new" | "approved" | "needs_review"
+TYPE DecisionHistory is list<DecisionStatus>
+TYPE ReviewReasons is list<"ready" | "manual_review">
+
+RECORD Decision
+  status: DecisionStatus
+  history: DecisionHistory
+  reasons: ReviewReasons
+```
+
+Aliases are contracts only. They do not define values, records, methods, or
+runtime namespaces. They are useful for naming domain states that appear in
+multiple records, request contracts, behavior contracts, or generated host
+types.
 
 Records can also describe values that are one of several named kinds:
 
@@ -241,7 +265,7 @@ Inside a named request:
 receives; `THEN` asserts what must be true after execution.
 
 Contracts use the same type syntax as record fields and behavior contracts,
-including `list<RecordName>` and literal unions. Request inputs validate before
+including type aliases, `list<Type>`, and literal unions. Request inputs validate before
 the request `WHEN` calls. `OUTPUT` validates after request `WHEN` execution.
 
 Within a request's inputs or within its outputs, contract paths must not
@@ -257,7 +281,7 @@ REQUEST checkout cart
 Request and output contracts are checked separately, so a `REQUEST` path may
 overlap an `OUTPUT` path.
 
-GWT v0.1 does not have a source-level `null` literal. JSON input can still
+GWT v0.2 does not have a source-level `null` literal. JSON input can still
 contain `null` at raw integration boundaries, but typed contracts reject it for
 `number`, `integer`, `decimal`, `text`, `boolean`, `list`, records, typed
 lists, and literal unions.
@@ -284,7 +308,7 @@ WHEN cart total for <cart>
 Contract `GIVEN` lines describe behavior parameters, not global state. They are
 metadata for `gwt check`, future editor tooling, and documentation. Contract
 types can use record field types (`number`, `text`, `boolean`, `list`, `any`,
-declared record names, `list<RecordName>`, or literal unions).
+declared record names, type aliases, `list<Type>`, or literal unions).
 
 `AND` can continue contract `GIVEN` lines:
 
@@ -452,16 +476,17 @@ for single-scenario runs; multi-scenario details are always available under
 
 ## Generated Host Types
 
-The same `RECORD` contracts and named request boundaries can generate
+The same `TYPE`, `RECORD`, and named request boundaries can generate
 host-language types. For TypeScript:
 
 ```sh
 python -m gwtlang types rules.gwt --language typescript --output rules.d.ts
 ```
 
-The generated declaration file includes record interfaces, one-of record
-unions, per-request input/output interfaces, `GwtRequestName`, `GwtRequests`,
-`GwtOutputs`, `GwtRequest`, and `GwtOutput`. Generated TypeScript maps
+The generated declaration file includes type aliases, record interfaces,
+one-of record unions, per-request input/output interfaces, `GwtRequestName`,
+`GwtRequests`, `GwtOutputs`, `GwtRequest`, and `GwtOutput`. Generated
+TypeScript maps
 `integer` and `number` to `number`, and maps `decimal` to `string` at the JSON
 boundary. These declarations are integration helpers for host code; the `.gwt`
 source remains the normative contract.
@@ -497,11 +522,11 @@ For Python:
 python -m gwtlang types rules.gwt --language python --output rules_types.py
 ```
 
-The generated Python module includes `TypedDict` records, per-request
-request/output shapes, `GwtRequestName`, `GwtRequest`, `GwtOutput`,
-request-name constants, and a program-specific client wrapper. Generated Python
-maps `integer` to `int`, `number` to `int | float`, and `decimal` to `str` at
-the JSON boundary.
+The generated Python module includes `TypeAlias` declarations, `TypedDict`
+records, per-request request/output shapes, `GwtRequestName`, `GwtRequest`,
+`GwtOutput`, request-name constants, and a program-specific client wrapper.
+Generated Python maps `integer` to `int`, `number` to `int | float`, and
+`decimal` to `str` at the JSON boundary.
 
 ```python
 from rules_types import PricingClient, PriceCartRequest
@@ -540,9 +565,16 @@ The current checker reports:
 - statically known behavior argument and return type mismatches
 - implicit behavior parameters as deprecation warnings
 
+`gwt check --lint` and `gwt validate --lint` add opt-in lint warnings for
+quality conventions that are useful during design review but too opinionated
+for the default checker. Current lint warnings include public requests without
+scenario evidence, bare `list` contracts where `list<Type>` would be clearer,
+requests that declare `OUTPUT` without a request-level `THEN` invariant, and
+behavior parameters without `GIVEN` contracts.
+
 `gwt check --json` includes editor-oriented diagnostics with codes, severity,
-source ranges, and a symbol list for records, record fields, named requests,
-behavior signatures, parameters, local names, and scenarios.
+source ranges, and a symbol list for records, type aliases, record fields,
+named requests, behavior signatures, parameters, local names, and scenarios.
 
 `gwt format file.gwt` rewrites a valid GWT file using the canonical current source
 layout. Use `gwt format file.gwt --check` in CI to fail when a file needs

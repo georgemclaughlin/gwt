@@ -259,6 +259,49 @@ GIVEN items are Item
                 request="accept payment",
             )
 
+    def test_type_aliases_name_literal_unions_and_collection_items(self):
+        source = """
+        TYPE DecisionStatus is "new" | "approved"
+        TYPE DecisionHistory is list<DecisionStatus>
+        TYPE ReviewReasons is list<"ready" | "manual">
+
+        RECORD Decision
+          status: DecisionStatus
+          history: DecisionHistory
+          reasons: ReviewReasons
+
+        REQUEST review decision
+          GIVEN decision is Decision
+
+          WHEN approve decision
+
+          OUTPUT decision is Decision
+
+          THEN decision.status == "approved"
+
+        WHEN approve <decision>
+          GIVEN decision is Decision
+          set decision.status to "approved"
+          append "approved" to decision.history
+          append "ready" to decision.reasons
+        """
+
+        result = run_json_text(
+            source,
+            {"decision": {"status": "new", "history": [], "reasons": []}},
+            request="review decision",
+        )
+
+        self.assertEqual(result.as_payload()["result"]["decision"]["status"], "approved")
+        self.assertEqual(result.as_payload()["result"]["decision"]["history"], ["approved"])
+
+        with self.assertRaisesRegex(GwtError, "expected decision.status to be one of"):
+            run_json_text(
+                source,
+                {"decision": {"status": "denied", "history": [], "reasons": []}},
+                request="review decision",
+            )
+
     def test_api_payloads_inspection_and_type_generation_use_named_requests(self):
         source = """
         PROGRAM host contract

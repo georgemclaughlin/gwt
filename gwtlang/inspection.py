@@ -15,6 +15,7 @@ from .payloads import (
     RecordPayload,
     RequestPayload,
     ScenarioInspectionPayload,
+    TypeAliasPayload,
 )
 from .runtime import (
     Action,
@@ -24,12 +25,13 @@ from .runtime import (
     Line,
     NamedRequest,
     Scenario,
+    TypeAliasDefinition,
     VariantDefinition,
     _signature_parameters,
 )
 from .service import Analysis, analyze_file, analyze_source
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -57,12 +59,14 @@ class InspectionResult:
                 for diagnostic in analysis.diagnostics
             ],
             "records": [],
+            "typeAliases": [],
             "oneOfRecords": [],
             "requests": [],
             "behaviors": [],
             "scenarios": [],
             "counts": {
                 "records": 0,
+                "typeAliases": 0,
                 "oneOfRecords": 0,
                 "requests": 0,
                 "behaviors": 0,
@@ -73,6 +77,10 @@ class InspectionResult:
             return payload
 
         records = [_record_payload(record, analysis.filename) for record in program.records.values()]
+        aliases = [
+            _type_alias_payload(alias, analysis.filename)
+            for alias in program.type_aliases.values()
+        ]
         variants = [
             _variant_payload(variant, analysis.filename)
             for variant in program.variants.values()
@@ -93,12 +101,14 @@ class InspectionResult:
         payload.update(
             {
                 "records": records,
+                "typeAliases": aliases,
                 "oneOfRecords": variants,
                 "requests": requests,
                 "behaviors": behaviors,
                 "scenarios": scenarios,
                 "counts": {
                     "records": len(records),
+                    "typeAliases": len(aliases),
                     "oneOfRecords": len(variants),
                     "requests": len(requests),
                     "behaviors": len(behaviors),
@@ -171,6 +181,17 @@ def _record_payload(record: RecordDefinition, fallback_filename: str) -> RecordP
             _record_field_payload(field, value_type, record.field_lines, fallback_filename)
             for field, value_type in record.fields.items()
         ],
+    }
+
+
+def _type_alias_payload(alias: TypeAliasDefinition, fallback_filename: str) -> TypeAliasPayload:
+    return {
+        "name": alias.name,
+        "kind": "typeAlias",
+        "type": alias.value_type,
+        "file": alias.filename or fallback_filename,
+        "line": alias.line,
+        "column": alias.column,
     }
 
 

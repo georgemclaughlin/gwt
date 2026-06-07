@@ -36,6 +36,7 @@ class Analysis:
             "program": self.program.name if self.program is not None else None,
             "requests": len(self.program.requests) if self.program is not None else 0,
             "records": len(self.program.records) if self.program is not None else 0,
+            "typeAliases": len(self.program.type_aliases) if self.program is not None else 0,
             "behaviors": len(self.program.actions) if self.program is not None else 0,
             "scenarios": len(self.program.scenarios) if self.program is not None else 0,
             "diagnostics": [diagnostic.as_payload(self.filename) for diagnostic in self.diagnostics],
@@ -54,6 +55,7 @@ def analyze_source(
     filename: str = "<source>",
     *,
     import_policy: ImportPolicy | None = None,
+    lint: bool = False,
 ) -> Analysis:
     try:
         program = parse_program(source, filename=filename, import_policy=import_policy)
@@ -66,19 +68,21 @@ def analyze_source(
             SymbolTable([]),
         )
 
-    return Analysis(source, filename, program, check_program(program), build_symbol_table(program))
+    return Analysis(source, filename, program, check_program(program, lint=lint), build_symbol_table(program))
 
 
 def analyze_file(
     path: str | Path,
     *,
     import_policy: ImportPolicy | None = None,
+    lint: bool = False,
 ) -> Analysis:
     file_path = Path(path)
     return analyze_source(
         file_path.read_text(),
         str(file_path),
         import_policy=import_policy,
+        lint=lint,
     )
 
 
@@ -130,7 +134,7 @@ def completion_items(analysis: Analysis) -> list[CompletionItemPayload]:
     items: list[CompletionItemPayload] = []
     seen: set[tuple[str, str]] = set()
     for symbol in analysis.symbols.symbols:
-        if symbol.kind not in {"behavior", "request", "record", "record_field", "parameter", "local", "contract"}:
+        if symbol.kind not in {"behavior", "request", "record", "type_alias", "record_field", "parameter", "local", "contract"}:
             continue
         key = (symbol.name, symbol.kind)
         if key in seen:
@@ -206,7 +210,7 @@ def _hover_text(symbol: Symbol) -> str:
 
 def _find_named_symbol(analysis: Analysis, name: str) -> Symbol | None:
     for symbol in analysis.symbols.symbols:
-        if symbol.name == name and symbol.kind in {"behavior", "request", "record", "record_field", "parameter", "local", "contract"}:
+        if symbol.name == name and symbol.kind in {"behavior", "request", "record", "type_alias", "record_field", "parameter", "local", "contract"}:
             return symbol
     return None
 
@@ -293,6 +297,7 @@ def _completion_kind(symbol_kind: str) -> int:
         "behavior": 3,
         "request": 2,
         "record": 7,
+        "type_alias": 7,
         "record_field": 5,
         "parameter": 6,
         "local": 6,
