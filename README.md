@@ -51,6 +51,11 @@ Expected decision:
 typed decision: needs_review (manual_review_required)
 ```
 
+For incremental adoption, run
+[`examples/vendor_onboarding/shadow_mode.py`](examples/vendor_onboarding/shadow_mode.py)
+to compare a legacy Python decision function against the GWT request before
+promoting GWT as the source of truth.
+
 ## Spec Is Code
 
 BMAD, GitHub Spec Kit, and OpenSpec are useful signs of the same shift: humans

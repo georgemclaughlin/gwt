@@ -185,6 +185,20 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn('"reason": "manual_review_required"', completed.stdout)
         self.assertIn("typed decision: needs_review (manual_review_required)", completed.stdout)
 
+    def test_vendor_onboarding_shadow_mode_example_runs(self):
+        completed = subprocess.run(
+            [sys.executable, "examples/vendor_onboarding/shadow_mode.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn("MATCH low risk vendor stays approved", completed.stdout)
+        self.assertIn("MISMATCH expired insurance exposes legacy gap", completed.stdout)
+        self.assertIn("risk_points legacy=9 gwt=10", completed.stdout)
+        self.assertIn('"mismatches": 1', completed.stdout)
+        self.assertIn('"promotion_ready": false', completed.stdout)
+
     def test_loan_underwriting_example_runs_scenarios_and_request(self):
         program = Path("examples/loan_underwriting/rules.gwt")
         request = Path("examples/loan_underwriting/request.gwt")

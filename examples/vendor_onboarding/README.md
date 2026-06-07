@@ -100,10 +100,39 @@ Expected final line:
 typed decision: needs_review (manual_review_required)
 ```
 
+## Shadow Mode
+
+Before replacing an existing production rule, run GWT beside the legacy path and
+compare decisions. The shadow example keeps a small legacy Python decision
+function, calls `REQUEST review vendor` through the generated client, and logs
+field-level differences without failing the request.
+
+```sh
+python examples/vendor_onboarding/shadow_mode.py
+```
+
+Expected summary:
+
+```json
+{
+  "cases": 2,
+  "matches": 1,
+  "mismatches": 1,
+  "promotion_ready": false
+}
+```
+
+The mismatch is intentional: the legacy function treats an expired document as
+acceptable, while the GWT spec records `insurance_expired` and adds one risk
+point. In a real adoption, this is the kind of mismatch to review before
+promoting GWT as the source of truth.
+
 ## Host Examples
 
 - Python host app:
   [`examples/vendor_onboarding/host_app.py`](host_app.py)
+- Python shadow-mode comparison:
+  [`examples/vendor_onboarding/shadow_mode.py`](shadow_mode.py)
 - Generated Python helpers:
   [`examples/vendor_onboarding/rules_types.py`](rules_types.py)
 - TypeScript host app:
