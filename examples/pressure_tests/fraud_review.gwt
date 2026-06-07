@@ -1,0 +1,291 @@
+PROGRAM fraud review pressure test
+
+RECORD FraudSignal
+  kind: "velocity" | "device" | "geo" | "chargeback" | "manual"
+  weight: number
+  severe: boolean
+  note: text
+
+RECORD PriorPayment
+  payment_id: text
+  amount: number
+  status: "settled" | "refunded" | "chargeback"
+  days_ago: number
+
+RECORD FraudReview
+  order_id: text
+  account_age_days: number
+  customer_tier: "new" | "standard" | "trusted"
+  order_amount: number
+  billing_country: text
+  shipping_country: text
+  payment_verified: boolean
+  signals: list<FraudSignal>
+  prior_payments: list<PriorPayment>
+
+RECORD FraudDecision
+  signal_count: number
+  risk_score: number
+  chargeback_count: number
+  has_severe_signal: boolean
+  has_velocity_signal: boolean
+  country_mismatch: boolean
+  large_order: boolean
+  unverified_payment: boolean
+  hold_funds: boolean
+  status: "new" | "approved" | "needs_review" | "blocked"
+  reason: "new" | "low_risk" | "severe_signal" | "repeat_chargebacks" | "high_score" | "unverified_high_value" | "signal_review"
+  review_queue: text
+  notes: list<text>
+
+REQUEST evaluate fraud risk
+  GIVEN review is FraudReview
+
+  GIVEN decision is FraudDecision
+    signal_count: 0
+    risk_score: 0
+    chargeback_count: 0
+    has_severe_signal: false
+    has_velocity_signal: false
+    country_mismatch: false
+    large_order: false
+    unverified_payment: false
+    hold_funds: false
+    status: "new"
+    reason: "new"
+    review_queue: ""
+    notes: []
+
+  WHEN evaluate fraud risk for review into decision
+
+  OUTPUT decision is FraudDecision
+
+WHEN reset fraud decision <decision>
+  GIVEN decision is FraudDecision
+  set decision.signal_count to 0
+  set decision.risk_score to 0
+  set decision.chargeback_count to 0
+  set decision.has_severe_signal to false
+  set decision.has_velocity_signal to false
+  set decision.country_mismatch to false
+  set decision.large_order to false
+  set decision.unverified_payment to false
+  set decision.hold_funds to false
+  set decision.status to "new"
+  set decision.reason to "new"
+  set decision.review_queue to ""
+  set decision.notes to []
+
+WHEN collect risk signals from <review> into <decision>
+  GIVEN review is FraudReview
+  AND decision is FraudDecision
+  count review.signals into decision.signal_count
+  FOR signal in review.signals
+    add signal.weight to decision.risk_score
+    IF signal.severe
+      set decision.has_severe_signal to true
+      append signal.note to decision.notes
+    IF signal.kind == "velocity"
+      set decision.has_velocity_signal to true
+
+WHEN collect payment history from <review> into <decision>
+  GIVEN review is FraudReview
+  AND decision is FraudDecision
+  FOR payment in review.prior_payments WHERE payment.status == "chargeback"
+    add 1 to decision.chargeback_count
+    add 20 to decision.risk_score
+
+WHEN collect review facts from <review> into <decision>
+  GIVEN review is FraudReview
+  AND decision is FraudDecision
+  IF review.billing_country != review.shipping_country
+    set decision.country_mismatch to true
+    add 15 to decision.risk_score
+  IF review.account_age_days < 14
+    add 20 to decision.risk_score
+    append "new_account" to decision.notes
+  IF review.payment_verified == false
+    set decision.unverified_payment to true
+    add 25 to decision.risk_score
+  IF review.order_amount >= 1000
+    set decision.large_order to true
+    add 20 to decision.risk_score
+  IF review.customer_tier == "trusted" and decision.risk_score >= 10
+    subtract 10 from decision.risk_score
+
+WHEN approve risk with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is FraudDecision
+  set decision.hold_funds to false
+  set decision.status to "approved"
+  set decision.reason to reason
+  set decision.review_queue to ""
+
+WHEN route risk to review with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is FraudDecision
+  set decision.hold_funds to true
+  set decision.status to "needs_review"
+  set decision.reason to reason
+  set decision.review_queue to "risk_review"
+
+WHEN block risk with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is FraudDecision
+  set decision.hold_funds to true
+  set decision.status to "blocked"
+  set decision.reason to reason
+  set decision.review_queue to "fraud_ops"
+
+WHEN classify fraud decision <decision>
+  GIVEN decision is FraudDecision
+  DECIDE
+    WHEN decision.has_severe_signal
+      block risk with severe_signal into decision
+    WHEN decision.chargeback_count >= 2
+      block risk with repeat_chargebacks into decision
+    WHEN decision.risk_score >= 60
+      route risk to review with high_score into decision
+    WHEN decision.unverified_payment and decision.large_order
+      route risk to review with unverified_high_value into decision
+    WHEN decision.country_mismatch or decision.has_velocity_signal
+      route risk to review with signal_review into decision
+    ELSE
+      approve risk with low_risk into decision
+
+WHEN evaluate fraud risk for <review> into <decision>
+  GIVEN review is FraudReview
+  AND decision is FraudDecision
+  reset fraud decision decision
+  collect risk signals from review into decision
+  collect payment history from review into decision
+  collect review facts from review into decision
+  classify fraud decision decision
+
+SCENARIO approve verified trusted domestic order
+GIVEN review is FraudReview
+  order_id: "O100"
+  account_age_days: 430
+  customer_tier: "trusted"
+  order_amount: 120
+  billing_country: "US"
+  shipping_country: "US"
+  payment_verified: true
+  signals: []
+  prior_payments: []
+
+GIVEN review.signals are FraudSignal
+  | kind     | weight | severe | note                 |
+  | "device" | 5      | false  | "known_device_match" |
+
+REQUEST evaluate fraud risk
+
+THEN decision.status == "approved"
+AND decision.reason == "low_risk"
+AND decision.risk_score == 5
+AND decision.signal_count == 1
+AND decision.hold_funds == false
+AND decision.review_queue == ""
+
+SCENARIO route country mismatch with velocity signal
+GIVEN review is FraudReview
+  order_id: "O101"
+  account_age_days: 90
+  customer_tier: "standard"
+  order_amount: 220
+  billing_country: "US"
+  shipping_country: "CA"
+  payment_verified: true
+  signals: []
+  prior_payments: []
+
+GIVEN review.signals are FraudSignal
+  | kind       | weight | severe | note              |
+  | "velocity" | 18     | false  | "many_orders"     |
+  | "geo"      | 8      | false  | "ip_country_diff" |
+
+REQUEST evaluate fraud risk
+
+THEN decision.status == "needs_review"
+AND decision.reason == "signal_review"
+AND decision.risk_score == 41
+AND decision.country_mismatch == true
+AND decision.has_velocity_signal == true
+AND decision.hold_funds == true
+AND decision.review_queue == "risk_review"
+
+SCENARIO block severe manual signal
+GIVEN review is FraudReview
+  order_id: "O102"
+  account_age_days: 200
+  customer_tier: "standard"
+  order_amount: 180
+  billing_country: "US"
+  shipping_country: "US"
+  payment_verified: true
+  signals: []
+  prior_payments: []
+
+GIVEN review.signals are FraudSignal
+  | kind     | weight | severe | note              |
+  | "manual" | 70     | true   | "confirmed_fraud" |
+
+REQUEST evaluate fraud risk
+
+THEN decision.status == "blocked"
+AND decision.reason == "severe_signal"
+AND decision.risk_score == 70
+AND decision.has_severe_signal == true
+AND decision.notes == ["confirmed_fraud"]
+AND decision.hold_funds == true
+AND decision.review_queue == "fraud_ops"
+
+SCENARIO block repeat chargebacks before high score review
+GIVEN review is FraudReview
+  order_id: "O103"
+  account_age_days: 80
+  customer_tier: "standard"
+  order_amount: 1100
+  billing_country: "US"
+  shipping_country: "US"
+  payment_verified: false
+  signals: []
+  prior_payments: []
+
+GIVEN review.prior_payments are PriorPayment
+  | payment_id | amount | status       | days_ago |
+  | "P1"       | 60     | "chargeback" | 50       |
+  | "P2"       | 75     | "chargeback" | 20       |
+  | "P3"       | 30     | "settled"    | 5        |
+
+REQUEST evaluate fraud risk
+
+THEN decision.status == "blocked"
+AND decision.reason == "repeat_chargebacks"
+AND decision.chargeback_count == 2
+AND decision.risk_score == 85
+AND decision.large_order == true
+AND decision.unverified_payment == true
+AND decision.hold_funds == true
+
+SCENARIO route unverified high value new account
+GIVEN review is FraudReview
+  order_id: "O104"
+  account_age_days: 3
+  customer_tier: "new"
+  order_amount: 1300
+  billing_country: "US"
+  shipping_country: "US"
+  payment_verified: false
+  signals: []
+  prior_payments: []
+
+REQUEST evaluate fraud risk
+
+THEN decision.status == "needs_review"
+AND decision.reason == "high_score"
+AND decision.risk_score == 65
+AND decision.large_order == true
+AND decision.unverified_payment == true
+AND decision.notes == ["new_account"]
+AND decision.review_queue == "risk_review"

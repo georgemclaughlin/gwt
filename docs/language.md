@@ -528,6 +528,7 @@ The current checker reports:
 - `LET`, `RETURN`, and `PASS` outside behavior bodies
 - `LET` names that overwrite parameters or earlier local names
 - `LET` bindings to behavior calls that do not return a value
+- invalid `DECIDE` branch conditions and branch body statements
 - invalid expression syntax in statically checkable expressions
 - missing `EXAMPLES` placeholders
 - obvious `FOR` use over a scalar literal
@@ -853,6 +854,24 @@ ELSE
 
 The matched name exists only in the match body, not in the `ELSE` body.
 
+Behavior blocks can express ordered priority rules with `DECIDE`:
+
+```gwt
+DECIDE
+  WHEN decision.has_severe_signal
+    block risk with severe_signal into decision
+  WHEN decision.risk_score >= 60
+    route risk to review with high_score into decision
+  ELSE
+    approve risk with low_risk into decision
+```
+
+`DECIDE` evaluates branch conditions from top to bottom and executes exactly the
+first true branch. If no branch matches, it executes `ELSE`. The `ELSE` block is
+required so the default outcome is explicit; use an `ELSE` block containing
+`PASS` when no default mutation is needed. Branch conditions use the same
+condition syntax as `IF`, `REQUIRE`, and `THEN`.
+
 Behavior blocks can branch on one-of record kinds with `DEPENDING ON`:
 
 ```gwt
@@ -889,6 +908,10 @@ the expression has a finite literal-union type and every value is covered.
 For broad `number` expressions, decimal-looking branch literals match host
 number values by numeric value; use `decimal` when exact decimal matching is
 required.
+
+Use `DECIDE` for first-matching priority policies over arbitrary conditions.
+Use `DEPENDING ON` when dispatching on one known value or one one-of record
+kind.
 
 ## Return Values
 

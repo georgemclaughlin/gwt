@@ -155,6 +155,33 @@ WHEN decide <mode>
 """,
         )
 
+    def test_format_text_normalizes_decide_block(self):
+        formatted = format_text(
+            """
+            WHEN classify <score> into <decision>
+              DECIDE
+                WHEN  score >= 10
+                  print  "high"
+                WHEN score >= 5
+                  print  "medium"
+                ELSE
+                  PASS
+            """
+        )
+
+        self.assertEqual(
+            formatted,
+            """WHEN classify <score> into <decision>
+  DECIDE
+    WHEN score >= 10
+      print "high"
+    WHEN score >= 5
+      print "medium"
+    ELSE
+      PASS
+""",
+        )
+
     def test_format_file_reports_changed_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "counter.gwt"

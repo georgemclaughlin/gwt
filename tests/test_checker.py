@@ -630,6 +630,47 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("branch value 1 cannot match decimal", messages)
         self.assertIn("duplicate value branch: 1", messages)
 
+    def test_accepts_decide_block(self):
+        messages = check_messages(
+            '''
+            RECORD Decision
+              status: "new" | "approved" | "review"
+
+            WHEN classify <score> into <decision>
+              GIVEN score is number
+              GIVEN decision is Decision
+              DECIDE
+                WHEN score >= 10
+                  set decision.status to "review"
+                WHEN score >= 0
+                  set decision.status to "approved"
+                ELSE
+                  set decision.status to "new"
+            '''
+        )
+
+        self.assertEqual(messages, [])
+
+    def test_reports_decide_condition_and_branch_body_errors(self):
+        messages = check_messages(
+            '''
+            RECORD Decision
+              status: "new" | "approved" | "review"
+
+            WHEN classify <score> into <decision>
+              GIVEN score is number
+              GIVEN decision is Decision
+              DECIDE
+                WHEN score
+                  set decision.status to "approved"
+                ELSE
+                  set decision.status to "bad"
+            '''
+        )
+
+        self.assertIn("condition must evaluate to a boolean", messages)
+        self.assertIn('set decision.status expected "new" | "approved" | "review", got text', messages)
+
     def test_rejects_export_form(self):
         with self.assertRaisesRegex(GwtError, "EXPORT is no longer a public interface form"):
             parse_program(

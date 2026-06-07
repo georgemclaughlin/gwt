@@ -1,0 +1,266 @@
+PROGRAM refund eligibility pressure test
+
+RECORD RefundItem
+  sku: text
+  category: "physical" | "digital" | "subscription"
+  unit_price: number
+  quantity: number
+  returnable: boolean
+  delivered: boolean
+
+RECORD PriorRefund
+  refund_id: text
+  amount: number
+  status: "approved" | "denied" | "pending"
+
+RECORD RefundCase
+  order_id: text
+  requested_sku: text
+  days_since_purchase: number
+  reason: "changed_mind" | "defective" | "late_delivery" | "duplicate_charge"
+  proof_uploaded: boolean
+  payment_captured: boolean
+  customer_plan: "standard" | "plus"
+  items: list<RefundItem>
+  prior_refunds: list<PriorRefund>
+
+RECORD RefundDecision
+  item_found: boolean
+  item_total: number
+  prior_refund_total: number
+  approved_amount: number
+  restocking_fee: number
+  manual_review: boolean
+  status: "new" | "approved" | "denied" | "needs_review"
+  reason: "new" | "within_policy" | "item_not_found" | "payment_not_captured" | "outside_window" | "non_returnable_item" | "proof_required" | "high_refund_history"
+  notes: list<text>
+
+REQUEST evaluate refund
+  GIVEN refund is RefundCase
+
+  GIVEN decision is RefundDecision
+    item_found: false
+    item_total: 0
+    prior_refund_total: 0
+    approved_amount: 0
+    restocking_fee: 0
+    manual_review: false
+    status: "new"
+    reason: "new"
+    notes: []
+
+  WHEN evaluate refund into decision
+
+  OUTPUT decision is RefundDecision
+
+WHEN reset refund decision <decision>
+  GIVEN decision is RefundDecision
+  set decision.item_found to false
+  set decision.item_total to 0
+  set decision.prior_refund_total to 0
+  set decision.approved_amount to 0
+  set decision.restocking_fee to 0
+  set decision.manual_review to false
+  set decision.status to "new"
+  set decision.reason to "new"
+  set decision.notes to []
+
+WHEN collect prior refunds from <refund> into <decision>
+  GIVEN refund is RefundCase
+  AND decision is RefundDecision
+  FOR prior in refund.prior_refunds WHERE prior.status == "approved"
+    add prior.amount to decision.prior_refund_total
+
+WHEN approve <amount> with <reason> into <decision>
+  GIVEN amount is number
+  AND reason is text
+  AND decision is RefundDecision
+  set decision.approved_amount to amount
+  set decision.status to "approved"
+  set decision.reason to reason
+
+WHEN deny refund with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is RefundDecision
+  set decision.approved_amount to 0
+  set decision.status to "denied"
+  set decision.reason to reason
+
+WHEN route refund to review with <reason> into <decision>
+  GIVEN reason is text
+  AND decision is RefundDecision
+  set decision.approved_amount to 0
+  set decision.manual_review to true
+  set decision.status to "needs_review"
+  set decision.reason to reason
+
+WHEN decide matched <item> for <refund> into <decision>
+  GIVEN item is RefundItem
+  AND refund is RefundCase
+  AND decision is RefundDecision
+  set decision.item_found to true
+  set decision.item_total to item.unit_price * item.quantity
+  IF refund.payment_captured == false
+    deny refund with payment_not_captured into decision
+  ELSE
+    IF decision.prior_refund_total >= 500
+      route refund to review with high_refund_history into decision
+    ELSE
+      IF item.returnable == false and refund.reason != "defective"
+        deny refund with non_returnable_item into decision
+      ELSE
+        IF refund.reason == "defective" and refund.proof_uploaded == false
+          route refund to review with proof_required into decision
+        ELSE
+          IF refund.days_since_purchase > 30 and refund.reason != "defective"
+            deny refund with outside_window into decision
+          ELSE
+            IF refund.reason == "changed_mind" and item.category == "physical"
+              set decision.restocking_fee to 5
+              LET net_amount be decision.item_total - decision.restocking_fee
+              approve net_amount with within_policy into decision
+            ELSE
+              approve decision.item_total with within_policy into decision
+
+WHEN evaluate <refund> into <decision>
+  GIVEN refund is RefundCase
+  AND decision is RefundDecision
+  reset refund decision decision
+  collect prior refunds from refund into decision
+  FIND item in refund.items WHERE item.sku == refund.requested_sku
+    decide matched item for refund into decision
+  ELSE
+    deny refund with item_not_found into decision
+
+SCENARIO approve standard return with restocking fee
+GIVEN refund is RefundCase
+  order_id: "R100"
+  requested_sku: "shirt"
+  days_since_purchase: 12
+  reason: "changed_mind"
+  proof_uploaded: false
+  payment_captured: true
+  customer_plan: "standard"
+  items: []
+  prior_refunds: []
+
+GIVEN refund.items are RefundItem
+  | sku     | category   | unit_price | quantity | returnable | delivered |
+  | "shirt" | "physical" | 40         | 2        | true       | true      |
+
+REQUEST evaluate refund
+
+THEN decision.status == "approved"
+AND decision.reason == "within_policy"
+AND decision.item_found == true
+AND decision.item_total == 80
+AND decision.restocking_fee == 5
+AND decision.approved_amount == 75
+AND decision.manual_review == false
+
+SCENARIO require proof for defective digital item
+GIVEN refund is RefundCase
+  order_id: "R101"
+  requested_sku: "ebook"
+  days_since_purchase: 4
+  reason: "defective"
+  proof_uploaded: false
+  payment_captured: true
+  customer_plan: "plus"
+  items: []
+  prior_refunds: []
+
+GIVEN refund.items are RefundItem
+  | sku     | category  | unit_price | quantity | returnable | delivered |
+  | "ebook" | "digital" | 18         | 1        | false      | true      |
+
+REQUEST evaluate refund
+
+THEN decision.status == "needs_review"
+AND decision.reason == "proof_required"
+AND decision.item_found == true
+AND decision.item_total == 18
+AND decision.approved_amount == 0
+AND decision.manual_review == true
+
+SCENARIO deny outside refund window
+GIVEN refund is RefundCase
+  order_id: "R102"
+  requested_sku: "lamp"
+  days_since_purchase: 45
+  reason: "changed_mind"
+  proof_uploaded: false
+  payment_captured: true
+  customer_plan: "standard"
+  items: []
+  prior_refunds: []
+
+GIVEN refund.items are RefundItem
+  | sku    | category   | unit_price | quantity | returnable | delivered |
+  | "lamp" | "physical" | 70         | 1        | true       | true      |
+
+REQUEST evaluate refund
+
+THEN decision.status == "denied"
+AND decision.reason == "outside_window"
+AND decision.item_found == true
+AND decision.item_total == 70
+AND decision.approved_amount == 0
+AND decision.manual_review == false
+
+SCENARIO deny refund when item is not in order
+GIVEN refund is RefundCase
+  order_id: "R104"
+  requested_sku: "missing"
+  days_since_purchase: 3
+  reason: "duplicate_charge"
+  proof_uploaded: true
+  payment_captured: true
+  customer_plan: "standard"
+  items: []
+  prior_refunds: []
+
+GIVEN refund.items are RefundItem
+  | sku    | category   | unit_price | quantity | returnable | delivered |
+  | "case" | "physical" | 25         | 1        | true       | true      |
+
+REQUEST evaluate refund
+
+THEN decision.status == "denied"
+AND decision.reason == "item_not_found"
+AND decision.item_found == false
+AND decision.item_total == 0
+AND decision.approved_amount == 0
+AND decision.manual_review == false
+
+SCENARIO route high refund history to review
+GIVEN refund is RefundCase
+  order_id: "R103"
+  requested_sku: "chair"
+  days_since_purchase: 7
+  reason: "late_delivery"
+  proof_uploaded: true
+  payment_captured: true
+  customer_plan: "plus"
+  items: []
+  prior_refunds: []
+
+GIVEN refund.items are RefundItem
+  | sku     | category   | unit_price | quantity | returnable | delivered |
+  | "chair" | "physical" | 120        | 1        | true       | true      |
+
+GIVEN refund.prior_refunds are PriorRefund
+  | refund_id | amount | status     |
+  | "P1"      | 250    | "approved" |
+  | "P2"      | 260    | "approved" |
+  | "P3"      | 50     | "denied"   |
+
+REQUEST evaluate refund
+
+THEN decision.status == "needs_review"
+AND decision.reason == "high_refund_history"
+AND decision.prior_refund_total == 510
+AND decision.item_found == true
+AND decision.item_total == 120
+AND decision.approved_amount == 0
+AND decision.manual_review == true

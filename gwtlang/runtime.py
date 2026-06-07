@@ -35,6 +35,7 @@ RESERVED_BEHAVIOR_NAMES = {
     "FOR",
     "FIND",
     "DEPENDING",
+    "DECIDE",
 }
 _MISSING = object()
 
@@ -139,6 +140,20 @@ class FindBlock:
     else_body: list[Any]
     name_line: Line | None = None
     header_line: Line | None = None
+
+
+@dataclass
+class DecisionBranch:
+    condition: Line
+    body: list[Any]
+
+
+@dataclass
+class DecisionBlock:
+    branches: list[DecisionBranch]
+    else_body: list[Any]
+    header_line: Line
+    else_line: Line
 
 
 @dataclass
@@ -1246,6 +1261,9 @@ class Runtime:
             elif isinstance(statement, FindBlock):
                 self._before_line(statement.header_line or statement.name_line or statement.iterable, env)
                 result = self._run_find_block(statement, env)
+            elif isinstance(statement, DecisionBlock):
+                self._before_line(statement.header_line, env)
+                result = self._run_decision_block(statement, env)
             elif isinstance(statement, MatchBlock):
                 self._before_line(statement.header_line or statement.expression, env)
                 result = self._run_match_block(statement, env)
@@ -1308,6 +1326,17 @@ class Runtime:
                 if isinstance(result, BehaviorReturn):
                     return result
                 return None
+        return self._run_body(statement.else_body, env)
+
+    def _run_decision_block(self, statement: DecisionBlock, env: dict[str, Any]) -> BehaviorReturn | None:
+        for branch in statement.branches:
+            self._before_line(branch.condition, env)
+            try:
+                if self._evaluate_condition(branch.condition.text, env):
+                    return self._run_body(branch.body, env)
+            except GwtError as exc:
+                raise _with_line_context(branch.condition, exc) from exc
+        self._before_line(statement.else_line, env)
         return self._run_body(statement.else_body, env)
 
     def _run_match_block(self, statement: MatchBlock, env: dict[str, Any]) -> BehaviorReturn | None:
@@ -1784,6 +1813,10 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             break
         if text.startswith("ELSE "):
             raise GwtError(f"{filename}:{line.number}: ELSE does not take a condition")
+        if text.startswith("WHEN ") and not (
+            text.startswith("WHEN the kind is ") or text.startswith("WHEN the value is ")
+        ):
+            raise GwtError(f"{filename}:{line.number}: DECIDE branch WHEN can only appear inside DECIDE")
         if text.startswith("WHEN the kind is ") or text.startswith("WHEN the value is "):
             raise GwtError(f"{filename}:{line.number}: WHEN the kind/value is can only appear inside DEPENDING ON")
         if text.startswith("GIVEN ") or text.startswith("THEN returns "):
@@ -1862,6 +1895,25 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
             last_body_keyword = None
             continue
 
+        if text == "DECIDE":
+            index += 1
+            branches, else_body, else_line, index = _parse_decision_block(lines, index, filename, indent + 2)
+            if not branches:
+                raise GwtError(f"{filename}:{line.number}: DECIDE requires WHEN branches")
+            body.append(
+                DecisionBlock(
+                    branches,
+                    else_body,
+                    _derived_line(line, text, 0),
+                    else_line,
+                )
+            )
+            last_body_keyword = None
+            continue
+
+        if text.startswith("DECIDE "):
+            raise GwtError(f"{filename}:{line.number}: DECIDE does not take a condition")
+
         if text.startswith("DEPENDING ON "):
             expression = text.removeprefix("DEPENDING ON ").strip()
             if not expression:
@@ -1889,6 +1941,53 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
         index += 1
 
     return body, index
+
+
+def _parse_decision_block(
+    lines: list[Line], index: int, filename: str, indent: int
+) -> tuple[list[DecisionBranch], list[Any], Line, int]:
+    branches: list[DecisionBranch] = []
+    else_body: list[Any] = []
+    else_line: Line | None = None
+    seen_else = False
+
+    while index < len(lines):
+        line = lines[index]
+        line_indent = _indent_width(line.text)
+        text = line.text.strip()
+        if line_indent < indent:
+            break
+        if line_indent > indent:
+            raise GwtError(f"{filename}:{line.number}: DECIDE branch is indented too far")
+
+        if text == "ELSE":
+            if seen_else:
+                raise GwtError(f"{filename}:{line.number}: DECIDE already has ELSE")
+            seen_else = True
+            else_line = _derived_line(line, text, 0)
+            index += 1
+            else_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+            if not else_body:
+                raise GwtError(f"{filename}:{line.number}: ELSE requires a body")
+            continue
+
+        if not text.startswith("WHEN "):
+            raise GwtError(f"{filename}:{line.number}: DECIDE expects WHEN condition or ELSE")
+        if seen_else:
+            raise GwtError(f"{filename}:{line.number}: DECIDE WHEN cannot follow ELSE")
+        condition = text.removeprefix("WHEN ").strip()
+        if not condition:
+            raise GwtError(f"{filename}:{line.number}: DECIDE WHEN requires a condition")
+        index += 1
+        branch_body, index = _parse_behavior_block(lines, index, filename, indent + 2)
+        if not branch_body:
+            raise GwtError(f"{filename}:{line.number}: DECIDE WHEN requires a body")
+        branches.append(DecisionBranch(_derived_line(line, condition, len("WHEN ")), branch_body))
+
+    if else_line is None:
+        line = lines[index - 1] if index > 0 else Line(1, "", filename)
+        raise GwtError(f"{filename}:{line.number}: DECIDE requires an ELSE block")
+    return branches, else_body, else_line, index
 
 
 def _parse_depending_block(

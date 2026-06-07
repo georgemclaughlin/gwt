@@ -50,6 +50,28 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(target.line, 4)
         self.assertEqual(target.column, 6)
 
+    def test_definition_ignores_decide_branch_when_label(self):
+        analysis = analyze_source(
+            """WHEN mark high into decision
+  set decision.status to "high"
+
+WHEN classify <score> into <decision>
+  DECIDE
+    WHEN score > 0
+      mark high into decision
+    ELSE
+      PASS
+""",
+            "example.gwt",
+        )
+
+        branch_target = definition_at(analysis, 5, 4)
+        call_target = definition_at(analysis, 6, 8)
+
+        self.assertIsNone(branch_target)
+        self.assertIsNotNone(call_target)
+        self.assertEqual(call_target.line, 1)
+
     def test_completion_items_include_behavior_and_dto(self):
         analysis = analyze_source(SOURCE, "example.gwt")
         labels = {item["label"] for item in completion_items(analysis)}

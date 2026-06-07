@@ -108,6 +108,147 @@ class RuntimeTests(unittest.TestCase):
                 """
             )
 
+    def test_decide_runs_first_true_branch_and_skips_later_branches(self):
+        result = run_source(
+            """
+            RECORD Decision
+              status: text
+              notes: list
+
+            GIVEN score is 12
+            GIVEN decision is Decision
+              status: "new"
+              notes: []
+
+            WHEN classify <score> into <decision>
+              GIVEN score is number
+              GIVEN decision is Decision
+              DECIDE
+                WHEN score >= 10
+                  set decision.status to "high"
+                  append "first" to decision.notes
+                WHEN score >= 5
+                  set decision.status to "medium"
+                  append "second" to decision.notes
+                ELSE
+                  set decision.status to "low"
+                  append "else" to decision.notes
+
+            WHEN classify score into decision
+
+            THEN decision.status == "high"
+            AND decision.notes == ["first"]
+            """
+        )
+
+        self.assertEqual(result.state["decision"]["status"], "high")
+        self.assertEqual(result.state["decision"]["notes"], ["first"])
+
+    def test_decide_runs_else_when_no_branch_matches(self):
+        result = run_source(
+            """
+            GIVEN score is 2
+            GIVEN decision.status is "new"
+
+            WHEN classify <score> into <decision>
+              GIVEN score is number
+              GIVEN decision is any
+              DECIDE
+                WHEN score >= 10
+                  set decision.status to "high"
+                WHEN score >= 5
+                  set decision.status to "medium"
+                ELSE
+                  set decision.status to "low"
+
+            WHEN classify score into decision
+
+            THEN decision.status == "low"
+            """
+        )
+
+        self.assertEqual(result.state["decision"]["status"], "low")
+
+    def test_decide_can_return_from_nested_branch(self):
+        result = run_source(
+            """
+            GIVEN score is 7
+            GIVEN decision.status is "new"
+
+            WHEN label for <score>
+              GIVEN score is number
+              THEN returns text
+              IF score > 0
+                DECIDE
+                  WHEN score >= 10
+                    RETURN "high"
+                  WHEN score >= 5
+                    RETURN "medium"
+                  ELSE
+                    RETURN "low"
+              ELSE
+                RETURN "none"
+
+            WHEN apply label <score> into <decision>
+              GIVEN score is number
+              GIVEN decision is any
+              LET label be label for score
+              set decision.status to label
+
+            WHEN apply label score into decision
+
+            THEN decision.status == "medium"
+            """
+        )
+
+        self.assertEqual(result.state["decision"]["status"], "medium")
+
+    def test_decide_requires_else_block(self):
+        with self.assertRaisesRegex(GwtError, "DECIDE requires an ELSE block"):
+            run_source(
+                """
+                WHEN classify <score>
+                  DECIDE
+                    WHEN score >= 10
+                      print "high"
+
+                WHEN classify 12
+                """
+            )
+        with self.assertRaisesRegex(GwtError, "DECIDE requires WHEN branches"):
+            run_source(
+                """
+                WHEN classify <score>
+                  DECIDE
+                    ELSE
+                      PASS
+
+                WHEN classify 12
+                """
+            )
+
+    def test_decide_is_only_valid_inside_behavior_body(self):
+        with self.assertRaisesRegex(GwtError, "unknown top-level form: DECIDE"):
+            run_source(
+                """
+                DECIDE
+                  WHEN count > 0
+                    print "positive"
+                  ELSE
+                    print "zero"
+                """
+            )
+        with self.assertRaisesRegex(GwtError, "DECIDE branch WHEN can only appear inside DECIDE"):
+            run_source(
+                """
+                WHEN classify <score>
+                  WHEN score > 0
+                    PASS
+
+                WHEN classify 12
+                """
+            )
+
     def test_one_of_record_setup_and_depending_on_branch(self):
         result = run_source(
             """
@@ -233,6 +374,13 @@ class RuntimeTests(unittest.TestCase):
                 """
                 WHEN count items
                   RETURN 0
+                """
+            )
+        with self.assertRaisesRegex(GwtError, "behavior name is reserved: DECIDE"):
+            run_source(
+                """
+                WHEN DECIDE
+                  PASS
                 """
             )
 
