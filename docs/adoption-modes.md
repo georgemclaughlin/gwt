@@ -77,5 +77,28 @@ Adopt embedded decisions gradually:
 2. Run GWT in shadow mode beside existing application code and log mismatches.
 3. Promote one low-risk deterministic rule only after shadow results are stable.
 
+The vendor onboarding flagship demo includes a concrete shadow-mode host:
+
+```sh
+python examples/vendor_onboarding/shadow_mode.py
+```
+
+It compares a small legacy Python decision function with
+`REQUEST review vendor`, reports one matching case and one intentional mismatch,
+and leaves promotion disabled:
+
+```json
+{
+  "cases": 2,
+  "matches": 1,
+  "mismatches": 1,
+  "promotion_ready": false
+}
+```
+
+That is the intended migration posture: observe mismatches, review whether GWT
+or the legacy code is correct, and promote only after the shadow report is
+stable for the chosen workflow.
+
 The host application should still own data loading, persistence, network calls,
 time sources, logging, and rollout controls.
