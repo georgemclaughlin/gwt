@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import shlex
 import textwrap
-from typing import Any
+from typing import Any, TypeGuard, cast
 
 from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
@@ -95,8 +95,8 @@ class PathRef:
 
 @dataclass
 class BehaviorContract:
-    inputs: dict[str, str] = field(default_factory=dict)
-    input_lines: dict[str, Line] = field(default_factory=dict)
+    inputs: dict[str, str] = field(default_factory=lambda: {})
+    input_lines: dict[str, Line] = field(default_factory=lambda: {})
     return_type: str | None = None
     return_line: Line | None = None
 
@@ -182,7 +182,7 @@ class DtoDefinition:
     filename: str | None = None
     column: int = 1
     length: int = 1
-    field_lines: dict[str, Line] = field(default_factory=dict)
+    field_lines: dict[str, Line] = field(default_factory=lambda: {})
 
 
 @dataclass(frozen=True)
@@ -193,7 +193,7 @@ class VariantCaseDefinition:
     filename: str | None = None
     column: int = 1
     length: int = 1
-    field_lines: dict[str, Line] = field(default_factory=dict)
+    field_lines: dict[str, Line] = field(default_factory=lambda: {})
 
 
 @dataclass(frozen=True)
@@ -236,7 +236,7 @@ class VariantAssignment:
     case_name: str
     fields: dict[str, str]
     line: Line
-    field_lines: dict[str, Line] = field(default_factory=dict)
+    field_lines: dict[str, Line] = field(default_factory=lambda: {})
 
 
 @dataclass(frozen=True)
@@ -257,32 +257,32 @@ class Scenario:
     filename: str | None = None
     column: int = 1
     length: int = 1
-    givens: list[Any] = field(default_factory=list)
-    whens: list[Any] = field(default_factory=list)
-    thens: list[Line] = field(default_factory=list)
-    examples: list[dict[str, str]] = field(default_factory=list)
+    givens: list[Any] = field(default_factory=lambda: [])
+    whens: list[Any] = field(default_factory=lambda: [])
+    thens: list[Line] = field(default_factory=lambda: [])
+    examples: list[dict[str, str]] = field(default_factory=lambda: [])
 
 
 @dataclass
 class NamedRequest:
     name: str
     line: Line
-    inputs: dict[str, ContractBinding] = field(default_factory=dict)
-    outputs: dict[str, ContractBinding] = field(default_factory=dict)
-    givens: list[Any] = field(default_factory=list)
-    whens: list[Line] = field(default_factory=list)
-    thens: list[Line] = field(default_factory=list)
+    inputs: dict[str, ContractBinding] = field(default_factory=lambda: {})
+    outputs: dict[str, ContractBinding] = field(default_factory=lambda: {})
+    givens: list[Any] = field(default_factory=lambda: [])
+    whens: list[Line] = field(default_factory=lambda: [])
+    thens: list[Line] = field(default_factory=lambda: [])
 
 
 @dataclass
 class Program:
     name: str | None = None
     background: Scenario = field(default_factory=lambda: Scenario("Background", 0))
-    dtos: dict[str, DtoDefinition] = field(default_factory=dict)
-    variants: dict[str, VariantDefinition] = field(default_factory=dict)
-    actions: list[Action] = field(default_factory=list)
-    requests: dict[str, NamedRequest] = field(default_factory=dict)
-    scenarios: list[Scenario] = field(default_factory=list)
+    dtos: dict[str, DtoDefinition] = field(default_factory=lambda: {})
+    variants: dict[str, VariantDefinition] = field(default_factory=lambda: {})
+    actions: list[Action] = field(default_factory=lambda: [])
+    requests: dict[str, NamedRequest] = field(default_factory=lambda: {})
+    scenarios: list[Scenario] = field(default_factory=lambda: [])
 
 
 @dataclass
@@ -681,7 +681,7 @@ class Runtime:
 
     def run_json(
         self,
-        state: dict[str, Any],
+        state: object,
         request: str,
         *,
         request_filename: str = "<request>",
@@ -690,6 +690,7 @@ class Runtime:
     ) -> RunResult:
         if not isinstance(state, dict):
             raise GwtError("JSON input must be an object")
+        json_state = cast(dict[object, object], state)
         request = request.strip()
         if not request:
             raise GwtError("request name is required for JSON input")
@@ -702,10 +703,10 @@ class Runtime:
         self._run_givens(self.program.background.givens)
 
         json_line = Line(1, "<json-input>", json_filename or request_filename, 1, len("<json-input>"))
+        declared_path_types = self.path_types
         try:
-            declared_path_types = self.path_types
             self.path_types = {}
-            for path, value in state.items():
+            for path, value in json_state.items():
                 if not isinstance(path, str) or not _is_path(path):
                     raise GwtError(f"JSON input key must be a state path: {path}")
                 self._set_path(path, deepcopy(value), {}, json_line)
@@ -872,7 +873,8 @@ class Runtime:
             if not isinstance(value, dict):
                 raise GwtError(f"expected {validation.path} to be a record")
             assert dto is not None
-            self._validate_dto_fields(validation.path, value, dto, validation.line)
+            record = cast(dict[str, Any], value)
+            self._validate_dto_fields(validation.path, record, dto, validation.line)
             self._register_path_type(validation.path, validation.dto_name)
         except GwtError as exc:
             raise _with_line_context(validation.line, exc) from exc
@@ -924,16 +926,18 @@ class Runtime:
         if item_type is not None:
             if not isinstance(value, list):
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
-            for index, item in enumerate(value, start=1):
-                value[index - 1] = self._validate_value_type(f"{path}[{index}]", item, item_type, line)
-            return value
+            items = cast(list[Any], value)
+            for index, item in enumerate(items, start=1):
+                items[index - 1] = self._validate_value_type(f"{path}[{index}]", item, item_type, line)
+            return items
 
         dto = self.program.dtos.get(expected_type)
         if dto is not None:
             if not isinstance(value, dict):
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
-            self._validate_dto_fields(path, value, dto, line)
-            return value
+            record = cast(dict[str, Any], value)
+            self._validate_dto_fields(path, record, dto, line)
+            return record
 
         variant = self.program.variants.get(expected_type)
         if variant is not None:
@@ -945,14 +949,15 @@ class Runtime:
     def _validate_variant_value(self, path: str, value: Any, variant: VariantDefinition, line: Line) -> dict[str, Any]:
         if not isinstance(value, dict):
             raise GwtError(f"expected {path} to be {variant.name}, got {_value_type_name(value)}")
-        kind = value.get("kind")
+        record = cast(dict[str, Any], value)
+        kind = record.get("kind")
         if not isinstance(kind, str):
             raise GwtError(f"record {variant.name} missing field: {path}.kind")
         case = variant.cases.get(kind)
         if case is None:
             raise GwtError(f"record {variant.name} has unknown kind: {kind}")
 
-        flat_value = _flatten_record(value)
+        flat_value = _flatten_record(record)
         expected_fields = {"kind", *case.fields}
         actual_fields = set(flat_value)
 
@@ -966,8 +971,8 @@ class Runtime:
 
         for field, expected_type in case.fields.items():
             normalized = self._validate_value_type(f"{path}.{field}", flat_value[field], expected_type, line)
-            _set_flat_record_value(value, field, normalized)
-        return value
+            _set_flat_record_value(record, field, normalized)
+        return record
 
     def _validate_contract_bindings(self, bindings: dict[str, ContractBinding], label: str) -> None:
         for binding in bindings.values():
@@ -1039,9 +1044,10 @@ class Runtime:
                 current = []
             if not isinstance(current, list):
                 raise GwtError(f"expected {assignment.path} to be a list")
-            self._validate_variant_value(f"{assignment.path}[{len(current) + 1}]", row, variant, assignment.line)
+            current_items = cast(list[Any], current)
+            self._validate_variant_value(f"{assignment.path}[{len(current_items) + 1}]", row, variant, assignment.line)
             self._register_path_type(assignment.path, f"list<{assignment.variant_name}>")
-            self._set_path(assignment.path, [*current, row], {}, assignment.line)
+            self._set_path(assignment.path, [*current_items, row], {}, assignment.line)
         except GwtError as exc:
             raise _with_line_context(assignment.line, exc) from exc
 
@@ -1145,7 +1151,8 @@ class Runtime:
             current = self._get_path(path, env)
             if not isinstance(current, list):
                 raise GwtError(f"line {line.number}: append requires a list target")
-            new_value = [*current, value]
+            current_items = cast(list[Any], current)
+            new_value: list[Any] = [*current_items, value]
             self._set_path(path, new_value, env, line)
         elif tokens[0] == "count":
             if len(tokens) < 4 or "into" not in tokens:
@@ -1154,7 +1161,8 @@ class Runtime:
             value = self._eval_expression(value_text, env)
             if not isinstance(value, list):
                 raise GwtError(f"line {line.number}: count requires a list")
-            self._set_path(path, len(value), env, line)
+            values = cast(list[Any], value)
+            self._set_path(path, len(values), env, line)
         elif tokens[0] == "sum":
             if len(tokens) < 4 or "into" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'sum list into path'")
@@ -1165,7 +1173,7 @@ class Runtime:
                 if not isinstance(values, list):
                     raise GwtError(f"line {line.number}: sum requires a list")
                 total = 0
-                for value in values:
+                for value in cast(list[Any], values):
                     sum_env = dict(env)
                     sum_env[name] = value
                     item = self._eval_expression(projection_text, sum_env)
@@ -1179,7 +1187,7 @@ class Runtime:
             if not isinstance(values, list):
                 raise GwtError(f"line {line.number}: sum requires a list")
             total = 0
-            for value in values:
+            for value in cast(list[Any], values):
                 if not _is_numeric_value(value):
                     raise GwtError(f"line {line.number}: sum requires a list of numbers")
                 total += value
@@ -1200,7 +1208,7 @@ class Runtime:
         values = self._eval_expression(iterable_text.strip(), env)
         if not isinstance(values, list):
             raise GwtError(f"line {line.number}: find requires a list")
-        for value in values:
+        for value in cast(list[Any], values):
             find_env = dict(env)
             find_env[name] = value
             if self._evaluate_condition(condition.strip(), find_env):
@@ -1219,7 +1227,7 @@ class Runtime:
         if not isinstance(values, list):
             raise GwtError(f"line {line.number}: exists requires a list")
         found = False
-        for value in values:
+        for value in cast(list[Any], values):
             exists_env = dict(env)
             exists_env[name] = value
             if self._evaluate_condition(condition.strip(), exists_env):
@@ -1298,7 +1306,7 @@ class Runtime:
         if not isinstance(values, list):
             raise GwtError(f"line {statement.iterable.number}: FOR requires a list")
 
-        for value in values:
+        for value in cast(list[Any], values):
             loop_env = dict(env)
             loop_env[statement.name] = value
             if statement.where is not None and not self._evaluate_condition(statement.where.text, loop_env):
@@ -1318,7 +1326,7 @@ class Runtime:
         if not isinstance(values, list):
             raise GwtError(f"line {statement.iterable.number}: FIND requires a list")
 
-        for value in values:
+        for value in cast(list[Any], values):
             find_env = dict(env)
             find_env[statement.name] = value
             if self._evaluate_condition(statement.condition.text, find_env):
@@ -1349,7 +1357,8 @@ class Runtime:
         if selector == "kind":
             if not isinstance(value, dict):
                 raise GwtError(f"line {statement.expression.number}: DEPENDING ON requires a record value")
-            kind = value.get("kind")
+            record = cast(dict[str, Any], value)
+            kind = record.get("kind")
             if not isinstance(kind, str):
                 raise GwtError(f"line {statement.expression.number}: DEPENDING ON record has no kind")
             for case in statement.cases:
@@ -1441,9 +1450,9 @@ class Runtime:
         if env_value is not _MISSING:
             return env_value
         resolved = self._resolve_path(path, env)
-        current: Any = self.state
+        current: object = self.state
         for part in resolved.split("."):
-            if not isinstance(current, dict) or part not in current:
+            if not _is_runtime_map(current) or part not in current:
                 raise GwtError(f"unknown path: {resolved}")
             current = current[part]
         return current
@@ -1459,33 +1468,34 @@ class Runtime:
             if len(parts) == 1:
                 env[parts[0]] = value
                 return
-            current = env[parts[0]]
+            current: object = env[parts[0]]
             for part in parts[1:-1]:
                 if not isinstance(current, dict):
                     raise GwtError(f"cannot create nested path under scalar: {part}")
-                next_value = current.setdefault(part, {})
+                current_map = cast(dict[str, Any], current)
+                next_value: Any = current_map.setdefault(part, {})
                 if not isinstance(next_value, dict):
                     raise GwtError(f"cannot create nested path under scalar: {part}")
-                current = next_value
+                current = cast(dict[str, Any], next_value)
             if not isinstance(current, dict):
                 raise GwtError(f"cannot create nested path under scalar: {parts[-2]}")
-            current[parts[-1]] = value
+            cast(dict[str, Any], current)[parts[-1]] = value
             return
 
         value = self._validate_assignment(resolved, value, line)
 
-        current = self.state
+        current_map = self.state
         for part in parts[:-1]:
-            next_value = current.setdefault(part, {})
+            next_value: Any = current_map.setdefault(part, {})
             if not isinstance(next_value, dict):
                 raise GwtError(f"cannot create nested path under scalar: {part}")
-            current = next_value
-        current[parts[-1]] = value
+            current_map = cast(dict[str, Any], next_value)
+        current_map[parts[-1]] = value
 
     def _path_exists(self, path: str) -> bool:
-        current: Any = self.state
+        current: object = self.state
         for part in path.split("."):
-            if not isinstance(current, dict) or part not in current:
+            if not _is_runtime_map(current) or part not in current:
                 return False
             current = current[part]
         return True
@@ -1494,13 +1504,13 @@ class Runtime:
         parts = path.split(".")
         if not parts or parts[0] not in env:
             return _MISSING
-        current = env[parts[0]]
+        current: object = env[parts[0]]
         if isinstance(current, PathRef):
             return _MISSING
         for part in parts[1:]:
             if not isinstance(current, dict) or part not in current:
                 return _MISSING
-            current = current[part]
+            current = cast(dict[str, Any], current)[part]
         return current
 
 
@@ -2773,20 +2783,24 @@ def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
     for key, item in value.items():
         path = key if prefix == "" else f"{prefix}.{key}"
         if isinstance(item, dict):
-            flattened.update(_flatten_record(item, path))
+            flattened.update(_flatten_record(cast(dict[str, Any], item), path))
         else:
             flattened[path] = item
     return flattened
+
+
+def _is_runtime_map(value: object) -> TypeGuard[dict[str, Any]]:
+    return isinstance(value, dict)
 
 
 def _set_flat_record_value(target: dict[str, Any], path: str, value: Any) -> None:
     current = target
     parts = path.split(".")
     for part in parts[:-1]:
-        next_value = current.setdefault(part, {})
+        next_value: Any = current.setdefault(part, {})
         if not isinstance(next_value, dict):
             raise GwtError(f"record path collides with scalar: {path}")
-        current = next_value
+        current = cast(dict[str, Any], next_value)
     current[parts[-1]] = value
 
 
@@ -2794,10 +2808,10 @@ def _set_nested_output(target: dict[str, Any], path: str, value: Any) -> None:
     current = target
     parts = path.split(".")
     for part in parts[:-1]:
-        next_value = current.setdefault(part, {})
+        next_value: Any = current.setdefault(part, {})
         if not isinstance(next_value, dict):
             raise GwtError(f"OUTPUT path collides with scalar: {path}")
-        current = next_value
+        current = cast(dict[str, Any], next_value)
     current[parts[-1]] = value
 
 
@@ -2836,7 +2850,7 @@ def _normalize_primitive_value(value: Any, expected_type: str) -> Any:
     if expected_type == "boolean":
         return value if isinstance(value, bool) else _INVALID_TYPE
     if expected_type == "list":
-        return value if isinstance(value, list) else _INVALID_TYPE
+        return cast(list[Any], value) if isinstance(value, list) else _INVALID_TYPE
     if expected_type == "any":
         return value
     raise AssertionError(expected_type)
