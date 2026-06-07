@@ -6,9 +6,10 @@ from decimal import Decimal
 from enum import Enum
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, cast
 
 from .api import CompiledProgram, ExecutionResult, compile_file, compile_text
+from .payloads import JsonObject, JsonValue
 from .runtime import GwtError
 
 PATH_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
@@ -120,25 +121,26 @@ class GwtHostAdapter:
         json_state = _json_value(state)
         if not isinstance(json_state, dict):
             raise GwtError("host adapter state must normalize to a JSON object")
+        json_object = cast(JsonObject, json_state)
 
         for observation in (*self.observations, *observations):
-            context = HostContext(json_state)
+            context = HostContext(json_object)
             try:
                 value = observation.observe(context)
             except GwtError:
                 raise
             except Exception as exc:
                 raise GwtError(f"host observation failed for {observation.path}: {exc}") from exc
-            _set_path(json_state, observation.path, _json_value(value))
+            _set_path(json_object, observation.path, _json_value(value))
 
         return self.program.run_json(
-            json_state,
+            json_object,
             request=request or self.request,
             json_file=json_file,
         )
 
 
-def _json_value(value: Any) -> Any:
+def _json_value(value: Any) -> JsonValue:
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise GwtError(f"host decimal is not finite: {value}")
@@ -155,27 +157,30 @@ def _json_value(value: Any) -> Any:
             for field in fields(value)
         }
     if isinstance(value, Mapping):
-        normalized: dict[str, Any] = {}
-        for key, item in value.items():
+        normalized: JsonObject = {}
+        for key, item in cast(Mapping[object, Any], value).items():
             if not isinstance(key, str):
                 raise GwtError(f"host JSON object keys must be text, got {key!r}")
             normalized[key] = _json_value(item)
         return normalized
     if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
-        return [_json_value(item) for item in value]
+        return [_json_value(item) for item in cast(Sequence[Any], value)]
     raise GwtError(f"host value is not JSON-compatible: {type(value).__name__}")
 
 
 def _get_path(state: Mapping[str, Any], path: str) -> Any:
-    value: Any = state
+    value: object = state
     for part in path.split("."):
-        if not isinstance(value, Mapping) or part not in value:
+        if not isinstance(value, Mapping):
             return _MISSING
-        value = value[part]
+        mapping = cast(Mapping[str, object], value)
+        if part not in mapping:
+            return _MISSING
+        value = mapping[part]
     return value
 
 
-def _set_path(state: dict[str, Any], path: str, value: Any) -> None:
+def _set_path(state: JsonObject, path: str, value: JsonValue) -> None:
     current = state
     parts = path.split(".")
     for part in parts[:-1]:
@@ -185,5 +190,5 @@ def _set_path(state: dict[str, Any], path: str, value: Any) -> None:
             current[part] = existing
         if not isinstance(existing, dict):
             raise GwtError(f"host observation path cannot extend non-object state: {path}")
-        current = existing
+        current = cast(JsonObject, existing)
     current[parts[-1]] = value
