@@ -51,7 +51,9 @@ class PythonTypesResult:
 @dataclass
 class _PropertyNode:
     value_type: str | None = None
-    children: dict[str, "_PropertyNode"] = field(default_factory=dict)
+    children: dict[str, "_PropertyNode"] = field(
+        default_factory=lambda: dict[str, _PropertyNode]()
+    )
 
 
 def generate_typescript_file(path: str | Path) -> TypeScriptTypesResult:

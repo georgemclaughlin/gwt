@@ -3,6 +3,7 @@
     "gwtlang/api.py",
     "gwtlang/inspection.py",
     "gwtlang/payloads.py",
+    "gwtlang/typegen.py",
     "gwtlang/validation.py",
     "examples/vendor_onboarding",
     "examples/exact_pricing"
