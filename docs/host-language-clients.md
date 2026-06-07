@@ -258,6 +258,13 @@ shows the complete host flow: generate declarations from GWT contracts, read a
 JSON request, check the rules file, run the named request, and consume a typed
 `GwtOutput` result.
 
+The paired Python host example at
+[`examples/vendor_onboarding/host_app.py`](../examples/vendor_onboarding/host_app.py)
+uses generated `TypedDict` contracts and the generated
+`VendorOnboardingClient` wrapper for the same `REQUEST review vendor` boundary.
+It validates the GWT file, inspects the public request manifest, compiles once,
+and runs the named request as an executable spec module.
+
 TypeScript test suites can use the same package as a small spec fixture:
 
 ```ts

@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Python package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run Python tests
+        run: python -m unittest discover
+
+      - name: Check example formatting
+        run: |
+          find examples -name '*.gwt' -print0 | while IFS= read -r -d '' file; do
+            python -m gwtlang format "$file" --check >/dev/null || exit 1
+          done
+
+      - name: Check top-level examples
+        run: |
+          for file in examples/*.gwt; do
+            python -m gwtlang check "$file" >/dev/null || exit 1
+          done
+
+      - name: Run reference request workflows
+        run: |
+          python -m gwtlang run examples/order_fulfillment/rules.gwt \
+            --input examples/order_fulfillment/request.gwt \
+            --json >/tmp/gwt-order.json
+          python -m gwtlang run examples/language_tour/rules.gwt \
+            --input examples/language_tour/request.gwt \
+            --json >/tmp/gwt-tour.json
+
+      - name: Validate typed module fixture
+        run: |
+          python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
+            --import-root examples/vendor_onboarding \
+            --no-absolute-imports
+          python examples/vendor_onboarding/host_app.py
+
+      - name: Verify generated host types
+        run: |
+          python -m gwtlang types examples/vendor_onboarding/rules.gwt \
+            --language typescript \
+            --output /tmp/vendor-onboarding.generated.d.ts
+          diff -u clients/typescript/examples/vendor-onboarding.generated.d.ts \
+            /tmp/vendor-onboarding.generated.d.ts
+          python -m gwtlang types examples/vendor_onboarding/rules.gwt \
+            --language python \
+            --output /tmp/vendor-onboarding.rules_types.py
+          diff -u examples/vendor_onboarding/rules_types.py \
+            /tmp/vendor-onboarding.rules_types.py
+
+      - name: Install TypeScript client dependencies
+        working-directory: clients/typescript
+        run: npm install
+
+      - name: Check TypeScript client
+        working-directory: clients/typescript
+        run: |
+          npm run check
+          npm test
+
+      - name: Install VS Code extension dependencies
+        working-directory: vscode-gwt
+        run: npm ci
+
+      - name: Check VS Code extension
+        working-directory: vscode-gwt
+        run: npm run check
+
+      - name: Check whitespace
+        run: git diff --check

@@ -23,6 +23,12 @@ class TypeGenerationTests(unittest.TestCase):
 
         self.assertEqual(fixture.read_text(), generated.source)
 
+    def test_vendor_onboarding_python_example_fixture_is_current(self):
+        generated = generate_python_file("examples/vendor_onboarding/rules.gwt")
+        fixture = Path("examples/vendor_onboarding/rules_types.py")
+
+        self.assertEqual(fixture.read_text(), generated.source)
+
     def test_typescript_generation_emits_named_request_types(self):
         result = generate_typescript_text(
             """

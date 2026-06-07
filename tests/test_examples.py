@@ -172,6 +172,19 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn("float input rejected:", completed.stdout)
         self.assertIn('"total": "29.97"', completed.stdout)
 
+    def test_vendor_onboarding_python_host_example_runs(self):
+        completed = subprocess.run(
+            [sys.executable, "examples/vendor_onboarding/host_app.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn('"review vendor"', completed.stdout)
+        self.assertIn('"status": "needs_review"', completed.stdout)
+        self.assertIn('"reason": "manual_review_required"', completed.stdout)
+        self.assertIn("typed decision: needs_review (manual_review_required)", completed.stdout)
+
     def test_loan_underwriting_example_runs_scenarios_and_request(self):
         program = Path("examples/loan_underwriting/rules.gwt")
         request = Path("examples/loan_underwriting/request.gwt")

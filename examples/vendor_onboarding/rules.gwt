@@ -125,20 +125,19 @@ WHEN score risk signals from <vendor> into <decision>
 
 WHEN classify <decision>
   GIVEN decision is VendorDecision
-  IF decision.high_signal_count > 0
-    set decision.status to "rejected"
-    set decision.reason to "high_risk_signal"
-  ELSE
-    IF decision.risk_points >= 12
+  DECIDE
+    WHEN decision.high_signal_count > 0
+      set decision.status to "rejected"
+      set decision.reason to "high_risk_signal"
+    WHEN decision.risk_points >= 12
       set decision.status to "rejected"
       set decision.reason to "risk_too_high"
+    WHEN decision.missing_document_count > 0 or decision.expired_document_count > 0 or decision.risk_points >= 6
+      set decision.status to "needs_review"
+      set decision.reason to "manual_review_required"
     ELSE
-      IF decision.missing_document_count > 0 or decision.expired_document_count > 0 or decision.risk_points >= 6
-        set decision.status to "needs_review"
-        set decision.reason to "manual_review_required"
-      ELSE
-        set decision.status to "approved"
-        set decision.reason to "ready_to_onboard"
+      set decision.status to "approved"
+      set decision.reason to "ready_to_onboard"
 
 WHEN review <vendor> into <decision>
   GIVEN vendor is VendorRequest

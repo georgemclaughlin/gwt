@@ -14,7 +14,11 @@
   "activationEvents": [
     "onLanguage:gwt",
     "onDebug:gwt",
-    "onCommand:gwt.debugCurrentFile"
+    "onCommand:gwt.debugCurrentFile",
+    "onCommand:gwt.validateCurrentFile",
+    "onCommand:gwt.testCurrentFile",
+    "onCommand:gwt.runCurrentFile",
+    "onCommand:gwt.formatCurrentFile"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -42,6 +46,22 @@
       {
         "command": "gwt.debugCurrentFile",
         "title": "GWT: Debug Current File"
+      },
+      {
+        "command": "gwt.validateCurrentFile",
+        "title": "GWT: Validate Current File"
+      },
+      {
+        "command": "gwt.testCurrentFile",
+        "title": "GWT: Test Current File"
+      },
+      {
+        "command": "gwt.runCurrentFile",
+        "title": "GWT: Run Current File"
+      },
+      {
+        "command": "gwt.formatCurrentFile",
+        "title": "GWT: Format Current File"
       }
     ],
     "breakpoints": [
