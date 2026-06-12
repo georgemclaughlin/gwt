@@ -13,6 +13,8 @@ using only the existing v0.2 language surface.
   Python request, output, and client helpers.
 - `host_app.py` validates, inspects, compiles, and calls `REQUEST review release`
   through the generated Python client.
+- `release_gate.py` normalizes repo/CI evidence into a `ReviewReleaseRequest`,
+  calls the same public request, and emits an advisory release decision report.
 - The host remains responsible for CI systems, deployment APIs, incident
   lookups, rollout controls, timestamps, persistence, and notifications.
 
@@ -66,6 +68,33 @@ Expected final line:
 ```txt
 typed decision: needs_review (missing_approval)
 ```
+
+Run the advisory repo release gate after the ordinary CI checks have passed:
+
+```sh
+python examples/release_readiness/release_gate.py --evidence ci-passed
+```
+
+Generate a machine-readable report:
+
+```sh
+python examples/release_readiness/release_gate.py \
+  --evidence ci-passed \
+  --release-approved \
+  --ignore-working-tree \
+  --json
+```
+
+Run the gate as a self-contained local check, using the installed Python, Node,
+and npm tooling already required by CI:
+
+```sh
+python examples/release_readiness/release_gate.py --evidence local
+```
+
+The gate is advisory by default: a `needs_review` decision still exits `0`.
+Use `--enforce` only after the release workflow is ready to block on the GWT
+decision.
 
 ## Pilot Notes
 
