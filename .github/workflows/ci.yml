@@ -120,3 +120,6 @@ jobs:
 
       - name: Check whitespace
         run: git diff --check
+
+      - name: Run advisory GWT release gate
+        run: python examples/release_readiness/release_gate.py --evidence ci-passed

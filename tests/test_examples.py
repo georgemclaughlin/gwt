@@ -207,6 +207,61 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn('"reason": "missing_approval"', completed.stdout)
         self.assertIn("typed decision: needs_review (missing_approval)", completed.stdout)
 
+    def test_release_readiness_repo_gate_approves_clean_ci_evidence(self):
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "examples/release_readiness/release_gate.py",
+                "--evidence",
+                "ci-passed",
+                "--release-approved",
+                "--ignore-working-tree",
+                "--json",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        report = json.loads(completed.stdout)
+        self.assertTrue(report["advisory"])
+        self.assertEqual(report["decision"]["status"], "approved")
+        self.assertEqual(report["decision"]["reason"], "ready")
+        self.assertEqual(report["request"]["release"]["version"], "0.1.0")
+        self.assertEqual(report["request"]["release"]["feature_flags"], [])
+
+    def test_release_readiness_repo_gate_is_advisory_without_release_approval(self):
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "examples/release_readiness/release_gate.py",
+                "--evidence",
+                "ci-passed",
+                "--ignore-working-tree",
+                "--json",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        report = json.loads(completed.stdout)
+        self.assertEqual(report["decision"]["status"], "needs_review")
+        self.assertEqual(report["decision"]["reason"], "missing_approval")
+        self.assertIn(
+            {"name": "maintainer", "required": True, "status": "missing"},
+            report["request"]["release"]["approvals"],
+        )
+
+    def test_release_readiness_repo_gate_is_documented_and_ci_guarded(self):
+        readme = Path("examples/release_readiness/README.md").read_text()
+        ci = Path(".github/workflows/ci.yml").read_text()
+
+        self.assertIn("release_gate.py", readme)
+        self.assertIn("--evidence ci-passed", readme)
+        self.assertIn("--enforce", readme)
+        self.assertIn("examples/release_readiness/release_gate.py --evidence ci-passed", ci)
+
     def test_vendor_onboarding_shadow_mode_example_runs(self):
         completed = subprocess.run(
             [sys.executable, "examples/vendor_onboarding/shadow_mode.py"],
