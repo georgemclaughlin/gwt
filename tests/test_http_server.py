@@ -25,6 +25,19 @@ from gwtlang.http_server import (
 
 
 class HttpServerTests(unittest.TestCase):
+    def test_public_http_api_exports_embedded_service_symbols(self):
+        from gwtlang import (
+            DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
+            GwtHttpService as ExportedGwtHttpService,
+            HttpTraceConfig as ExportedHttpTraceConfig,
+        )
+        import gwtlang
+
+        self.assertEqual(exported_body_limit, DEFAULT_MAX_REQUEST_BODY_BYTES)
+        self.assertIs(ExportedGwtHttpService, GwtHttpService)
+        self.assertIs(ExportedHttpTraceConfig, HttpTraceConfig)
+        self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
+
     def test_gwt_serve_openapi_contract_smoke(self):
         success_trace_id = "77777777777777777777777777777777"
         bad_request_trace_id = "88888888888888888888888888888888"
@@ -594,6 +607,30 @@ class HttpServerTests(unittest.TestCase):
             payload["error"]["message"],
             "request Content-Type must be application/json",
         )
+
+    def test_run_route_uses_decoded_json_without_http_body_rules(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                REQUEST ping
+                  GIVEN metadata.trace_id is text
+                  WHEN ping
+
+                  OUTPUT ok is boolean
+
+                WHEN ping
+                  set ok to true
+                """
+            )
+            service = GwtHttpService.from_file(program, max_request_body_bytes=0)
+
+            result = service.run_route(
+                "/requests/ping",
+                {"metadata": {"trace_id": "T-100"}},
+            )
+
+        self.assertEqual(result.body, {"ok": True})
 
     def test_run_http_route_keeps_previous_positional_call_shape(self):
         with tempfile.TemporaryDirectory() as temp_dir:
