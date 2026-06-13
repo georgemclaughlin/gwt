@@ -499,14 +499,38 @@ class HttpServerTests(unittest.TestCase):
             "request Content-Type must be application/json",
         )
 
+    def test_run_http_route_keeps_previous_positional_call_shape(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                REQUEST ping
+                  WHEN ping
+
+                  OUTPUT ok is boolean
+
+                WHEN ping
+                  set ok to true
+                """
+            )
+            service = GwtHttpService.from_file(program)
+
+            result = service.run_http_route(
+                "/requests/ping",
+                "2",
+                io.BytesIO(b"{}"),
+            )
+
+        self.assertEqual(result.body, {"ok": True})
+
     def test_missing_content_type_returns_415(self):
         service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
         with self.assertRaisesRegex(HttpServiceError, "Content-Type") as error:
             service.run_http_route(
                 "/requests/triage-ticket",
                 "2",
-                None,
                 io.BytesIO(b"{}"),
+                content_type=None,
             )
 
         self.assertEqual(error.exception.status, 415)
@@ -617,8 +641,8 @@ class HttpServerTests(unittest.TestCase):
                 service.run_http_route(
                     "/requests/triage-ticket",
                     "not-a-number",
-                    "application/json",
                     io.BytesIO(b"{}"),
+                    content_type="application/json",
                     traceparent=f"00-{incoming_trace_id}-{incoming_span_id}-01",
                 )
             exported = otlp.payloads
