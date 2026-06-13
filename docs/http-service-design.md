@@ -159,6 +159,10 @@ changes also include JSON Patch-shaped payloads plus parsed `gwt.state.old`,
 This remains out-of-band: OpenAPI clients still receive only the declared
 `OUTPUT` object.
 
+Source locations and GWT source text remain visible in redacted traces so tools
+can point back to the executable spec. Do not put secrets directly in `.gwt`
+source if traces are exported to shared systems.
+
 For known `POST /requests/<request-slug>` routes, body parsing failures and
 strict request-body rejections are traced on the route span and return
 `traceparent` plus `x-gwt-trace-id` response headers when trace export is

@@ -177,6 +177,79 @@ class HttpServerTests(unittest.TestCase):
             )
         )
 
+    def test_redacted_trace_hides_contract_failure_values(self):
+        secret = "customer-secret-123"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                TYPE Status is "approved" | "denied"
+
+                REQUEST review
+                  GIVEN status is Status
+                  WHEN review
+
+                WHEN review
+                  PASS
+                """
+            )
+
+            with running_otlp_sink() as otlp:
+                with running_service(
+                    program,
+                    trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+                ) as base_url:
+                    status, payload = request_json(
+                        f"{base_url}/requests/review",
+                        {"status": secret},
+                        method="POST",
+                    )
+
+                exported = otlp.payloads
+
+        self.assertEqual(status, 400)
+        self.assertIn(secret, payload["error"]["message"])
+        serialized_trace = json.dumps(exported, sort_keys=True)
+        self.assertNotIn(secret, serialized_trace)
+        self.assertIn("GWT error", serialized_trace)
+        self.assertIn("GWT contract failed", serialized_trace)
+
+    def test_redacted_trace_uses_declared_output_paths_not_runtime_object_keys(self):
+        sensitive_key = "ssn-123-45-6789"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                REQUEST echo
+                  GIVEN payload is any
+                  WHEN echo
+
+                  OUTPUT payload is any
+
+                WHEN echo
+                  PASS
+                """
+            )
+
+            with running_otlp_sink() as otlp:
+                with running_service(
+                    program,
+                    trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+                ) as base_url:
+                    status, payload = request_json(
+                        f"{base_url}/requests/echo",
+                        {"payload": {sensitive_key: "present"}},
+                        method="POST",
+                    )
+
+                exported = otlp.payloads
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["payload"], {sensitive_key: "present"})
+        serialized_trace = json.dumps(exported, sort_keys=True)
+        self.assertNotIn(sensitive_key, serialized_trace)
+        self.assertIn("payload [values redacted]", serialized_trace)
+
     def test_invalid_request_contract_returns_400(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:
             status, payload = request_json(
@@ -262,8 +335,12 @@ class HttpServerTests(unittest.TestCase):
                 event["name"] == "exception"
                 and any(
                     attribute["key"] == "exception.message"
-                    and attribute["value"]["stringValue"]
-                    == "request body contains undeclared input: unexpected"
+                    and attribute["value"]["stringValue"] == "GWT error"
+                    for attribute in event["attributes"]
+                )
+                and any(
+                    attribute["key"] == "exception.message.redacted"
+                    and attribute["value"]["boolValue"]
                     for attribute in event["attributes"]
                 )
                 for span in spans
@@ -411,7 +488,12 @@ class HttpServerTests(unittest.TestCase):
                 event["name"] == "exception"
                 and any(
                     attribute["key"] == "exception.message"
-                    and "invalid JSON" in attribute["value"]["stringValue"]
+                    and attribute["value"]["stringValue"] == "GWT error"
+                    for attribute in event["attributes"]
+                )
+                and any(
+                    attribute["key"] == "exception.message.redacted"
+                    and attribute["value"]["boolValue"]
                     for attribute in event["attributes"]
                 )
                 for span in spans
@@ -446,7 +528,12 @@ class HttpServerTests(unittest.TestCase):
                 event["name"] == "exception"
                 and any(
                     attribute["key"] == "exception.message"
-                    and attribute["value"]["stringValue"] == "invalid Content-Length header"
+                    and attribute["value"]["stringValue"] == "GWT error"
+                    for attribute in event["attributes"]
+                )
+                and any(
+                    attribute["key"] == "exception.message.redacted"
+                    and attribute["value"]["boolValue"]
                     for attribute in event["attributes"]
                 )
                 for span in spans

@@ -880,7 +880,10 @@ class Runtime:
                     raise GwtError(f"REQUEST {request.name}: line {then.number}: assertion failed: {then.text}")
             self._last_returned_state = self._declared_output_state(request)
             if self.tracer is not None:
-                self.tracer.record_request_completed(output=self._last_returned_state)
+                self.tracer.record_request_completed(
+                    output=self._last_returned_state,
+                    output_paths=[binding.path for binding in request.outputs.values()],
+                )
         except GwtError as exc:
             if self.tracer is not None:
                 self.tracer.exit_request(error=str(exc))
