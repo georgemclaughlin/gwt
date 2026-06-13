@@ -227,6 +227,14 @@ def build_parser() -> argparse.ArgumentParser:
             "If omitted, OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is used."
         ),
     )
+    serve_parser.add_argument(
+        "--trace-values",
+        action="store_true",
+        help=(
+            "Include request output, printed output, and state-change values in exported traces. "
+            "By default served traces redact values."
+        ),
+    )
 
     version_parser = subparsers.add_parser(
         "version",
@@ -552,6 +560,7 @@ def serve_command(args: argparse.Namespace) -> int:
             import_roots=args.import_root,
             allow_absolute_imports=not args.no_absolute_imports,
             otlp_endpoint=args.otlp_endpoint,
+            trace_values=args.trace_values,
         )
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)

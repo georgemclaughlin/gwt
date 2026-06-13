@@ -203,6 +203,7 @@ class GwtHttpService:
             route_path=route.path,
             context=parse_traceparent(traceparent),
             service_name=self.trace_config.service_name,
+            include_values=self.trace_config.include_values,
         )
 
     def _export_trace(self, recorder: GwtTraceRecorder) -> None:
@@ -224,6 +225,7 @@ class GwtHttpService:
 class HttpTraceConfig:
     otlp_endpoint: str
     service_name: str = "gwt-serve"
+    include_values: bool = False
 
 
 @dataclass(frozen=True)
@@ -268,6 +270,7 @@ def run_http_server(
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
     otlp_endpoint: str | None = None,
+    trace_values: bool = False,
 ) -> int:
     resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
     service = GwtHttpService.from_file(
@@ -275,7 +278,7 @@ def run_http_server(
         import_roots=import_roots,
         allow_absolute_imports=allow_absolute_imports,
         trace_config=(
-            HttpTraceConfig(resolved_otlp_endpoint)
+            HttpTraceConfig(resolved_otlp_endpoint, include_values=trace_values)
             if resolved_otlp_endpoint is not None
             else None
         ),

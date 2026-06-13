@@ -99,6 +99,8 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
         self.assertIn("POST /requests/triage-ticket", [span["name"] for span in spans])
         self.assertIn("GWT REQUEST triage ticket", [span["name"] for span in spans])
+        root_attributes = attributes_by_key(spans[0]["attributes"])
+        self.assertEqual(root_attributes["gwt.trace.values"]["stringValue"], "redacted")
         self.assertTrue(
             any(
                 event["name"] == "gwt.state.changed"
@@ -111,6 +113,67 @@ class HttpServerTests(unittest.TestCase):
                 event["name"] == "gwt.request.completed"
                 for span in spans
                 for event in span["events"]
+            )
+        )
+        event_attribute_keys = {
+            attribute["key"]
+            for span in spans
+            for event in span["events"]
+            for attribute in event["attributes"]
+        }
+        self.assertIn("gwt.state.values.redacted", event_attribute_keys)
+        self.assertIn("gwt.output.redacted", event_attribute_keys)
+        self.assertNotIn("gwt.state.old", event_attribute_keys)
+        self.assertNotIn("gwt.state.new", event_attribute_keys)
+        self.assertNotIn("gwt.state.patch", event_attribute_keys)
+        self.assertNotIn("gwt.output.decision.status", event_attribute_keys)
+
+    def test_trace_values_opt_in_exports_output_and_state_values(self):
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(
+                    f"{otlp.base_url}/v1/traces",
+                    include_values=True,
+                ),
+            ) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    {
+                        "ticket": {
+                            "customer_id": "C-100",
+                            "subject": "checkout unavailable",
+                            "severity": "medium",
+                            "account_value": 5000,
+                            "has_outage": True,
+                        }
+                    },
+                    method="POST",
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        root_attributes = attributes_by_key(spans[0]["attributes"])
+        self.assertEqual(root_attributes["gwt.trace.values"]["stringValue"], "full")
+        self.assertTrue(
+            any(
+                attribute["key"] == "gwt.state.new"
+                and attribute["value"].get("stringValue") == "incident"
+                for span in spans
+                for event in span["events"]
+                for attribute in event["attributes"]
+            )
+        )
+        self.assertTrue(
+            any(
+                attribute["key"] == "gwt.output.decision.status"
+                and attribute["value"].get("stringValue") == "escalated"
+                for span in spans
+                for event in span["events"]
+                for attribute in event["attributes"]
             )
         )
 
@@ -493,6 +556,20 @@ def cast_otlp_sink(server: object) -> OtlpSink:
     if not isinstance(server, OtlpSink):
         raise TypeError("expected OtlpSink")
     return server
+
+
+def attributes_by_key(attributes: object) -> dict[str, dict[str, object]]:
+    if not isinstance(attributes, list):
+        return {}
+    result: dict[str, dict[str, object]] = {}
+    for attribute in attributes:
+        if not isinstance(attribute, dict):
+            continue
+        key = attribute.get("key")
+        value = attribute.get("value")
+        if isinstance(key, str) and isinstance(value, dict):
+            result[key] = value
+    return result
 
 
 def request_json(url: str, payload: object | None = None, *, method: str = "GET") -> tuple[int, object]:

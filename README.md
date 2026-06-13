@@ -482,7 +482,9 @@ contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests
 lists callable requests, and `POST /requests/<request-slug>` runs the request
 and returns only the declared `OUTPUT` object. Use `--otlp-endpoint` or
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
-execution traces out-of-band.
+execution traces out-of-band. Served traces redact state, output, and print
+values by default; pass `--trace-values` for local diagnostic runs that need
+full values.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for

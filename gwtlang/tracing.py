@@ -109,9 +109,11 @@ class GwtTraceRecorder:
         route_path: str | None = None,
         context: TraceContext | None = None,
         service_name: str = "gwt-serve",
+        include_values: bool = True,
     ) -> None:
         self.trace_id = context.trace_id if context is not None else new_trace_id()
         self.trace_flags = context.trace_flags if context is not None else "01"
+        self.include_values = include_values
         self.root_span_id = new_span_id()
         self._sequence = 0
         self._spans: list[OtlpSpan] = []
@@ -130,6 +132,7 @@ class GwtTraceRecorder:
                 "gwt.program.file": program_file,
                 "gwt.program.hash": program_hash,
                 "gwt.request.name": request_name,
+                "gwt.trace.values": "full" if include_values else "redacted",
             },
         )
         if program_name is not None:
@@ -266,12 +269,16 @@ class GwtTraceRecorder:
             "gwt.state.path": path,
             "gwt.state.operation": change.operation,
             "gwt.state.pointer": change.pointer,
-            "gwt.state.new": _attribute_value(change.new_value),
-            "gwt.state.patch": json.dumps(_jsonable(change.patch), separators=(",", ":"), sort_keys=True),
         }
-        if change.has_old_value:
-            attributes["gwt.state.old"] = _attribute_value(change.old_value)
-        attributes["gwt.state.summary"] = _state_summary(path, change)
+        if self.include_values:
+            attributes["gwt.state.new"] = _attribute_value(change.new_value)
+            attributes["gwt.state.patch"] = json.dumps(_jsonable(change.patch), separators=(",", ":"), sort_keys=True)
+            if change.has_old_value:
+                attributes["gwt.state.old"] = _attribute_value(change.old_value)
+            attributes["gwt.state.summary"] = _state_summary(path, change)
+        else:
+            attributes["gwt.state.values.redacted"] = True
+            attributes["gwt.state.summary"] = _state_summary(path, change, include_values=False)
         if line is not None:
             attributes.update(self._line_attributes(line))
         self._event("gwt.state.changed", attributes)
@@ -283,23 +290,32 @@ class GwtTraceRecorder:
         self._event("gwt.local.changed", attributes)
 
     def record_output(self, *, value: str, line: Any | None = None) -> None:
-        attributes: dict[str, Any] = {"gwt.output": value}
+        if self.include_values:
+            attributes: dict[str, Any] = {"gwt.output": value}
+        else:
+            attributes = {"gwt.output.redacted": True}
         if line is not None:
             attributes.update(self._line_attributes(line))
         self._event("gwt.output", attributes)
 
     def record_request_completed(self, *, output: dict[str, Any]) -> None:
         output_fields = _flatten_scalar_paths(output)
+        request_name = self._span_stack[-1].attributes.get("gwt.request.name")
         attributes: dict[str, Any] = {
             "gwt.request.outcome": "completed",
-            "gwt.output": json.dumps(_jsonable(output), separators=(",", ":"), sort_keys=True),
-            "gwt.request.summary": _request_summary(self._span_stack[-1].attributes.get("gwt.request.name"), output_fields),
+            "gwt.request.summary": _request_summary(request_name, output_fields, include_values=self.include_values),
         }
         self._span_stack[-1].attributes["gwt.request.summary"] = attributes["gwt.request.summary"]
-        for path, value in output_fields.items():
-            key = f"gwt.output.{path}"
-            attributes[key] = _attribute_value(value)
-            self._span_stack[-1].attributes[key] = _attribute_value(value)
+        if self.include_values:
+            attributes["gwt.output"] = json.dumps(_jsonable(output), separators=(",", ":"), sort_keys=True)
+            for path, value in output_fields.items():
+                key = f"gwt.output.{path}"
+                attributes[key] = _attribute_value(value)
+                self._span_stack[-1].attributes[key] = _attribute_value(value)
+        else:
+            attributes["gwt.output.redacted"] = True
+            if output_fields:
+                attributes["gwt.output.fields"] = ", ".join(output_fields)
         self._event("gwt.request.completed", attributes)
 
     def record_error(self, error: str) -> None:
@@ -623,18 +639,25 @@ def _event_summary(name: str, attributes: dict[str, Any]) -> str:
     if name == "gwt.local.changed":
         return f"local {attributes.get('gwt.local.path', 'value')} changed"
     if name == "gwt.output":
+        if attributes.get("gwt.output.redacted") is True:
+            return "print [redacted]"
         return f"print {attributes.get('gwt.output', '')}"
     if name == "exception":
         return str(attributes.get("exception.message") or "GWT error")
     return name
 
 
-def _request_summary(request_name: Any, output_fields: dict[str, Any]) -> str:
+def _request_summary(request_name: Any, output_fields: dict[str, Any], *, include_values: bool) -> str:
+    name = str(request_name or "request")
+    if not include_values:
+        fields = ", ".join(output_fields)
+        if not fields:
+            return f"{name} completed"
+        return f"{name} completed: {fields} [values redacted]"
     fields = ", ".join(
         f"{path}={_summary_value(value)}"
         for path, value in output_fields.items()
     )
-    name = str(request_name or "request")
     if not fields:
         return f"{name} completed"
     return f"{name} completed: {fields}"
@@ -650,7 +673,9 @@ def _summary_value(value: Any) -> str:
     return json.dumps(_jsonable(value), separators=(",", ":"), sort_keys=True)
 
 
-def _state_summary(path: str, change: StateChange) -> str:
+def _state_summary(path: str, change: StateChange, *, include_values: bool = True) -> str:
+    if not include_values:
+        return f"{path} {change.operation} [values redacted]"
     new_value = _display_value(change.new_value)
     if change.has_old_value:
         return f"{path} {change.operation} {_display_value(change.old_value)} -> {new_value}"
