@@ -68,6 +68,14 @@ class OpenApiGenerationTests(unittest.TestCase):
             operation["responses"]["200"]["content"]["application/json"]["schema"],
             {"$ref": "#/components/schemas/CheckoutCartOutput"},
         )
+        self.assertEqual(
+            operation["responses"]["400"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/GwtErrorResponse"},
+        )
+        self.assertEqual(
+            operation["responses"]["500"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/GwtErrorResponse"},
+        )
 
         self.assertEqual(schemas["CartStatus"]["enum"], ["new", "priced"])
         self.assertEqual(
@@ -89,6 +97,30 @@ class OpenApiGenerationTests(unittest.TestCase):
         self.assertEqual(
             schemas["Decision"]["oneOf"][0]["properties"]["kind"],
             {"type": "string", "enum": ["approved"]},
+        )
+        self.assertEqual(
+            schemas["GwtErrorResponse"],
+            {
+                "title": "GwtErrorResponse",
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean",
+                        "description": "Always false for service error responses.",
+                    },
+                    "error": {
+                        "type": "object",
+                        "properties": {
+                            "code": {"type": "string"},
+                            "message": {"type": "string"},
+                        },
+                        "required": ["code", "message"],
+                        "additionalProperties": False,
+                    },
+                },
+                "required": ["ok", "error"],
+                "additionalProperties": False,
+            },
         )
 
     def test_decimal_literal_unions_do_not_reject_valid_decimal_input_shapes(self):

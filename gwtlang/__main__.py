@@ -18,6 +18,7 @@ from .api import (
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
+from .http_server import run_http_server
 from .inspection import inspect_file
 from .lsp import run_stdio_server
 from .payloads import JsonObject, ValidationPayload
@@ -48,6 +49,8 @@ def main(argv: list[str] | None = None) -> int:
         return types_command(args)
     if args.command == "openapi":
         return openapi_command(args)
+    if args.command == "serve":
+        return serve_command(args)
     if args.command == "version":
         return version_command(args)
     if args.command == "lsp":
@@ -198,6 +201,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         help="Write generated OpenAPI JSON to a file instead of stdout.",
+    )
+
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Serve named REQUEST contracts over HTTP.",
+    )
+    add_file_arguments(serve_parser)
+    add_import_policy_arguments(serve_parser)
+    serve_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host interface to bind.",
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="TCP port to bind.",
     )
 
     version_parser = subparsers.add_parser(
@@ -514,6 +535,24 @@ def openapi_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def serve_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        return run_http_server(
+            args.file,
+            host=args.host,
+            port=args.port,
+            import_roots=args.import_root,
+            allow_absolute_imports=not args.no_absolute_imports,
+        )
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"gwt: failed to start HTTP server: {exc}", file=sys.stderr)
+        return 1
+
+
 def version_command(args: argparse.Namespace) -> int:
     payload = version_payload()
     if args.json:
@@ -574,6 +613,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "format",
         "types",
         "openapi",
+        "serve",
         "version",
         "lsp",
         "debug",
