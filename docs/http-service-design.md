@@ -1,7 +1,8 @@
 # HTTP Service And OpenAPI
 
-Status: proposed direction, with OpenAPI generation as the first implemented
-slice.
+Status: OpenAPI generation and an experimental standard-library HTTP service
+are implemented. Deployment policy and deeper service customization remain
+deferred.
 
 GWT named `REQUEST` blocks already define a public request/response boundary.
 The HTTP service direction is to project that boundary into standard API
@@ -39,8 +40,8 @@ while OpenAPI describes the clean host-facing API shape.
 
 ## Interop Smoke Path
 
-The OpenAPI slice is useful before `gwt serve` exists because many host tools
-can consume the generated document directly.
+The OpenAPI slice remains useful on its own because many host tools can consume
+the generated document directly.
 
 Generate the contract:
 
@@ -77,35 +78,12 @@ response body schema contains only the declared `decision` output. Runtime
 debug information such as final full state and print output remains part of the
 CLI execution envelope, not the OpenAPI endpoint response.
 
-## Future HTTP Runner
+## Implemented Experimental HTTP Service
 
-A later `gwt serve` command can use the same OpenAPI generator and compiled
-program API:
-
-```text
-POST /requests/review-vendor
-  JSON body -> REQUEST review vendor -> declared OUTPUT JSON
-```
-
-The server layer should compile and check the GWT program once at startup, then
-run named requests against fresh runtime state for each HTTP call. It should not
-reimplement durable domain rules in host code.
-
-## Proposed Experimental Service
-
-The first service slice should be explicitly experimental and should live behind
-optional dependencies so the base `gwtlang` package remains a small runtime and
-tooling package:
-
-```toml
-[project.optional-dependencies]
-server = ["fastapi", "uvicorn"]
-```
-
-Proposed command:
+`gwt serve` uses the same OpenAPI generator and compiled program API:
 
 ```sh
-python -m gwtlang serve rules.gwt \
+python -m gwtlang serve examples/deployable_api/rules.gwt \
   --host 127.0.0.1 \
   --port 8080
 ```
@@ -115,23 +93,24 @@ Startup behavior:
 - parse, import, and check the `.gwt` program once
 - fail startup if parser/checker diagnostics include errors
 - keep the compiled program in memory
-- generate OpenAPI from the same compiled program model
+- generate OpenAPI for the same source and import policy
 - expose only named `REQUEST` blocks, not helper `WHEN` behaviors
 
-Initial routes:
+Routes:
 
 ```text
 GET  /health
 GET  /openapi.json
-GET  /docs
+GET  /requests
 POST /requests/<request-slug>
 ```
 
 Request execution:
 
 - HTTP JSON body is the caller-provided GWT state for that named request
-- the service invokes the exact named `REQUEST` stored in
-  `x-gwt-request-name`
+- request slugs are derived from the generated OpenAPI paths, including
+  collision suffixes such as `/requests/review-vendor-2`
+- the service invokes the exact named `REQUEST` stored in `x-gwt-request-name`
 - `REQUEST` input contracts validate before execution
 - request-local `GIVEN` setup and `WHEN` calls run normally
 - `OUTPUT` contracts validate after execution
@@ -142,6 +121,20 @@ CLI envelope is useful for local runners, scenario state, print output, and
 debugging. The service should start with the API contract that host clients
 expect from OpenAPI: request body in, declared response body out.
 
+## Generated Client Smoke Path
+
+Standard OpenAPI tooling should be the first typed HTTP client path. The
+deployable API example includes a generated-client smoke script:
+
+```sh
+node examples/deployable_api/openapi_generator_client_demo.mjs
+```
+
+The script generates OpenAPI from `rules.gwt`, runs OpenAPI Generator's
+`typescript-fetch` generator into a temporary directory, starts `gwt serve`, and
+calls the generated `DefaultApi.triageTicket(...)` method. This proves the
+service can be consumed without a custom GWT HTTP client wrapper.
+
 Error posture:
 
 - startup parse/check failures should fail the process with source-located
@@ -150,8 +143,9 @@ Error posture:
 - missing or invalid `REQUEST` input should return `400`
 - failed request `THEN` assertions or missing `OUTPUT` values should return
   `500` unless a later design proves a better contract-specific status shape
-- returned error bodies should include GWT source locations when available, but
-  should not expose unrelated host stack traces by default
+- returned error bodies use the `GwtErrorResponse` OpenAPI schema and include
+  the GWT diagnostic message when available, but do not expose unrelated host
+  stack traces by default
 
 Deferred service options:
 
@@ -159,6 +153,7 @@ Deferred service options:
 - custom operation IDs
 - CORS configuration
 - structured logging
+- request body size limits
 - debug envelope mode
 - reload/watch mode for local development
 - Docker examples

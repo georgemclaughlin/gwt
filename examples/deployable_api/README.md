@@ -1,7 +1,7 @@
 # Deployable API Example
 
 This example shows how a named GWT `REQUEST` can be projected into an OpenAPI
-contract.
+contract and served as a typed HTTP endpoint.
 
 The rules file defines one public request:
 
@@ -33,6 +33,28 @@ python -m gwtlang openapi examples/deployable_api/rules.gwt \
 python -m json.tool /tmp/gwt-openapi.json >/dev/null
 ```
 
+Serve the same request boundary over HTTP:
+
+```sh
+python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
+```
+
+Then call it with ordinary JSON:
+
+```sh
+curl -X POST http://127.0.0.1:8080/requests/triage-ticket \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticket": {
+      "customer_id": "C-100",
+      "subject": "checkout unavailable",
+      "severity": "medium",
+      "account_value": 5000,
+      "has_outage": true
+    }
+  }'
+```
+
 The generated API surface is:
 
 ```text
@@ -46,5 +68,32 @@ The OpenAPI response body is the declared `OUTPUT` object. It is intentionally
 not the `gwt run --json` execution envelope, which remains the CLI/debug payload
 with final state and print output.
 
+## OpenAPI Generator Client Demo
+
+The generated OpenAPI contract can drive standard client generators. This demo
+does not commit generated code; it writes OpenAPI and the generated TypeScript
+fetch client to a temporary directory, starts `gwt serve`, and calls the
+generated `DefaultApi.triageTicket(...)` method:
+
+```sh
+node examples/deployable_api/openapi_generator_client_demo.mjs
+```
+
+It requires Node 20 or newer, npm, and the Java runtime used by OpenAPI
+Generator CLI.
+
+The generated TypeScript client provides `TriageTicketRequest` and
+`TriageTicketOutput` types from the OpenAPI schemas. Set
+`GWT_KEEP_OPENAPI_DEMO=1` to keep the generated files for inspection.
+
+The demo uses:
+
+```sh
+npx --yes @openapitools/openapi-generator-cli@2.38.0 generate \
+  -i /tmp/gwt-openapi.json \
+  -g typescript-fetch \
+  -o /tmp/gwt-openapi-client
+```
+
 See [`../../docs/http-service-design.md`](../../docs/http-service-design.md)
-for the proposed experimental `gwt serve` direction.
+for the HTTP service direction.

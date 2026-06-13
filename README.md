@@ -118,16 +118,18 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript \
 ```
 
 For hosts that consume standard HTTP contracts, GWT can project the same named
-request boundary into OpenAPI:
+request boundary into OpenAPI and serve those requests experimentally over
+HTTP:
 
 ```sh
 gwt openapi examples/deployable_api/rules.gwt --json
+gwt serve examples/deployable_api/rules.gwt --port 8080
 ```
 
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
 client-library model and boundary rules, and
 [`docs/http-service-design.md`](docs/http-service-design.md) for the OpenAPI
-and future HTTP service direction. JSON Schemas for CLI/API payloads live in
+and HTTP service direction. JSON Schemas for CLI/API payloads live in
 [`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
 lives in [`clients/typescript`](clients/typescript), with a typed host example
 in [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
@@ -430,6 +432,7 @@ gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt openapi examples/deployable_api/rules.gwt --json
+gwt serve examples/deployable_api/rules.gwt --port 8080
 gwt test examples/checkout/scenarios.gwt
 gwt check examples/checkout/rules.gwt
 gwt inspect examples/vendor_onboarding/rules.gwt --json
@@ -473,6 +476,11 @@ integration helpers; the `.gwt` file remains the source of truth.
 `gwt openapi file.gwt` generates an OpenAPI 3.1 document from named `REQUEST`
 contracts. Caller-provided `GIVEN` bindings become request body schemas, and
 declared `OUTPUT` bindings become response body schemas.
+
+`gwt serve file.gwt` starts an experimental HTTP service for named `REQUEST`
+contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests`
+lists callable requests, and `POST /requests/<request-slug>` runs the request
+and returns only the declared `OUTPUT` object.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for

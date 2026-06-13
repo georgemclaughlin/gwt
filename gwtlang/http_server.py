@@ -1,0 +1,275 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
+from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+from pathlib import Path
+from typing import Any, cast
+from urllib.parse import urlparse
+
+from .api import CompiledProgram, compile_text, generate_openapi_text
+from .errors import GwtError
+from .runtime import ContractBinding
+
+
+@dataclass(frozen=True)
+class HttpRequestRoute:
+    path: str
+    request_name: str
+    operation_id: str
+
+    def as_payload(self, program: CompiledProgram) -> dict[str, Any]:
+        request = program.program.requests[self.request_name]
+        return {
+            "name": self.request_name,
+            "method": "POST",
+            "path": self.path,
+            "operationId": self.operation_id,
+            "inputs": _contract_payloads(request.inputs.values()),
+            "outputs": _contract_payloads(request.outputs.values()),
+        }
+
+
+@dataclass(frozen=True)
+class GwtHttpService:
+    compiled: CompiledProgram
+    openapi_document: dict[str, Any]
+    routes: dict[str, HttpRequestRoute]
+
+    @classmethod
+    def from_file(
+        cls,
+        path: str | Path,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> GwtHttpService:
+        file_path = Path(path)
+        source = file_path.read_text()
+        filename = str(file_path)
+        compiled = compile_text(
+            source,
+            filename=filename,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
+        openapi_document = generate_openapi_text(
+            source,
+            filename=filename,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        ).as_payload()
+        return cls(compiled, openapi_document, _routes_from_openapi(openapi_document))
+
+    @property
+    def program_name(self) -> str | None:
+        return self.compiled.program.name
+
+    def health_payload(self) -> dict[str, Any]:
+        return {
+            "ok": True,
+            "file": self.compiled.file,
+            "program": self.program_name,
+            "requests": len(self.routes),
+        }
+
+    def requests_payload(self) -> dict[str, Any]:
+        return {
+            "file": self.compiled.file,
+            "program": self.program_name,
+            "requests": [
+                route.as_payload(self.compiled)
+                for route in self.routes.values()
+            ],
+        }
+
+    def run_route(self, path: str, json_state: dict[str, Any]) -> dict[str, Any]:
+        route = self.routes.get(path)
+        if route is None:
+            raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
+
+        try:
+            execution = self.compiled.run_json(json_state, request=route.request_name)
+        except GwtError as exc:
+            raise HttpServiceError(
+                _status_for_gwt_error(str(exc)),
+                str(exc),
+                "GWT_REQUEST_FAILED",
+            ) from exc
+
+        result = execution.as_payload()["result"]
+        if result is None:
+            return {}
+        if not isinstance(result, dict):
+            raise HttpServiceError(500, "GWT request returned a non-object response", "GWT_RESPONSE_INVALID")
+        return cast(dict[str, Any], result)
+
+
+class HttpServiceError(Exception):
+    def __init__(self, status: int, message: str, code: str) -> None:
+        super().__init__(message)
+        self.status = status
+        self.message = message
+        self.code = code
+
+
+class GwtHttpServer(ThreadingHTTPServer):
+    def __init__(
+        self,
+        server_address: tuple[str, int],
+        service: GwtHttpService,
+    ) -> None:
+        super().__init__(server_address, _GwtHttpRequestHandler)
+        self.service = service
+
+
+def create_http_server(
+    service: GwtHttpService,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+) -> GwtHttpServer:
+    return GwtHttpServer((host, port), service)
+
+
+def run_http_server(
+    path: str | Path,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> int:
+    service = GwtHttpService.from_file(
+        path,
+        import_roots=import_roots,
+        allow_absolute_imports=allow_absolute_imports,
+    )
+    server = create_http_server(service, host=host, port=port)
+    actual_host, actual_port = server.server_address[:2]
+    print(f"Serving {path} at http://{actual_host}:{actual_port}", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        return 0
+    finally:
+        server.server_close()
+    return 0
+
+
+class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        path = _request_path(self.path)
+        if path == "/health":
+            self._write_json(200, self._service().health_payload())
+            return
+        if path == "/openapi.json":
+            self._write_json(200, self._service().openapi_document)
+            return
+        if path == "/requests":
+            self._write_json(200, self._service().requests_payload())
+            return
+        self._write_error(HttpServiceError(404, f"unknown route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND"))
+
+    def do_POST(self) -> None:
+        path = _request_path(self.path)
+        try:
+            json_state = self._read_json_body()
+            result = self._service().run_route(path, json_state)
+        except HttpServiceError as exc:
+            self._write_error(exc)
+            return
+        self._write_json(200, result)
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+    def _service(self) -> GwtHttpService:
+        return cast(GwtHttpServer, self.server).service
+
+    def _read_json_body(self) -> dict[str, Any]:
+        content_length = self.headers.get("Content-Length", "0")
+        try:
+            length = int(content_length)
+        except ValueError as exc:
+            raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST") from exc
+        raw = self.rfile.read(length) if length > 0 else b""
+        if not raw.strip():
+            return {}
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except UnicodeDecodeError as exc:
+            raise HttpServiceError(400, "request body must be UTF-8 JSON", "GWT_HTTP_INVALID_JSON") from exc
+        except json.JSONDecodeError as exc:
+            message = f"invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+            raise HttpServiceError(400, message, "GWT_HTTP_INVALID_JSON") from exc
+        if not isinstance(payload, dict):
+            raise HttpServiceError(400, "request body must be a JSON object", "GWT_HTTP_INVALID_JSON")
+        return cast(dict[str, Any], payload)
+
+    def _write_json(self, status: int, payload: object) -> None:
+        rendered = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(rendered)))
+        self.end_headers()
+        self.wfile.write(rendered)
+
+    def _write_error(self, error: HttpServiceError) -> None:
+        self._write_json(
+            error.status,
+            {
+                "ok": False,
+                "error": {
+                    "code": error.code,
+                    "message": error.message,
+                },
+            },
+        )
+
+
+def _routes_from_openapi(document: dict[str, Any]) -> dict[str, HttpRequestRoute]:
+    routes: dict[str, HttpRequestRoute] = {}
+    paths_object = document.get("paths", {})
+    if not isinstance(paths_object, dict):
+        return routes
+    paths = cast(dict[object, object], paths_object)
+    for path, path_item in paths.items():
+        if not isinstance(path, str) or not isinstance(path_item, dict):
+            continue
+        post_object = cast(dict[object, object], path_item).get("post")
+        if not isinstance(post_object, dict):
+            continue
+        post = cast(dict[object, object], post_object)
+        request_name = post.get("x-gwt-request-name")
+        operation_id = post.get("operationId")
+        if isinstance(request_name, str) and isinstance(operation_id, str):
+            routes[path] = HttpRequestRoute(path, request_name, operation_id)
+    return routes
+
+
+def _contract_payloads(bindings: Iterable[ContractBinding]) -> list[dict[str, str]]:
+    return [
+        {
+            "path": binding.path,
+            "type": binding.value_type,
+        }
+        for binding in bindings
+    ]
+
+
+def _request_path(raw_path: str) -> str:
+    return urlparse(raw_path).path
+
+
+def _status_for_gwt_error(message: str) -> int:
+    if (
+        "REQUEST contract failed" in message
+        or "JSON input" in message
+        or "JSON input key" in message
+        or message.startswith("<json-input>:")
+        or message.startswith("<request>:")
+    ):
+        return 400
+    return 500

@@ -100,11 +100,13 @@ class _OpenApiBuilder:
             *program.variants,
         ):
             self.schema_names[name] = self._unique_schema_name(name)
+        self.error_schema_name = self._unique_schema_name("GwtErrorResponse")
 
     def build(self) -> dict[str, Any]:
         components = self._component_schemas()
         request_schemas = self._request_schemas()
         components.update(request_schemas)
+        components[self.error_schema_name] = self._error_schema()
 
         return {
             "openapi": "3.1.0",
@@ -177,6 +179,19 @@ class _OpenApiBuilder:
                         },
                         "400": {
                             "description": "Invalid JSON input or GWT request contract failure.",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
+                                }
+                            },
+                        },
+                        "500": {
+                            "description": "GWT request assertion, output contract, or runtime failure.",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
+                                }
+                            },
                         },
                     },
                 }
@@ -224,6 +239,29 @@ class _OpenApiBuilder:
         return self._object_schema(
             _build_property_tree((binding.path, binding.value_type) for binding in bindings)
         )
+
+    def _error_schema(self) -> dict[str, Any]:
+        return {
+            "title": self.error_schema_name,
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean",
+                    "description": "Always false for service error responses.",
+                },
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {"type": "string"},
+                        "message": {"type": "string"},
+                    },
+                    "required": ["code", "message"],
+                    "additionalProperties": False,
+                },
+            },
+            "required": ["ok", "error"],
+            "additionalProperties": False,
+        }
 
     def _object_schema(self, root: _PropertyNode) -> dict[str, Any]:
         properties: dict[str, Any] = {}
