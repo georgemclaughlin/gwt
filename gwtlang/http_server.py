@@ -5,7 +5,11 @@ from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
+from queue import Queue
+import signal
 import sys
+from threading import Lock, Thread, current_thread, main_thread
+from types import FrameType
 from typing import Any, BinaryIO, cast
 from urllib.parse import urlparse
 
@@ -16,6 +20,11 @@ from .tracing import (
     GwtTraceRecorder,
     OtlpExportError,
     OtlpHttpExporter,
+    OtlpMetric,
+    OtlpMetricsExporter,
+    OtlpSpan,
+    now_unix_nano,
+    otlp_metrics_endpoint as resolve_otlp_metrics_endpoint,
     parse_traceparent,
     otlp_trace_endpoint,
 )
@@ -63,7 +72,9 @@ class GwtHttpService:
     openapi_document: dict[str, Any]
     routes: dict[str, HttpRequestRoute]
     trace_config: HttpTraceConfig | None = None
+    metrics_config: HttpMetricsConfig | None = None
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES
+    background_exporter: _BackgroundOtlpExporter | None = None
 
     @classmethod
     def from_file(
@@ -73,7 +84,9 @@ class GwtHttpService:
         import_roots: Iterable[str | Path] | None = None,
         allow_absolute_imports: bool = True,
         trace_config: HttpTraceConfig | None = None,
+        metrics_config: HttpMetricsConfig | None = None,
         max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+        background_exports: bool = False,
     ) -> GwtHttpService:
         """Compile a GWT file and build its OpenAPI-backed HTTP route table."""
 
@@ -97,7 +110,13 @@ class GwtHttpService:
             openapi_document=openapi_document,
             routes=_routes_from_openapi(openapi_document),
             trace_config=trace_config,
+            metrics_config=metrics_config,
             max_request_body_bytes=max_request_body_bytes,
+            background_exporter=(
+                _BackgroundOtlpExporter()
+                if background_exports and (trace_config is not None or metrics_config is not None)
+                else None
+            ),
         )
 
     @property
@@ -122,6 +141,10 @@ class GwtHttpService:
             ],
         }
 
+    def close(self) -> None:
+        if self.background_exporter is not None:
+            self.background_exporter.close()
+
     def run_route(
         self,
         path: str,
@@ -139,13 +162,37 @@ class GwtHttpService:
         if route is None:
             raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
 
+        start_time = now_unix_nano()
+        status = 200
+        error_code: str | None = None
+        error_message: str | None = None
         recorder = self._trace_recorder(route, traceparent)
         try:
             self._validate_declared_input_keys(route, json_state)
+            return self._execute_route(route, json_state, recorder)
         except HttpServiceError as exc:
-            self._finish_trace(recorder, error=exc.message)
-            raise _with_traceparent(exc, recorder) from exc
-        return self._execute_route(route, json_state, recorder)
+            status = exc.status
+            error_code = exc.code
+            error_message = exc.message
+            if exc.traceparent is None:
+                self._finish_trace(recorder, error=exc.message)
+                raise _with_traceparent(exc, recorder) from exc
+            raise
+        except Exception:
+            status = 500
+            error_code = "GWT_HTTP_UNEXPECTED_ERROR"
+            error_message = "unexpected GWT HTTP service error"
+            self._finish_trace(recorder, error=error_message)
+            raise
+        finally:
+            self._export_route_metrics(
+                route,
+                status=status,
+                error_code=error_code,
+                error_message=error_message,
+                start_time_unix_nano=start_time,
+            )
+            self._export_trace(recorder)
 
     def run_http_route(
         self,
@@ -167,15 +214,39 @@ class GwtHttpService:
         if route is None:
             raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
 
+        start_time = now_unix_nano()
+        status = 200
+        error_code: str | None = None
+        error_message: str | None = None
         recorder = self._trace_recorder(route, traceparent)
         try:
             _validate_json_content_type(content_type)
             json_state = _read_json_body(body, content_length, self.max_request_body_bytes)
             self._validate_declared_input_keys(route, json_state)
+            return self._execute_route(route, json_state, recorder)
         except HttpServiceError as exc:
-            self._finish_trace(recorder, error=exc.message)
-            raise _with_traceparent(exc, recorder) from exc
-        return self._execute_route(route, json_state, recorder)
+            status = exc.status
+            error_code = exc.code
+            error_message = exc.message
+            if exc.traceparent is None:
+                self._finish_trace(recorder, error=exc.message)
+                raise _with_traceparent(exc, recorder) from exc
+            raise
+        except Exception:
+            status = 500
+            error_code = "GWT_HTTP_UNEXPECTED_ERROR"
+            error_message = "unexpected GWT HTTP service error"
+            self._finish_trace(recorder, error=error_message)
+            raise
+        finally:
+            self._export_route_metrics(
+                route,
+                status=status,
+                error_code=error_code,
+                error_message=error_message,
+                start_time_unix_nano=start_time,
+            )
+            self._export_trace(recorder)
 
     def _execute_route(
         self,
@@ -187,9 +258,10 @@ class GwtHttpService:
             runtime = Runtime(self.compiled.program, tracer=recorder)
             run_result = runtime.run_json(json_state, request=route.request_name)
         except GwtError as exc:
+            error_status = _status_for_gwt_error(str(exc))
             self._finish_trace(recorder, error=str(exc))
             raise HttpServiceError(
-                _status_for_gwt_error(str(exc)),
+                error_status,
                 str(exc),
                 "GWT_REQUEST_FAILED",
                 traceparent=recorder.traceparent if recorder is not None else None,
@@ -241,8 +313,14 @@ class GwtHttpService:
             include_values=self.trace_config.include_values,
         )
 
-    def _export_trace(self, recorder: GwtTraceRecorder) -> None:
-        if self.trace_config is None:
+    def _export_trace(self, recorder: GwtTraceRecorder | None) -> None:
+        if self.trace_config is None or recorder is None:
+            return
+        if self.background_exporter is not None:
+            self.background_exporter.export_trace(
+                self.trace_config.otlp_endpoint,
+                recorder.spans,
+            )
             return
         try:
             OtlpHttpExporter(self.trace_config.otlp_endpoint).export(recorder.spans)
@@ -253,7 +331,165 @@ class GwtHttpService:
         if recorder is None:
             return
         recorder.finish(error=error)
-        self._export_trace(recorder)
+
+    def _export_route_metrics(
+        self,
+        route: HttpRequestRoute,
+        *,
+        status: int,
+        error_code: str | None,
+        error_message: str | None,
+        start_time_unix_nano: int,
+    ) -> None:
+        if self.metrics_config is None:
+            return
+        end_time = now_unix_nano()
+        attributes: dict[str, Any] = {
+            "gwt.request.name": route.request_name,
+            "http.route": route.path,
+            "http.request.method": "POST",
+            "http.response.status_code": status,
+        }
+        if error_code is not None:
+            attributes["gwt.error.code"] = error_code
+        duration_ms = max((end_time - start_time_unix_nano) / 1_000_000, 0.0)
+        metrics = [
+            OtlpMetric(
+                name="gwt.request.count",
+                description="GWT HTTP request executions.",
+                unit="{request}",
+                kind="sum",
+                value=1,
+                attributes=attributes,
+                start_time_unix_nano=start_time_unix_nano,
+                time_unix_nano=end_time,
+            ),
+            OtlpMetric(
+                name="gwt.request.duration_ms",
+                description="GWT HTTP request execution duration.",
+                unit="ms",
+                kind="histogram",
+                value=duration_ms,
+                attributes=attributes,
+                start_time_unix_nano=start_time_unix_nano,
+                time_unix_nano=end_time,
+            ),
+        ]
+        if status >= 400:
+            metrics.append(
+                OtlpMetric(
+                    name="gwt.request.failure.count",
+                    description="Failed GWT HTTP request executions.",
+                    unit="{request}",
+                    kind="sum",
+                    value=1,
+                    attributes=attributes,
+                    start_time_unix_nano=start_time_unix_nano,
+                    time_unix_nano=end_time,
+                )
+            )
+        for metric_name, description in _failure_metric_specs(error_message):
+            metrics.append(
+                OtlpMetric(
+                    name=metric_name,
+                    description=description,
+                    unit="{failure}",
+                    kind="sum",
+                    value=1,
+                    attributes=attributes,
+                    start_time_unix_nano=start_time_unix_nano,
+                    time_unix_nano=end_time,
+                )
+            )
+        if self.background_exporter is not None:
+            self.background_exporter.export_metrics(
+                self.metrics_config.otlp_endpoint,
+                metrics,
+                service_name=self.metrics_config.service_name,
+            )
+            return
+        try:
+            OtlpMetricsExporter(self.metrics_config.otlp_endpoint).export(
+                metrics,
+                service_name=self.metrics_config.service_name,
+            )
+        except OtlpExportError as exc:
+            print(f"gwt: OTLP metric export failed: {exc}", file=sys.stderr)
+
+
+@dataclass(frozen=True)
+class _TraceExportTask:
+    endpoint: str
+    spans: list[OtlpSpan]
+
+
+@dataclass(frozen=True)
+class _MetricsExportTask:
+    endpoint: str
+    metrics: list[OtlpMetric]
+    service_name: str
+
+
+_OtlpExportTask = _TraceExportTask | _MetricsExportTask
+
+
+class _BackgroundOtlpExporter:
+    def __init__(self) -> None:
+        self._queue: Queue[_OtlpExportTask | None] = Queue()
+        self._lock = Lock()
+        self._closed = False
+        self._thread = Thread(target=self._run, name="gwt-otlp-exporter", daemon=True)
+        self._thread.start()
+
+    def export_trace(self, endpoint: str, spans: list[OtlpSpan]) -> None:
+        self._put(_TraceExportTask(endpoint, list(spans)))
+
+    def export_metrics(
+        self,
+        endpoint: str,
+        metrics: list[OtlpMetric],
+        *,
+        service_name: str,
+    ) -> None:
+        self._put(_MetricsExportTask(endpoint, list(metrics), service_name))
+
+    def close(self, *, timeout: float = 10.0) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+            self._queue.put(None)
+        self._thread.join(timeout=timeout)
+        if self._thread.is_alive():
+            print(
+                "gwt: OTLP background exporter did not finish before shutdown timeout",
+                file=sys.stderr,
+            )
+
+    def _put(self, task: _OtlpExportTask) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            self._queue.put(task)
+
+    def _run(self) -> None:
+        while True:
+            task = self._queue.get()
+            try:
+                if task is None:
+                    return
+                if isinstance(task, _TraceExportTask):
+                    OtlpHttpExporter(task.endpoint).export(task.spans)
+                    continue
+                OtlpMetricsExporter(task.endpoint).export(
+                    task.metrics,
+                    service_name=task.service_name,
+                )
+            except Exception as exc:
+                label = "trace" if isinstance(task, _TraceExportTask) else "metric"
+                print(f"gwt: OTLP {label} export failed: {exc}", file=sys.stderr)
+            finally:
+                self._queue.task_done()
 
 
 @dataclass(frozen=True)
@@ -263,6 +499,14 @@ class HttpTraceConfig:
     otlp_endpoint: str
     service_name: str = "gwt-serve"
     include_values: bool = False
+
+
+@dataclass(frozen=True)
+class HttpMetricsConfig:
+    """OpenTelemetry metrics export settings for served or embedded HTTP request runs."""
+
+    otlp_endpoint: str
+    service_name: str = "gwt-serve"
 
 
 @dataclass(frozen=True)
@@ -281,6 +525,9 @@ class HttpServiceError(Exception):
 
 
 class GwtHttpServer(ThreadingHTTPServer):
+    daemon_threads = False
+    block_on_close = True
+
     def __init__(
         self,
         server_address: tuple[str, int],
@@ -288,6 +535,10 @@ class GwtHttpServer(ThreadingHTTPServer):
     ) -> None:
         super().__init__(server_address, _GwtHttpRequestHandler)
         self.service = service
+
+    def server_close(self) -> None:
+        super().server_close()
+        self.service.close()
 
 
 def create_http_server(
@@ -310,9 +561,11 @@ def run_http_server(
     allow_absolute_imports: bool = True,
     otlp_endpoint: str | None = None,
     trace_values: bool = False,
+    otlp_metrics_endpoint: str | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
 ) -> int:
     resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
+    resolved_otlp_metrics_endpoint = resolve_otlp_metrics_endpoint(otlp_metrics_endpoint)
     service = GwtHttpService.from_file(
         path,
         import_roots=import_roots,
@@ -322,16 +575,24 @@ def run_http_server(
             if resolved_otlp_endpoint is not None
             else None
         ),
+        metrics_config=(
+            HttpMetricsConfig(resolved_otlp_metrics_endpoint)
+            if resolved_otlp_metrics_endpoint is not None
+            else None
+        ),
         max_request_body_bytes=max_request_body_bytes,
+        background_exports=True,
     )
     server = create_http_server(service, host=host, port=port)
     actual_host, actual_port = server.server_address[:2]
     print(f"Serving {path} at http://{actual_host}:{actual_port}", flush=True)
+    previous_sigterm = _install_sigterm_handler()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         return 0
     finally:
+        _restore_sigterm_handler(previous_sigterm)
         server.server_close()
     return 0
 
@@ -525,6 +786,17 @@ def _status_for_gwt_error(message: str) -> int:
     return 500
 
 
+def _failure_metric_specs(error_message: str | None) -> list[tuple[str, str]]:
+    if error_message is None:
+        return []
+    specs: list[tuple[str, str]] = []
+    if "REQUEST contract failed" in error_message or "OUTPUT contract failed" in error_message:
+        specs.append(("gwt.contract.failure.count", "GWT request or output contract failures."))
+    if "assertion failed:" in error_message:
+        specs.append(("gwt.assertion.failure.count", "GWT request assertion failures."))
+    return specs
+
+
 def _trace_headers(traceparent: str | None) -> dict[str, str]:
     if traceparent is None:
         return {}
@@ -548,3 +820,22 @@ def _with_traceparent(
         error.code,
         traceparent=recorder.traceparent,
     )
+
+
+def _install_sigterm_handler() -> Any:
+    if current_thread() is not main_thread():
+        return None
+    previous = signal.getsignal(signal.SIGTERM)
+    signal.signal(signal.SIGTERM, _raise_keyboard_interrupt)
+    return previous
+
+
+def _restore_sigterm_handler(previous: Any) -> None:
+    if previous is None or current_thread() is not main_thread():
+        return
+    signal.signal(signal.SIGTERM, previous)
+
+
+def _raise_keyboard_interrupt(signum: int, frame: FrameType | None) -> None:
+    del signum, frame
+    raise KeyboardInterrupt

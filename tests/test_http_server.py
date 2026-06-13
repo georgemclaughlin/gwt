@@ -1,7 +1,9 @@
 from contextlib import contextmanager, redirect_stderr
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 from queue import Empty, Queue
 import re
@@ -9,8 +11,10 @@ import subprocess
 import sys
 import tempfile
 from threading import Thread
+import time
 from typing import Any
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -18,11 +22,13 @@ from gwtlang.__main__ import main
 from gwtlang.http_server import (
     DEFAULT_MAX_REQUEST_BODY_BYTES,
     GwtHttpService,
+    HttpMetricsConfig,
     HttpServiceError,
     HttpTraceConfig,
     HttpRouteResult,
     create_http_server,
 )
+from gwtlang.tracing import OtlpHttpExporter, OtlpMetricsExporter
 
 
 class HttpServerTests(unittest.TestCase):
@@ -30,6 +36,7 @@ class HttpServerTests(unittest.TestCase):
         from gwtlang import (
             DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
             GwtHttpService as ExportedGwtHttpService,
+            HttpMetricsConfig as ExportedHttpMetricsConfig,
             HttpRouteResult as ExportedHttpRouteResult,
             HttpServiceError as ExportedHttpServiceError,
             HttpTraceConfig as ExportedHttpTraceConfig,
@@ -38,10 +45,12 @@ class HttpServerTests(unittest.TestCase):
 
         self.assertEqual(exported_body_limit, DEFAULT_MAX_REQUEST_BODY_BYTES)
         self.assertIs(ExportedGwtHttpService, GwtHttpService)
+        self.assertIs(ExportedHttpMetricsConfig, HttpMetricsConfig)
         self.assertIs(ExportedHttpRouteResult, HttpRouteResult)
         self.assertIs(ExportedHttpServiceError, HttpServiceError)
         self.assertIs(ExportedHttpTraceConfig, HttpTraceConfig)
         self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
+        self.assertIn("HttpMetricsConfig", gwtlang.__all__)
         self.assertIn("HttpRouteResult", gwtlang.__all__)
         self.assertIn("HttpServiceError", gwtlang.__all__)
 
@@ -136,6 +145,29 @@ class HttpServerTests(unittest.TestCase):
                 unsupported_trace_id,
             }.issubset(exported_trace_ids)
         )
+
+    def test_json_schema_client_demo_validates_request_and_response(self):
+        if importlib.util.find_spec("jsonschema") is None:
+            self.skipTest("jsonschema package is not installed")
+
+        with running_service("examples/deployable_api/rules.gwt") as base_url:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "examples/deployable_api/json_schema_client_demo.py",
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                env={**os.environ, "GWT_DEMO_BASE_URL": base_url},
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["decision"]["status"], "escalated")
+        self.assertEqual(payload["decision"]["queue"], "incident")
 
     def test_serves_health_request_manifest_and_openapi(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:
@@ -298,6 +330,175 @@ class HttpServerTests(unittest.TestCase):
                 for attribute in event["attributes"]
             )
         )
+
+    def test_post_request_exports_otlp_metrics(self):
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                metrics_config=HttpMetricsConfig(f"{otlp.base_url}/v1/metrics"),
+            ) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    triage_ticket_request(),
+                    method="POST",
+                )
+
+            exported = otlp.payloads_for_path("/v1/metrics")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertEqual(len(exported), 1)
+        metrics = exported[0]["resourceMetrics"][0]["scopeMetrics"][0]["metrics"]
+        metric_names = {metric["name"] for metric in metrics}
+        self.assertIn("gwt.request.count", metric_names)
+        self.assertIn("gwt.request.duration_ms", metric_names)
+        request_count = next(metric for metric in metrics if metric["name"] == "gwt.request.count")
+        data_point = request_count["sum"]["dataPoints"][0]
+        attributes = attributes_by_key(data_point["attributes"])
+        self.assertEqual(attributes["gwt.request.name"]["stringValue"], "triage ticket")
+        self.assertEqual(attributes["http.route"]["stringValue"], "/requests/triage-ticket")
+        self.assertEqual(attributes["http.response.status_code"]["intValue"], "200")
+        self.assertEqual(data_point["asInt"], "1")
+
+    def test_malformed_otlp_metrics_endpoint_does_not_break_response(self):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                metrics_config=HttpMetricsConfig("://missing-scheme"),
+            ) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    triage_ticket_request(),
+                    method="POST",
+                )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertIn("OTLP metric export failed", stderr.getvalue())
+
+    def test_malformed_otlp_trace_endpoint_does_not_break_response(self):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig("://missing-scheme"),
+            ) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    triage_ticket_request(),
+                    method="POST",
+                )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertIn("OTLP trace export failed", stderr.getvalue())
+
+    def test_background_otlp_exports_do_not_delay_response(self):
+        completed_metric_calls: Queue[str] = Queue()
+        completed_trace_calls: Queue[str] = Queue()
+        metric_calls: Queue[str] = Queue()
+        trace_calls: Queue[str] = Queue()
+
+        def slow_metrics_export(
+            exporter: OtlpMetricsExporter,
+            metrics: list[dict[str, Any]],
+            *,
+            service_name: str,
+        ) -> None:
+            del exporter, metrics, service_name
+            metric_calls.put("metrics")
+            time.sleep(0.35)
+            completed_metric_calls.put("metrics")
+
+        def slow_trace_export(exporter: OtlpHttpExporter, spans: list[Any]) -> None:
+            del exporter, spans
+            trace_calls.put("trace")
+            time.sleep(0.35)
+            completed_trace_calls.put("trace")
+
+        with (
+            patch.object(OtlpMetricsExporter, "export", slow_metrics_export),
+            patch.object(OtlpHttpExporter, "export", slow_trace_export),
+            running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig("http://127.0.0.1:4318/v1/traces"),
+                metrics_config=HttpMetricsConfig("http://127.0.0.1:4318/v1/metrics"),
+                background_exports=True,
+            ) as base_url,
+        ):
+            start = time.monotonic()
+            status, payload = request_json(
+                f"{base_url}/requests/triage-ticket",
+                triage_ticket_request(),
+                method="POST",
+            )
+            elapsed = time.monotonic() - start
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertLess(elapsed, 0.25)
+        self.assertEqual(metric_calls.get(timeout=1), "metrics")
+        self.assertEqual(trace_calls.get(timeout=1), "trace")
+        self.assertEqual(completed_metric_calls.get(timeout=1), "metrics")
+        self.assertEqual(completed_trace_calls.get(timeout=1), "trace")
+
+    def test_background_otlp_worker_continues_after_unexpected_export_error(self):
+        trace_calls: Queue[str] = Queue()
+
+        def flaky_trace_export(exporter: OtlpHttpExporter, spans: list[Any]) -> None:
+            del exporter, spans
+            trace_calls.put("trace")
+            if trace_calls.qsize() == 1:
+                raise RuntimeError("boom")
+
+        stderr = io.StringIO()
+        with (
+            redirect_stderr(stderr),
+            patch.object(OtlpHttpExporter, "export", flaky_trace_export),
+            running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig("http://127.0.0.1:4318/v1/traces"),
+                background_exports=True,
+            ) as base_url,
+        ):
+            for _ in range(2):
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    triage_ticket_request(),
+                    method="POST",
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(payload["decision"]["queue"], "incident")
+
+        self.assertEqual(trace_calls.get(timeout=1), "trace")
+        self.assertEqual(trace_calls.get(timeout=1), "trace")
+        self.assertIn("OTLP trace export failed: boom", stderr.getvalue())
+
+    def test_failed_request_exports_otlp_failure_metrics(self):
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                metrics_config=HttpMetricsConfig(f"{otlp.base_url}/v1/metrics"),
+            ) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/triage-ticket",
+                    {"ticket": {"customer_id": "C-100"}},
+                    method="POST",
+                )
+
+            exported = otlp.payloads_for_path("/v1/metrics")
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"]["code"], "GWT_REQUEST_FAILED")
+        metrics = exported[0]["resourceMetrics"][0]["scopeMetrics"][0]["metrics"]
+        metric_names = {metric["name"] for metric in metrics}
+        self.assertIn("gwt.request.failure.count", metric_names)
+        self.assertIn("gwt.contract.failure.count", metric_names)
+        failure_count = next(metric for metric in metrics if metric["name"] == "gwt.request.failure.count")
+        attributes = attributes_by_key(failure_count["sum"]["dataPoints"][0]["attributes"])
+        self.assertEqual(attributes["http.response.status_code"]["intValue"], "400")
+        self.assertEqual(attributes["gwt.error.code"]["stringValue"], "GWT_REQUEST_FAILED")
 
     def test_redacted_trace_hides_contract_failure_values(self):
         secret = "customer-secret-123"
@@ -869,12 +1070,16 @@ def running_service(
     path: str | Path,
     *,
     trace_config: HttpTraceConfig | None = None,
+    metrics_config: HttpMetricsConfig | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+    background_exports: bool = False,
 ):
     service = GwtHttpService.from_file(
         path,
         trace_config=trace_config,
+        metrics_config=metrics_config,
         max_request_body_bytes=max_request_body_bytes,
+        background_exports=background_exports,
     )
     server = create_http_server(service, port=0)
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -968,11 +1173,15 @@ class OtlpSink(ThreadingHTTPServer):
     def __init__(self) -> None:
         super().__init__(("127.0.0.1", 0), OtlpSinkHandler)
         self.payloads: list[dict[str, Any]] = []
+        self.requests: list[tuple[str, dict[str, Any]]] = []
 
     @property
     def base_url(self) -> str:
         host, port = self.server_address[:2]
         return f"http://{host}:{port}"
+
+    def payloads_for_path(self, path: str) -> list[dict[str, Any]]:
+        return [payload for request_path, payload in self.requests if request_path == path]
 
 
 class OtlpSinkHandler(BaseHTTPRequestHandler):
@@ -980,7 +1189,9 @@ class OtlpSinkHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
         server = cast_otlp_sink(self.server)
-        server.payloads.append(json.loads(body.decode("utf-8")))
+        payload = json.loads(body.decode("utf-8"))
+        server.payloads.append(payload)
+        server.requests.append((self.path, payload))
         rendered = b"{}"
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

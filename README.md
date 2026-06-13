@@ -109,12 +109,13 @@ printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
   --json
 ```
 
-GWT can also generate TypeScript declaration files from `TYPE`, `RECORD`,
-`REQUEST`, and `OUTPUT` contracts:
+GWT can also generate TypeScript declaration files and standalone JSON Schema
+documents from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
   --output vendor-onboarding.d.ts
+gwt schema examples/deployable_api/rules.gwt --json
 ```
 
 For hosts that consume standard HTTP contracts, GWT can project the same named
@@ -129,7 +130,7 @@ gwt serve examples/deployable_api/rules.gwt --port 8080
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
 client-library model and boundary rules, and
 [`docs/http-service-design.md`](docs/http-service-design.md) for the OpenAPI
-and HTTP service direction. JSON Schemas for CLI/API payloads live in
+and HTTP service direction. Separate JSON Schemas for CLI/API payloads live in
 [`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
 lives in [`clients/typescript`](clients/typescript), with a typed host example
 in [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
@@ -278,8 +279,8 @@ GIVEN account is Account
 
 Named requests define the host-facing interface. Use `integer` for exact whole
 numbers, `decimal` for finite exact base-10 values, and `number` for legacy
-broad numeric values. Decimal JSON input should use strings such as `"12.30"`;
-decimal values serialize as strings in JSON/API payloads.
+broad numeric values. Decimal JSON input may use strings such as `"12.30"` or
+JSON integers; decimal values serialize as strings in JSON/API payloads.
 
 ```gwt
 RECORD LineItem
@@ -431,6 +432,7 @@ The CLI currently supports:
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
+gwt schema examples/deployable_api/rules.gwt --json
 gwt openapi examples/deployable_api/rules.gwt --json
 gwt serve examples/deployable_api/rules.gwt --port 8080
 gwt test examples/checkout/scenarios.gwt
@@ -473,6 +475,13 @@ declarations from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
 shapes plus a program-specific client wrapper. The generated types are
 integration helpers; the `.gwt` file remains the source of truth.
 
+`gwt schema file.gwt` generates a JSON Schema Draft 2020-12 catalog from
+`TYPE`, `RECORD`, named `REQUEST`, and `OUTPUT` contracts. GWT type definitions
+and request input/output object schemas are emitted under `$defs`, and `x-gwt`
+metadata maps each request name to its input and output schema references.
+Decimal schemas include both `format: decimal` and a regex `pattern`, because
+many standard validators treat custom formats as annotation-only.
+
 `gwt openapi file.gwt` generates an OpenAPI 3.1 document from named `REQUEST`
 contracts. Caller-provided `GIVEN` bindings become request body schemas, and
 declared `OUTPUT` bindings become response body schemas.
@@ -484,9 +493,12 @@ and returns only the declared `OUTPUT` object. Request posts require
 `Content-Type: application/json` and are limited to 1 MiB by default; use
 `--max-body-bytes` to change the local service limit. Use `--otlp-endpoint` or
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
-execution traces out-of-band. Served traces redact state, output, and print
-values by default; pass `--trace-values` for local diagnostic runs that need
-full values.
+execution traces out-of-band. Use `--otlp-metrics-endpoint`,
+`OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`, or the same base
+`OTEL_EXPORTER_OTLP_ENDPOINT` to export request metrics. `gwt serve` queues
+OTLP trace and metric exports in a background worker and uses a bounded flush
+on graceful shutdown. Served traces redact state, output, and print values by
+default; pass `--trace-values` for local diagnostic runs that need full values.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
@@ -610,14 +622,9 @@ The exact-pricing host additionally shows exact `decimal` handling, float input
 rejection, and trusted prevalidated execution.
 
 The Python package includes a `py.typed` marker and typed payload aliases for
-the public host boundary. The scoped Pyright gate in
-[`pyrightconfig.json`](pyrightconfig.json) runs in strict mode for
-`gwtlang/api.py`, the host observation adapter, generated host type support,
-the package re-export surface, the base error type, analysis service payloads,
-completion items, checker/type-analysis logic, expression parsing/evaluation,
-runtime/parser execution, LSP response helpers, the CLI entrypoint, formatter
-helpers, debugger line payloads, the public validation/inspection payload
-builders, and the Python host examples:
+the public host boundary. The Pyright gate in
+[`pyrightconfig.json`](pyrightconfig.json) runs in strict mode for the full
+`gwtlang` package plus selected Python host and deployable API examples:
 
 ```sh
 npx --yes pyright@1.1.410 --project pyrightconfig.json

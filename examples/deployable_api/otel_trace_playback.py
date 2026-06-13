@@ -4,7 +4,7 @@ import argparse
 from dataclasses import dataclass
 import json
 import sys
-from typing import Any
+from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -67,21 +67,25 @@ def fetch_trace(jaeger_url: str, trace_id: str) -> dict[str, Any]:
     url = f"{jaeger_url.rstrip('/')}/api/traces/{quote(trace_id)}"
     try:
         with urlopen(url, timeout=5) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            payload: object = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         raise TracePlaybackError(f"Jaeger returned HTTP {exc.code} for {url}") from exc
     except URLError as exc:
         raise TracePlaybackError(f"could not reach Jaeger at {url}: {exc.reason}") from exc
     except json.JSONDecodeError as exc:
         raise TracePlaybackError(f"Jaeger returned invalid JSON from {url}") from exc
+    except ValueError as exc:
+        raise TracePlaybackError(f"invalid Jaeger URL {jaeger_url!r}: {exc}") from exc
 
-    data = payload.get("data")
+    if not isinstance(payload, dict):
+        raise TracePlaybackError(f"trace {trace_id} has an unexpected Jaeger shape")
+    data = cast(dict[str, object], payload).get("data")
     if not isinstance(data, list) or not data:
         raise TracePlaybackError(f"trace {trace_id} was not found in Jaeger")
-    trace = data[0]
+    trace = cast(list[object], data)[0]
     if not isinstance(trace, dict):
         raise TracePlaybackError(f"trace {trace_id} has an unexpected Jaeger shape")
-    return trace
+    return cast(dict[str, Any], trace)
 
 
 def extract_gwt_events(trace: dict[str, Any]) -> list[PlaybackEvent]:
@@ -90,17 +94,21 @@ def extract_gwt_events(trace: dict[str, Any]) -> list[PlaybackEvent]:
         return []
 
     events: list[PlaybackEvent] = []
-    for span in spans:
+    for span_object in cast(list[object], spans):
+        span = span_object
         if not isinstance(span, dict):
             continue
-        span_name = str(span.get("operationName") or span.get("name") or "<span>")
-        logs = span.get("logs")
+        span_dict = cast(dict[str, object], span)
+        span_name = str(span_dict.get("operationName") or span_dict.get("name") or "<span>")
+        logs = span_dict.get("logs")
         if not isinstance(logs, list):
             continue
-        for log in logs:
+        for log_object in cast(list[object], logs):
+            log = log_object
             if not isinstance(log, dict):
                 continue
-            fields = _fields_by_key(log.get("fields"))
+            log_dict = cast(dict[str, object], log)
+            fields = _fields_by_key(log_dict.get("fields"))
             sequence = _int_field(fields.get("gwt.event.sequence"))
             event_name = _str_field(fields.get("event"))
             if sequence is None or event_name is None:
@@ -108,7 +116,7 @@ def extract_gwt_events(trace: dict[str, Any]) -> list[PlaybackEvent]:
             events.append(
                 PlaybackEvent(
                     sequence=sequence,
-                    timestamp=_int_value(log.get("timestamp")) or 0,
+                    timestamp=_int_value(log_dict.get("timestamp")) or 0,
                     span_name=span_name,
                     name=event_name,
                     summary=_event_summary(fields),
@@ -134,12 +142,14 @@ def _fields_by_key(fields: object) -> dict[str, object]:
     if not isinstance(fields, list):
         return {}
     result: dict[str, object] = {}
-    for field in fields:
+    for field_object in cast(list[object], fields):
+        field = field_object
         if not isinstance(field, dict):
             continue
-        key = field.get("key")
+        field_dict = cast(dict[str, object], field)
+        key = field_dict.get("key")
         if isinstance(key, str):
-            result[key] = field.get("value")
+            result[key] = field_dict.get("value")
     return result
 
 

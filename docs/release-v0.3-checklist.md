@@ -60,8 +60,8 @@ These decisions are explicit for the v0.3 checkpoint:
 - Keep named `REQUEST` blocks as the host-facing callable unit.
 - Treat `gwt validate` as the local and CI product gate.
 - Keep `ExecutionResult.as_payload` and CLI JSON result shapes stable.
-- Keep generated Python/TypeScript types and OpenAPI output aligned with
-  `gwt inspect --json`.
+- Keep generated Python/TypeScript types, JSON Schema, and OpenAPI output
+  aligned with `gwt inspect --json`.
 - Keep substantial public examples scenario-backed with top-level assertions.
 - Treat host applications as responsible for I/O, persistence, timestamps,
   networking, rollout controls, and normalization before calling GWT.

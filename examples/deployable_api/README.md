@@ -24,6 +24,12 @@ Generate OpenAPI:
 python -m gwtlang openapi examples/deployable_api/rules.gwt --json
 ```
 
+Generate standalone JSON Schema:
+
+```sh
+python -m gwtlang schema examples/deployable_api/rules.gwt --json
+```
+
 Or write the document to a file for Swagger UI, Redoc, Postman, OpenAPI
 Generator, or contract-test tooling:
 
@@ -42,7 +48,7 @@ python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
 Then call it with ordinary JSON:
 
 ```sh
-curl -X POST http://127.0.0.1:8080/requests/triage-ticket \
+curl -i -X POST http://127.0.0.1:8080/requests/triage-ticket \
   -H 'Content-Type: application/json' \
   -d '{
     "ticket": {
@@ -67,6 +73,82 @@ POST /requests/triage-ticket
 The OpenAPI response body is the declared `OUTPUT` object. It is intentionally
 not the `gwt run --json` execution envelope, which remains the CLI/debug payload
 with final state and print output.
+
+## Self-Hosted Docker Demo
+
+The example includes a self-hosted Docker Compose path that runs `gwt serve`,
+an OpenTelemetry Collector, Jaeger, and Prometheus together. From the
+repository root:
+
+```sh
+docker compose -f examples/deployable_api/docker-compose.yml up --build
+```
+
+The service listens on <http://127.0.0.1:8080>. Check the operational and
+contract surfaces:
+
+```sh
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8080/openapi.json
+python -m gwtlang schema examples/deployable_api/rules.gwt --json \
+  >/tmp/gwt-deployable-api.schema.json
+```
+
+Then call the deployed GWT request:
+
+```sh
+curl -X POST http://127.0.0.1:8080/requests/triage-ticket \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticket": {
+      "customer_id": "C-100",
+      "subject": "checkout unavailable",
+      "severity": "medium",
+      "account_value": 5000,
+      "has_outage": true
+    }
+  }'
+```
+
+The Compose service sets `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318`,
+so `gwt serve` exports request traces and request metrics over OTLP/HTTP. The
+OpenTelemetry Collector sends traces to Jaeger and exposes metrics to
+Prometheus. Published demo ports are bound to `127.0.0.1` by default, and
+served traces redact values by default. `gwt serve` queues those OTLP exports
+in a background worker and uses a bounded flush on graceful shutdown.
+
+Open Jaeger at <http://127.0.0.1:16686> and select `gwt-serve` to inspect the
+trace. Open Prometheus at <http://127.0.0.1:9090> and query metrics such as:
+
+```text
+gwt_request_count_total
+gwt_request_duration_ms_count
+gwt_request_failure_count_total
+gwt_contract_failure_count_total
+```
+
+The response headers include `x-gwt-trace-id` when trace export is enabled.
+Use that trace ID with the playback helper if you want a linear GWT event list:
+
+```sh
+python examples/deployable_api/otel_trace_playback.py <trace_id>
+```
+
+If a local port is already in use, override the published ports while keeping
+the in-container service wiring unchanged:
+
+```sh
+GWT_HTTP_PORT=18080 PROMETHEUS_PORT=19090 JAEGER_UI_PORT=16687 \
+  docker compose -f examples/deployable_api/docker-compose.yml up --build
+```
+
+For local diagnostics that need full request, state, and output values in
+Jaeger, opt in explicitly:
+
+```sh
+GWT_SERVE_ARGS=--trace-values \
+  docker compose -f examples/deployable_api/docker-compose.yml up --build
+```
 
 ## OpenAPI Generator Client Demo
 
@@ -98,28 +180,25 @@ npx --yes @openapitools/openapi-generator-cli@2.38.0 generate \
 See [`../../docs/http-service-design.md`](../../docs/http-service-design.md)
 for the HTTP service direction.
 
-## OpenTelemetry Trace Demo
+## JSON Schema Validated Client Demo
 
-The experimental HTTP service can export request execution traces over
-OTLP/HTTP. The demo stack uses Jaeger v2 all-in-one as the local OTLP ingester
-and trace viewer.
-
-Start the observability stack:
+The standalone JSON Schema contract can validate request and response bodies for
+non-OpenAPI clients. With `gwt serve` or the Docker Compose stack running:
 
 ```sh
-docker compose -f examples/deployable_api/observability/docker-compose.yml up
+python -m pip install jsonschema
+python examples/deployable_api/json_schema_client_demo.py
 ```
 
-In another terminal, start the GWT service with OTLP export enabled. Served
-traces redact values by default; this local demo opts into full values so the
-playback output can show the decision data:
+The demo generates JSON Schema from `rules.gwt`, validates the request body,
+calls `POST /requests/triage-ticket`, validates the response body, and prints
+the declared `OUTPUT` object. It uses the optional `jsonschema` Python package.
 
-```sh
-OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
-  python -m gwtlang serve examples/deployable_api/rules.gwt \
-    --port 8080 \
-    --trace-values
-```
+## OpenTelemetry Client Trace Demo
+
+With the main Docker Compose stack running, the demo client can add a client
+span and send both successful and intentionally invalid requests through the
+served GWT API:
 
 Then run the demo client:
 
@@ -138,11 +217,12 @@ Open Jaeger at <http://127.0.0.1:16686>, select `gwt-demo-client` or
 `gwt-serve`, and run a search. The trace should show the client request, the
 served GWT request, the `WHEN triage <ticket> into <decision>` behavior,
 executed statements, contract checks, branch conditions, checked assertions,
-state changes, and a `gwt.request.completed` event with the declared output.
-The playback helper prints the same GWT events sorted by `gwt.event.sequence`
-so you can scan the execution without manually merging Jaeger span event
-tables. The client sends one successful outage case and one intentionally
-invalid request, so the viewer also shows a rejected request contract trace.
+redacted state changes, and a `gwt.request.completed` event with the declared
+output fields.
+The playback helper sorts GWT events by `gwt.event.sequence` so you can scan
+the execution without manually merging Jaeger span event tables. The client
+sends one successful outage case and one intentionally invalid request, so the
+viewer also shows a rejected request contract trace.
 
-Only use `--trace-values` for local diagnostic runs or environments with
-appropriate log-style redaction and retention controls.
+Only use `GWT_SERVE_ARGS=--trace-values` for local diagnostic runs or
+environments with appropriate log-style redaction and retention controls.

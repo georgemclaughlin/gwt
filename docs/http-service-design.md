@@ -130,8 +130,8 @@ expect from OpenAPI: request body in, declared response body out.
 
 ## Experimental OpenTelemetry Export
 
-`gwt serve` can export request execution traces over OTLP/HTTP without changing
-the HTTP response body:
+`gwt serve` can export request execution traces and metrics over OTLP/HTTP
+without changing the HTTP response body:
 
 ```sh
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
@@ -143,6 +143,12 @@ When a request includes a W3C `traceparent` header, GWT uses that trace ID and
 parent span. Responses include `traceparent` and `x-gwt-trace-id` headers when
 trace export is enabled. Served traces redact state, output, and print values by
 default; pass `--trace-values` for local diagnostic runs that need full values.
+Use `--otlp-metrics-endpoint` to send metrics to a separate collector endpoint;
+otherwise `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or the standard
+`OTEL_EXPORTER_OTLP_ENDPOINT` base endpoint is used when present.
+Served OTLP trace and metric exports are queued in a background worker and
+flushed with a bounded wait on graceful shutdown, so collector latency does not
+sit on the HTTP response path.
 
 The exported trace is a diagnostic projection of GWT execution:
 
@@ -173,12 +179,28 @@ oversized bodies, body parsing failures, and strict request-body rejections are
 traced on the route span and return `traceparent` plus `x-gwt-trace-id`
 response headers when trace export is enabled.
 
+The emitted request metrics are:
+
+- `gwt.request.count`
+- `gwt.request.duration_ms`
+- `gwt.request.failure.count`
+- `gwt.contract.failure.count`
+- `gwt.assertion.failure.count`
+
+Metric attributes include the request name, HTTP route, method, response
+status code, and error code when one is available. Metrics do not include GWT
+state, request input, output values, source text, or error messages.
+
 The deployable API example includes a small playback helper that reads a Jaeger
 trace by ID and prints GWT events sorted by `gwt.event.sequence`:
 
 ```sh
 python examples/deployable_api/otel_trace_playback.py <trace_id>
 ```
+
+Jaeger remains the trace UI for now. A future GWT-specific debugger should be a
+domain UI over source, state diffs, contract checks, and request/response data,
+not a thin duplicate of Jaeger.
 
 ## Generated Client Smoke Path
 
@@ -213,11 +235,9 @@ Deferred service options:
 - custom operation IDs
 - CORS configuration
 - structured logging
-- request body size limits
 - debug envelope mode
 - persistent audit storage and redaction policy
 - reload/watch mode for local development
-- Docker examples
 
 Explicit non-goals for the first service slice:
 

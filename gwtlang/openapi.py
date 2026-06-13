@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Literal
 
 from .checker import Diagnostic
 from .errors import GwtError
@@ -38,6 +38,17 @@ class _PropertyNode:
     children: dict[str, "_PropertyNode"] = field(
         default_factory=lambda: dict[str, _PropertyNode]()
     )
+
+
+@dataclass(frozen=True)
+class _SchemaProjection:
+    schemas: dict[str, Any]
+    request_input_names: dict[str, str]
+    request_output_names: dict[str, str]
+
+
+_SchemaMode = Literal["input", "output"]
+DECIMAL_STRING_PATTERN = r"^\s*[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?\s*$"
 
 
 def generate_openapi_file(
@@ -92,20 +103,16 @@ class _OpenApiBuilder:
     def __init__(self, program: Program, filename: str) -> None:
         self.program = program
         self.filename = filename
-        self.schema_names: dict[str, str] = {}
-        self.used_schema_names: set[str] = set()
-        for name in (
-            *program.type_aliases,
-            *program.records,
-            *program.variants,
-        ):
-            self.schema_names[name] = self._unique_schema_name(name)
-        self.error_schema_name = self._unique_schema_name("GwtErrorResponse")
+        self.projection = _GwtSchemaBuilder(
+            program,
+            ref_prefix="#/components/schemas/",
+            include_openapi_discriminator=True,
+        ).build()
+        used_schema_names = set(self.projection.schemas)
+        self.error_schema_name = _unique_schema_name("GwtErrorResponse", used_schema_names)
 
     def build(self) -> dict[str, Any]:
-        components = self._component_schemas()
-        request_schemas = self._request_schemas()
-        components.update(request_schemas)
+        components = dict(self.projection.schemas)
         components[self.error_schema_name] = self._error_schema()
 
         return {
@@ -124,28 +131,6 @@ class _OpenApiBuilder:
             },
         }
 
-    def _component_schemas(self) -> dict[str, Any]:
-        schemas: dict[str, Any] = {}
-        for alias in self.program.type_aliases.values():
-            schemas[self.schema_names[alias.name]] = self._alias_schema(alias)
-        for record in self.program.records.values():
-            schemas[self.schema_names[record.name]] = self._record_schema(record)
-        for variant in self.program.variants.values():
-            schemas[self.schema_names[variant.name]] = self._variant_schema(variant)
-        return schemas
-
-    def _request_schemas(self) -> dict[str, Any]:
-        schemas: dict[str, Any] = {}
-        for request in self.program.requests.values():
-            base = _request_component_base(request.name)
-            input_name = self._unique_schema_name(f"{base}Request")
-            output_name = self._unique_schema_name(f"{base}Output")
-            self.schema_names[f"request:{request.name}:input"] = input_name
-            self.schema_names[f"request:{request.name}:output"] = output_name
-            schemas[input_name] = self._contract_schema(request.inputs.values())
-            schemas[output_name] = self._contract_schema(request.outputs.values())
-        return schemas
-
     def _paths(self) -> dict[str, Any]:
         paths: dict[str, Any] = {}
         used_paths: set[str] = set()
@@ -153,8 +138,8 @@ class _OpenApiBuilder:
         for request in self.program.requests.values():
             path = _unique_path(f"/requests/{_slug(request.name)}", used_paths)
             operation_id = _unique_operation_id(_operation_id(request.name), used_operation_ids)
-            input_name = self.schema_names[f"request:{request.name}:input"]
-            output_name = self.schema_names[f"request:{request.name}:output"]
+            input_name = self.projection.request_input_names[request.name]
+            output_name = self.projection.request_output_names[request.name]
             paths[path] = {
                 "post": {
                     "summary": request.name,
@@ -219,48 +204,6 @@ class _OpenApiBuilder:
             }
         return paths
 
-    def _alias_schema(self, alias: TypeAliasDefinition) -> dict[str, Any]:
-        schema = self._schema_for_type(alias.value_type)
-        return {
-            **schema,
-            "title": alias.name,
-            "x-gwt-type": "typeAlias",
-        }
-
-    def _record_schema(self, record: RecordDefinition) -> dict[str, Any]:
-        schema = self._object_schema(_build_property_tree(record.fields.items()))
-        schema["title"] = record.name
-        schema["x-gwt-type"] = "record"
-        return schema
-
-    def _variant_schema(self, variant: VariantDefinition) -> dict[str, Any]:
-        cases: list[dict[str, Any]] = []
-        for case in variant.cases.values():
-            root = _build_property_tree(case.fields.items())
-            schema = self._object_schema(root)
-            schema["properties"] = {
-                "kind": {
-                    "type": "string",
-                    "enum": [case.name],
-                },
-                **schema["properties"],
-            }
-            schema["required"] = ["kind", *schema["required"]]
-            cases.append(schema)
-        return {
-            "title": variant.name,
-            "oneOf": cases,
-            "discriminator": {
-                "propertyName": "kind",
-            },
-            "x-gwt-type": "oneOfRecord",
-        }
-
-    def _contract_schema(self, bindings: Iterable[ContractBinding]) -> dict[str, Any]:
-        return self._object_schema(
-            _build_property_tree((binding.path, binding.value_type) for binding in bindings)
-        )
-
     def _error_schema(self) -> dict[str, Any]:
         return {
             "title": self.error_schema_name,
@@ -284,11 +227,127 @@ class _OpenApiBuilder:
             "additionalProperties": False,
         }
 
-    def _object_schema(self, root: _PropertyNode) -> dict[str, Any]:
+
+class _GwtSchemaBuilder:
+    def __init__(
+        self,
+        program: Program,
+        *,
+        ref_prefix: str,
+        include_openapi_discriminator: bool,
+    ) -> None:
+        self.program = program
+        self.ref_prefix = ref_prefix
+        self.include_openapi_discriminator = include_openapi_discriminator
+        self.schema_names: dict[str, str] = {}
+        self.output_schema_names: dict[str, str] = {}
+        self.used_schema_names: set[str] = set()
+        for name in (
+            *program.type_aliases,
+            *program.records,
+            *program.variants,
+        ):
+            self.schema_names[name] = self._unique_schema_name(name)
+        for name in (
+            *program.type_aliases,
+            *program.records,
+            *program.variants,
+        ):
+            if self._type_needs_output_schema(name):
+                self.output_schema_names[name] = self._unique_schema_name(f"{name}OutputValue")
+
+    def build(self) -> _SchemaProjection:
+        schemas = self._component_schemas()
+        request_input_names: dict[str, str] = {}
+        request_output_names: dict[str, str] = {}
+
+        for request in self.program.requests.values():
+            base = _request_component_base(request.name)
+            input_name = self._unique_schema_name(f"{base}Request")
+            output_name = self._unique_schema_name(f"{base}Output")
+            request_input_names[request.name] = input_name
+            request_output_names[request.name] = output_name
+            schemas[input_name] = self._contract_schema(request.inputs.values(), mode="input")
+            schemas[output_name] = self._contract_schema(request.outputs.values(), mode="output")
+        return _SchemaProjection(schemas, request_input_names, request_output_names)
+
+    def _component_schemas(self) -> dict[str, Any]:
+        schemas: dict[str, Any] = {}
+        for alias in self.program.type_aliases.values():
+            schemas[self.schema_names[alias.name]] = self._alias_schema(alias, mode="input")
+        for record in self.program.records.values():
+            schemas[self.schema_names[record.name]] = self._record_schema(record, mode="input")
+        for variant in self.program.variants.values():
+            schemas[self.schema_names[variant.name]] = self._variant_schema(variant, mode="input")
+        for alias in self.program.type_aliases.values():
+            schema_name = self.output_schema_names.get(alias.name)
+            if schema_name is not None:
+                schemas[schema_name] = self._alias_schema(alias, mode="output")
+        for record in self.program.records.values():
+            schema_name = self.output_schema_names.get(record.name)
+            if schema_name is not None:
+                schemas[schema_name] = self._record_schema(record, mode="output")
+        for variant in self.program.variants.values():
+            schema_name = self.output_schema_names.get(variant.name)
+            if schema_name is not None:
+                schemas[schema_name] = self._variant_schema(variant, mode="output")
+        return schemas
+
+    def _alias_schema(self, alias: TypeAliasDefinition, *, mode: _SchemaMode) -> dict[str, Any]:
+        schema = self._schema_for_type(alias.value_type, mode=mode)
+        return {
+            **schema,
+            "title": self._schema_title(alias.name, mode=mode),
+            "x-gwt-type": "typeAlias",
+        }
+
+    def _record_schema(self, record: RecordDefinition, *, mode: _SchemaMode) -> dict[str, Any]:
+        schema = self._object_schema(_build_property_tree(record.fields.items()), mode=mode)
+        schema["title"] = self._schema_title(record.name, mode=mode)
+        schema["x-gwt-type"] = "record"
+        return schema
+
+    def _variant_schema(self, variant: VariantDefinition, *, mode: _SchemaMode) -> dict[str, Any]:
+        cases: list[dict[str, Any]] = []
+        for case in variant.cases.values():
+            root = _build_property_tree(case.fields.items())
+            schema = self._object_schema(root, mode=mode)
+            schema["properties"] = {
+                "kind": {
+                    "type": "string",
+                    "enum": [case.name],
+                },
+                **schema["properties"],
+            }
+            schema["required"] = ["kind", *schema["required"]]
+            cases.append(schema)
+        return {
+            "title": self._schema_title(variant.name, mode=mode),
+            "oneOf": cases,
+            **(
+                {"discriminator": {"propertyName": "kind"}}
+                if self.include_openapi_discriminator
+                else {}
+            ),
+            "x-gwt-type": "oneOfRecord",
+        }
+
+    def _contract_schema(
+        self,
+        bindings: Iterable[ContractBinding],
+        *,
+        mode: _SchemaMode,
+    ) -> dict[str, Any]:
+        return self._object_schema(
+            _build_property_tree((binding.path, binding.value_type) for binding in bindings),
+            mode=mode,
+        )
+
+    def _object_schema(self, root: _PropertyNode, *, mode: _SchemaMode) -> dict[str, Any]:
         properties: dict[str, Any] = {}
         required: list[str] = []
         for name, node in root.children.items():
-            properties[name] = self._property_schema(node)
+            properties[name] = self._property_schema(node, mode=mode)
             required.append(name)
         return {
             "type": "object",
@@ -297,24 +356,24 @@ class _OpenApiBuilder:
             "additionalProperties": False,
         }
 
-    def _property_schema(self, node: _PropertyNode) -> dict[str, Any]:
+    def _property_schema(self, node: _PropertyNode, *, mode: _SchemaMode) -> dict[str, Any]:
         if node.children:
             if node.value_type is not None:
-                raise GwtError("OpenAPI schema path has both scalar and nested fields")
-            return self._object_schema(node)
-        return self._schema_for_type(node.value_type or "any")
+                raise GwtError("JSON schema path has both scalar and nested fields")
+            return self._object_schema(node, mode=mode)
+        return self._schema_for_type(node.value_type or "any", mode=mode)
 
-    def _schema_for_type(self, value_type: str) -> dict[str, Any]:
+    def _schema_for_type(self, value_type: str, *, mode: _SchemaMode) -> dict[str, Any]:
         literal_values = _literal_union_values(value_type)
         if literal_values is not None:
-            return _literal_union_schema(literal_values)
+            return _literal_union_schema(literal_values, mode=mode)
 
         if value_type == "number":
             return {"type": "number"}
         if value_type == "integer":
             return {"type": "integer"}
         if value_type == "decimal":
-            return _decimal_schema()
+            return _decimal_schema(mode=mode)
         if value_type == "text":
             return {"type": "string"}
         if value_type == "boolean":
@@ -328,24 +387,59 @@ class _OpenApiBuilder:
         if item_type is not None:
             return {
                 "type": "array",
-                "items": self._schema_for_type(item_type),
+                "items": self._schema_for_type(item_type, mode=mode),
             }
+
+        if mode == "output":
+            output_schema_name = self.output_schema_names.get(value_type)
+            if output_schema_name is not None:
+                return {"$ref": f"{self.ref_prefix}{output_schema_name}"}
 
         schema_name = self.schema_names.get(value_type)
         if schema_name is not None:
-            return {"$ref": f"#/components/schemas/{schema_name}"}
+            return {"$ref": f"{self.ref_prefix}{schema_name}"}
 
-        raise GwtError(f"unknown GWT type for OpenAPI schema: {value_type}")
+        raise GwtError(f"unknown GWT type for JSON schema: {value_type}")
 
     def _unique_schema_name(self, preferred: str) -> str:
-        base = _schema_name(preferred)
-        candidate = base
-        suffix = 2
-        while candidate in self.used_schema_names:
-            candidate = f"{base}{suffix}"
-            suffix += 1
-        self.used_schema_names.add(candidate)
-        return candidate
+        return _unique_schema_name(preferred, self.used_schema_names)
+
+    def _schema_title(self, name: str, *, mode: _SchemaMode) -> str:
+        if mode == "output" and name in self.output_schema_names:
+            return f"{name} output"
+        return name
+
+    def _type_needs_output_schema(self, value_type: str, seen: set[str] | None = None) -> bool:
+        literal_values = _literal_union_values(value_type)
+        if literal_values is not None:
+            return any(isinstance(value, Decimal) for value in literal_values)
+        if value_type == "decimal":
+            return True
+        item_type = _list_item_type(value_type)
+        if item_type is not None:
+            return self._type_needs_output_schema(item_type, seen=seen)
+        if seen is None:
+            seen = set()
+        if value_type in seen:
+            return False
+        seen.add(value_type)
+        alias = self.program.type_aliases.get(value_type)
+        if alias is not None:
+            return self._type_needs_output_schema(alias.value_type, seen=seen)
+        record = self.program.records.get(value_type)
+        if record is not None:
+            return any(
+                self._type_needs_output_schema(field_type, seen=set(seen))
+                for field_type in record.fields.values()
+            )
+        variant = self.program.variants.get(value_type)
+        if variant is not None:
+            return any(
+                self._type_needs_output_schema(field_type, seen=set(seen))
+                for case in variant.cases.values()
+                for field_type in case.fields.values()
+            )
+        return False
 
 
 def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:
@@ -359,17 +453,17 @@ def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:
             traversed.append(part)
             if current.value_type is not None and traversed != parts:
                 ancestor = ".".join(traversed)
-                raise GwtError(f"OpenAPI schema path {path} overlaps {ancestor}")
+                raise GwtError(f"JSON schema path {path} overlaps {ancestor}")
         if current.children:
             descendant = f"{path}.{next(iter(current.children))}"
-            raise GwtError(f"OpenAPI schema path {path} overlaps {descendant}")
+            raise GwtError(f"JSON schema path {path} overlaps {descendant}")
         current.value_type = value_type
     return root
 
 
-def _literal_union_schema(values: tuple[Any, ...]) -> dict[str, Any]:
+def _literal_union_schema(values: tuple[Any, ...], *, mode: _SchemaMode) -> dict[str, Any]:
     if any(isinstance(value, Decimal) for value in values):
-        return _decimal_literal_union_schema(values)
+        return _decimal_literal_union_schema(values, mode=mode)
 
     enum_values = [_json_literal(value) for value in values]
     schema_type = _json_schema_type(enum_values[0])
@@ -379,10 +473,23 @@ def _literal_union_schema(values: tuple[Any, ...]) -> dict[str, Any]:
     }
 
 
-def _decimal_schema() -> dict[str, Any]:
+def _decimal_string_schema() -> dict[str, Any]:
+    return {
+        "type": "string",
+        "format": "decimal",
+        "pattern": DECIMAL_STRING_PATTERN,
+    }
+
+
+def _decimal_schema(*, mode: _SchemaMode) -> dict[str, Any]:
+    if mode == "output":
+        return {
+            **_decimal_string_schema(),
+            "x-gwt-json-output": "decimal string",
+        }
     return {
         "anyOf": [
-            {"type": "string", "format": "decimal"},
+            _decimal_string_schema(),
             {"type": "integer"},
         ],
         "x-gwt-json-input": "decimal string or integer",
@@ -390,21 +497,36 @@ def _decimal_schema() -> dict[str, Any]:
     }
 
 
-def _decimal_literal_union_schema(values: tuple[Any, ...]) -> dict[str, Any]:
-    schemas: list[dict[str, Any]] = [{"type": "string", "format": "decimal"}]
-    integer_values = [
+def _decimal_literal_union_schema(values: tuple[Any, ...], *, mode: _SchemaMode) -> dict[str, Any]:
+    string_schema = _decimal_string_schema()
+    if mode == "output":
+        return {
+            **string_schema,
+            "x-gwt-literal-values": [str(value) for value in values],
+            "x-gwt-json-output": "decimal string",
+        }
+    schemas: list[dict[str, Any]] = [string_schema]
+    integer_values = _unique_preserving_order(
         int(value)
         for value in values
         if isinstance(value, Decimal) and value == value.to_integral_value()
-    ]
+    )
     if integer_values:
         schemas.append({"type": "integer", "enum": integer_values})
     return {
         "anyOf": schemas,
         "x-gwt-literal-values": [str(value) for value in values],
-        "x-gwt-json-input": "decimal string or matching integer",
+        "x-gwt-json-input": "decimal string or matching integer; GWT validates declared literal values at runtime",
         "x-gwt-json-output": "decimal string",
     }
+
+
+def _unique_preserving_order(values: Iterable[Any]) -> list[Any]:
+    unique: list[Any] = []
+    for value in values:
+        if value not in unique:
+            unique.append(value)
+    return unique
 
 
 def _json_literal(value: Any) -> Any:
@@ -442,6 +564,17 @@ def _schema_name(name: str) -> str:
     if not base[0].isalpha():
         base = f"Schema{base}"
     return base
+
+
+def _unique_schema_name(preferred: str, used: set[str]) -> str:
+    base = _schema_name(preferred)
+    candidate = base
+    suffix = 2
+    while candidate in used:
+        candidate = f"{base}{suffix}"
+        suffix += 1
+    used.add(candidate)
+    return candidate
 
 
 def _slug(name: str) -> str:
