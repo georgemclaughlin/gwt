@@ -111,6 +111,8 @@ Request execution:
 - request slugs are derived from the generated OpenAPI paths, including
   collision suffixes such as `/requests/review-vendor-2`
 - the service invokes the exact named `REQUEST` stored in `x-gwt-request-name`
+- request bodies are strict against the declared `REQUEST` input paths, so
+  undeclared JSON fields are rejected with `400` before execution
 - `REQUEST` input contracts validate before execution
 - request-local `GIVEN` setup and `WHEN` calls run normally
 - `OUTPUT` contracts validate after execution
@@ -154,6 +156,11 @@ declared output snapshot and scalar output fields such as
 `gwt.output.decision.status`. This is intentionally out-of-band: OpenAPI
 clients still receive only the declared `OUTPUT` object.
 
+For known `POST /requests/<request-slug>` routes, body parsing failures and
+strict request-body rejections are traced on the route span and return
+`traceparent` plus `x-gwt-trace-id` response headers when trace export is
+enabled.
+
 The deployable API example includes a small playback helper that reads a Jaeger
 trace by ID and prints GWT events sorted by `gwt.event.sequence`:
 
@@ -180,6 +187,7 @@ Error posture:
 - startup parse/check failures should fail the process with source-located
   diagnostics
 - malformed JSON should return `400`
+- undeclared request body fields should return `400`
 - missing or invalid `REQUEST` input should return `400`
 - failed request `THEN` assertions or missing `OUTPUT` values should return
   `500` unless a later design proves a better contract-specific status shape

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from gwtlang.runtime import Runtime, parse_program
+from gwtlang.runtime import GwtError, Runtime, parse_program
 from gwtlang.tracing import GwtTraceRecorder, otlp_trace_endpoint, otlp_traces_payload
 
 
@@ -165,6 +165,41 @@ class TracingTests(unittest.TestCase):
                 and event.attributes.get("gwt.statement.text") == "ticket.has_outage"
                 for event in events
             )
+        )
+
+    def test_trace_does_not_record_state_change_when_mutation_fails(self):
+        program = parse_program(
+            """
+            REQUEST close account
+              GIVEN account is number
+              WHEN close account
+
+            WHEN close account
+              set account.status to "closed"
+            """,
+            filename="account.gwt",
+        )
+        recorder = GwtTraceRecorder(
+            program_file="account.gwt",
+            program_name="account",
+            program_hash="sha256:" + ("c" * 64),
+            request_name="close account",
+        )
+        runtime = Runtime(program, tracer=recorder)
+
+        with self.assertRaisesRegex(GwtError, "cannot create nested path under scalar: account"):
+            runtime.run_json({"account": 1}, "close account")
+        recorder.finish(error="cannot create nested path under scalar: account")
+
+        self.assertEqual(runtime.state, {"account": 1})
+        state_events = [
+            event
+            for span in recorder.spans
+            for event in span.events
+            if event.name == "gwt.state.changed"
+        ]
+        self.assertFalse(
+            any(event.attributes["gwt.state.path"] == "account.status" for event in state_events)
         )
 
     def test_trace_endpoint_uses_standard_environment_fallback(self):

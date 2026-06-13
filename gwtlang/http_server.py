@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import sys
-from typing import Any, cast
+from typing import Any, BinaryIO, cast
 from urllib.parse import urlparse
 
 from .api import CompiledProgram, compile_text, generate_openapi_text, run_result_payload
@@ -37,6 +37,12 @@ class HttpRequestRoute:
             "inputs": _contract_payloads(request.inputs.values()),
             "outputs": _contract_payloads(request.outputs.values()),
         }
+
+
+@dataclass
+class _ContractPathNode:
+    value_type: str | None = None
+    children: dict[str, "_ContractPathNode"] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -107,12 +113,44 @@ class GwtHttpService:
 
         recorder = self._trace_recorder(route, traceparent)
         try:
+            self._validate_declared_input_keys(route, json_state)
+        except HttpServiceError as exc:
+            self._finish_trace(recorder, error=exc.message)
+            raise _with_traceparent(exc, recorder) from exc
+        return self._execute_route(route, json_state, recorder)
+
+    def run_http_route(
+        self,
+        path: str,
+        content_length: str | None,
+        body: BinaryIO,
+        *,
+        traceparent: str | None = None,
+    ) -> HttpRouteResult:
+        route = self.routes.get(path)
+        if route is None:
+            raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
+
+        recorder = self._trace_recorder(route, traceparent)
+        try:
+            json_state = _read_json_body(body, content_length)
+            self._validate_declared_input_keys(route, json_state)
+        except HttpServiceError as exc:
+            self._finish_trace(recorder, error=exc.message)
+            raise _with_traceparent(exc, recorder) from exc
+        return self._execute_route(route, json_state, recorder)
+
+    def _execute_route(
+        self,
+        route: HttpRequestRoute,
+        json_state: dict[str, Any],
+        recorder: GwtTraceRecorder | None,
+    ) -> HttpRouteResult:
+        try:
             runtime = Runtime(self.compiled.program, tracer=recorder)
             run_result = runtime.run_json(json_state, request=route.request_name)
         except GwtError as exc:
-            if recorder is not None:
-                recorder.finish(error=str(exc))
-                self._export_trace(recorder)
+            self._finish_trace(recorder, error=str(exc))
             raise HttpServiceError(
                 _status_for_gwt_error(str(exc)),
                 str(exc),
@@ -122,28 +160,31 @@ class GwtHttpService:
 
         result = run_result_payload(run_result, file=self.compiled.file)["result"]
         if result is None:
-            if recorder is not None:
-                recorder.finish()
-                self._export_trace(recorder)
+            self._finish_trace(recorder)
             return HttpRouteResult({}, traceparent=recorder.traceparent if recorder is not None else None)
         if not isinstance(result, dict):
-            if recorder is not None:
-                error = "GWT request returned a non-object response"
-                recorder.finish(error=error)
-                self._export_trace(recorder)
+            error = "GWT request returned a non-object response"
+            self._finish_trace(recorder, error=error)
             raise HttpServiceError(
                 500,
-                "GWT request returned a non-object response",
+                error,
                 "GWT_RESPONSE_INVALID",
                 traceparent=recorder.traceparent if recorder is not None else None,
             )
-        if recorder is not None:
-            recorder.finish()
-            self._export_trace(recorder)
+        self._finish_trace(recorder)
         return HttpRouteResult(
             cast(dict[str, Any], result),
             traceparent=recorder.traceparent if recorder is not None else None,
         )
+
+    def _validate_declared_input_keys(
+        self,
+        route: HttpRequestRoute,
+        json_state: dict[str, Any],
+    ) -> None:
+        request = self.compiled.program.requests[route.request_name]
+        root = _contract_path_tree(request.inputs.values())
+        _validate_contract_object(root, json_state)
 
     def _trace_recorder(
         self,
@@ -169,6 +210,12 @@ class GwtHttpService:
             OtlpHttpExporter(self.trace_config.otlp_endpoint).export(recorder.spans)
         except OtlpExportError as exc:
             print(f"gwt: OTLP trace export failed: {exc}", file=sys.stderr)
+
+    def _finish_trace(self, recorder: GwtTraceRecorder | None, *, error: str | None = None) -> None:
+        if recorder is None:
+            return
+        recorder.finish(error=error)
+        self._export_trace(recorder)
 
 
 @dataclass(frozen=True)
@@ -260,10 +307,10 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         path = _request_path(self.path)
         try:
-            json_state = self._read_json_body()
-            result = self._service().run_route(
+            result = self._service().run_http_route(
                 path,
-                json_state,
+                self.headers.get("Content-Length", "0"),
+                cast(BinaryIO, self.rfile),
                 traceparent=self.headers.get("traceparent"),
             )
         except HttpServiceError as exc:
@@ -276,26 +323,6 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
 
     def _service(self) -> GwtHttpService:
         return cast(GwtHttpServer, self.server).service
-
-    def _read_json_body(self) -> dict[str, Any]:
-        content_length = self.headers.get("Content-Length", "0")
-        try:
-            length = int(content_length)
-        except ValueError as exc:
-            raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST") from exc
-        raw = self.rfile.read(length) if length > 0 else b""
-        if not raw.strip():
-            return {}
-        try:
-            payload = json.loads(raw.decode("utf-8"))
-        except UnicodeDecodeError as exc:
-            raise HttpServiceError(400, "request body must be UTF-8 JSON", "GWT_HTTP_INVALID_JSON") from exc
-        except json.JSONDecodeError as exc:
-            message = f"invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
-            raise HttpServiceError(400, message, "GWT_HTTP_INVALID_JSON") from exc
-        if not isinstance(payload, dict):
-            raise HttpServiceError(400, "request body must be a JSON object", "GWT_HTTP_INVALID_JSON")
-        return cast(dict[str, Any], payload)
 
     def _write_json(
         self,
@@ -347,6 +374,38 @@ def _routes_from_openapi(document: dict[str, Any]) -> dict[str, HttpRequestRoute
     return routes
 
 
+def _contract_path_tree(bindings: Iterable[ContractBinding]) -> _ContractPathNode:
+    root = _ContractPathNode()
+    for binding in bindings:
+        current = root
+        for part in binding.path.split("."):
+            current = current.children.setdefault(part, _ContractPathNode())
+        current.value_type = binding.value_type
+    return root
+
+
+def _validate_contract_object(node: _ContractPathNode, value: object, *, path: str = "") -> None:
+    if node.value_type is not None:
+        return
+    if not isinstance(value, dict):
+        return
+    item = cast(dict[object, object], value)
+    for key in item:
+        if not isinstance(key, str):
+            return
+        if key not in node.children:
+            input_path = f"{path}.{key}" if path else key
+            raise HttpServiceError(
+                400,
+                f"request body contains undeclared input: {input_path}",
+                "GWT_HTTP_UNDECLARED_INPUT",
+            )
+    for key, child in node.children.items():
+        if key in item:
+            input_path = f"{path}.{key}" if path else key
+            _validate_contract_object(child, item[key], path=input_path)
+
+
 def _contract_payloads(bindings: Iterable[ContractBinding]) -> list[dict[str, str]]:
     return [
         {
@@ -359,6 +418,32 @@ def _contract_payloads(bindings: Iterable[ContractBinding]) -> list[dict[str, st
 
 def _request_path(raw_path: str) -> str:
     return urlparse(raw_path).path
+
+
+def _read_json_body(body: BinaryIO, content_length: str | None) -> dict[str, Any]:
+    try:
+        length = int(content_length or "0")
+    except ValueError as exc:
+        raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST") from exc
+    if length < 0:
+        raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST")
+    raw = body.read(length) if length > 0 else b""
+    return _json_body_from_raw(raw)
+
+
+def _json_body_from_raw(raw: bytes) -> dict[str, Any]:
+    if not raw.strip():
+        return {}
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise HttpServiceError(400, "request body must be UTF-8 JSON", "GWT_HTTP_INVALID_JSON") from exc
+    except json.JSONDecodeError as exc:
+        message = f"invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+        raise HttpServiceError(400, message, "GWT_HTTP_INVALID_JSON") from exc
+    if not isinstance(payload, dict):
+        raise HttpServiceError(400, "request body must be a JSON object", "GWT_HTTP_INVALID_JSON")
+    return cast(dict[str, Any], payload)
 
 
 def _status_for_gwt_error(message: str) -> int:
@@ -382,3 +467,17 @@ def _trace_headers(traceparent: str | None) -> dict[str, str]:
         "traceparent": traceparent,
         "x-gwt-trace-id": trace_id,
     }
+
+
+def _with_traceparent(
+    error: HttpServiceError,
+    recorder: GwtTraceRecorder | None,
+) -> HttpServiceError:
+    if recorder is None:
+        return error
+    return HttpServiceError(
+        error.status,
+        error.message,
+        error.code,
+        traceparent=recorder.traceparent,
+    )

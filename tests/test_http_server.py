@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang.__main__ import main
-from gwtlang.http_server import GwtHttpService, HttpTraceConfig, create_http_server
+from gwtlang.http_server import GwtHttpService, HttpServiceError, HttpTraceConfig, create_http_server
 
 
 class HttpServerTests(unittest.TestCase):
@@ -127,6 +127,113 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(payload["error"]["code"], "GWT_REQUEST_FAILED")
         self.assertIn("REQUEST contract failed for ticket", payload["error"]["message"])
 
+    def test_undeclared_request_input_returns_400(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                REQUEST ping
+                  GIVEN metadata.trace_id is text
+                  WHEN ping
+
+                  OUTPUT ok is boolean
+
+                WHEN ping
+                  set ok to true
+                """
+            )
+
+            with running_service(program) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/ping",
+                    {"metadata": {"trace_id": "T-100", "extra": "ignored before strict mode"}},
+                    method="POST",
+                )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["ok"], False)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_UNDECLARED_INPUT")
+        self.assertEqual(
+            payload["error"]["message"],
+            "request body contains undeclared input: metadata.extra",
+        )
+
+    def test_undeclared_request_input_exports_error_trace(self):
+        incoming_trace_id = "33333333333333333333333333333333"
+        incoming_span_id = "4444444444444444"
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+            ) as base_url:
+                status, payload, headers = request_json_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    {
+                        "ticket": {
+                            "customer_id": "C-100",
+                            "subject": "checkout unavailable",
+                            "severity": "medium",
+                            "account_value": 5000,
+                            "has_outage": True,
+                        },
+                        "unexpected": "not declared",
+                    },
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{incoming_trace_id}-{incoming_span_id}-01",
+                    },
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_UNDECLARED_INPUT")
+        self.assertTrue(headers["traceparent"].startswith(f"00-{incoming_trace_id}-"))
+        self.assertEqual(headers["x-gwt-trace-id"], incoming_trace_id)
+        self.assertEqual(len(exported), 1)
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(spans[0]["traceId"], incoming_trace_id)
+        self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
+        self.assertTrue(
+            any(
+                event["name"] == "exception"
+                and any(
+                    attribute["key"] == "exception.message"
+                    and attribute["value"]["stringValue"]
+                    == "request body contains undeclared input: unexpected"
+                    for attribute in event["attributes"]
+                )
+                for span in spans
+                for event in span["events"]
+            )
+        )
+
+    def test_empty_request_rejects_nonempty_body(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                """
+                REQUEST ping
+                  WHEN ping
+
+                  OUTPUT ok is boolean
+
+                WHEN ping
+                  set ok to true
+                """
+            )
+
+            with running_service(program) as base_url:
+                status, payload = request_json(
+                    f"{base_url}/requests/ping",
+                    {"extra": "not declared"},
+                    method="POST",
+                )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_UNDECLARED_INPUT")
+        self.assertEqual(payload["error"]["message"], "request body contains undeclared input: extra")
+
     def test_request_assertion_failure_returns_500(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "rules.gwt"
@@ -208,6 +315,81 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(payload["ok"], False)
         self.assertEqual(payload["error"]["code"], "GWT_HTTP_INVALID_JSON")
+
+    def test_malformed_json_exports_error_trace_and_returns_trace_headers(self):
+        incoming_trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
+        incoming_span_id = "00f067aa0ba902b7"
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+            ) as base_url:
+                status, payload, headers = request_raw_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    b"{",
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{incoming_trace_id}-{incoming_span_id}-01",
+                    },
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_INVALID_JSON")
+        self.assertTrue(headers["traceparent"].startswith(f"00-{incoming_trace_id}-"))
+        self.assertEqual(headers["x-gwt-trace-id"], incoming_trace_id)
+        self.assertEqual(len(exported), 1)
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(spans[0]["traceId"], incoming_trace_id)
+        self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
+        self.assertTrue(
+            any(
+                event["name"] == "exception"
+                and any(
+                    attribute["key"] == "exception.message"
+                    and "invalid JSON" in attribute["value"]["stringValue"]
+                    for attribute in event["attributes"]
+                )
+                for span in spans
+                for event in span["events"]
+            )
+        )
+
+    def test_bad_content_length_exports_error_trace(self):
+        incoming_trace_id = "11111111111111111111111111111111"
+        incoming_span_id = "2222222222222222"
+        with running_otlp_sink() as otlp:
+            service = GwtHttpService.from_file(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+            )
+            with self.assertRaisesRegex(HttpServiceError, "invalid Content-Length header") as error:
+                service.run_http_route(
+                    "/requests/triage-ticket",
+                    "not-a-number",
+                    io.BytesIO(b"{}"),
+                    traceparent=f"00-{incoming_trace_id}-{incoming_span_id}-01",
+                )
+            exported = otlp.payloads
+
+        self.assertTrue(error.exception.traceparent.startswith(f"00-{incoming_trace_id}-"))
+        self.assertEqual(len(exported), 1)
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(spans[0]["traceId"], incoming_trace_id)
+        self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
+        self.assertTrue(
+            any(
+                event["name"] == "exception"
+                and any(
+                    attribute["key"] == "exception.message"
+                    and attribute["value"]["stringValue"] == "invalid Content-Length header"
+                    for attribute in event["attributes"]
+                )
+                for span in spans
+                for event in span["events"]
+            )
+        )
 
     def test_non_object_json_body_returns_400(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:

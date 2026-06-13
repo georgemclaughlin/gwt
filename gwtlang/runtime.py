@@ -1645,10 +1645,10 @@ class Runtime:
 
         if parts[0] in env and not isinstance(env[parts[0]], PathRef):
             value = self._validate_assignment(resolved, value, line)
-            if self.tracer is not None:
-                self.tracer.record_local_change(path=resolved, line=line)
             if len(parts) == 1:
                 env[parts[0]] = value
+                if self.tracer is not None:
+                    self.tracer.record_local_change(path=resolved, line=line)
                 return
             current: object = env[parts[0]]
             for part in parts[1:-1]:
@@ -1662,21 +1662,28 @@ class Runtime:
             if not isinstance(current, dict):
                 raise GwtError(f"cannot create nested path under scalar: {parts[-2]}")
             cast(dict[str, Any], current)[parts[-1]] = value
+            if self.tracer is not None:
+                self.tracer.record_local_change(path=resolved, line=line)
             return
 
         value = self._validate_assignment(resolved, value, line)
-        if self.tracer is not None:
-            change = state_change_for_set(self.state, resolved, value)
-            if change is not None:
-                self.tracer.record_state_change(path=resolved, change=change, line=line)
+        change = state_change_for_set(self.state, resolved, value) if self.tracer is not None else None
 
         current_map = self.state
         for part in parts[:-1]:
-            next_value: Any = current_map.setdefault(part, {})
+            next_value = current_map.get(part, _MISSING)
+            if next_value is _MISSING:
+                next_map: dict[str, Any] = {}
+                current_map[part] = next_map
+                current_map = next_map
+                continue
             if not isinstance(next_value, dict):
                 raise GwtError(f"cannot create nested path under scalar: {part}")
             current_map = cast(dict[str, Any], next_value)
         current_map[parts[-1]] = value
+        if self.tracer is not None:
+            if change is not None:
+                self.tracer.record_state_change(path=resolved, change=change, line=line)
 
     def _path_exists(self, path: str) -> bool:
         current: object = self.state
