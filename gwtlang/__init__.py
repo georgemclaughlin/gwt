@@ -37,6 +37,8 @@ from .http_server import (
     GwtHttpService,
     GwtHttpServer,
     HttpRequestRoute,
+    HttpRouteResult,
+    HttpServiceError,
     HttpTraceConfig,
     create_http_server,
 )
@@ -104,6 +106,8 @@ __all__ = [
     "HostContext",
     "HostObservation",
     "HttpRequestRoute",
+    "HttpRouteResult",
+    "HttpServiceError",
     "HttpTraceConfig",
     "InspectionPayload",
     "InspectionResult",
