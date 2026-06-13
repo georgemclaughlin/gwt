@@ -25,6 +25,11 @@ from .inspection import (
     inspect_file as _inspect_file,
     inspect_source as _inspect_source,
 )
+from .jsonschema import (
+    JsonSchemaResult,
+    generate_json_schema_file as _generate_json_schema_file,
+    generate_json_schema_text as _generate_json_schema_text,
+)
 from .openapi import (
     OpenApiResult,
     generate_openapi_file as _generate_openapi_file,
@@ -255,6 +260,18 @@ class GwtClient:
             allow_absolute_imports=allow_absolute_imports,
         )
 
+    def json_schema(
+        self,
+        *,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> JsonSchemaResult:
+        return generate_json_schema_file(
+            self.path,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
+
     def inspect(
         self,
         *,
@@ -415,6 +432,32 @@ def generate_openapi_text(
     allow_absolute_imports: bool = True,
 ) -> OpenApiResult:
     return _generate_openapi_text(
+        source,
+        filename,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def generate_json_schema_file(
+    path: str | Path,
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> JsonSchemaResult:
+    return _generate_json_schema_file(
+        path,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def generate_json_schema_text(
+    source: str,
+    filename: str = "<source>",
+    *,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> JsonSchemaResult:
+    return _generate_json_schema_text(
         source,
         filename,
         import_policy=_import_policy(import_roots, allow_absolute_imports),

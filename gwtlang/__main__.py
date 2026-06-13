@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 from .api import (
+    generate_json_schema_file,
     generate_openapi_file,
     generate_python_file,
     generate_typescript_file,
@@ -47,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
         return format_command(args)
     if args.command == "types":
         return types_command(args)
+    if args.command == "schema":
+        return schema_command(args)
     if args.command == "openapi":
         return openapi_command(args)
     if args.command == "serve":
@@ -186,6 +189,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write generated types to a file instead of stdout.",
     )
 
+    schema_parser = subparsers.add_parser(
+        "schema",
+        help="Generate JSON Schema from GWT contracts.",
+    )
+    add_file_arguments(schema_parser)
+    add_import_policy_arguments(schema_parser)
+    schema_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print JSON Schema as JSON. This is currently the only stdout mode.",
+    )
+    schema_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write generated JSON Schema to a file instead of stdout.",
+    )
+
     openapi_parser = subparsers.add_parser(
         "openapi",
         help="Generate OpenAPI JSON from named REQUEST contracts.",
@@ -233,6 +253,13 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Include request output, printed output, and state-change values in exported traces. "
             "By default served traces redact values."
+        ),
+    )
+    serve_parser.add_argument(
+        "--otlp-metrics-endpoint",
+        help=(
+            "Export experimental request metrics to an OTLP/HTTP endpoint. "
+            "If omitted, OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is used."
         ),
     )
     serve_parser.add_argument(
@@ -559,6 +586,28 @@ def openapi_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def schema_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        result = generate_json_schema_file(
+            args.file,
+            import_roots=args.import_root,
+            allow_absolute_imports=not args.no_absolute_imports,
+        )
+    except GwtError as exc:
+        print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    rendered = json.dumps(result.as_payload(), indent=2, sort_keys=True) + "\n"
+    if args.output is not None:
+        args.output.write_text(rendered)
+        print(f"Wrote {args.output}")
+        return 0
+
+    print(rendered, end="")
+    return 0
+
+
 def serve_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
@@ -570,6 +619,7 @@ def serve_command(args: argparse.Namespace) -> int:
             allow_absolute_imports=not args.no_absolute_imports,
             otlp_endpoint=args.otlp_endpoint,
             trace_values=args.trace_values,
+            otlp_metrics_endpoint=args.otlp_metrics_endpoint,
             max_request_body_bytes=args.max_body_bytes,
         )
     except GwtError as exc:
@@ -639,6 +689,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "validate",
         "format",
         "types",
+        "schema",
         "openapi",
         "serve",
         "version",

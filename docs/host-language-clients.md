@@ -201,6 +201,32 @@ JSON Schemas for the stable command payloads live in
 should treat them as additive contracts: new optional fields may appear, while
 incompatible shape changes should bump the payload `schemaVersion`.
 
+## JSON Schema Projection
+
+For hosts that need contract schemas without an HTTP API document, `gwt schema`
+projects GWT type and request contracts into a JSON Schema Draft 2020-12
+catalog:
+
+```sh
+python -m gwtlang schema rules.gwt --json
+```
+
+The generated document emits `TYPE`, `RECORD`, one-of records, named request
+inputs, and named request outputs under `$defs`. The top-level `x-gwt.requests`
+metadata maps each exact request name to its input and output schema references.
+This gives validators, schema registries, generated forms, and non-HTTP
+contract-test tooling a standard contract surface without adding GWT syntax or
+requiring OpenAPI.
+
+Decimal contracts use a JSON Schema `pattern` as well as `format: decimal`, so
+standard validators can reject non-decimal strings even when they treat
+`format` as annotation. Request schemas accept decimal strings and JSON
+integers, matching GWT's host input normalization. Response schemas model the
+serialized GWT wire shape, so decimal outputs are strings. Decimal literal
+unions carry `x-gwt-literal-values`; standard schemas preserve the accepted
+decimal wire shape, while the GWT runtime remains the final authority for exact
+literal membership.
+
 ## OpenAPI Projection
 
 For hosts that already consume HTTP API contracts, `gwt openapi` projects named

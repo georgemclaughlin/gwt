@@ -7,7 +7,6 @@ import os
 import secrets
 import time
 from typing import Any, cast
-from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -33,7 +32,7 @@ class TraceContext:
 class OtlpEvent:
     name: str
     time_unix_nano: int
-    attributes: dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
 
 
 @dataclass
@@ -45,8 +44,8 @@ class OtlpSpan:
     kind: int
     start_time_unix_nano: int
     end_time_unix_nano: int | None = None
-    attributes: dict[str, Any] = field(default_factory=dict)
-    events: list[OtlpEvent] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
+    events: list[OtlpEvent] = field(default_factory=lambda: list[OtlpEvent]())
     status_code: int = STATUS_CODE_UNSET
     status_message: str | None = None
 
@@ -58,6 +57,18 @@ class OtlpSpan:
             return
         self.status_code = STATUS_CODE_ERROR
         self.status_message = error
+
+
+@dataclass(frozen=True)
+class OtlpMetric:
+    name: str
+    description: str
+    unit: str
+    kind: str
+    value: int | float
+    attributes: dict[str, Any]
+    start_time_unix_nano: int
+    time_unix_nano: int
 
 
 @dataclass(frozen=True)
@@ -84,18 +95,46 @@ class OtlpHttpExporter:
             return
         payload = otlp_traces_payload(spans)
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-        request = Request(
-            self.endpoint,
-            data=body,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
         try:
+            request = Request(
+                self.endpoint,
+                data=body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
             with urlopen(request, timeout=self.timeout) as response:
                 if response.status >= 300:
                     raise OtlpExportError(f"OTLP export failed with HTTP {response.status}")
-        except (OSError, URLError) as exc:
+        except OtlpExportError:
+            raise
+        except Exception as exc:
             raise OtlpExportError(f"OTLP export failed: {exc}") from exc
+
+
+class OtlpMetricsExporter:
+    def __init__(self, endpoint: str, *, timeout: float = 2.0) -> None:
+        self.endpoint = endpoint
+        self.timeout = timeout
+
+    def export(self, metrics: list[OtlpMetric], *, service_name: str) -> None:
+        if not metrics:
+            return
+        payload = otlp_metrics_payload(metrics, service_name=service_name)
+        body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        try:
+            request = Request(
+                self.endpoint,
+                data=body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urlopen(request, timeout=self.timeout) as response:
+                if response.status >= 300:
+                    raise OtlpExportError(f"OTLP metric export failed with HTTP {response.status}")
+        except OtlpExportError:
+            raise
+        except Exception as exc:
+            raise OtlpExportError(f"OTLP metric export failed: {exc}") from exc
 
 
 class GwtTraceRecorder:
@@ -438,6 +477,18 @@ def otlp_trace_endpoint(explicit_endpoint: str | None = None) -> str | None:
     return None
 
 
+def otlp_metrics_endpoint(explicit_endpoint: str | None = None) -> str | None:
+    if explicit_endpoint:
+        return _with_metrics_path(explicit_endpoint)
+    metrics_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT")
+    if metrics_endpoint:
+        return metrics_endpoint
+    base_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if base_endpoint:
+        return _with_metrics_path(base_endpoint)
+    return None
+
+
 def json_patch_for_set(root: dict[str, Any], path: str, value: Any) -> list[dict[str, Any]]:
     parts = path.split(".")
     current: Any = root
@@ -445,7 +496,7 @@ def json_patch_for_set(root: dict[str, Any], path: str, value: Any) -> list[dict
     for index, part in enumerate(parts[:-1]):
         if not isinstance(current, dict) or part not in current:
             return _patch_for_missing_parent(pointer_parts, parts[index:], value)
-        current = current[part]
+        current = cast(dict[str, Any], current)[part]
         pointer_parts.append(part)
 
     final = parts[-1]
@@ -496,6 +547,81 @@ def otlp_traces_payload(spans: list[OtlpSpan]) -> dict[str, Any]:
             }
         ]
     }
+
+
+def otlp_metrics_payload(
+    metrics: list[OtlpMetric],
+    *,
+    service_name: str,
+) -> dict[str, Any]:
+    return {
+        "resourceMetrics": [
+            {
+                "resource": {
+                    "attributes": [
+                        _otlp_attribute("service.name", service_name),
+                    ]
+                },
+                "scopeMetrics": [
+                    {
+                        "scope": {
+                            "name": "gwtlang",
+                            "version": PACKAGE_VERSION,
+                        },
+                        "metrics": [_otlp_metric(metric) for metric in metrics],
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def _otlp_metric(metric: OtlpMetric) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "name": metric.name,
+        "description": metric.description,
+        "unit": metric.unit,
+    }
+    data_point = _otlp_metric_data_point(metric)
+    if metric.kind == "sum":
+        payload["sum"] = {
+            "dataPoints": [data_point],
+            "aggregationTemporality": 1,
+            "isMonotonic": True,
+        }
+        return payload
+    if metric.kind == "histogram":
+        payload["histogram"] = {
+            "dataPoints": [
+                {
+                    **data_point,
+                    "count": "1",
+                    "sum": float(metric.value),
+                    "bucketCounts": ["1"],
+                    "explicitBounds": [],
+                }
+            ],
+            "aggregationTemporality": 1,
+        }
+        return payload
+    raise OtlpExportError(f"unknown OTLP metric kind: {metric.kind}")
+
+
+def _otlp_metric_data_point(metric: OtlpMetric) -> dict[str, Any]:
+    data_point: dict[str, Any] = {
+        "attributes": [
+            _otlp_attribute(key, value)
+            for key, value in metric.attributes.items()
+        ],
+        "startTimeUnixNano": str(metric.start_time_unix_nano),
+        "timeUnixNano": str(metric.time_unix_nano),
+    }
+    if metric.kind == "sum":
+        if isinstance(metric.value, int):
+            data_point["asInt"] = str(metric.value)
+        else:
+            data_point["asDouble"] = float(metric.value)
+    return data_point
 
 
 def _otlp_span(span: OtlpSpan) -> dict[str, Any]:
@@ -563,6 +689,14 @@ def _with_trace_path(endpoint: str) -> str:
     return f"{endpoint}/v1/traces"
 
 
+def _with_metrics_path(endpoint: str) -> str:
+    endpoint = endpoint.rstrip("/")
+    parsed = urlparse(endpoint)
+    if parsed.path.endswith("/v1/metrics"):
+        return endpoint
+    return f"{endpoint}/v1/metrics"
+
+
 def _is_lower_hex(value: str) -> bool:
     return all(character in "0123456789abcdef" for character in value)
 
@@ -591,7 +725,7 @@ def _value_at_path(root: dict[str, Any], path: str) -> tuple[bool, Any]:
     for part in path.split("."):
         if not isinstance(current, dict) or part not in current:
             return False, None
-        current = current[part]
+        current = cast(dict[str, Any], current)[part]
     return True, current
 
 
@@ -614,7 +748,7 @@ def _flatten_scalar_paths(value: dict[str, Any]) -> dict[str, Any]:
 
     def visit(prefix: str, item: Any) -> None:
         if isinstance(item, dict):
-            for key, nested in item.items():
+            for key, nested in cast(dict[object, Any], item).items():
                 visit(f"{prefix}.{key}" if prefix else str(key), nested)
             return
         if isinstance(item, list):
@@ -718,9 +852,12 @@ def _jsonable(value: Any) -> Any:
     if isinstance(value, Decimal):
         return str(value)
     if isinstance(value, list):
-        return [_jsonable(item) for item in value]
+        return [_jsonable(item) for item in cast(list[Any], value)]
     if isinstance(value, dict):
-        return {str(key): _jsonable(item) for key, item in value.items()}
+        return {
+            str(key): _jsonable(item)
+            for key, item in cast(dict[object, Any], value).items()
+        }
     if value is None or isinstance(value, str | int | float | bool):
         return value
     return str(value)

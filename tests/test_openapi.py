@@ -7,6 +7,7 @@ import unittest
 
 from gwtlang import GwtClient, generate_openapi_file, generate_openapi_text
 from gwtlang.__main__ import main
+from gwtlang.openapi import DECIMAL_STRING_PATTERN
 from gwtlang.version import PACKAGE_VERSION
 
 
@@ -94,7 +95,14 @@ class OpenApiGenerationTests(unittest.TestCase):
         self.assertEqual(schemas["CartStatus"]["enum"], ["new", "priced"])
         self.assertEqual(
             schemas["Cart"]["properties"]["subtotal"]["anyOf"],
-            [{"type": "string", "format": "decimal"}, {"type": "integer"}],
+            [
+                {
+                    "type": "string",
+                    "format": "decimal",
+                    "pattern": DECIMAL_STRING_PATTERN,
+                },
+                {"type": "integer"},
+            ],
         )
         self.assertEqual(schemas["Cart"]["properties"]["items"]["items"], {"$ref": "#/components/schemas/CartItem"})
         self.assertEqual(schemas["Cart"]["properties"]["customer"]["required"], ["id"])
@@ -106,6 +114,19 @@ class OpenApiGenerationTests(unittest.TestCase):
         self.assertEqual(
             schemas["CheckoutCartOutput"]["properties"]["decision"],
             {"$ref": "#/components/schemas/Decision"},
+        )
+        self.assertEqual(
+            schemas["CheckoutCartOutput"]["properties"]["cart"],
+            {"$ref": "#/components/schemas/CartOutputValue"},
+        )
+        self.assertEqual(
+            schemas["CartOutputValue"]["properties"]["subtotal"],
+            {
+                "type": "string",
+                "format": "decimal",
+                "pattern": DECIMAL_STRING_PATTERN,
+                "x-gwt-json-output": "decimal string",
+            },
         )
         self.assertEqual(schemas["Decision"]["discriminator"], {"propertyName": "kind"})
         self.assertEqual(
@@ -162,21 +183,51 @@ class OpenApiGenerationTests(unittest.TestCase):
 
         self.assertEqual(
             price["properties"]["amount"]["anyOf"],
-            [{"type": "string", "format": "decimal"}, {"type": "integer"}],
+            [
+                {
+                    "type": "string",
+                    "format": "decimal",
+                    "pattern": DECIMAL_STRING_PATTERN,
+                },
+                {"type": "integer"},
+            ],
         )
         self.assertEqual(
             result.as_payload()["components"]["schemas"]["Rate"],
             {
                 "anyOf": [
-                    {"type": "string", "format": "decimal"},
+                    {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": DECIMAL_STRING_PATTERN,
+                    },
                     {"type": "integer", "enum": [1, 2]},
                 ],
                 "title": "Rate",
-                "x-gwt-json-input": "decimal string or matching integer",
+                "x-gwt-json-input": (
+                    "decimal string or matching integer; "
+                    "GWT validates declared literal values at runtime"
+                ),
                 "x-gwt-json-output": "decimal string",
                 "x-gwt-literal-values": ["1.0", "2.0"],
                 "x-gwt-type": "typeAlias",
             },
+        )
+        self.assertEqual(
+            result.as_payload()["components"]["schemas"]["RateOutputValue"],
+            {
+                "type": "string",
+                "format": "decimal",
+                "pattern": DECIMAL_STRING_PATTERN,
+                "title": "Rate output",
+                "x-gwt-json-output": "decimal string",
+                "x-gwt-literal-values": ["1.0", "2.0"],
+                "x-gwt-type": "typeAlias",
+            },
+        )
+        self.assertEqual(
+            result.as_payload()["components"]["schemas"]["PriceOutputValue"]["properties"]["rate"],
+            {"$ref": "#/components/schemas/RateOutputValue"},
         )
 
     def test_generates_unique_paths_and_component_names_for_slug_collisions(self):

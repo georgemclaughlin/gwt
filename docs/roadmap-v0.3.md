@@ -79,21 +79,23 @@ Exit criteria:
 
 ### 3. Host Integration
 
-Treat the Python API, CLI runner protocol, TypeScript client, and generated host
-types as one integration contract.
+Treat the Python API, CLI runner protocol, TypeScript client, generated host
+types, JSON Schema, and OpenAPI as one integration contract.
 
 Candidate work:
 
 - harden examples that compile once, run many requests, and expose diagnostics
-- keep TypeScript and Python generated types aligned with `gwt inspect --json`
+- keep TypeScript/Python generated types, JSON Schema, and OpenAPI aligned with
+  `gwt inspect --json`
 - document operational guidance for the CLI-backed TypeScript client
 - preserve explicit request names when a program exposes multiple workflows
 - keep host observation adapters deterministic at the GWT boundary
 
 Exit criteria:
 
-- a host application can validate a file, inspect the manifest, generate types,
-  run a named request, and understand failures without reading runtime internals
+- a host application can validate a file, inspect the manifest, generate types
+  or schemas, run a named request, and understand failures without reading
+  runtime internals
 - examples show both executable-spec mode and embedded-decision mode
 - host code does not reimplement durable GWT rules
 

@@ -13,8 +13,12 @@ source language at `v0.2` and keeps the payload schema version at `3`.
 - CLI/API JSON payloads continue to use the stable execution envelope.
 - Generated Python and TypeScript host types stay aligned with
   `gwt inspect --json`.
+- JSON Schema generation documents GWT contracts for validators, schema
+  registries, and non-HTTP contract tooling.
 - OpenAPI generation documents named request boundaries for deployable host
   services.
+- `gwt serve` can export experimental OTLP request traces and request metrics
+  for self-hosted service runs.
 - The VS Code extension continues to provide validation, formatting, testing,
   running, debugging, hover, completion, and diagnostics support.
 

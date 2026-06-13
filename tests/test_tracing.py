@@ -2,7 +2,14 @@ import unittest
 from unittest.mock import patch
 
 from gwtlang.runtime import GwtError, Runtime, parse_program
-from gwtlang.tracing import GwtTraceRecorder, otlp_trace_endpoint, otlp_traces_payload
+from gwtlang.tracing import (
+    GwtTraceRecorder,
+    OtlpMetric,
+    otlp_metrics_endpoint,
+    otlp_metrics_payload,
+    otlp_trace_endpoint,
+    otlp_traces_payload,
+)
 
 
 class TracingTests(unittest.TestCase):
@@ -212,6 +219,53 @@ class TracingTests(unittest.TestCase):
             clear=True,
         ):
             self.assertEqual(otlp_trace_endpoint(), "http://localhost:4318/custom")
+
+    def test_metrics_endpoint_uses_standard_environment_fallback(self):
+        with patch.dict("os.environ", {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318"}, clear=True):
+            self.assertEqual(otlp_metrics_endpoint(), "http://localhost:4318/v1/metrics")
+
+        with patch.dict(
+            "os.environ",
+            {"OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "http://localhost:4318/custom"},
+            clear=True,
+        ):
+            self.assertEqual(otlp_metrics_endpoint(), "http://localhost:4318/custom")
+
+    def test_otlp_metrics_payload_records_sum_and_histogram_points(self):
+        payload = otlp_metrics_payload(
+            [
+                OtlpMetric(
+                    name="gwt.request.count",
+                    description="GWT HTTP request executions.",
+                    unit="{request}",
+                    kind="sum",
+                    value=1,
+                    attributes={"gwt.request.name": "checkout cart"},
+                    start_time_unix_nano=100,
+                    time_unix_nano=200,
+                ),
+                OtlpMetric(
+                    name="gwt.request.duration_ms",
+                    description="GWT HTTP request execution duration.",
+                    unit="ms",
+                    kind="histogram",
+                    value=12.5,
+                    attributes={"gwt.request.name": "checkout cart"},
+                    start_time_unix_nano=100,
+                    time_unix_nano=200,
+                ),
+            ],
+            service_name="gwt-serve",
+        )
+
+        metrics = payload["resourceMetrics"][0]["scopeMetrics"][0]["metrics"]
+        self.assertEqual(metrics[0]["name"], "gwt.request.count")
+        self.assertEqual(metrics[0]["sum"]["aggregationTemporality"], 1)
+        self.assertEqual(metrics[0]["sum"]["dataPoints"][0]["asInt"], "1")
+        self.assertEqual(metrics[1]["name"], "gwt.request.duration_ms")
+        self.assertEqual(metrics[1]["histogram"]["aggregationTemporality"], 1)
+        self.assertEqual(metrics[1]["histogram"]["dataPoints"][0]["count"], "1")
+        self.assertEqual(metrics[1]["histogram"]["dataPoints"][0]["sum"], 12.5)
 
 
 if __name__ == "__main__":

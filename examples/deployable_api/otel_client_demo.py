@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import os
 import sys
@@ -40,6 +41,9 @@ def main() -> int:
     base_url = os.environ.get("GWT_DEMO_BASE_URL", "http://127.0.0.1:8080")
     otlp_base = os.environ.get("GWT_DEMO_OTLP_ENDPOINT", "http://127.0.0.1:4318")
     endpoint = otlp_trace_endpoint(otlp_base)
+    if endpoint is None:
+        print("demo client could not resolve an OTLP trace endpoint", file=sys.stderr)
+        return 1
     url = f"{base_url.rstrip('/')}/requests/triage-ticket"
     cases = [
         ("outage escalates", SUCCESS_BODY, True),
@@ -54,7 +58,7 @@ def main() -> int:
 
 def run_case(
     label: str,
-    request_body: dict[str, object],
+    request_body: Mapping[str, object],
     expect_success: bool,
     *,
     url: str,
@@ -89,7 +93,7 @@ def run_case(
         error = f"HTTP {status}"
     except URLError as exc:
         print(f"demo client could not reach {url}: {exc}", file=sys.stderr)
-        return 1
+        return False
     end = now_unix_nano()
 
     parsed = urlparse(url)
