@@ -20,6 +20,7 @@ from gwtlang.http_server import (
     GwtHttpService,
     HttpServiceError,
     HttpTraceConfig,
+    HttpRouteResult,
     create_http_server,
 )
 
@@ -29,14 +30,20 @@ class HttpServerTests(unittest.TestCase):
         from gwtlang import (
             DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
             GwtHttpService as ExportedGwtHttpService,
+            HttpRouteResult as ExportedHttpRouteResult,
+            HttpServiceError as ExportedHttpServiceError,
             HttpTraceConfig as ExportedHttpTraceConfig,
         )
         import gwtlang
 
         self.assertEqual(exported_body_limit, DEFAULT_MAX_REQUEST_BODY_BYTES)
         self.assertIs(ExportedGwtHttpService, GwtHttpService)
+        self.assertIs(ExportedHttpRouteResult, HttpRouteResult)
+        self.assertIs(ExportedHttpServiceError, HttpServiceError)
         self.assertIs(ExportedHttpTraceConfig, HttpTraceConfig)
         self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
+        self.assertIn("HttpRouteResult", gwtlang.__all__)
+        self.assertIn("HttpServiceError", gwtlang.__all__)
 
     def test_gwt_serve_openapi_contract_smoke(self):
         success_trace_id = "77777777777777777777777777777777"
