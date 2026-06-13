@@ -52,6 +52,13 @@ class _ContractPathNode:
 
 @dataclass(frozen=True)
 class GwtHttpService:
+    """Compiled HTTP view of a GWT file's named REQUEST contracts.
+
+    Use `run_route` when the caller already has a decoded JSON object. Use
+    `run_http_route` when the caller has raw HTTP body bytes and wants the same
+    content-type, size, JSON parsing, and strict input checks as `gwt serve`.
+    """
+
     compiled: CompiledProgram
     openapi_document: dict[str, Any]
     routes: dict[str, HttpRequestRoute]
@@ -68,6 +75,8 @@ class GwtHttpService:
         trace_config: HttpTraceConfig | None = None,
         max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
     ) -> GwtHttpService:
+        """Compile a GWT file and build its OpenAPI-backed HTTP route table."""
+
         file_path = Path(path)
         source = file_path.read_text()
         filename = str(file_path)
@@ -120,6 +129,12 @@ class GwtHttpService:
         *,
         traceparent: str | None = None,
     ) -> HttpRouteResult:
+        """Run a route with an already-decoded JSON object.
+
+        This path is for embedded callers and does not apply HTTP content-type
+        or request-body size checks.
+        """
+
         route = self.routes.get(path)
         if route is None:
             raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
@@ -141,6 +156,13 @@ class GwtHttpService:
         content_type: str | None = "application/json",
         traceparent: str | None = None,
     ) -> HttpRouteResult:
+        """Run a route from raw HTTP request body bytes.
+
+        `content_type` defaults to `application/json` to preserve the original
+        embedded call shape. Real HTTP handlers should pass the request header;
+        missing or non-JSON content types are rejected with `415`.
+        """
+
         route = self.routes.get(path)
         if route is None:
             raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
@@ -236,6 +258,8 @@ class GwtHttpService:
 
 @dataclass(frozen=True)
 class HttpTraceConfig:
+    """OpenTelemetry export settings for served or embedded HTTP request runs."""
+
     otlp_endpoint: str
     service_name: str = "gwt-serve"
     include_values: bool = False
@@ -272,6 +296,8 @@ def create_http_server(
     host: str = "127.0.0.1",
     port: int = 8080,
 ) -> GwtHttpServer:
+    """Create a ThreadingHTTPServer for a precompiled `GwtHttpService`."""
+
     return GwtHttpServer((host, port), service)
 
 
