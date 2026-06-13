@@ -18,7 +18,7 @@ from .api import (
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .formatter import format_text
-from .http_server import run_http_server
+from .http_server import DEFAULT_MAX_REQUEST_BODY_BYTES, run_http_server
 from .inspection import inspect_file
 from .lsp import run_stdio_server
 from .payloads import JsonObject, ValidationPayload
@@ -233,6 +233,15 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Include request output, printed output, and state-change values in exported traces. "
             "By default served traces redact values."
+        ),
+    )
+    serve_parser.add_argument(
+        "--max-body-bytes",
+        type=_non_negative_int,
+        default=DEFAULT_MAX_REQUEST_BODY_BYTES,
+        help=(
+            "Maximum accepted POST request body size in bytes "
+            f"(default: {DEFAULT_MAX_REQUEST_BODY_BYTES})."
         ),
     )
 
@@ -561,6 +570,7 @@ def serve_command(args: argparse.Namespace) -> int:
             allow_absolute_imports=not args.no_absolute_imports,
             otlp_endpoint=args.otlp_endpoint,
             trace_values=args.trace_values,
+            max_request_body_bytes=args.max_body_bytes,
         )
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
@@ -639,6 +649,16 @@ def _normalize_argv(argv: list[str]) -> list[str]:
     if argv[0] in {*known_commands, "-h", "--help"}:
         return argv
     return ["run", *argv]
+
+
+def _non_negative_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected a non-negative integer") from exc
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("expected a non-negative integer")
+    return parsed
 
 
 def format_error(error: GwtError, source: str, filename: str) -> str:

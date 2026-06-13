@@ -480,7 +480,9 @@ declared `OUTPUT` bindings become response body schemas.
 `gwt serve file.gwt` starts an experimental HTTP service for named `REQUEST`
 contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests`
 lists callable requests, and `POST /requests/<request-slug>` runs the request
-and returns only the declared `OUTPUT` object. Use `--otlp-endpoint` or
+and returns only the declared `OUTPUT` object. Request posts require
+`Content-Type: application/json` and are limited to 1 MiB by default; use
+`--max-body-bytes` to change the local service limit. Use `--otlp-endpoint` or
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
 execution traces out-of-band. Served traces redact state, output, and print
 values by default; pass `--trace-values` for local diagnostic runs that need

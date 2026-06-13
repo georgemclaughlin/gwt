@@ -21,6 +21,9 @@ from .tracing import (
 )
 
 
+DEFAULT_MAX_REQUEST_BODY_BYTES = 1024 * 1024
+
+
 @dataclass(frozen=True)
 class HttpRequestRoute:
     path: str
@@ -53,6 +56,7 @@ class GwtHttpService:
     openapi_document: dict[str, Any]
     routes: dict[str, HttpRequestRoute]
     trace_config: HttpTraceConfig | None = None
+    max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES
 
     @classmethod
     def from_file(
@@ -62,6 +66,7 @@ class GwtHttpService:
         import_roots: Iterable[str | Path] | None = None,
         allow_absolute_imports: bool = True,
         trace_config: HttpTraceConfig | None = None,
+        max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
     ) -> GwtHttpService:
         file_path = Path(path)
         source = file_path.read_text()
@@ -78,7 +83,13 @@ class GwtHttpService:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         ).as_payload()
-        return cls(compiled, openapi_document, _routes_from_openapi(openapi_document), trace_config)
+        return cls(
+            compiled=compiled,
+            openapi_document=openapi_document,
+            routes=_routes_from_openapi(openapi_document),
+            trace_config=trace_config,
+            max_request_body_bytes=max_request_body_bytes,
+        )
 
     @property
     def program_name(self) -> str | None:
@@ -125,6 +136,7 @@ class GwtHttpService:
         self,
         path: str,
         content_length: str | None,
+        content_type: str | None,
         body: BinaryIO,
         *,
         traceparent: str | None = None,
@@ -135,7 +147,8 @@ class GwtHttpService:
 
         recorder = self._trace_recorder(route, traceparent)
         try:
-            json_state = _read_json_body(body, content_length)
+            _validate_json_content_type(content_type)
+            json_state = _read_json_body(body, content_length, self.max_request_body_bytes)
             self._validate_declared_input_keys(route, json_state)
         except HttpServiceError as exc:
             self._finish_trace(recorder, error=exc.message)
@@ -271,6 +284,7 @@ def run_http_server(
     allow_absolute_imports: bool = True,
     otlp_endpoint: str | None = None,
     trace_values: bool = False,
+    max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
 ) -> int:
     resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
     service = GwtHttpService.from_file(
@@ -282,6 +296,7 @@ def run_http_server(
             if resolved_otlp_endpoint is not None
             else None
         ),
+        max_request_body_bytes=max_request_body_bytes,
     )
     server = create_http_server(service, host=host, port=port)
     actual_host, actual_port = server.server_address[:2]
@@ -315,6 +330,7 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
             result = self._service().run_http_route(
                 path,
                 self.headers.get("Content-Length", "0"),
+                self.headers.get("Content-Type"),
                 cast(BinaryIO, self.rfile),
                 traceparent=self.headers.get("traceparent"),
             )
@@ -425,13 +441,33 @@ def _request_path(raw_path: str) -> str:
     return urlparse(raw_path).path
 
 
-def _read_json_body(body: BinaryIO, content_length: str | None) -> dict[str, Any]:
+def _validate_json_content_type(content_type: str | None) -> None:
+    media_type = (content_type or "").split(";", 1)[0].strip().lower()
+    if media_type != "application/json":
+        raise HttpServiceError(
+            415,
+            "request Content-Type must be application/json",
+            "GWT_HTTP_UNSUPPORTED_MEDIA_TYPE",
+        )
+
+
+def _read_json_body(
+    body: BinaryIO,
+    content_length: str | None,
+    max_body_bytes: int,
+) -> dict[str, Any]:
     try:
         length = int(content_length or "0")
     except ValueError as exc:
         raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST") from exc
     if length < 0:
         raise HttpServiceError(400, "invalid Content-Length header", "GWT_HTTP_BAD_REQUEST")
+    if length > max_body_bytes:
+        raise HttpServiceError(
+            413,
+            f"request body exceeds {max_body_bytes} byte limit",
+            "GWT_HTTP_BODY_TOO_LARGE",
+        )
     raw = body.read(length) if length > 0 else b""
     return _json_body_from_raw(raw)
 
