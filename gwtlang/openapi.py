@@ -171,6 +171,7 @@ class _OpenApiBuilder:
                     "responses": {
                         "200": {
                             "description": "Declared GWT OUTPUT values.",
+                            "headers": _trace_response_headers(),
                             "content": {
                                 "application/json": {
                                     "schema": {"$ref": f"#/components/schemas/{output_name}"}
@@ -179,6 +180,7 @@ class _OpenApiBuilder:
                         },
                         "400": {
                             "description": "Invalid JSON input or GWT request contract failure.",
+                            "headers": _trace_response_headers(),
                             "content": {
                                 "application/json": {
                                     "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
@@ -187,6 +189,7 @@ class _OpenApiBuilder:
                         },
                         "500": {
                             "description": "GWT request assertion, output contract, or runtime failure.",
+                            "headers": _trace_response_headers(),
                             "content": {
                                 "application/json": {
                                     "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
@@ -459,3 +462,22 @@ def _unique_operation_id(preferred: str, used: set[str]) -> str:
         suffix += 1
     used.add(candidate)
     return candidate
+
+
+def _trace_response_headers() -> dict[str, Any]:
+    return {
+        "traceparent": {
+            "description": (
+                "W3C trace context for the served GWT request. Present when "
+                "OpenTelemetry export is enabled."
+            ),
+            "schema": {"type": "string"},
+        },
+        "x-gwt-trace-id": {
+            "description": (
+                "Trace ID for the served GWT request. Present when OpenTelemetry "
+                "export is enabled."
+            ),
+            "schema": {"type": "string"},
+        },
+    }

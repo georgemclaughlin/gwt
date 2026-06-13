@@ -76,6 +76,12 @@ class OpenApiGenerationTests(unittest.TestCase):
             operation["responses"]["500"]["content"]["application/json"]["schema"],
             {"$ref": "#/components/schemas/GwtErrorResponse"},
         )
+        for status in ("200", "400", "500"):
+            headers = operation["responses"][status]["headers"]
+            self.assertEqual(headers["traceparent"]["schema"], {"type": "string"})
+            self.assertIn("OpenTelemetry export is enabled", headers["traceparent"]["description"])
+            self.assertEqual(headers["x-gwt-trace-id"]["schema"], {"type": "string"})
+            self.assertIn("OpenTelemetry export is enabled", headers["x-gwt-trace-id"]["description"])
 
         self.assertEqual(schemas["CartStatus"]["enum"], ["new", "priced"])
         self.assertEqual(

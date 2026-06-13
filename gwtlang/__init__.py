@@ -32,7 +32,7 @@ from .api import (
 from .checker import check_program
 from .formatter import FormatResult, format_file, format_text, is_formatted
 from .host import GwtHostAdapter, HostContext, HostObservation
-from .http_server import GwtHttpService, GwtHttpServer, HttpRequestRoute, create_http_server
+from .http_server import GwtHttpService, GwtHttpServer, HttpRequestRoute, HttpTraceConfig, create_http_server
 from .payloads import (
     AnalysisPayload,
     CheckPayload,
@@ -96,6 +96,7 @@ __all__ = [
     "HostContext",
     "HostObservation",
     "HttpRequestRoute",
+    "HttpTraceConfig",
     "InspectionPayload",
     "InspectionResult",
     "ImportPolicy",

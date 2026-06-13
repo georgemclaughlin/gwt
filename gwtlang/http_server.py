@@ -42,7 +42,9 @@ class HttpRequestRoute:
 @dataclass
 class _ContractPathNode:
     value_type: str | None = None
-    children: dict[str, "_ContractPathNode"] = field(default_factory=dict)
+    children: dict[str, "_ContractPathNode"] = field(
+        default_factory=lambda: dict[str, _ContractPathNode]()
+    )
 
 
 @dataclass(frozen=True)
