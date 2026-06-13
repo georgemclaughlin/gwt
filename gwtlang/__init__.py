@@ -56,6 +56,16 @@ from .runtime import (
 )
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
+from .tracing import (
+    OtlpHttpExporter,
+    OtlpSpan,
+    SPAN_KIND_CLIENT,
+    make_traceparent,
+    new_span_id,
+    new_trace_id,
+    now_unix_nano,
+    otlp_trace_endpoint,
+)
 from .version import (
     LANGUAGE_SPEC_PATH,
     LANGUAGE_SPEC_VERSION,
@@ -94,10 +104,13 @@ __all__ = [
     "LANGUAGE_SPEC_PATH",
     "LANGUAGE_SPEC_VERSION",
     "OpenApiResult",
+    "OtlpHttpExporter",
+    "OtlpSpan",
     "PACKAGE_NAME",
     "PACKAGE_VERSION",
     "PAYLOAD_SCHEMA_VERSION",
     "PythonTypesResult",
+    "SPAN_KIND_CLIENT",
     "TypeScriptTypesResult",
     "VersionPayload",
     "AnalysisPayload",
@@ -124,6 +137,11 @@ __all__ = [
     "inspect_file",
     "inspect_source",
     "is_formatted",
+    "make_traceparent",
+    "new_span_id",
+    "new_trace_id",
+    "now_unix_nano",
+    "otlp_trace_endpoint",
     "parse_program",
     "run_file",
     "run_json_file",

@@ -12,6 +12,7 @@ from typing import Any, Iterable, TypeGuard, cast
 
 from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
+from .tracing import GwtTraceRecorder, state_change_for_set
 
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 RECORD_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
@@ -706,12 +707,18 @@ def parse_program(
 
 
 class Runtime:
-    def __init__(self, program: Program, debugger: Any | None = None) -> None:
+    def __init__(
+        self,
+        program: Program,
+        debugger: Any | None = None,
+        tracer: GwtTraceRecorder | None = None,
+    ) -> None:
         self.program = program
         self.state: dict[str, Any] = {}
         self.output: list[str] = []
         self.actions = self._index_actions(program.actions)
         self.debugger = debugger
+        self.tracer = tracer
         self.call_stack: list[CallFrame] = []
         self.base_path_types = self._base_path_types()
         self.path_types: dict[str, str] = {}
@@ -770,9 +777,9 @@ class Runtime:
         self._run_request_call(request, request_line, validate_contracts=validate_contracts)
 
         for line in self.program.background.thens:
-            self._before_line(line, {})
+            self._before_line(line, {}, trace_statement=False)
             try:
-                assertion_passed = self._evaluate_condition(line.text, {})
+                assertion_passed = self._evaluate_condition(line.text, {}, line, trace_kind="assertion")
             except GwtError as exc:
                 raise _with_line_context(line, exc) from exc
             if not assertion_passed:
@@ -794,9 +801,9 @@ class Runtime:
         for line in whens:
             self._run_when_step(line, {})
         for line in thens:
-            self._before_line(line, {})
+            self._before_line(line, {}, trace_statement=False)
             try:
-                assertion_passed = self._evaluate_condition(line.text, {})
+                assertion_passed = self._evaluate_condition(line.text, {}, line, trace_kind="assertion")
             except GwtError as exc:
                 raise _with_line_context(line, exc) from exc
             if not assertion_passed:
@@ -851,6 +858,8 @@ class Runtime:
             )
 
         self._before_line(line, {})
+        if self.tracer is not None:
+            self.tracer.enter_request(name, line)
         previous_path_types = self.path_types
         self.path_types = self._request_path_types(request, previous_path_types)
         try:
@@ -862,17 +871,25 @@ class Runtime:
             if validate_contracts:
                 self._validate_contract_bindings(request.outputs, "OUTPUT")
             for then in request.thens:
-                self._before_line(then, {})
+                self._before_line(then, {}, trace_statement=False)
                 try:
-                    assertion_passed = self._evaluate_condition(then.text, {})
+                    assertion_passed = self._evaluate_condition(then.text, {}, then, trace_kind="assertion")
                 except GwtError as exc:
                     raise _with_line_context(then, exc) from exc
                 if not assertion_passed:
                     raise GwtError(f"REQUEST {request.name}: line {then.number}: assertion failed: {then.text}")
             self._last_returned_state = self._declared_output_state(request)
+            if self.tracer is not None:
+                self.tracer.record_request_completed(output=self._last_returned_state)
+        except GwtError as exc:
+            if self.tracer is not None:
+                self.tracer.exit_request(error=str(exc))
+            raise
         finally:
             previous_path_types.update(self.path_types)
             self.path_types = previous_path_types
+        if self.tracer is not None:
+            self.tracer.exit_request()
 
     def _register_path_type(self, path: str, value_type: str, path_types: dict[str, str] | None = None) -> None:
         target = self.path_types if path_types is None else path_types
@@ -1039,10 +1056,27 @@ class Runtime:
                 normalized = self._validate_value_type(binding.path, value, binding.value_type, binding.line)
                 self._set_path(binding.path, normalized, {}, binding.line)
             except GwtError as exc:
+                if self.tracer is not None:
+                    self.tracer.record_contract(
+                        label=label,
+                        path=binding.path,
+                        value_type=binding.value_type,
+                        passed=False,
+                        line=binding.line,
+                        error=str(exc),
+                    )
                 raise _with_line_context(
                     binding.line,
                     GwtError(_contract_failure_message(label, binding, exc)),
                 ) from exc
+            if self.tracer is not None:
+                self.tracer.record_contract(
+                    label=label,
+                    path=binding.path,
+                    value_type=binding.value_type,
+                    passed=True,
+                    line=binding.line,
+                )
 
     def _declared_output_state(self, request: NamedRequest) -> dict[str, Any]:
         if not request.outputs:
@@ -1054,7 +1088,7 @@ class Runtime:
         return returned
 
     def _run_given(self, line: Line) -> None:
-        self._before_line(line, {})
+        self._before_line(line, {}, trace_statement=False)
         try:
             left, right = _split_required(line.text, " is ", line.number)
             self._set_path(left.strip(), self._eval_expression(right.strip(), {}), {}, line)
@@ -1062,7 +1096,7 @@ class Runtime:
             raise _with_line_context(line, exc) from exc
 
     def _run_table_assignment(self, table: TableAssignment) -> None:
-        self._before_line(table.line, {})
+        self._before_line(table.line, {}, trace_statement=False)
         try:
             rows = [
                 {
@@ -1086,7 +1120,7 @@ class Runtime:
             raise _with_line_context(table.line, exc) from exc
 
     def _run_variant_assignment(self, assignment: VariantAssignment) -> None:
-        self._before_line(assignment.line, {})
+        self._before_line(assignment.line, {}, trace_statement=False)
         try:
             variant_name = self._resolve_type_alias(assignment.variant_name)
             variant = self.program.variants.get(variant_name)
@@ -1115,7 +1149,7 @@ class Runtime:
             raise _with_line_context(assignment.line, exc) from exc
 
     def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
-        self._before_line(line, env)
+        self._before_line(line, env, trace_statement=not self._line_has_semantic_trace(line))
         try:
             return self._run_command_or_action_inner(line, env, allow_let=allow_let)
         except GwtError as exc:
@@ -1149,7 +1183,7 @@ class Runtime:
             return
         if command == "REQUIRE":
             condition = line.text.removeprefix("REQUIRE ").strip()
-            if not self._evaluate_condition(condition, env):
+            if not self._evaluate_condition(condition, env, line):
                 raise GwtError(f"line {line.number}: requirement failed: {condition}")
             return
         if _is_builtin_statement(tokens, line.text):
@@ -1262,6 +1296,8 @@ class Runtime:
         elif tokens[0] == "print":
             value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
             self.output.append(str(value))
+            if self.tracer is not None:
+                self.tracer.record_output(value=str(value), line=line)
 
     def _run_find(self, line: Line, env: dict[str, Any]) -> None:
         parsed = _parse_find_statement(line.text)
@@ -1274,7 +1310,7 @@ class Runtime:
         for value in cast(list[Any], values):
             find_env = dict(env)
             find_env[name] = value
-            if self._evaluate_condition(condition.strip(), find_env):
+            if self._evaluate_condition(condition.strip(), find_env, line):
                 self._set_path(path, value, env, line)
                 return
         if optional:
@@ -1293,7 +1329,7 @@ class Runtime:
         for value in cast(list[Any], values):
             exists_env = dict(env)
             exists_env[name] = value
-            if self._evaluate_condition(condition.strip(), exists_env):
+            if self._evaluate_condition(condition.strip(), exists_env, line):
                 found = True
                 break
         self._set_path(path, found, env, line)
@@ -1310,8 +1346,18 @@ class Runtime:
                     caller_env,
                 )
                 self.call_stack.append(frame)
+                if self.tracer is not None:
+                    self.tracer.enter_behavior(frame.name, line)
                 try:
-                    return self._run_body(action.body, env)
+                    result = self._run_body(action.body, env)
+                except GwtError as exc:
+                    if self.tracer is not None:
+                        self.tracer.exit_behavior(error=str(exc))
+                    raise
+                else:
+                    if self.tracer is not None:
+                        self.tracer.exit_behavior()
+                    return result
                 finally:
                     self.call_stack.pop()
         raise GwtError(
@@ -1322,11 +1368,12 @@ class Runtime:
     def _run_body(self, body: list[Any], env: dict[str, Any]) -> BehaviorReturn | None:
         for statement in body:
             if isinstance(statement, IfBlock):
-                self._before_line(statement.condition, env)
+                self._before_line(statement.condition, env, trace_statement=False)
                 try:
-                    condition_result = self._evaluate_condition(statement.condition.text, env)
+                    condition_result = self._evaluate_condition(statement.condition.text, env, statement.condition)
                 except GwtError as exc:
                     raise _with_line_context(statement.condition, exc) from exc
+                self._record_if_branch(statement, selected=condition_result)
                 branch = statement.then_body if condition_result else statement.else_body
                 result = self._run_body(branch, env)
             elif isinstance(statement, ForBlock):
@@ -1347,9 +1394,31 @@ class Runtime:
                 return result
         return None
 
-    def _before_line(self, line: Line, env: dict[str, Any]) -> None:
+    def _before_line(self, line: Line, env: dict[str, Any], *, trace_statement: bool = True) -> None:
+        stack = self._stack_frames(line, env)
         if self.debugger is not None:
-            self.debugger.before_line(line, self.state, env, self._stack_frames(line, env))
+            self.debugger.before_line(line, self.state, env, stack)
+        if self.tracer is not None and trace_statement:
+            self.tracer.before_line(line, self.state, env, stack)
+
+    def _line_has_semantic_trace(self, line: Line) -> bool:
+        tokens = _tokens(line.text, "<source>", line.number)
+        if not tokens:
+            return False
+        if tokens[0] in {
+            "set",
+            "add",
+            "subtract",
+            "append",
+            "count",
+            "sum",
+            "find",
+            "exists",
+            "print",
+            "REQUIRE",
+        }:
+            return True
+        return tokens[0] in self.actions
 
     def _stack_frames(self, line: Line, env: dict[str, Any]) -> list[StackFrame]:
         if not self.call_stack:
@@ -1361,6 +1430,33 @@ class Runtime:
             caller_name = self.call_stack[index - 1].name if index > 0 else "Main"
             frames.append(StackFrame(caller_name, active.call_line, active.caller_env))
         return frames
+
+    def _record_if_branch(self, statement: IfBlock, *, selected: bool) -> None:
+        if self.tracer is None:
+            return
+        body = statement.then_body if selected else statement.then_body
+        start_line, end_line = _body_line_range(body)
+        self.tracer.record_branch(
+            kind="IF",
+            condition=statement.condition.text,
+            selected=selected,
+            line=statement.condition,
+            start_line=start_line,
+            end_line=end_line,
+        )
+
+    def _record_decision_branch(self, branch: DecisionBranch, *, selected: bool) -> None:
+        if self.tracer is None:
+            return
+        start_line, end_line = _body_line_range(branch.body)
+        self.tracer.record_branch(
+            kind="DECIDE",
+            condition=branch.condition.text,
+            selected=selected,
+            line=branch.condition,
+            start_line=start_line,
+            end_line=end_line,
+        )
 
     def _run_for(self, statement: ForBlock, env: dict[str, Any]) -> BehaviorReturn | None:
         if statement.name in env or self._path_exists(statement.name):
@@ -1375,7 +1471,11 @@ class Runtime:
         for value in cast(list[Any], values):
             loop_env = dict(env)
             loop_env[statement.name] = value
-            if statement.where is not None and not self._evaluate_condition(statement.where.text, loop_env):
+            if statement.where is not None and not self._evaluate_condition(
+                statement.where.text,
+                loop_env,
+                statement.where,
+            ):
                 continue
             result = self._run_body(statement.body, loop_env)
             if isinstance(result, BehaviorReturn):
@@ -1395,7 +1495,7 @@ class Runtime:
         for value in cast(list[Any], values):
             find_env = dict(env)
             find_env[statement.name] = value
-            if self._evaluate_condition(statement.condition.text, find_env):
+            if self._evaluate_condition(statement.condition.text, find_env, statement.condition):
                 result = self._run_body(statement.body, find_env)
                 if isinstance(result, BehaviorReturn):
                     return result
@@ -1404,9 +1504,11 @@ class Runtime:
 
     def _run_decision_block(self, statement: DecisionBlock, env: dict[str, Any]) -> BehaviorReturn | None:
         for branch in statement.branches:
-            self._before_line(branch.condition, env)
+            self._before_line(branch.condition, env, trace_statement=False)
             try:
-                if self._evaluate_condition(branch.condition.text, env):
+                selected = self._evaluate_condition(branch.condition.text, env, branch.condition)
+                self._record_decision_branch(branch, selected=selected)
+                if selected:
                     return self._run_body(branch.body, env)
             except GwtError as exc:
                 raise _with_line_context(branch.condition, exc) from exc
@@ -1469,11 +1571,23 @@ class Runtime:
             pass
         return token
 
-    def _evaluate_condition(self, text: str, env: dict[str, Any]) -> bool:
+    def _evaluate_condition(
+        self,
+        text: str,
+        env: dict[str, Any],
+        line: Line | None = None,
+        *,
+        trace_kind: str = "condition",
+    ) -> bool:
         expression = _condition_to_expression(text)
         value = self._eval_expression(expression, env)
         if not isinstance(value, bool):
             raise GwtError(f"condition must evaluate to a boolean: {text}")
+        if self.tracer is not None:
+            if trace_kind == "assertion":
+                self.tracer.record_assertion(text=text, result=value, line=line)
+            else:
+                self.tracer.record_condition(text=text, result=value, line=line)
         return value
 
     def _eval_expression(self, text: str, env: dict[str, Any]) -> Any:
@@ -1531,6 +1645,8 @@ class Runtime:
 
         if parts[0] in env and not isinstance(env[parts[0]], PathRef):
             value = self._validate_assignment(resolved, value, line)
+            if self.tracer is not None:
+                self.tracer.record_local_change(path=resolved, line=line)
             if len(parts) == 1:
                 env[parts[0]] = value
                 return
@@ -1549,6 +1665,10 @@ class Runtime:
             return
 
         value = self._validate_assignment(resolved, value, line)
+        if self.tracer is not None:
+            change = state_change_for_set(self.state, resolved, value)
+            if change is not None:
+                self.tracer.record_state_change(path=resolved, change=change, line=line)
 
         current_map = self.state
         for part in parts[:-1]:
@@ -1587,6 +1707,64 @@ class ExpressionScope:
 
     def resolve_name(self, name: str) -> Any:
         return self.runtime._resolve_name(name, self.env)
+
+
+def _body_line_range(body: list[Any]) -> tuple[int | None, int | None]:
+    lines: list[int] = []
+    for statement in body:
+        lines.extend(_statement_line_numbers(statement))
+    if not lines:
+        return None, None
+    return min(lines), max(lines)
+
+
+def _statement_line_numbers(statement: Any) -> list[int]:
+    if isinstance(statement, Line):
+        return [statement.number]
+    if isinstance(statement, RecordValidation):
+        return [statement.line.number]
+    if isinstance(statement, TableAssignment):
+        return [statement.line.number]
+    if isinstance(statement, VariantAssignment):
+        return [statement.line.number]
+    if isinstance(statement, RequestCall):
+        return [statement.line.number]
+    if isinstance(statement, IfBlock):
+        return [
+            statement.condition.number,
+            *_body_line_numbers(statement.then_body),
+            *_body_line_numbers(statement.else_body),
+        ]
+    if isinstance(statement, ForBlock):
+        header = statement.header_line or statement.name_line or statement.iterable
+        return [header.number, *_body_line_numbers(statement.body)]
+    if isinstance(statement, FindBlock):
+        header = statement.header_line or statement.name_line or statement.iterable
+        return [header.number, *_body_line_numbers(statement.body), *_body_line_numbers(statement.else_body)]
+    if isinstance(statement, DecisionBlock):
+        return [
+            statement.header_line.number,
+            *[branch.condition.number for branch in statement.branches],
+            *_body_line_numbers([body for branch in statement.branches for body in branch.body]),
+            statement.else_line.number,
+            *_body_line_numbers(statement.else_body),
+        ]
+    if isinstance(statement, MatchBlock):
+        header = statement.header_line or statement.expression
+        return [
+            header.number,
+            *[case.line.number for case in statement.cases],
+            *_body_line_numbers([body for case in statement.cases for body in case.body]),
+            *_body_line_numbers(statement.else_body),
+        ]
+    return []
+
+
+def _body_line_numbers(body: list[Any]) -> list[int]:
+    lines: list[int] = []
+    for statement in body:
+        lines.extend(_statement_line_numbers(statement))
+    return lines
 
 
 def _logical_lines(source: str, filename: str) -> list[Line]:

@@ -97,3 +97,49 @@ npx --yes @openapitools/openapi-generator-cli@2.38.0 generate \
 
 See [`../../docs/http-service-design.md`](../../docs/http-service-design.md)
 for the HTTP service direction.
+
+## OpenTelemetry Trace Demo
+
+The experimental HTTP service can export request execution traces over
+OTLP/HTTP. The demo stack uses Jaeger v2 all-in-one as the local OTLP ingester
+and trace viewer.
+
+Start the observability stack:
+
+```sh
+docker compose -f examples/deployable_api/observability/docker-compose.yml up
+```
+
+In another terminal, start the GWT service with OTLP export enabled:
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
+  python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
+```
+
+Then run the demo client:
+
+```sh
+python examples/deployable_api/otel_client_demo.py
+```
+
+The client prints a `trace_id` for each case. To read a trace as a linear GWT
+audit story, pass one of those IDs to the playback helper:
+
+```sh
+python examples/deployable_api/otel_trace_playback.py <trace_id>
+```
+
+Open Jaeger at <http://127.0.0.1:16686>, select `gwt-demo-client` or
+`gwt-serve`, and run a search. The trace should show the client request, the
+served GWT request, the `WHEN triage <ticket> into <decision>` behavior,
+executed statements, contract checks, branch conditions, checked assertions,
+state changes, and a `gwt.request.completed` event with the declared output.
+The playback helper prints the same GWT events sorted by `gwt.event.sequence`
+so you can scan the execution without manually merging Jaeger span event
+tables. The client sends one successful outage case and one intentionally
+invalid request, so the viewer also shows a rejected request contract trace.
+
+The trace can include request and state values. Treat it as diagnostic/audit
+data and route it through the same redaction and retention controls as
+application logs before using it outside local development.

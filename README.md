@@ -480,7 +480,9 @@ declared `OUTPUT` bindings become response body schemas.
 `gwt serve file.gwt` starts an experimental HTTP service for named `REQUEST`
 contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests`
 lists callable requests, and `POST /requests/<request-slug>` runs the request
-and returns only the declared `OUTPUT` object.
+and returns only the declared `OUTPUT` object. Use `--otlp-endpoint` or
+`OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
+execution traces out-of-band.
 
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
