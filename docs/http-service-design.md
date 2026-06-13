@@ -136,7 +136,8 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
 The `--otlp-endpoint` flag can also set the base OTLP endpoint explicitly.
 When a request includes a W3C `traceparent` header, GWT uses that trace ID and
 parent span. Responses include `traceparent` and `x-gwt-trace-id` headers when
-trace export is enabled.
+trace export is enabled. Served traces redact state, output, and print values by
+default; pass `--trace-values` for local diagnostic runs that need full values.
 
 The exported trace is a diagnostic projection of GWT execution:
 
@@ -145,16 +146,18 @@ The exported trace is a diagnostic projection of GWT execution:
 - child spans: matched `WHEN` behavior calls
 - span events: executed statements, contract checks, evaluated conditions,
   checked assertions, `print` output, request completion summaries, runtime
-  errors, and state-change patches
+  errors, and state-change paths
 
 Every GWT span event includes `gwt.event.sequence` and `gwt.event.summary` so
 generic trace tools can render a stable audit timeline without knowing every
-GWT-specific event type. State-change events include JSON Patch-shaped payloads
-plus parsed `gwt.state.old`, `gwt.state.new`, and `gwt.state.operation`
-attributes for viewer readability. Request completion events include the
-declared output snapshot and scalar output fields such as
-`gwt.output.decision.status`. This is intentionally out-of-band: OpenAPI
-clients still receive only the declared `OUTPUT` object.
+GWT-specific event type. Redacted state-change events include the state path,
+JSON pointer, and operation, but not old values, new values, or full patch
+payloads. Redacted request completion events include output field paths but not
+the declared output snapshot or scalar values. With `--trace-values`, state
+changes also include JSON Patch-shaped payloads plus parsed `gwt.state.old`,
+`gwt.state.new`, and scalar output fields such as `gwt.output.decision.status`.
+This remains out-of-band: OpenAPI clients still receive only the declared
+`OUTPUT` object.
 
 For known `POST /requests/<request-slug>` routes, body parsing failures and
 strict request-body rejections are traced on the route span and return

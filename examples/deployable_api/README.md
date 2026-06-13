@@ -110,11 +110,15 @@ Start the observability stack:
 docker compose -f examples/deployable_api/observability/docker-compose.yml up
 ```
 
-In another terminal, start the GWT service with OTLP export enabled:
+In another terminal, start the GWT service with OTLP export enabled. Served
+traces redact values by default; this local demo opts into full values so the
+playback output can show the decision data:
 
 ```sh
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
-  python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
+  python -m gwtlang serve examples/deployable_api/rules.gwt \
+    --port 8080 \
+    --trace-values
 ```
 
 Then run the demo client:
@@ -140,6 +144,5 @@ so you can scan the execution without manually merging Jaeger span event
 tables. The client sends one successful outage case and one intentionally
 invalid request, so the viewer also shows a rejected request contract trace.
 
-The trace can include request and state values. Treat it as diagnostic/audit
-data and route it through the same redaction and retention controls as
-application logs before using it outside local development.
+Only use `--trace-values` for local diagnostic runs or environments with
+appropriate log-style redaction and retention controls.
