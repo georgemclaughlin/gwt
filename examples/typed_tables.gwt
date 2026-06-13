@@ -23,6 +23,8 @@ REQUEST calculate invoice
 
   OUTPUT invoice is Invoice
 
+  THEN invoice.status == "ready"
+
 WHEN calculate <invoice>
   GIVEN invoice is Invoice
   count invoice.items into invoice.item_count

@@ -689,7 +689,12 @@ def parse_program(
                 current.thens.append(_derived_line(line, statement, len("THEN ")))
                 index += 1
             last_top_keyword = "THEN"
-        elif text.startswith("  "):
+        elif text.startswith(" "):
+            indent = _indent_width(text)
+            if indent % 2 != 0:
+                raise GwtError(
+                    f"{filename}:{line.number}: invalid indentation: use two spaces per level"
+                )
             raise GwtError(f"{filename}:{line.number}: indented line outside a block")
         else:
             raise GwtError(f"{filename}:{line.number}: unknown top-level form: {text}")

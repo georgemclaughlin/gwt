@@ -24,6 +24,7 @@ from .payloads import JsonObject, ValidationPayload
 from .runtime import GwtError, ImportPolicy, RunResult, run_source
 from .service import analyze_file
 from .validation import validate_file
+from .version import version_payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
         return types_command(args)
     if args.command == "openapi":
         return openapi_command(args)
+    if args.command == "version":
+        return version_command(args)
     if args.command == "lsp":
         return lsp_command(args)
     if args.command == "debug":
@@ -195,6 +198,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         help="Write generated OpenAPI JSON to a file instead of stdout.",
+    )
+
+    version_parser = subparsers.add_parser(
+        "version",
+        help="Print GWT package, language, and payload version information.",
+    )
+    version_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print version information as JSON.",
     )
 
     subparsers.add_parser("lsp", help="Run the GWT language server over stdio.")
@@ -501,6 +514,20 @@ def openapi_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def version_command(args: argparse.Namespace) -> int:
+    payload = version_payload()
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"{payload['packageName']} {payload['packageVersion']}")
+        print(
+            f"language spec {payload['languageSpecVersion']} "
+            f"({payload['languageSpecPath']})"
+        )
+        print(f"payload schema {payload['payloadSchemaVersion']}")
+    return 0
+
+
 def lsp_command(args: argparse.Namespace) -> int:
     return run_stdio_server()
 
@@ -547,6 +574,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "format",
         "types",
         "openapi",
+        "version",
         "lsp",
         "debug",
         "debug-lines",

@@ -17,8 +17,9 @@ from .runtime import (
     _tokens,
 )
 from .symbols import SourceRange, Symbol, SymbolTable, build_symbol_table
+from .version import PAYLOAD_SCHEMA_VERSION
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = PAYLOAD_SCHEMA_VERSION
 
 
 @dataclass(frozen=True)

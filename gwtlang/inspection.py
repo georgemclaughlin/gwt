@@ -30,8 +30,9 @@ from .runtime import (
     _signature_parameters,
 )
 from .service import Analysis, analyze_file, analyze_source
+from .version import PAYLOAD_SCHEMA_VERSION
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = PAYLOAD_SCHEMA_VERSION
 
 
 @dataclass(frozen=True)

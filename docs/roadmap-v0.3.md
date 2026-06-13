@@ -33,7 +33,7 @@ Candidate work:
 
 - document the relationship between package versions and language spec versions
 - keep JSON schemas additive unless a schema version changes
-- add or document a machine-readable version surface for tooling
+- keep `gwt version --json` as the machine-readable version surface for tooling
 - write migration notes for removed v0.1 boundary forms
 - keep `ExecutionResult.as_payload` and CLI JSON output stable
 

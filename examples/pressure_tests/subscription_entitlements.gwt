@@ -48,6 +48,9 @@ REQUEST decide entitlement
 
   OUTPUT decision is EntitlementDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN plan rank for <plan>
   GIVEN plan is text
   THEN returns number

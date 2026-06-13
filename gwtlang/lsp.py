@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlparse
 from .payloads import CompletionItemPayload, RangePayload
 from .service import Analysis, analyze_source, completion_items, definition_at, hover_at
 from .symbols import SourceRange
+from .version import current_package_version
 
 
 TEXT_DOCUMENT_SYNC_FULL = 1
@@ -254,7 +255,7 @@ def _initialize_result() -> _LspInitializeResultPayload:
             "definitionProvider": True,
             "completionProvider": {"resolveProvider": False},
         },
-        "serverInfo": {"name": "gwt-language-server", "version": "0.1.0"},
+        "serverInfo": {"name": "gwt-language-server", "version": current_package_version()},
     }
 
 

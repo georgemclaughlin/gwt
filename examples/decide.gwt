@@ -20,6 +20,9 @@ REQUEST review risk
 
   OUTPUT decision is RiskDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN approve with <reason> into <decision>
   GIVEN reason is text
   AND decision is RiskDecision

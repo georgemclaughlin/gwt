@@ -20,6 +20,7 @@ from .runtime import (
     _literal_union_values,
 )
 from .service import analyze_source
+from .version import current_package_version
 
 
 @dataclass(frozen=True)
@@ -109,7 +110,7 @@ class _OpenApiBuilder:
             "openapi": "3.1.0",
             "info": {
                 "title": self.program.name or _title_from_filename(self.filename),
-                "version": "0.1.0",
+                "version": current_package_version(),
             },
             "paths": self._paths(),
             "components": {

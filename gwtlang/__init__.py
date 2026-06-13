@@ -55,6 +55,16 @@ from .runtime import (
 )
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
+from .version import (
+    LANGUAGE_SPEC_PATH,
+    LANGUAGE_SPEC_VERSION,
+    PACKAGE_NAME,
+    PACKAGE_VERSION,
+    PAYLOAD_SCHEMA_VERSION,
+    VersionPayload,
+    current_package_version,
+    version_payload,
+)
 
 __all__ = [
     "CheckResult",
@@ -77,9 +87,15 @@ __all__ = [
     "ImportPolicy",
     "JsonObject",
     "JsonValue",
+    "LANGUAGE_SPEC_PATH",
+    "LANGUAGE_SPEC_VERSION",
     "OpenApiResult",
+    "PACKAGE_NAME",
+    "PACKAGE_VERSION",
+    "PAYLOAD_SCHEMA_VERSION",
     "PythonTypesResult",
     "TypeScriptTypesResult",
+    "VersionPayload",
     "AnalysisPayload",
     "ValidationPayload",
     "ValidationResult",
@@ -91,6 +107,7 @@ __all__ = [
     "check_text",
     "compile_file",
     "compile_text",
+    "current_package_version",
     "format_file",
     "format_text",
     "generate_openapi_file",
@@ -112,4 +129,5 @@ __all__ = [
     "run_source",
     "run_text",
     "validate_file",
+    "version_payload",
 ]

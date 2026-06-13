@@ -53,6 +53,9 @@ REQUEST evaluate refund
 
   OUTPUT decision is RefundDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN reset refund decision <decision>
   GIVEN decision is RefundDecision
   set decision.item_found to false

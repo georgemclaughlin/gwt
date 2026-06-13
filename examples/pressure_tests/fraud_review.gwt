@@ -60,6 +60,9 @@ REQUEST evaluate fraud risk
 
   OUTPUT decision is FraudDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN reset fraud decision <decision>
   GIVEN decision is FraudDecision
   set decision.signal_count to 0

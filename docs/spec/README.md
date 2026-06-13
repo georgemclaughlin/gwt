@@ -7,6 +7,20 @@ one implemented language surface.
 - [v0.2](v0.2.md) is the current implemented language version.
 - [v0.1](v0.1.md) records the previous program-contract/entry-boundary model.
 
+Use `gwt version --json` to inspect the installed package version, current
+language spec version, and stable CLI/API payload schema version:
+
+```sh
+python -m gwtlang version --json
+```
+
+These version surfaces move independently:
+
+- `packageVersion` identifies the installed Python package.
+- `languageSpecVersion` identifies the current implemented source language.
+- `payloadSchemaVersion` identifies the JSON payload contract used by commands
+  such as `check`, `inspect`, `validate`, and `version`.
+
 The formatter targets the current spec's source layout rules. Grammar-only
 changes should update the versioned spec, [../grammar.md](../grammar.md), and
 the v0.2 conformance tests in

@@ -221,6 +221,8 @@ REQUEST execute mini2 source
   AND debugger is Mini2Debugger
   AND repl is Mini2Repl
 
+  THEN vm.status != "new"
+
 WHEN reset front end <front_end>
   GIVEN front_end is Mini2FrontEnd
   set front_end.token_count to 0

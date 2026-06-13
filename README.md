@@ -182,6 +182,7 @@ For a quick public review, start with:
 | Artifact | Why |
 | --- | --- |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
+| [`examples/incident_triage`](examples/incident_triage) | v0.3 pilot artifact for deterministic incident escalation, JSON execution, generated Python host types, and a typed host call |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Proposed stabilization roadmap for the next language/tooling milestone |
@@ -431,6 +432,7 @@ gwt test examples/checkout/scenarios.gwt
 gwt check examples/checkout/rules.gwt
 gwt inspect examples/vendor_onboarding/rules.gwt --json
 gwt validate examples/vendor_onboarding/rules.gwt --import-root examples/vendor_onboarding --no-absolute-imports
+gwt version --json
 gwt format examples/bank.gwt --check
 gwt lsp
 gwt debug-lines examples/checkout/scenarios.gwt --json
@@ -456,6 +458,9 @@ existing project.
 
 `gwt format file.gwt` rewrites valid source to the canonical current layout.
 `gwt format file.gwt --check` is intended for CI.
+
+`gwt version --json` reports the installed package version, current language
+spec version, and stable payload schema version.
 
 `gwt types file.gwt --language typescript` generates host TypeScript
 declarations from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use

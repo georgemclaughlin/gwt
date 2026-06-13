@@ -7,6 +7,7 @@ import unittest
 
 from gwtlang import GwtClient, generate_openapi_file, generate_openapi_text
 from gwtlang.__main__ import main
+from gwtlang.version import PACKAGE_VERSION
 
 
 class OpenApiGenerationTests(unittest.TestCase):
@@ -56,6 +57,7 @@ class OpenApiGenerationTests(unittest.TestCase):
 
         self.assertEqual(payload["openapi"], "3.1.0")
         self.assertEqual(payload["info"]["title"], "checkout api")
+        self.assertEqual(payload["info"]["version"], PACKAGE_VERSION)
         self.assertEqual(operation["operationId"], "checkoutCart")
         self.assertEqual(operation["x-gwt-request-name"], "checkout cart")
         self.assertEqual(

@@ -48,6 +48,9 @@ REQUEST fulfill order
   OUTPUT fulfillment is FulfillmentState
   AND inventory is InventoryState
 
+  THEN fulfillment.status != "new"
+  AND fulfillment.reason != "new"
+
 WHEN reset_fulfillment <fulfillment>
   GIVEN fulfillment is FulfillmentState
   set fulfillment.requested_units to 0

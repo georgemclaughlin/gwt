@@ -18,6 +18,8 @@
     "gwtlang/symbols.py",
     "gwtlang/typegen.py",
     "gwtlang/validation.py",
+    "gwtlang/version.py",
+    "examples/incident_triage",
     "examples/vendor_onboarding",
     "examples/release_readiness",
     "examples/exact_pricing"

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/version.schema.json",
+  "title": "GWT Version Payload",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "packageName",
+    "packageVersion",
+    "languageSpecVersion",
+    "languageSpecPath",
+    "payloadSchemaVersion"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "packageName": { "const": "gwtlang" },
+    "packageVersion": { "type": "string" },
+    "languageSpecVersion": { "const": "v0.2" },
+    "languageSpecPath": { "const": "docs/spec/v0.2.md" },
+    "payloadSchemaVersion": { "const": 3 }
+  },
+  "additionalProperties": false
+}

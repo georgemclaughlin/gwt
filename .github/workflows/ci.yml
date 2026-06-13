@@ -65,6 +65,10 @@ jobs:
             --import-root examples/release_readiness \
             --no-absolute-imports
           python examples/release_readiness/host_app.py
+          python -m gwtlang validate examples/incident_triage/rules.gwt \
+            --import-root examples/incident_triage \
+            --no-absolute-imports
+          python examples/incident_triage/host_app.py
 
       - name: Verify generated host types
         run: |
@@ -83,6 +87,11 @@ jobs:
             --output /tmp/release-readiness.rules_types.py
           diff -u examples/release_readiness/rules_types.py \
             /tmp/release-readiness.rules_types.py
+          python -m gwtlang types examples/incident_triage/rules.gwt \
+            --language python \
+            --output /tmp/incident-triage.rules_types.py
+          diff -u examples/incident_triage/rules_types.py \
+            /tmp/incident-triage.rules_types.py
 
       - name: Verify generated OpenAPI
         run: |

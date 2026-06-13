@@ -9,6 +9,7 @@ API helpers:
 - `check.schema.json` for `gwt check --json`.
 - `inspect.schema.json` for `gwt inspect --json`.
 - `validation.schema.json` for `gwt validate --json`.
+- `version.schema.json` for `gwt version --json`.
 
 Schemas are additive contracts. New optional fields may be added as tooling
 evolves; incompatible shape changes should bump the payload `schemaVersion`.

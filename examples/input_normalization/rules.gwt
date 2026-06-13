@@ -25,6 +25,8 @@ REQUEST normalize contact profile
 
   OUTPUT profile is ContactProfile
 
+  THEN profile.status != "new"
+
 WHEN reset profile state <profile>
   GIVEN profile is ContactProfile
   set profile.name to ""

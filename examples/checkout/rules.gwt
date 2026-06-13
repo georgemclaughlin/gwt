@@ -4,7 +4,7 @@ RECORD Customer
   member: boolean
 
 RECORD Cart
-  items: list
+  items: list<number>
   subtotal: number
   shipping: number
   discount: number
