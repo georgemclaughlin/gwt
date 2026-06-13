@@ -187,6 +187,24 @@ class _OpenApiBuilder:
                                 }
                             },
                         },
+                        "413": {
+                            "description": "Request body exceeds the configured service limit.",
+                            "headers": _trace_response_headers(),
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
+                                }
+                            },
+                        },
+                        "415": {
+                            "description": "Request body Content-Type is not application/json.",
+                            "headers": _trace_response_headers(),
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": f"#/components/schemas/{self.error_schema_name}"}
+                                }
+                            },
+                        },
                         "500": {
                             "description": "GWT request assertion, output contract, or runtime failure.",
                             "headers": _trace_response_headers(),

@@ -11,7 +11,13 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang.__main__ import main
-from gwtlang.http_server import GwtHttpService, HttpServiceError, HttpTraceConfig, create_http_server
+from gwtlang.http_server import (
+    DEFAULT_MAX_REQUEST_BODY_BYTES,
+    GwtHttpService,
+    HttpServiceError,
+    HttpTraceConfig,
+    create_http_server,
+)
 
 
 class HttpServerTests(unittest.TestCase):
@@ -456,6 +462,104 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(payload["ok"], False)
         self.assertEqual(payload["error"]["code"], "GWT_HTTP_INVALID_JSON")
 
+    def test_accepts_json_content_type_with_charset(self):
+        with running_service("examples/deployable_api/rules.gwt") as base_url:
+            status, payload, _headers = request_json_with_headers(
+                f"{base_url}/requests/triage-ticket",
+                {
+                    "ticket": {
+                        "customer_id": "C-100",
+                        "subject": "checkout unavailable",
+                        "severity": "medium",
+                        "account_value": 5000,
+                        "has_outage": True,
+                    }
+                },
+                method="POST",
+                headers={"Content-Type": "application/json; charset=utf-8"},
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+
+    def test_unsupported_content_type_returns_415(self):
+        with running_service("examples/deployable_api/rules.gwt") as base_url:
+            status, payload = request_raw(
+                f"{base_url}/requests/triage-ticket",
+                b"{}",
+                method="POST",
+                headers={"Content-Type": "text/plain"},
+            )
+
+        self.assertEqual(status, 415)
+        self.assertEqual(payload["ok"], False)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_UNSUPPORTED_MEDIA_TYPE")
+        self.assertEqual(
+            payload["error"]["message"],
+            "request Content-Type must be application/json",
+        )
+
+    def test_missing_content_type_returns_415(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        with self.assertRaisesRegex(HttpServiceError, "Content-Type") as error:
+            service.run_http_route(
+                "/requests/triage-ticket",
+                "2",
+                None,
+                io.BytesIO(b"{}"),
+            )
+
+        self.assertEqual(error.exception.status, 415)
+        self.assertEqual(error.exception.code, "GWT_HTTP_UNSUPPORTED_MEDIA_TYPE")
+
+    def test_request_body_too_large_returns_413_and_trace_headers(self):
+        incoming_trace_id = "55555555555555555555555555555555"
+        incoming_span_id = "6666666666666666"
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+                max_request_body_bytes=1,
+            ) as base_url:
+                status, payload, headers = request_raw_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    b"{}",
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{incoming_trace_id}-{incoming_span_id}-01",
+                    },
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(status, 413)
+        self.assertEqual(payload["ok"], False)
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_BODY_TOO_LARGE")
+        self.assertEqual(payload["error"]["message"], "request body exceeds 1 byte limit")
+        self.assertTrue(headers["traceparent"].startswith(f"00-{incoming_trace_id}-"))
+        self.assertEqual(headers["x-gwt-trace-id"], incoming_trace_id)
+        self.assertEqual(len(exported), 1)
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(spans[0]["traceId"], incoming_trace_id)
+        self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
+        self.assertTrue(
+            any(
+                event["name"] == "exception"
+                and any(
+                    attribute["key"] == "exception.message"
+                    and attribute["value"]["stringValue"] == "GWT error"
+                    for attribute in event["attributes"]
+                )
+                and any(
+                    attribute["key"] == "exception.message.redacted"
+                    and attribute["value"]["boolValue"]
+                    for attribute in event["attributes"]
+                )
+                for span in spans
+                for event in span["events"]
+            )
+        )
+
     def test_malformed_json_exports_error_trace_and_returns_trace_headers(self):
         incoming_trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
         incoming_span_id = "00f067aa0ba902b7"
@@ -513,6 +617,7 @@ class HttpServerTests(unittest.TestCase):
                 service.run_http_route(
                     "/requests/triage-ticket",
                     "not-a-number",
+                    "application/json",
                     io.BytesIO(b"{}"),
                     traceparent=f"00-{incoming_trace_id}-{incoming_span_id}-01",
                 )
@@ -582,10 +687,27 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn("AND has no previous", stderr.getvalue())
 
+    def test_serve_command_rejects_negative_body_limit(self):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr), self.assertRaises(SystemExit) as error:
+            main(["serve", "examples/deployable_api/rules.gwt", "--max-body-bytes", "-1"])
+
+        self.assertEqual(error.exception.code, 2)
+        self.assertIn("expected a non-negative integer", stderr.getvalue())
+
 
 @contextmanager
-def running_service(path: str | Path, *, trace_config: HttpTraceConfig | None = None):
-    service = GwtHttpService.from_file(path, trace_config=trace_config)
+def running_service(
+    path: str | Path,
+    *,
+    trace_config: HttpTraceConfig | None = None,
+    max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+):
+    service = GwtHttpService.from_file(
+        path,
+        trace_config=trace_config,
+        max_request_body_bytes=max_request_body_bytes,
+    )
     server = create_http_server(service, port=0)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -675,8 +797,14 @@ def request_json_with_headers(
     return request_raw_with_headers(url, data, method=method, headers=headers)
 
 
-def request_raw(url: str, data: bytes | None, *, method: str) -> tuple[int, object]:
-    status, payload, _headers = request_raw_with_headers(url, data, method=method)
+def request_raw(
+    url: str,
+    data: bytes | None,
+    *,
+    method: str,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, object]:
+    status, payload, _headers = request_raw_with_headers(url, data, method=method, headers=headers)
     return status, payload
 
 

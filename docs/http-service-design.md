@@ -108,6 +108,11 @@ POST /requests/<request-slug>
 Request execution:
 
 - HTTP JSON body is the caller-provided GWT state for that named request
+- `POST /requests/<request-slug>` requires `Content-Type: application/json`
+  and rejects other media types with `415`
+- request bodies are limited to 1 MiB by default and larger bodies are
+  rejected with `413`; pass `--max-body-bytes` to change the local service
+  limit
 - request slugs are derived from the generated OpenAPI paths, including
   collision suffixes such as `/requests/review-vendor-2`
 - the service invokes the exact named `REQUEST` stored in `x-gwt-request-name`
@@ -163,10 +168,10 @@ Source locations and GWT source text remain visible in redacted traces so tools
 can point back to the executable spec. Do not put secrets directly in `.gwt`
 source if traces are exported to shared systems.
 
-For known `POST /requests/<request-slug>` routes, body parsing failures and
-strict request-body rejections are traced on the route span and return
-`traceparent` plus `x-gwt-trace-id` response headers when trace export is
-enabled.
+For known `POST /requests/<request-slug>` routes, unsupported content types,
+oversized bodies, body parsing failures, and strict request-body rejections are
+traced on the route span and return `traceparent` plus `x-gwt-trace-id`
+response headers when trace export is enabled.
 
 The deployable API example includes a small playback helper that reads a Jaeger
 trace by ID and prints GWT events sorted by `gwt.event.sequence`:

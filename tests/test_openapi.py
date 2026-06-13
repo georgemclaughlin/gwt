@@ -73,10 +73,18 @@ class OpenApiGenerationTests(unittest.TestCase):
             {"$ref": "#/components/schemas/GwtErrorResponse"},
         )
         self.assertEqual(
+            operation["responses"]["413"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/GwtErrorResponse"},
+        )
+        self.assertEqual(
+            operation["responses"]["415"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/GwtErrorResponse"},
+        )
+        self.assertEqual(
             operation["responses"]["500"]["content"]["application/json"]["schema"],
             {"$ref": "#/components/schemas/GwtErrorResponse"},
         )
-        for status in ("200", "400", "500"):
+        for status in ("200", "400", "413", "415", "500"):
             headers = operation["responses"][status]["headers"]
             self.assertEqual(headers["traceparent"]["schema"], {"type": "string"})
             self.assertIn("OpenTelemetry export is enabled", headers["traceparent"]["description"])
