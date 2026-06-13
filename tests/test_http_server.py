@@ -3,6 +3,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
 import json
 from pathlib import Path
+from queue import Empty, Queue
+import re
+import subprocess
+import sys
 import tempfile
 from threading import Thread
 from typing import Any
@@ -21,6 +25,98 @@ from gwtlang.http_server import (
 
 
 class HttpServerTests(unittest.TestCase):
+    def test_gwt_serve_openapi_contract_smoke(self):
+        success_trace_id = "77777777777777777777777777777777"
+        bad_request_trace_id = "88888888888888888888888888888888"
+        too_large_trace_id = "99999999999999999999999999999999"
+        unsupported_trace_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        with running_otlp_sink() as otlp:
+            with running_serve_process(
+                "examples/deployable_api/rules.gwt",
+                otlp_endpoint=f"{otlp.base_url}/v1/traces",
+                max_body_bytes=4096,
+            ) as base_url:
+                openapi_status, openapi = request_json(f"{base_url}/openapi.json")
+                route = route_for_request(openapi, "triage ticket")
+                operation = openapi["paths"][route]["post"]
+
+                success_status, success_payload, success_headers = request_json_with_headers(
+                    f"{base_url}{route}",
+                    triage_ticket_request(),
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{success_trace_id}-1111111111111111-01",
+                    },
+                )
+                bad_status, bad_payload, bad_headers = request_json_with_headers(
+                    f"{base_url}{route}",
+                    {**triage_ticket_request(), "unexpected": "not declared"},
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{bad_request_trace_id}-2222222222222222-01",
+                    },
+                )
+                too_large_status, too_large_payload, too_large_headers = request_raw_with_headers(
+                    f"{base_url}{route}",
+                    b" " * 4097,
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{too_large_trace_id}-3333333333333333-01",
+                    },
+                )
+                unsupported_status, unsupported_payload, unsupported_headers = request_raw_with_headers(
+                    f"{base_url}{route}",
+                    b"{}",
+                    method="POST",
+                    headers={
+                        "Content-Type": "text/plain",
+                        "traceparent": f"00-{unsupported_trace_id}-4444444444444444-01",
+                    },
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(openapi_status, 200)
+        self.assertEqual(operation["requestBody"]["content"]["application/json"]["schema"], {
+            "$ref": "#/components/schemas/TriageTicketRequest"
+        })
+        for status in ("200", "400", "413", "415", "500"):
+            self.assertIn(status, operation["responses"])
+
+        self.assertEqual(success_status, 200)
+        self.assertEqual(success_payload["decision"]["queue"], "incident")
+        self.assertNotIn("ticket", success_payload)
+        self.assert_trace_headers(success_headers, success_trace_id)
+
+        self.assertEqual(bad_status, 400)
+        self.assertEqual(bad_payload["error"]["code"], "GWT_HTTP_UNDECLARED_INPUT")
+        self.assert_trace_headers(bad_headers, bad_request_trace_id)
+
+        self.assertEqual(too_large_status, 413)
+        self.assertEqual(too_large_payload["error"]["code"], "GWT_HTTP_BODY_TOO_LARGE")
+        self.assert_trace_headers(too_large_headers, too_large_trace_id)
+
+        self.assertEqual(unsupported_status, 415)
+        self.assertEqual(unsupported_payload["error"]["code"], "GWT_HTTP_UNSUPPORTED_MEDIA_TYPE")
+        self.assert_trace_headers(unsupported_headers, unsupported_trace_id)
+
+        exported_trace_ids = {
+            span["traceId"]
+            for payload in exported
+            for resource_span in payload["resourceSpans"]
+            for scope_span in resource_span["scopeSpans"]
+            for span in scope_span["spans"]
+        }
+        self.assertEqual(len(exported), 4)
+        self.assertTrue(
+            {
+                success_trace_id,
+                bad_request_trace_id,
+                too_large_trace_id,
+                unsupported_trace_id,
+            }.issubset(exported_trace_ids)
+        )
+
     def test_serves_health_request_manifest_and_openapi(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:
             health_status, health = request_json(f"{base_url}/health")
@@ -719,6 +815,10 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(error.exception.code, 2)
         self.assertIn("expected a non-negative integer", stderr.getvalue())
 
+    def assert_trace_headers(self, headers: dict[str, str], trace_id: str) -> None:
+        self.assertTrue(headers["traceparent"].startswith(f"00-{trace_id}-"))
+        self.assertEqual(headers["x-gwt-trace-id"], trace_id)
+
 
 @contextmanager
 def running_service(
@@ -742,6 +842,82 @@ def running_service(
         server.shutdown()
         thread.join(timeout=5)
         server.server_close()
+
+
+@contextmanager
+def running_serve_process(
+    path: str | Path,
+    *,
+    otlp_endpoint: str | None = None,
+    max_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+):
+    command = [
+        sys.executable,
+        "-m",
+        "gwtlang",
+        "serve",
+        str(path),
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "0",
+        "--max-body-bytes",
+        str(max_body_bytes),
+    ]
+    if otlp_endpoint is not None:
+        command.extend(["--otlp-endpoint", otlp_endpoint])
+
+    process = subprocess.Popen(
+        command,
+        cwd=Path(__file__).resolve().parents[1],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    output = Queue()
+    if process.stdout is None:
+        raise AssertionError("expected gwt serve stdout pipe")
+    Thread(target=_read_server_startup_line, args=(process.stdout, output), daemon=True).start()
+    try:
+        try:
+            line = output.get(timeout=10)
+        except Empty as exc:
+            _stop_process(process)
+            stderr = process.stderr.read() if process.stderr is not None else ""
+            _close_process_pipes(process)
+            raise AssertionError(f"gwt serve did not report startup URL\n{stderr}") from exc
+
+        match = re.search(r" at (http://\S+)$", line.strip())
+        if match is None:
+            _stop_process(process)
+            stderr = process.stderr.read() if process.stderr is not None else ""
+            _close_process_pipes(process)
+            raise AssertionError(f"unexpected gwt serve startup output: {line!r}\n{stderr}")
+        yield match.group(1)
+    finally:
+        _stop_process(process)
+        _close_process_pipes(process)
+
+
+def _read_server_startup_line(stream: Any, output: Queue) -> None:
+    output.put(stream.readline())
+
+
+def _stop_process(process: subprocess.Popen) -> None:
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+
+
+def _close_process_pipes(process: subprocess.Popen) -> None:
+    for stream in (process.stdout, process.stderr):
+        if stream is not None:
+            stream.close()
 
 
 class OtlpSink(ThreadingHTTPServer):
@@ -803,6 +979,33 @@ def attributes_by_key(attributes: object) -> dict[str, dict[str, object]]:
         if isinstance(key, str) and isinstance(value, dict):
             result[key] = value
     return result
+
+
+def triage_ticket_request() -> dict[str, dict[str, object]]:
+    return {
+        "ticket": {
+            "customer_id": "C-100",
+            "subject": "checkout unavailable",
+            "severity": "medium",
+            "account_value": 5000,
+            "has_outage": True,
+        }
+    }
+
+
+def route_for_request(openapi: object, request_name: str) -> str:
+    if not isinstance(openapi, dict):
+        raise AssertionError("expected OpenAPI object")
+    paths = openapi.get("paths")
+    if not isinstance(paths, dict):
+        raise AssertionError("expected OpenAPI paths object")
+    for path, path_item in paths.items():
+        if not isinstance(path, str) or not isinstance(path_item, dict):
+            continue
+        post = path_item.get("post")
+        if isinstance(post, dict) and post.get("x-gwt-request-name") == request_name:
+            return path
+    raise AssertionError(f"missing OpenAPI route for request: {request_name}")
 
 
 def request_json(url: str, payload: object | None = None, *, method: str = "GET") -> tuple[int, object]:
