@@ -136,9 +136,9 @@ class GwtHttpService:
         self,
         path: str,
         content_length: str | None,
-        content_type: str | None,
         body: BinaryIO,
         *,
+        content_type: str | None = "application/json",
         traceparent: str | None = None,
     ) -> HttpRouteResult:
         route = self.routes.get(path)
@@ -330,8 +330,8 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
             result = self._service().run_http_route(
                 path,
                 self.headers.get("Content-Length", "0"),
-                self.headers.get("Content-Type"),
                 cast(BinaryIO, self.rfile),
+                content_type=self.headers.get("Content-Type"),
                 traceparent=self.headers.get("traceparent"),
             )
         except HttpServiceError as exc:
