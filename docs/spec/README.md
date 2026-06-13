@@ -36,6 +36,7 @@ natural language may describe intent, but executable GWT defines normative
 behavior for deterministic workflows.
 
 Forward-looking stabilization work is tracked in
-[../roadmap-v0.3.md](../roadmap-v0.3.md). Real workflow trials should use
-[../pilot-evaluation.md](../pilot-evaluation.md) so syntax pressure is grounded
-in executable examples.
+[../roadmap-v0.3.md](../roadmap-v0.3.md). The concrete release-candidate gate is
+[../release-v0.3-checklist.md](../release-v0.3-checklist.md). Real workflow
+trials should use [../pilot-evaluation.md](../pilot-evaluation.md) so syntax
+pressure is grounded in executable examples.

@@ -185,7 +185,8 @@ For a quick public review, start with:
 | [`examples/incident_triage`](examples/incident_triage) | v0.3 pilot artifact for deterministic incident escalation, JSON execution, generated Python host types, and a typed host call |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
-| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Proposed stabilization roadmap for the next language/tooling milestone |
+| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Active stabilization roadmap for the next language/tooling milestone |
+| [`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md) | Concrete v0.3 release-candidate gate, pilot evidence, deferred design pressure, and versioning checklist |
 | [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md) | Template for testing GWT against real workflows before adding syntax |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
 | [`docs/program-interface-boundary.md`](docs/program-interface-boundary.md) | Clarifying note on public entries, helper behaviors, scenarios, request files, and CLI JSON execution |
@@ -702,10 +703,12 @@ EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
 language-shape guardrails live in
 [`docs/design-principles.md`](docs/design-principles.md). The current
 variant/match design pressure from MiniLang is captured in
-[`docs/variant-match-design.md`](docs/variant-match-design.md). Proposed
+[`docs/variant-match-design.md`](docs/variant-match-design.md). Active
 stabilization work is tracked in
-[`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md), and real-workflow evaluation
-should use [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md).
+[`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md). The concrete release-candidate
+gate is [`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md), and
+real-workflow evaluation should use
+[`docs/pilot-evaluation.md`](docs/pilot-evaluation.md).
 
 Run tests:
 
