@@ -4,7 +4,7 @@ from typing import TypedDict
 
 
 PACKAGE_NAME = "gwtlang"
-PACKAGE_VERSION = "0.1.0"
+PACKAGE_VERSION = "0.3.0"
 LANGUAGE_SPEC_VERSION = "v0.2"
 LANGUAGE_SPEC_PATH = "docs/spec/v0.2.md"
 PAYLOAD_SCHEMA_VERSION = 3

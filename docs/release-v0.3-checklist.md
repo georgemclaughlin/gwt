@@ -13,15 +13,14 @@ The project currently exposes these independent version surfaces:
 
 | Surface | Current Value | Release Meaning |
 | --- | --- | --- |
-| Python package version | `0.1.0` | Distribution/package identity in `pyproject.toml` and `gwtlang/version.py` |
+| Python package version | `0.3.0` | Distribution/package identity in `pyproject.toml` and `gwtlang/version.py` |
 | Language spec version | `v0.2` | Implemented source language documented in [`spec/v0.2.md`](spec/v0.2.md) |
 | Payload schema version | `3` | Stable JSON envelope version for CLI/API payloads |
 | Roadmap milestone | `v0.3` | Stabilization target for tooling, integration, diagnostics, and pilots |
 
-Before publishing a package release, update the package version in both
-`pyproject.toml` and `gwtlang/version.py`. Do not change the language spec
-version unless the implemented source language changes and the versioned spec is
-updated with it.
+This checkpoint prepares Python package version `0.3.0`. Do not change the
+language spec version unless the implemented source language changes and the
+versioned spec is updated with it.
 
 ## Current Pilot Evidence
 
@@ -116,6 +115,7 @@ git diff --exit-code -- examples/release_readiness/rules_types.py examples/incid
 - The advisory release gate returns `approved` with `reason: "ready"`.
 - Public docs link to the roadmap, pilot evaluation guide, and this checkpoint.
 - Package version changes, if any, are reflected in `pyproject.toml`,
-  `gwtlang/version.py`, generated metadata, and release notes.
+  `gwtlang/version.py`, generated metadata, and
+  [`release-notes-v0.3.md`](release-notes-v0.3.md).
 - Any payload or language incompatibility has an explicit schema/spec version
   bump or migration note.

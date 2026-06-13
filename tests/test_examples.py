@@ -8,6 +8,7 @@ import unittest
 from gwtlang import GwtError, check_file, is_formatted, run_file, run_json_file
 from gwtlang.runtime import run_json_request, run_request, run_source
 from gwtlang.service import analyze_file
+from gwtlang.version import PACKAGE_VERSION
 
 
 PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
@@ -240,7 +241,7 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertTrue(report["advisory"])
         self.assertEqual(report["decision"]["status"], "approved")
         self.assertEqual(report["decision"]["reason"], "ready")
-        self.assertEqual(report["request"]["release"]["version"], "0.1.0")
+        self.assertEqual(report["request"]["release"]["version"], PACKAGE_VERSION)
         self.assertEqual(report["request"]["release"]["feature_flags"], [])
 
     def test_release_readiness_repo_gate_is_advisory_without_release_approval(self):
