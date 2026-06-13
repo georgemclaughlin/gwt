@@ -69,6 +69,8 @@ REQUEST run mini source
   OUTPUT front_end is MiniFrontEnd
   AND runtime is MiniRuntime
 
+  THEN runtime.status != "new"
+
 WHEN reset <front_end>
   GIVEN front_end is MiniFrontEnd
   set front_end.token_count to 0

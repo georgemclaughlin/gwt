@@ -45,6 +45,9 @@ REQUEST review expense report
 
   OUTPUT decision is ExpenseDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN review <report> into <decision>
   GIVEN report is ExpenseReport
   AND decision is ExpenseDecision

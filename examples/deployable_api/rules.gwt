@@ -29,6 +29,8 @@ REQUEST triage ticket
 
   OUTPUT decision is TicketDecision
 
+  THEN decision.status != "new"
+
 WHEN triage <ticket> into <decision>
   GIVEN ticket is TicketRequest
   AND decision is TicketDecision

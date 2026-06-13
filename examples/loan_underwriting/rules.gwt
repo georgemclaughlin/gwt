@@ -7,8 +7,8 @@ RECORD LoanApplication
   home_price: number
   down_payment: number
   available_cash: number
-  late_payments: list
-  collections: list
+  late_payments: list<number>
+  collections: list<number>
   bankruptcies: number
   employment_years: number
 
@@ -38,6 +38,9 @@ REQUEST underwrite loan
   WHEN underwrite application into decision
 
   OUTPUT decision is LoanDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"
 
 WHEN ratios <application> into <decision>
   GIVEN application is LoanApplication

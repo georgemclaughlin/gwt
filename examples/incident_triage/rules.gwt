@@ -1,0 +1,193 @@
+PROGRAM incident triage pilot
+
+TYPE IncidentSeverity is "low" | "medium" | "high" | "critical"
+TYPE IncidentStatus is "new" | "watch" | "investigate" | "page" | "major_incident"
+TYPE IncidentReason is "new" | "low_impact" | "runbook_missing" | "customer_impact" | "critical_system_down" | "security_signal"
+
+RECORD IncidentSignal
+  name: text
+  severity: "low" | "medium" | "high"
+  active: boolean
+
+RECORD IncidentRequest
+  incident_id: text
+  service: text
+  severity: IncidentSeverity
+  customer_count: integer
+  revenue_at_risk: boolean
+  security_related: boolean
+  runbook_present: boolean
+  minutes_open: integer
+  signals: list<IncidentSignal>
+
+RECORD TriageDecision
+  status: IncidentStatus
+  reason: IncidentReason
+  escalation_level: integer
+  page_on_call: boolean
+  open_major_incident: boolean
+  required_actions: list<text>
+  active_signal_count: integer
+  high_signal_count: integer
+
+REQUEST triage incident
+  GIVEN incident is IncidentRequest
+
+  GIVEN decision is TriageDecision
+    status: "new"
+    reason: "new"
+    escalation_level: 0
+    page_on_call: false
+    open_major_incident: false
+    required_actions: []
+    active_signal_count: 0
+    high_signal_count: 0
+
+  WHEN triage incident into decision
+
+  OUTPUT decision is TriageDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
+WHEN reset triage decision <decision>
+  GIVEN decision is TriageDecision
+  set decision.status to "new"
+  set decision.reason to "new"
+  set decision.escalation_level to 0
+  set decision.page_on_call to false
+  set decision.open_major_incident to false
+  set decision.required_actions to []
+  set decision.active_signal_count to 0
+  set decision.high_signal_count to 0
+
+WHEN collect signals from <incident> into <decision>
+  GIVEN incident is IncidentRequest
+  AND decision is TriageDecision
+  FOR signal in incident.signals WHERE signal.active == true
+    add 1 to decision.active_signal_count
+    IF signal.severity == "high"
+      add 1 to decision.high_signal_count
+      append "review_signal_" + signal.name to decision.required_actions
+
+WHEN collect required actions from <incident> into <decision>
+  GIVEN incident is IncidentRequest
+  AND decision is TriageDecision
+  IF incident.runbook_present == false
+    append "attach_runbook" to decision.required_actions
+  IF incident.security_related
+    append "notify_security" to decision.required_actions
+  IF incident.customer_count > 0 or incident.revenue_at_risk
+    append "post_customer_update" to decision.required_actions
+  IF incident.minutes_open >= 30
+    append "review_stale_incident" to decision.required_actions
+
+WHEN mark outcome <status> because <reason> at level <level> into <decision>
+  GIVEN status is IncidentStatus
+  AND reason is IncidentReason
+  AND level is integer
+  AND decision is TriageDecision
+  set decision.status to status
+  set decision.reason to reason
+  set decision.escalation_level to level
+  IF status == "page" or status == "major_incident"
+    set decision.page_on_call to true
+  ELSE
+    set decision.page_on_call to false
+  IF status == "major_incident"
+    set decision.open_major_incident to true
+  ELSE
+    set decision.open_major_incident to false
+
+WHEN classify <incident> into <decision>
+  GIVEN incident is IncidentRequest
+  AND decision is TriageDecision
+  DECIDE
+    WHEN incident.security_related and (incident.severity == "critical" or decision.high_signal_count > 0)
+      mark outcome "major_incident" because "security_signal" at level 3 into decision
+    WHEN incident.severity == "critical" and (incident.customer_count > 0 or incident.revenue_at_risk)
+      mark outcome "major_incident" because "critical_system_down" at level 3 into decision
+    WHEN incident.customer_count >= 100 or incident.revenue_at_risk or incident.severity == "high"
+      mark outcome "page" because "customer_impact" at level 2 into decision
+    WHEN incident.runbook_present == false
+      mark outcome "investigate" because "runbook_missing" at level 1 into decision
+    ELSE
+      mark outcome "watch" because "low_impact" at level 0 into decision
+
+WHEN triage <incident> into <decision>
+  GIVEN incident is IncidentRequest
+  AND decision is TriageDecision
+  reset triage decision decision
+  collect signals from incident into decision
+  collect required actions from incident into decision
+  classify incident into decision
+
+SCENARIO low impact incident stays on watch
+GIVEN incident is IncidentRequest
+  incident_id: "INC-100"
+  service: "docs"
+  severity: "low"
+  customer_count: 0
+  revenue_at_risk: false
+  security_related: false
+  runbook_present: true
+  minutes_open: 5
+  signals: []
+
+REQUEST triage incident
+
+THEN decision.status == "watch"
+AND decision.reason == "low_impact"
+AND decision.escalation_level == 0
+AND decision.page_on_call == false
+AND decision.open_major_incident == false
+AND decision.required_actions == []
+
+SCENARIO high customer impact pages on call
+GIVEN incident is IncidentRequest
+  incident_id: "INC-200"
+  service: "checkout"
+  severity: "high"
+  customer_count: 250
+  revenue_at_risk: true
+  security_related: false
+  runbook_present: true
+  minutes_open: 12
+  signals: []
+
+REQUEST triage incident
+
+THEN decision.status == "page"
+AND decision.reason == "customer_impact"
+AND decision.escalation_level == 2
+AND decision.page_on_call == true
+AND decision.open_major_incident == false
+AND decision.required_actions == ["post_customer_update"]
+
+SCENARIO critical security signal opens major incident
+GIVEN incident is IncidentRequest
+  incident_id: "INC-300"
+  service: "identity"
+  severity: "critical"
+  customer_count: 20
+  revenue_at_risk: true
+  security_related: true
+  runbook_present: false
+  minutes_open: 45
+  signals: []
+
+GIVEN incident.signals are IncidentSignal
+  | name             | severity | active |
+  | "suspicious_ips" | "high"   | true   |
+  | "noisy_monitor"  | "medium" | false  |
+
+REQUEST triage incident
+
+THEN decision.status == "major_incident"
+AND decision.reason == "security_signal"
+AND decision.escalation_level == 3
+AND decision.page_on_call == true
+AND decision.open_major_incident == true
+AND decision.active_signal_count == 1
+AND decision.high_signal_count == 1
+AND decision.required_actions == ["review_signal_suspicious_ips", "attach_runbook", "notify_security", "post_customer_update", "review_stale_incident"]

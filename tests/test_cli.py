@@ -8,6 +8,13 @@ from unittest.mock import patch
 
 from gwtlang.__main__ import format_error, main
 from gwtlang.errors import GwtError
+from gwtlang.version import (
+    LANGUAGE_SPEC_PATH,
+    LANGUAGE_SPEC_VERSION,
+    PACKAGE_NAME,
+    PAYLOAD_SCHEMA_VERSION,
+    current_package_version,
+)
 
 
 class CliDiagnosticsTests(unittest.TestCase):
@@ -31,6 +38,31 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         self.assertIn("gwt: example.gwt:1: AND has no previous", message)
         self.assertIn("AND count is 1", message)
+
+    def test_version_command_json_reports_package_language_and_payload_versions(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = main(["version", "--json"])
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["schemaVersion"], PAYLOAD_SCHEMA_VERSION)
+        self.assertEqual(payload["packageName"], PACKAGE_NAME)
+        self.assertEqual(payload["packageVersion"], current_package_version())
+        self.assertEqual(payload["languageSpecVersion"], LANGUAGE_SPEC_VERSION)
+        self.assertEqual(payload["languageSpecPath"], LANGUAGE_SPEC_PATH)
+        self.assertEqual(payload["payloadSchemaVersion"], PAYLOAD_SCHEMA_VERSION)
+
+    def test_version_command_prints_human_readable_versions(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = main(["version"])
+
+        output = stdout.getvalue()
+        self.assertEqual(status, 0)
+        self.assertIn(f"{PACKAGE_NAME} {current_package_version()}", output)
+        self.assertIn(f"language spec {LANGUAGE_SPEC_VERSION}", output)
+        self.assertIn(f"payload schema {PAYLOAD_SCHEMA_VERSION}", output)
 
     def test_cli_runs_program_with_gwt_input_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -6,6 +6,7 @@ import unittest
 
 from gwtlang.lsp import LspServer, filename_to_uri, lsp_definition, lsp_diagnostics, lsp_document_symbols, lsp_hover
 from gwtlang.service import analyze_source
+from gwtlang.version import PACKAGE_VERSION
 
 
 SOURCE = """RECORD Cart
@@ -67,6 +68,7 @@ class LspTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(responses[0]["id"], 1)
+        self.assertEqual(responses[0]["result"]["serverInfo"]["version"], PACKAGE_VERSION)
         diagnostics = responses[1]["params"]["diagnostics"]
         self.assertEqual(responses[1]["method"], "textDocument/publishDiagnostics")
         self.assertEqual(diagnostics[0]["code"], "GWT001")

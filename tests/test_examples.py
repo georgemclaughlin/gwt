@@ -18,6 +18,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/minilang_spec/rules.gwt"),
     Path("examples/minilang2_vm/rules.gwt"),
     Path("examples/input_normalization/rules.gwt"),
+    Path("examples/incident_triage/rules.gwt"),
     Path("examples/vendor_onboarding/rules.gwt"),
     Path("examples/release_readiness/rules.gwt"),
     Path("examples/exact_pricing/rules.gwt"),
@@ -206,6 +207,18 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertIn('"status": "needs_review"', completed.stdout)
         self.assertIn('"reason": "missing_approval"', completed.stdout)
         self.assertIn("typed decision: needs_review (missing_approval)", completed.stdout)
+
+    def test_incident_triage_python_host_example_runs(self):
+        completed = subprocess.run(
+            [sys.executable, "examples/incident_triage/host_app.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn('"status": "page"', completed.stdout)
+        self.assertIn('"reason": "customer_impact"', completed.stdout)
+        self.assertIn("typed decision: page (customer_impact)", completed.stdout)
 
     def test_release_readiness_repo_gate_approves_clean_ci_evidence(self):
         completed = subprocess.run(

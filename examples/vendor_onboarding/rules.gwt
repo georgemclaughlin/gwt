@@ -51,6 +51,9 @@ REQUEST review vendor
 
   OUTPUT decision is VendorDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN reset <decision>
   GIVEN decision is VendorDecision
   set decision.required_document_count to 0

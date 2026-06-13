@@ -1,0 +1,24 @@
+{
+  "incident": {
+    "incident_id": "INC-240",
+    "service": "payments",
+    "severity": "high",
+    "customer_count": 180,
+    "revenue_at_risk": true,
+    "security_related": false,
+    "runbook_present": false,
+    "minutes_open": 37,
+    "signals": [
+      {
+        "name": "error_budget_burn",
+        "severity": "high",
+        "active": true
+      },
+      {
+        "name": "latency_watch",
+        "severity": "medium",
+        "active": true
+      }
+    ]
+  }
+}

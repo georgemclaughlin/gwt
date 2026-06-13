@@ -46,6 +46,9 @@ REQUEST evaluate flag
 
   OUTPUT decision is FlagDecision
 
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
 WHEN reset <decision>
   GIVEN decision is FlagDecision
   set decision.enabled to false
