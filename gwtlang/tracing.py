@@ -209,7 +209,9 @@ class GwtTraceRecorder:
             **self._line_attributes(line),
         }
         if error is not None:
-            attributes["error.message"] = error
+            attributes["error.message"] = error if self.include_values else "GWT contract failed"
+            if not self.include_values:
+                attributes["error.message.redacted"] = True
         attributes["gwt.contract.summary"] = (
             f"{label} {path} is {value_type} {'passed' if passed else 'failed'}"
         )
@@ -298,12 +300,17 @@ class GwtTraceRecorder:
             attributes.update(self._line_attributes(line))
         self._event("gwt.output", attributes)
 
-    def record_request_completed(self, *, output: dict[str, Any]) -> None:
+    def record_request_completed(self, *, output: dict[str, Any], output_paths: list[str] | None = None) -> None:
         output_fields = _flatten_scalar_paths(output)
         request_name = self._span_stack[-1].attributes.get("gwt.request.name")
+        redacted_output_fields = {path: None for path in (output_paths or output_fields)}
         attributes: dict[str, Any] = {
             "gwt.request.outcome": "completed",
-            "gwt.request.summary": _request_summary(request_name, output_fields, include_values=self.include_values),
+            "gwt.request.summary": _request_summary(
+                request_name,
+                output_fields if self.include_values else redacted_output_fields,
+                include_values=self.include_values,
+            ),
         }
         self._span_stack[-1].attributes["gwt.request.summary"] = attributes["gwt.request.summary"]
         if self.include_values:
@@ -314,12 +321,22 @@ class GwtTraceRecorder:
                 self._span_stack[-1].attributes[key] = _attribute_value(value)
         else:
             attributes["gwt.output.redacted"] = True
-            if output_fields:
-                attributes["gwt.output.fields"] = ", ".join(output_fields)
+            if redacted_output_fields:
+                attributes["gwt.output.fields"] = ", ".join(redacted_output_fields)
         self._event("gwt.request.completed", attributes)
 
     def record_error(self, error: str) -> None:
-        self._event("exception", {"exception.type": "GwtError", "exception.message": error})
+        if self.include_values:
+            self._event("exception", {"exception.type": "GwtError", "exception.message": error})
+            return
+        self._event(
+            "exception",
+            {
+                "exception.type": "GwtError",
+                "exception.message": "GWT error",
+                "exception.message.redacted": True,
+            },
+        )
 
     def finish(self, *, error: str | None = None) -> None:
         if error is not None:
@@ -346,7 +363,12 @@ class GwtTraceRecorder:
 
     def _pop_span(self, *, error: str | None = None) -> None:
         span = self._span_stack.pop()
-        span.finish(error=error)
+        span.finish(error=self._error_message(error))
+
+    def _error_message(self, error: str | None) -> str | None:
+        if error is None or self.include_values:
+            return error
+        return "GWT error"
 
     def _event(self, name: str, attributes: dict[str, Any]) -> None:
         self._sequence += 1
