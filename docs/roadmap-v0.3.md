@@ -1,6 +1,6 @@
 # GWT v0.3 Stabilization Roadmap
 
-Status: proposed direction.
+Status: active stabilization checkpoint.
 
 This roadmap treats v0.3 as a stabilization release, not a broad syntax release.
 The [v0.2 language surface](spec/v0.2.md) is already implemented around named
@@ -21,6 +21,12 @@ v0.3 should make GWT easier to trust as a small executable-spec module:
 
 The release should not try to make GWT a general-purpose language, a policy
 decision point, a SQL-like query system, or a host-side scripting extension.
+
+The concrete release-candidate gate is tracked in
+[`release-v0.3-checklist.md`](release-v0.3-checklist.md). The current
+checkpoint has two implemented pilots:
+[`examples/release_readiness`](../examples/release_readiness) and
+[`examples/incident_triage`](../examples/incident_triage).
 
 ## Work Tracks
 
@@ -157,12 +163,15 @@ Related docs: [deferred language ideas](deferred-language-ideas.md),
 
 ## Suggested Sequence
 
-1. Fix obvious docs drift and make v0.3's stabilization intent visible.
-2. Run a diagnostic UX pass and improve the highest-friction messages.
-3. Use one real pilot workflow to test the current request/host boundary.
-4. Tighten compatibility/versioning notes based on what the pilot needed.
-5. Decide whether any deferred syntax has enough evidence for a design note.
-6. Cut v0.3 only when docs, examples, generated fixtures, clients, and CI agree.
+1. Done: fix obvious docs drift and make v0.3's stabilization intent visible.
+2. Done: run a diagnostic UX pass and improve the highest-friction messages.
+3. Done: use real pilot workflows to test the current request/host boundary.
+4. Current: tighten compatibility/versioning notes based on what the pilots
+   needed.
+5. Current: keep deferred syntax behind concrete pilot evidence; current
+   evidence does not justify new v0.3 syntax.
+6. Next: cut v0.3 only when docs, examples, generated fixtures, clients, and CI
+   agree.
 
 ## Non-Goals
 
