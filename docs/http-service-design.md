@@ -121,6 +121,46 @@ CLI envelope is useful for local runners, scenario state, print output, and
 debugging. The service should start with the API contract that host clients
 expect from OpenAPI: request body in, declared response body out.
 
+## Experimental OpenTelemetry Export
+
+`gwt serve` can export request execution traces over OTLP/HTTP without changing
+the HTTP response body:
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
+  python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
+```
+
+The `--otlp-endpoint` flag can also set the base OTLP endpoint explicitly.
+When a request includes a W3C `traceparent` header, GWT uses that trace ID and
+parent span. Responses include `traceparent` and `x-gwt-trace-id` headers when
+trace export is enabled.
+
+The exported trace is a diagnostic projection of GWT execution:
+
+- root span: served HTTP request route
+- child span: named GWT `REQUEST`
+- child spans: matched `WHEN` behavior calls
+- span events: executed statements, contract checks, evaluated conditions,
+  checked assertions, `print` output, request completion summaries, runtime
+  errors, and state-change patches
+
+Every GWT span event includes `gwt.event.sequence` and `gwt.event.summary` so
+generic trace tools can render a stable audit timeline without knowing every
+GWT-specific event type. State-change events include JSON Patch-shaped payloads
+plus parsed `gwt.state.old`, `gwt.state.new`, and `gwt.state.operation`
+attributes for viewer readability. Request completion events include the
+declared output snapshot and scalar output fields such as
+`gwt.output.decision.status`. This is intentionally out-of-band: OpenAPI
+clients still receive only the declared `OUTPUT` object.
+
+The deployable API example includes a small playback helper that reads a Jaeger
+trace by ID and prints GWT events sorted by `gwt.event.sequence`:
+
+```sh
+python examples/deployable_api/otel_trace_playback.py <trace_id>
+```
+
 ## Generated Client Smoke Path
 
 Standard OpenAPI tooling should be the first typed HTTP client path. The
@@ -155,6 +195,7 @@ Deferred service options:
 - structured logging
 - request body size limits
 - debug envelope mode
+- persistent audit storage and redaction policy
 - reload/watch mode for local development
 - Docker examples
 

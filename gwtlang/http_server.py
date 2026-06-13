@@ -5,12 +5,20 @@ from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
+import sys
 from typing import Any, cast
 from urllib.parse import urlparse
 
-from .api import CompiledProgram, compile_text, generate_openapi_text
+from .api import CompiledProgram, compile_text, generate_openapi_text, run_result_payload
 from .errors import GwtError
-from .runtime import ContractBinding
+from .runtime import ContractBinding, Runtime
+from .tracing import (
+    GwtTraceRecorder,
+    OtlpExportError,
+    OtlpHttpExporter,
+    parse_traceparent,
+    otlp_trace_endpoint,
+)
 
 
 @dataclass(frozen=True)
@@ -36,6 +44,7 @@ class GwtHttpService:
     compiled: CompiledProgram
     openapi_document: dict[str, Any]
     routes: dict[str, HttpRequestRoute]
+    trace_config: HttpTraceConfig | None = None
 
     @classmethod
     def from_file(
@@ -44,6 +53,7 @@ class GwtHttpService:
         *,
         import_roots: Iterable[str | Path] | None = None,
         allow_absolute_imports: bool = True,
+        trace_config: HttpTraceConfig | None = None,
     ) -> GwtHttpService:
         file_path = Path(path)
         source = file_path.read_text()
@@ -60,7 +70,7 @@ class GwtHttpService:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         ).as_payload()
-        return cls(compiled, openapi_document, _routes_from_openapi(openapi_document))
+        return cls(compiled, openapi_document, _routes_from_openapi(openapi_document), trace_config)
 
     @property
     def program_name(self) -> str | None:
@@ -84,34 +94,102 @@ class GwtHttpService:
             ],
         }
 
-    def run_route(self, path: str, json_state: dict[str, Any]) -> dict[str, Any]:
+    def run_route(
+        self,
+        path: str,
+        json_state: dict[str, Any],
+        *,
+        traceparent: str | None = None,
+    ) -> HttpRouteResult:
         route = self.routes.get(path)
         if route is None:
             raise HttpServiceError(404, f"unknown GWT request route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND")
 
+        recorder = self._trace_recorder(route, traceparent)
         try:
-            execution = self.compiled.run_json(json_state, request=route.request_name)
+            runtime = Runtime(self.compiled.program, tracer=recorder)
+            run_result = runtime.run_json(json_state, request=route.request_name)
         except GwtError as exc:
+            if recorder is not None:
+                recorder.finish(error=str(exc))
+                self._export_trace(recorder)
             raise HttpServiceError(
                 _status_for_gwt_error(str(exc)),
                 str(exc),
                 "GWT_REQUEST_FAILED",
+                traceparent=recorder.traceparent if recorder is not None else None,
             ) from exc
 
-        result = execution.as_payload()["result"]
+        result = run_result_payload(run_result, file=self.compiled.file)["result"]
         if result is None:
-            return {}
+            if recorder is not None:
+                recorder.finish()
+                self._export_trace(recorder)
+            return HttpRouteResult({}, traceparent=recorder.traceparent if recorder is not None else None)
         if not isinstance(result, dict):
-            raise HttpServiceError(500, "GWT request returned a non-object response", "GWT_RESPONSE_INVALID")
-        return cast(dict[str, Any], result)
+            if recorder is not None:
+                error = "GWT request returned a non-object response"
+                recorder.finish(error=error)
+                self._export_trace(recorder)
+            raise HttpServiceError(
+                500,
+                "GWT request returned a non-object response",
+                "GWT_RESPONSE_INVALID",
+                traceparent=recorder.traceparent if recorder is not None else None,
+            )
+        if recorder is not None:
+            recorder.finish()
+            self._export_trace(recorder)
+        return HttpRouteResult(
+            cast(dict[str, Any], result),
+            traceparent=recorder.traceparent if recorder is not None else None,
+        )
+
+    def _trace_recorder(
+        self,
+        route: HttpRequestRoute,
+        traceparent: str | None,
+    ) -> GwtTraceRecorder | None:
+        if self.trace_config is None:
+            return None
+        return GwtTraceRecorder(
+            program_file=self.compiled.file,
+            program_name=self.program_name,
+            program_hash=f"sha256:{self.compiled.source_hash}",
+            request_name=route.request_name,
+            route_path=route.path,
+            context=parse_traceparent(traceparent),
+            service_name=self.trace_config.service_name,
+        )
+
+    def _export_trace(self, recorder: GwtTraceRecorder) -> None:
+        if self.trace_config is None:
+            return
+        try:
+            OtlpHttpExporter(self.trace_config.otlp_endpoint).export(recorder.spans)
+        except OtlpExportError as exc:
+            print(f"gwt: OTLP trace export failed: {exc}", file=sys.stderr)
+
+
+@dataclass(frozen=True)
+class HttpTraceConfig:
+    otlp_endpoint: str
+    service_name: str = "gwt-serve"
+
+
+@dataclass(frozen=True)
+class HttpRouteResult:
+    body: dict[str, Any]
+    traceparent: str | None = None
 
 
 class HttpServiceError(Exception):
-    def __init__(self, status: int, message: str, code: str) -> None:
+    def __init__(self, status: int, message: str, code: str, *, traceparent: str | None = None) -> None:
         super().__init__(message)
         self.status = status
         self.message = message
         self.code = code
+        self.traceparent = traceparent
 
 
 class GwtHttpServer(ThreadingHTTPServer):
@@ -140,11 +218,18 @@ def run_http_server(
     port: int = 8080,
     import_roots: Iterable[str | Path] | None = None,
     allow_absolute_imports: bool = True,
+    otlp_endpoint: str | None = None,
 ) -> int:
+    resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
     service = GwtHttpService.from_file(
         path,
         import_roots=import_roots,
         allow_absolute_imports=allow_absolute_imports,
+        trace_config=(
+            HttpTraceConfig(resolved_otlp_endpoint)
+            if resolved_otlp_endpoint is not None
+            else None
+        ),
     )
     server = create_http_server(service, host=host, port=port)
     actual_host, actual_port = server.server_address[:2]
@@ -176,11 +261,15 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
         path = _request_path(self.path)
         try:
             json_state = self._read_json_body()
-            result = self._service().run_route(path, json_state)
+            result = self._service().run_route(
+                path,
+                json_state,
+                traceparent=self.headers.get("traceparent"),
+            )
         except HttpServiceError as exc:
             self._write_error(exc)
             return
-        self._write_json(200, result)
+        self._write_json(200, result.body, headers=_trace_headers(result.traceparent))
 
     def log_message(self, format: str, *args: object) -> None:
         return
@@ -208,11 +297,19 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
             raise HttpServiceError(400, "request body must be a JSON object", "GWT_HTTP_INVALID_JSON")
         return cast(dict[str, Any], payload)
 
-    def _write_json(self, status: int, payload: object) -> None:
+    def _write_json(
+        self,
+        status: int,
+        payload: object,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         rendered = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(rendered)))
+        for key, value in (headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
         self.wfile.write(rendered)
 
@@ -226,6 +323,7 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
                     "message": error.message,
                 },
             },
+            headers=_trace_headers(error.traceparent),
         )
 
 
@@ -273,3 +371,14 @@ def _status_for_gwt_error(message: str) -> int:
     ):
         return 400
     return 500
+
+
+def _trace_headers(traceparent: str | None) -> dict[str, str]:
+    if traceparent is None:
+        return {}
+    parts = traceparent.split("-")
+    trace_id = parts[1] if len(parts) == 4 else ""
+    return {
+        "traceparent": traceparent,
+        "x-gwt-trace-id": trace_id,
+    }

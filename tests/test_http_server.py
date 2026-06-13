@@ -1,15 +1,17 @@
 from contextlib import contextmanager, redirect_stderr
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
 import json
 from pathlib import Path
 import tempfile
 from threading import Thread
+from typing import Any
 import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang.__main__ import main
-from gwtlang.http_server import GwtHttpService, create_http_server
+from gwtlang.http_server import GwtHttpService, HttpTraceConfig, create_http_server
 
 
 class HttpServerTests(unittest.TestCase):
@@ -59,6 +61,58 @@ class HttpServerTests(unittest.TestCase):
         self.assertNotIn("ok", payload)
         self.assertNotIn("state", payload)
         self.assertNotIn("ticket", payload)
+
+    def test_post_request_exports_otlp_trace_and_returns_trace_headers(self):
+        incoming_trace_id = "0af7651916cd43dd8448eb211c80319c"
+        incoming_span_id = "b7ad6b7169203331"
+        with running_otlp_sink() as otlp:
+            with running_service(
+                "examples/deployable_api/rules.gwt",
+                trace_config=HttpTraceConfig(f"{otlp.base_url}/v1/traces"),
+            ) as base_url:
+                status, payload, headers = request_json_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    {
+                        "ticket": {
+                            "customer_id": "C-100",
+                            "subject": "checkout unavailable",
+                            "severity": "medium",
+                            "account_value": 5000,
+                            "has_outage": True,
+                        }
+                    },
+                    method="POST",
+                    headers={
+                        "traceparent": f"00-{incoming_trace_id}-{incoming_span_id}-01",
+                    },
+                )
+
+            exported = otlp.payloads
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertTrue(headers["traceparent"].startswith(f"00-{incoming_trace_id}-"))
+        self.assertEqual(headers["x-gwt-trace-id"], incoming_trace_id)
+        self.assertEqual(len(exported), 1)
+        spans = exported[0]["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(spans[0]["traceId"], incoming_trace_id)
+        self.assertEqual(spans[0]["parentSpanId"], incoming_span_id)
+        self.assertIn("POST /requests/triage-ticket", [span["name"] for span in spans])
+        self.assertIn("GWT REQUEST triage ticket", [span["name"] for span in spans])
+        self.assertTrue(
+            any(
+                event["name"] == "gwt.state.changed"
+                for span in spans
+                for event in span["events"]
+            )
+        )
+        self.assertTrue(
+            any(
+                event["name"] == "gwt.request.completed"
+                for span in spans
+                for event in span["events"]
+            )
+        )
 
     def test_invalid_request_contract_returns_400(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:
@@ -198,8 +252,8 @@ class HttpServerTests(unittest.TestCase):
 
 
 @contextmanager
-def running_service(path: str | Path):
-    service = GwtHttpService.from_file(path)
+def running_service(path: str | Path, *, trace_config: HttpTraceConfig | None = None):
+    service = GwtHttpService.from_file(path, trace_config=trace_config)
     server = create_http_server(service, port=0)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -212,20 +266,98 @@ def running_service(path: str | Path):
         server.server_close()
 
 
+class OtlpSink(ThreadingHTTPServer):
+    def __init__(self) -> None:
+        super().__init__(("127.0.0.1", 0), OtlpSinkHandler)
+        self.payloads: list[dict[str, Any]] = []
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server_address[:2]
+        return f"http://{host}:{port}"
+
+
+class OtlpSinkHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(length)
+        server = cast_otlp_sink(self.server)
+        server.payloads.append(json.loads(body.decode("utf-8")))
+        rendered = b"{}"
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(rendered)))
+        self.end_headers()
+        self.wfile.write(rendered)
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+
+@contextmanager
+def running_otlp_sink():
+    server = OtlpSink()
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+
+def cast_otlp_sink(server: object) -> OtlpSink:
+    if not isinstance(server, OtlpSink):
+        raise TypeError("expected OtlpSink")
+    return server
+
+
 def request_json(url: str, payload: object | None = None, *, method: str = "GET") -> tuple[int, object]:
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     return request_raw(url, data, method=method)
 
 
+def request_json_with_headers(
+    url: str,
+    payload: object | None = None,
+    *,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+) -> tuple[int, object, dict[str, str]]:
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    return request_raw_with_headers(url, data, method=method, headers=headers)
+
+
 def request_raw(url: str, data: bytes | None, *, method: str) -> tuple[int, object]:
-    headers = {"Content-Type": "application/json"} if data is not None else {}
-    request = Request(url, data=data, headers=headers, method=method)
+    status, payload, _headers = request_raw_with_headers(url, data, method=method)
+    return status, payload
+
+
+def request_raw_with_headers(
+    url: str,
+    data: bytes | None,
+    *,
+    method: str,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, object, dict[str, str]]:
+    request_headers = {"Content-Type": "application/json"} if data is not None else {}
+    request_headers.update(headers or {})
+    request = Request(url, data=data, headers=request_headers, method=method)
     try:
         with urlopen(request, timeout=5) as response:
-            return response.status, json.loads(response.read().decode("utf-8"))
+            return (
+                response.status,
+                json.loads(response.read().decode("utf-8")),
+                dict(response.headers.items()),
+            )
     except HTTPError as exc:
         try:
-            return exc.code, json.loads(exc.read().decode("utf-8"))
+            return (
+                exc.code,
+                json.loads(exc.read().decode("utf-8")),
+                dict(exc.headers.items()),
+            )
         finally:
             exc.close()
 
