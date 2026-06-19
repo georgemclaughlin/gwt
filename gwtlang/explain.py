@@ -6,10 +6,14 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias, TypeGuard, cast
 
 from .runtime import ImportPolicy, Runtime, parse_program
-from .tracing import GwtTraceRecorder
+from .tracing import GwtTraceRecorder, OtlpSpan
+
+JsonScalar: TypeAlias = str | int | float | bool | None | Decimal
+JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+JsonObject: TypeAlias = dict[str, JsonValue]
 
 
 @dataclass(frozen=True)
@@ -76,31 +80,34 @@ def explain_json_file(
         json_filename=str(json_file) if json_file is not None else None,
     )
     recorder.finish()
-    state = result.state
-    output_state = result.scenarios[0].returned_state or {}
+    input_state = cast(JsonObject, json_state)
+    state = cast(JsonObject, result.state)
+    output_state = cast(JsonObject, result.scenarios[0].returned_state or {})
     outcome = _primary_outcome(output_state, state)
-    decision = outcome["value"] if outcome is not None else {}
-    status = str(decision.get("status") or "completed")
-    reason = str(decision.get("reason")) if decision.get("reason") is not None else None
+    decision: JsonObject = outcome if outcome is not None else {}
+    status_value = decision.get("status")
+    reason_value = decision.get("reason")
+    status = str(status_value or "completed")
+    reason = str(reason_value) if reason_value is not None else None
     outcome_branch = _selected_decide_branch(recorder.spans)
     outcome_rule = _clean_condition(outcome_branch.get("condition")) if outcome_branch else None
     outcome_line = outcome_branch.get("line") if outcome_branch else None
     return ExplainResult(
         request=request,
         status=status,
-        subject=_subject(json_state),
+        subject=_subject(input_state),
         reason=reason,
-        input_lines=_summary_lines(json_state, max_lines=12),
+        input_lines=_summary_lines(input_state, max_lines=12),
         result_lines=_summary_lines(output_state, max_lines=10, priority_fields=("status", "reason")),
-        bullets=_explanation_bullets(json_state, decision, outcome_rule),
-        outcome_line=int(outcome_line) if outcome_line is not None else None,
+        bullets=_explanation_bullets(input_state, decision, outcome_rule),
+        outcome_line=_int_value(outcome_line),
         outcome_rule=outcome_rule,
         change_lines=_state_change_lines(recorder.spans, output_state, max_lines=10),
     )
 
 
-def _selected_decide_branch(spans: list[Any]) -> dict[str, Any] | None:
-    selected: dict[str, Any] | None = None
+def _selected_decide_branch(spans: list[OtlpSpan]) -> dict[str, object] | None:
+    selected: dict[str, object] | None = None
     for span in spans:
         for event in span.events:
             attributes = dict(event.attributes)
@@ -116,33 +123,38 @@ def _selected_decide_branch(spans: list[Any]) -> dict[str, Any] | None:
     return selected
 
 
-def _primary_outcome(output_state: dict[str, Any], state: dict[str, Any]) -> dict[str, Any] | None:
+def _primary_outcome(output_state: JsonObject, state: JsonObject) -> JsonObject | None:
     for root in (output_state, state):
-        decision = root.get("decision") if isinstance(root.get("decision"), dict) else None
+        decision = _object_field(root, "decision")
         if decision is not None and "status" in decision:
-            return {"path": "decision", "value": decision}
-        for path, value in root.items():
+            return decision
+        for value in root.values():
             if isinstance(value, dict) and "status" in value:
-                return {"path": path, "value": value}
+                return cast(JsonObject, value)
     return None
 
 
 def _explanation_bullets(
-    json_state: dict[str, Any],
-    decision: dict[str, Any],
+    json_state: JsonObject,
+    decision: JsonObject,
     outcome_rule: str | None,
 ) -> list[str]:
-    vendor = json_state.get("vendor") if isinstance(json_state.get("vendor"), dict) else {}
+    vendor: JsonObject = _object_field(json_state, "vendor") or {}
     bullets: list[str] = []
 
-    for requirement in decision.get("missing_requirements") or []:
-        text = str(requirement)
-        if text.endswith("_expired"):
-            bullets.append(f"{text.removesuffix('_expired')} is expired")
-        else:
-            bullets.append(f"{text} is missing")
+    missing_requirements = decision.get("missing_requirements")
+    if isinstance(missing_requirements, list):
+        for requirement_value in missing_requirements:
+            text = str(requirement_value)
+            if text.endswith("_expired"):
+                bullets.append(f"{text.removesuffix('_expired')} is expired")
+            else:
+                bullets.append(f"{text} is missing")
 
-    reasons = set(str(reason) for reason in decision.get("reasons") or [])
+    reasons_value = decision.get("reasons")
+    reasons: set[str] = set()
+    if isinstance(reasons_value, list):
+        reasons = {str(reason_value) for reason_value in reasons_value}
     annual_spend = vendor.get("annual_spend")
     if "high_annual_spend" in reasons and annual_spend is not None:
         bullets.append(f"annual_spend is {annual_spend}, which adds inherent risk")
@@ -151,26 +163,28 @@ def _explanation_bullets(
     if vendor.get("stores_payment_data") is True:
         bullets.append("the vendor stores payment data")
     high_signal_count = decision.get("high_signal_count")
-    if isinstance(high_signal_count, int | float) and high_signal_count > 0:
-        bullets.append(f"{high_signal_count:g} high-severity risk signal was present")
+    if _is_number(high_signal_count) and high_signal_count > 0:
+        bullets.append(f"{_number_text(high_signal_count)} high-severity risk signal was present")
 
     risk_points = decision.get("risk_points")
     threshold = _risk_threshold(outcome_rule)
-    if threshold is not None and isinstance(risk_points, int | float) and risk_points >= threshold:
-        bullets.append(f"risk score {risk_points:g} crossed the review threshold {threshold:g}")
+    if threshold is not None and _is_number(risk_points) and risk_points >= threshold:
+        bullets.append(
+            f"risk score {_number_text(risk_points)} crossed the review threshold {_number_text(threshold)}"
+        )
 
     return _unique(bullets)
 
 
 def _summary_lines(
-    value: Any,
+    value: JsonValue,
     *,
     max_lines: int,
     priority_fields: tuple[str, ...] = (),
 ) -> list[str]:
     lines: list[str] = []
 
-    def visit(path: str, item: Any) -> None:
+    def visit(path: str, item: JsonValue) -> None:
         if len(lines) >= max_lines:
             return
         if isinstance(item, dict):
@@ -194,9 +208,9 @@ def _summary_lines(
 
 
 def _ordered_items(
-    value: dict[str, Any],
+    value: JsonObject,
     priority_fields: tuple[str, ...],
-) -> list[tuple[str, Any]]:
+) -> list[tuple[str, JsonValue]]:
     priority = [
         item
         for item in value.items()
@@ -210,7 +224,7 @@ def _ordered_items(
     return [*priority, *rest]
 
 
-def _summary_line_count(value: Any) -> int:
+def _summary_line_count(value: JsonValue) -> int:
     if isinstance(value, dict):
         if not value:
             return 1
@@ -218,7 +232,7 @@ def _summary_line_count(value: Any) -> int:
     return 1
 
 
-def _list_summary(items: list[Any]) -> str:
+def _list_summary(items: list[JsonValue]) -> str:
     if not items:
         return "[]"
     if len(items) <= 4 and all(_is_scalar(item) for item in items):
@@ -227,16 +241,16 @@ def _list_summary(items: list[Any]) -> str:
 
 
 def _state_change_lines(
-    spans: list[Any],
-    output_state: dict[str, Any],
+    spans: list[OtlpSpan],
+    output_state: JsonObject,
     *,
     max_lines: int,
 ) -> list[str]:
-    output_roots = set(output_state)
+    output_roots = set(output_state.keys())
     if not output_roots:
         return []
 
-    changes: dict[str, dict[str, Any]] = {}
+    changes: dict[str, dict[str, object]] = {}
     order: list[str] = []
     for span in spans:
         for event in span.events:
@@ -271,7 +285,7 @@ def _is_output_path(path: str, roots: set[str]) -> bool:
     return any(path == root or path.startswith(f"{root}.") for root in roots)
 
 
-def _change_value_text(value: Any) -> str:
+def _change_value_text(value: object) -> str:
     if isinstance(value, str):
         if _looks_json(value):
             return value
@@ -299,7 +313,7 @@ def _risk_threshold(condition: str | None) -> int | float | None:
     return int(value) if value.is_integer() else value
 
 
-def _clean_condition(condition: Any) -> str | None:
+def _clean_condition(condition: object) -> str | None:
     if condition is None:
         return None
     return str(condition).removeprefix("DECIDE ").strip()
@@ -313,8 +327,8 @@ def _wrap_condition(condition: str) -> list[str]:
 
 
 def _unique(items: list[str]) -> list[str]:
-    seen = set()
-    result = []
+    seen: set[str] = set()
+    result: list[str] = []
     for item in items:
         if item in seen:
             continue
@@ -323,16 +337,18 @@ def _unique(items: list[str]) -> list[str]:
     return result
 
 
-def _subject(json_state: dict[str, Any]) -> str:
-    vendor = json_state.get("vendor") if isinstance(json_state.get("vendor"), dict) else {}
+def _subject(json_state: JsonObject) -> str:
+    vendor: JsonObject = _object_field(json_state, "vendor") or {}
     if vendor.get("vendor_name") is not None:
         return str(vendor["vendor_name"])
     for key in ("order", "release", "incident", "request"):
         value = json_state.get(key)
         if isinstance(value, dict):
+            details = cast(JsonObject, value)
             for field in ("name", "order_id", "version", "id"):
-                if value.get(field) is not None:
-                    return str(value[field])
+                field_value = details.get(field)
+                if field_value is not None:
+                    return str(field_value)
     return "This request"
 
 
@@ -346,19 +362,48 @@ def human_outcome(status: str) -> str:
     return f"returned {status}"
 
 
-def _display_value(value: Any) -> str:
+def _display_value(value: object) -> str:
     return json.dumps(_jsonable(value), separators=(",", ":"))
 
 
-def _jsonable(value: Any) -> Any:
+def _jsonable(value: object) -> object:
     if isinstance(value, Decimal):
         return str(value)
     if isinstance(value, list):
-        return [_jsonable(item) for item in value]
+        return [_jsonable(item) for item in cast(list[object], value)]
     if isinstance(value, dict):
-        return {str(key): _jsonable(item) for key, item in value.items()}
+        return {
+            str(key): _jsonable(item)
+            for key, item in cast(dict[object, object], value).items()
+        }
     return value
 
 
-def _is_scalar(value: Any) -> bool:
+def _is_scalar(value: object) -> bool:
     return value is None or isinstance(value, str | int | float | bool | Decimal)
+
+
+def _object_field(value: JsonObject, key: str) -> JsonObject | None:
+    field = value.get(key)
+    if isinstance(field, dict):
+        return cast(JsonObject, field)
+    return None
+
+
+def _is_number(value: object) -> TypeGuard[int | float | Decimal]:
+    return isinstance(value, int | float | Decimal) and not isinstance(value, bool)
+
+
+def _number_text(value: int | float | Decimal) -> str:
+    return f"{value:g}"
+
+
+def _int_value(value: object) -> int | None:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None
