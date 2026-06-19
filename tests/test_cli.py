@@ -206,6 +206,38 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["result"]["cart"]["total"], 92)
         self.assertEqual(payload["state"]["audit"]["status"], "priced")
 
+    def test_explain_command_summarizes_vendor_onboarding_json_request(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = main(
+                [
+                    "explain",
+                    "examples/vendor_onboarding/rules.gwt",
+                    "--json-input",
+                    "examples/vendor_onboarding/request.json",
+                    "--request",
+                    "review vendor",
+                ]
+            )
+
+        output = stdout.getvalue()
+        self.assertEqual(status, 0)
+        self.assertIn("review vendor returned needs_review", output)
+        self.assertIn("Input:", output)
+        self.assertIn('vendor.vendor_name: "Cloud Ledger"', output)
+        self.assertIn("Result:", output)
+        self.assertIn('decision.status: "needs_review"', output)
+        self.assertIn('decision.reason: "manual_review_required"', output)
+        self.assertIn("Cloud Ledger needs review because:", output)
+        self.assertIn("- insurance is expired", output)
+        self.assertIn("- security_questionnaire is missing", output)
+        self.assertIn("- risk score 10 crossed the review threshold 6", output)
+        self.assertIn("Outcome rule:", output)
+        self.assertIn("line 138", output)
+        self.assertIn("decision.risk_points >= 6", output)
+        self.assertIn("Changed values:", output)
+        self.assertIn('decision.risk_points: 0 -> 10', output)
+
     def test_cli_runs_program_with_json_input_file_and_named_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             request_path = Path(temp_dir) / "request.json"

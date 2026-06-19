@@ -18,6 +18,7 @@ from .api import (
 )
 from .checker import Diagnostic
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
+from .explain import explain_json_file
 from .formatter import format_text
 from .http_server import DEFAULT_MAX_REQUEST_BODY_BYTES, run_http_server
 from .inspection import inspect_file
@@ -42,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_command(args)
     if args.command == "inspect":
         return inspect_command(args)
+    if args.command == "explain":
+        return explain_command(args)
     if args.command == "validate":
         return validate_command(args)
     if args.command == "format":
@@ -130,6 +133,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help="Print inspect result as JSON. This is currently the only output mode.",
+    )
+
+    explain_parser = subparsers.add_parser(
+        "explain",
+        help="Explain why a JSON REQUEST run produced its result.",
+    )
+    add_file_arguments(explain_parser)
+    add_import_policy_arguments(explain_parser)
+    explain_parser.add_argument(
+        "--json-input",
+        type=Path,
+        required=True,
+        help="Path to a JSON object containing initial state for REQUEST contracts, or '-' for stdin.",
+    )
+    explain_parser.add_argument(
+        "--request",
+        required=True,
+        help="Named REQUEST to execute and explain.",
     )
 
     validate_parser = subparsers.add_parser(
@@ -544,6 +565,28 @@ def format_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def explain_command(args: argparse.Namespace) -> int:
+    source = args.file.read_text()
+    try:
+        json_state = _load_json_input(args.json_input)
+        explanation = explain_json_file(
+            args.file,
+            json_state,
+            request=args.request,
+            json_file=args.json_input if args.json_input != Path("-") else None,
+            import_policy=import_policy_from_args(args),
+        )
+    except GwtError as exc:
+        if str(exc).startswith("<request>:"):
+            print(format_error(exc, f"{args.request}\n", "<request>"), file=sys.stderr)
+        else:
+            print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+
+    print(explanation.as_text(), end="")
+    return 0
+
+
 def types_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
@@ -686,6 +729,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "test",
         "check",
         "inspect",
+        "explain",
         "validate",
         "format",
         "types",

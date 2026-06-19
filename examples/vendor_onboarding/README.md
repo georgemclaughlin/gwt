@@ -37,7 +37,7 @@ For the included Cloud Ledger request, the expected decision is:
 }
 ```
 
-## Four-Command Path
+## Five-Command Path
 
 1. Validate the executable spec module:
 
@@ -76,7 +76,34 @@ Expected result excerpt:
 }
 ```
 
-3. Refresh generated host types when contracts change:
+3. Explain why the request produced that decision:
+
+```sh
+python -m gwtlang explain examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor"
+```
+
+Expected result excerpt:
+
+```txt
+review vendor returned needs_review
+
+Input:
+vendor.vendor_name: "Cloud Ledger"
+vendor.annual_spend: 125000
+
+Result:
+decision.status: "needs_review"
+decision.reason: "manual_review_required"
+
+Cloud Ledger needs review because:
+- insurance is expired
+- security_questionnaire is missing
+- risk score 10 crossed the review threshold 6
+```
+
+4. Refresh generated host types when contracts change:
 
 ```sh
 python -m gwtlang types examples/vendor_onboarding/rules.gwt \
@@ -88,7 +115,7 @@ python -m gwtlang types examples/vendor_onboarding/rules.gwt \
   --output examples/vendor_onboarding/rules_types.py
 ```
 
-4. Run the typed Python host app:
+5. Run the typed Python host app:
 
 ```sh
 python examples/vendor_onboarding/host_app.py
