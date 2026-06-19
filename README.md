@@ -165,6 +165,14 @@ python -m gwtlang run examples/vendor_onboarding/rules.gwt \
   --json
 ```
 
+Explain why that JSON request produced its decision:
+
+```sh
+python -m gwtlang explain examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor"
+```
+
 Install a local `gwt` command while developing:
 
 ```sh
@@ -431,6 +439,7 @@ The CLI currently supports:
 ```sh
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
+gwt explain examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor"
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt schema examples/deployable_api/rules.gwt --json
 gwt openapi examples/deployable_api/rules.gwt --json
@@ -456,6 +465,13 @@ for editor tooling.
 tools, agents, and CI. It includes the program hash, direct imports, records,
 named requests, behaviors, scenarios, and diagnostics. This is intentionally an
 inspection surface, not a separate graph or alternate source format.
+
+`gwt explain file.gwt --json-input request.json --request "<request name>"`
+runs a named JSON request with trace values enabled and prints the incoming
+request, declared result, changed output values, and a plain-language decision
+explanation with the selected outcome rule. This is an early decision-workbench
+surface focused on making captured behavior understandable before turning it
+into new scenario coverage.
 
 `gwt validate file.gwt` is the standard local/CI gate. It checks the program,
 verifies canonical formatting, and runs embedded scenarios when the file has
