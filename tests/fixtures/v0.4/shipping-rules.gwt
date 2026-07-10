@@ -1,0 +1,24 @@
+PROGRAM shipping quote fixture
+
+RECORD Shipment
+  weight: number
+  zone: text
+
+RECORD Quote
+  status: text
+  cost: number
+
+REQUEST quote shipment
+  GIVEN shipment is Shipment
+  GIVEN quote is Quote
+    status: "new"
+    cost: 0
+  WHEN calculate shipment into quote
+  OUTPUT quote is Quote
+
+WHEN calculate <shipment> into <quote>
+  GIVEN shipment is Shipment
+  AND quote is Quote
+  REQUIRE shipment.weight > 0
+  set quote.status to "quoted"
+  set quote.cost to shipment.weight * 2

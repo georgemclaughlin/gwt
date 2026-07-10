@@ -1,11 +1,145 @@
+from decimal import Decimal
 from pathlib import Path
 import tempfile
 import unittest
 
 from gwtlang import GwtError, run_json_request, run_request, run_source
+from gwtlang.runtime import Runtime, parse_program
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_division_by_zero_is_a_source_located_gwt_error(self):
+        with self.assertRaises(GwtError) as raised:
+            run_source("GIVEN result is 1 / 0", filename="arithmetic.gwt")
+
+        self.assertEqual(str(raised.exception), "arithmetic.gwt:1: division by zero")
+
+    def test_invalid_comparison_operands_are_a_source_located_gwt_error(self):
+        with self.assertRaises(GwtError) as raised:
+            run_source('GIVEN result is "one" > 1', filename="comparison.gwt")
+
+        self.assertTrue(
+            str(raised.exception).startswith(
+                "comparison.gwt:1: invalid operands for operator '>'"
+            )
+        )
+
+    def test_decimal_operation_errors_are_a_source_located_gwt_error(self):
+        program = parse_program(
+            """REQUEST evaluate
+  GIVEN input is any
+  WHEN evaluate
+
+WHEN evaluate
+  IF input > 0
+    PASS
+""",
+            filename="decimal.gwt",
+        )
+
+        with self.assertRaises(GwtError) as raised:
+            Runtime(program).run_json({"input": Decimal("NaN")}, "evaluate")
+
+        self.assertTrue(
+            str(raised.exception).startswith(
+                "decimal.gwt:6: invalid operands for operator '>'"
+            )
+        )
+
+    def test_runtime_execution_budget_stops_collection_iteration(self):
+        program = parse_program(
+            """GIVEN values is [1, 2, 3]
+WHEN scan values
+  FOR value in values WHERE false
+    PASS
+WHEN scan values
+""",
+            filename="budget.gwt",
+        )
+
+        with self.assertRaises(GwtError) as raised:
+            Runtime(program, execution_budget=3).run()
+
+        self.assertEqual(
+            str(raised.exception),
+            "budget.gwt:3: execution budget exceeded (maximum 3 steps)",
+        )
+
+    def test_runtime_execution_budget_stops_collection_walks_in_expressions(self):
+        cases = [
+            (
+                "payload.values contains 999",
+                {"payload": {"values": list(range(100))}},
+            ),
+            (
+                "payload.values == payload.expected",
+                {
+                    "payload": {
+                        "values": list(range(100)),
+                        "expected": list(range(100)),
+                    }
+                },
+            ),
+            (
+                'payload.text contains "missing"',
+                {"payload": {"text": "x" * 100}},
+            ),
+        ]
+        for expression, input_state in cases:
+            with self.subTest(expression=expression):
+                program = parse_program(
+                    "REQUEST inspect\n"
+                    "  GIVEN payload is any\n"
+                    "  WHEN inspect payload\n"
+                    "\n"
+                    "WHEN inspect <payload>\n"
+                    f"  IF {expression}\n"
+                    "    PASS\n",
+                    filename="expression-budget.gwt",
+                )
+
+                with self.assertRaises(GwtError) as raised:
+                    Runtime(program, execution_budget=8).run_json(
+                        input_state,
+                        "inspect",
+                    )
+
+                self.assertEqual(
+                    str(raised.exception),
+                    "expression-budget.gwt:6: execution budget exceeded "
+                    "(maximum 8 steps)",
+                )
+
+    def test_runtime_behavior_call_depth_limit_stops_recursion(self):
+        program = parse_program(
+            """WHEN recurse
+  recurse
+WHEN recurse
+""",
+            filename="recursion.gwt",
+        )
+
+        with self.assertRaises(GwtError) as raised:
+            Runtime(program, max_call_depth=2).run()
+
+        self.assertEqual(
+            str(raised.exception),
+            "recursion.gwt:2: behavior call depth limit exceeded (maximum 2)",
+        )
+
+    def test_runtime_limits_accept_none_and_reject_invalid_values(self):
+        program = parse_program("GIVEN value is 1")
+
+        Runtime(program, execution_budget=None, max_call_depth=None).run()
+        for keyword in ("execution_budget", "max_call_depth"):
+            for value in (0, -1, True, 1.5):
+                with self.subTest(keyword=keyword, value=value):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        f"{keyword} must be a positive integer or None",
+                    ):
+                        Runtime(program, **{keyword: value})
+
     def test_runs_action_with_path_alias(self):
         result = run_source(
             """

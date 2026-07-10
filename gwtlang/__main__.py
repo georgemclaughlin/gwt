@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import cast
 
@@ -17,17 +19,32 @@ from .api import (
     run_result_payload,
 )
 from .checker import Diagnostic
+from .comparison import compare_execution_cases
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
+from .execution_case import (
+    ExecutionCaseCapturePolicy,
+    capture_execution_case,
+    load_execution_case,
+)
 from .explain import explain_json_file
 from .formatter import format_text
 from .http_server import DEFAULT_MAX_REQUEST_BODY_BYTES, run_http_server
 from .inspection import inspect_file
 from .lsp import run_stdio_server
 from .payloads import JsonObject, ValidationPayload
-from .runtime import GwtError, ImportPolicy, RunResult, run_source
+from .runtime import (
+    DEFAULT_EXECUTION_BUDGET,
+    DEFAULT_MAX_CALL_DEPTH,
+    GwtError,
+    ImportPolicy,
+    RunResult,
+    run_source,
+)
+from .scenario_generation import generate_scenario
 from .service import analyze_file
 from .validation import validate_file
 from .version import version_payload
+from .workbench import render_workbench_html
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -45,6 +62,14 @@ def main(argv: list[str] | None = None) -> int:
         return inspect_command(args)
     if args.command == "explain":
         return explain_command(args)
+    if args.command == "capture":
+        return capture_command(args)
+    if args.command == "scenario-from-run":
+        return scenario_from_run_command(args)
+    if args.command == "compare":
+        return compare_command(args)
+    if args.command == "workbench":
+        return workbench_command(args)
     if args.command == "validate":
         return validate_command(args)
     if args.command == "format":
@@ -72,7 +97,10 @@ def main(argv: list[str] | None = None) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run, test, check, format, and generate types for GWT programs."
+        description=(
+            "Run, test, check, capture, compare, format, and generate artifacts "
+            "for GWT programs."
+        )
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -152,6 +180,133 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Named REQUEST to execute and explain.",
     )
+    explain_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a versioned execution case as JSON.",
+    )
+    add_execution_case_capture_arguments(explain_parser)
+
+    capture_parser = subparsers.add_parser(
+        "capture",
+        help="Capture a named JSON REQUEST run as an Execution Case.",
+    )
+    add_file_arguments(capture_parser)
+    add_import_policy_arguments(capture_parser)
+    capture_parser.add_argument(
+        "--json-input",
+        type=Path,
+        required=True,
+        help="Path to a JSON object containing initial state for REQUEST contracts, or '-' for stdin.",
+    )
+    capture_parser.add_argument(
+        "--request",
+        required=True,
+        help="Named REQUEST to execute and capture.",
+    )
+    capture_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write the Execution Case JSON to this path instead of stdout.",
+    )
+    add_execution_case_capture_arguments(capture_parser)
+
+    scenario_parser = subparsers.add_parser(
+        "scenario-from-run",
+        help="Generate a verified GWT scenario from an Execution Case.",
+    )
+    scenario_parser.add_argument(
+        "case",
+        type=Path,
+        help="Path to an Execution Case JSON file.",
+    )
+    scenario_parser.add_argument(
+        "--program",
+        type=Path,
+        required=True,
+        help="Program whose dependency-closure identity must match the Execution Case.",
+    )
+    scenario_parser.add_argument(
+        "--name",
+        help="Scenario name. Defaults to 'captured <request name>'.",
+    )
+    scenario_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Atomically write the canonical scenario to this path instead of stdout.",
+    )
+    add_import_policy_arguments(scenario_parser)
+
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="Compare captured Execution Cases against old and new programs.",
+    )
+    compare_parser.add_argument(
+        "cases",
+        type=Path,
+        nargs="+",
+        metavar="CASE",
+        help="One or more Execution Case JSON files.",
+    )
+    compare_parser.add_argument(
+        "--old",
+        type=Path,
+        required=True,
+        help="Baseline program used to capture the cases.",
+    )
+    compare_parser.add_argument(
+        "--new",
+        type=Path,
+        required=True,
+        help="Candidate program to evaluate.",
+    )
+    add_import_policy_arguments(compare_parser)
+    compare_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the versioned comparison payload as canonical pretty JSON.",
+    )
+
+    workbench_parser = subparsers.add_parser(
+        "workbench",
+        help="Build a self-contained local behavior-review dossier.",
+    )
+    workbench_parser.add_argument(
+        "cases",
+        type=Path,
+        nargs="+",
+        metavar="CASE",
+        help="One or more validated Execution Case JSON files.",
+    )
+    workbench_parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="Atomically write the self-contained HTML dossier to this path.",
+    )
+    workbench_parser.add_argument(
+        "--old",
+        type=Path,
+        help="Optional baseline program; requires --new.",
+    )
+    workbench_parser.add_argument(
+        "--new",
+        type=Path,
+        help="Optional candidate program; requires --old.",
+    )
+    workbench_parser.add_argument(
+        "--program",
+        type=Path,
+        help=(
+            "Optional program matching the first case; includes a replay-verified "
+            "scenario preview."
+        ),
+    )
+    workbench_parser.add_argument(
+        "--name",
+        help="Scenario name when --program is supplied.",
+    )
+    add_import_policy_arguments(workbench_parser)
 
     validate_parser = subparsers.add_parser(
         "validate",
@@ -353,6 +508,45 @@ def add_import_policy_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_execution_case_capture_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--record-failures",
+        action="store_true",
+        help=(
+            "Return a failed Execution Case for a GWT parse or execution error "
+            "instead of exiting without an artifact."
+        ),
+    )
+    parser.add_argument(
+        "--omit-values",
+        action="store_true",
+        help=(
+            "Execute normally but omit input, result, state-change, operand, and "
+            "error-detail values from the artifact."
+        ),
+    )
+    parser.add_argument(
+        "--execution-budget",
+        type=_positive_limit_or_none,
+        default=DEFAULT_EXECUTION_BUDGET,
+        metavar="N|none",
+        help=(
+            f"Maximum execution work units (default: {DEFAULT_EXECUTION_BUDGET}); "
+            "use 'none' to disable."
+        ),
+    )
+    parser.add_argument(
+        "--max-call-depth",
+        type=_positive_limit_or_none,
+        default=DEFAULT_MAX_CALL_DEPTH,
+        metavar="N|none",
+        help=(
+            f"Maximum nested behavior calls (default: {DEFAULT_MAX_CALL_DEPTH}); "
+            "use 'none' to disable."
+        ),
+    )
+
+
 def run_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     request_source = args.input.read_text() if args.input else None
@@ -401,22 +595,61 @@ def _load_json_input(path: Path) -> JsonObject:
     if path == Path("-"):
         raw = sys.stdin.read()
         try:
-            payload = json.loads(raw)
+            _validate_json_nesting(raw)
+            payload = json.loads(raw, parse_constant=_reject_json_constant)
         except json.JSONDecodeError as exc:
             raise GwtError(
                 f"stdin JSON input is invalid at line {exc.lineno}, column {exc.colno}: {exc.msg}"
             ) from exc
+        except ValueError as exc:
+            raise GwtError(f"stdin JSON input is invalid: {exc}") from exc
         if not isinstance(payload, dict):
             raise GwtError("stdin JSON input must be an object")
         return cast(JsonObject, payload)
 
     try:
-        payload = json.loads(path.read_text())
+        raw = path.read_bytes().decode("utf-8")
+    except UnicodeDecodeError:
+        raise GwtError(f"{path}: JSON input is not valid UTF-8") from None
+    try:
+        _validate_json_nesting(raw)
+        payload = json.loads(raw, parse_constant=_reject_json_constant)
     except json.JSONDecodeError as exc:
         raise GwtError(f"{path}:{exc.lineno}:{exc.colno}: invalid JSON: {exc.msg}") from exc
+    except ValueError as exc:
+        raise GwtError(f"{path}: invalid JSON: {exc}") from exc
     if not isinstance(payload, dict):
         raise GwtError(f"{path}: JSON input must be an object")
     return cast(JsonObject, payload)
+
+
+def _reject_json_constant(value: str) -> object:
+    raise ValueError(f"non-finite number {value!r} is not valid JSON")
+
+
+def _validate_json_nesting(raw: str, *, maximum: int = 128) -> None:
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > maximum:
+                raise ValueError(
+                    f"maximum nesting depth of {maximum} exceeded"
+                )
+        elif character in "]}":
+            depth = max(0, depth - 1)
 
 
 def test_command(args: argparse.Namespace) -> int:
@@ -537,6 +770,15 @@ def import_policy_from_args(args: argparse.Namespace) -> ImportPolicy | None:
     return ImportPolicy(import_roots, allow_absolute=not args.no_absolute_imports)
 
 
+def _execution_case_policy_from_args(
+    args: argparse.Namespace,
+) -> ExecutionCaseCapturePolicy:
+    return ExecutionCaseCapturePolicy(
+        on_error="record" if args.record_failures else "raise",
+        values="omit" if args.omit_values else "full",
+    )
+
+
 def format_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
@@ -566,7 +808,7 @@ def format_command(args: argparse.Namespace) -> int:
 
 
 def explain_command(args: argparse.Namespace) -> int:
-    source = args.file.read_text()
+    source = ""
     try:
         json_state = _load_json_input(args.json_input)
         explanation = explain_json_file(
@@ -575,16 +817,185 @@ def explain_command(args: argparse.Namespace) -> int:
             request=args.request,
             json_file=args.json_input if args.json_input != Path("-") else None,
             import_policy=import_policy_from_args(args),
+            policy=_execution_case_policy_from_args(args),
+            execution_budget=args.execution_budget,
+            max_call_depth=args.max_call_depth,
         )
+    except OSError as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
     except GwtError as exc:
         if str(exc).startswith("<request>:"):
             print(format_error(exc, f"{args.request}\n", "<request>"), file=sys.stderr)
         else:
             print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1
+    except ValueError as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
 
-    print(explanation.as_text(), end="")
+    if args.json:
+        print(json.dumps(explanation.as_payload(), indent=2, sort_keys=True))
+    else:
+        print(explanation.as_text(), end="")
     return 0
+
+
+def capture_command(args: argparse.Namespace) -> int:
+    source = ""
+    try:
+        json_state = _load_json_input(args.json_input)
+        execution_case = capture_execution_case(
+            args.file,
+            json_state,
+            request=args.request,
+            json_file=args.json_input if args.json_input != Path("-") else None,
+            import_policy=import_policy_from_args(args),
+            policy=_execution_case_policy_from_args(args),
+            execution_budget=args.execution_budget,
+            max_call_depth=args.max_call_depth,
+        )
+    except OSError as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+    except GwtError as exc:
+        if str(exc).startswith("<request>:"):
+            print(format_error(exc, f"{args.request}\n", "<request>"), file=sys.stderr)
+        else:
+            print(format_error(exc, source, str(args.file)), file=sys.stderr)
+        return 1
+    except ValueError as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+    if args.output is not None:
+        try:
+            execution_case.write(args.output)
+        except OSError as exc:
+            print(f"gwt: could not write Execution Case to {args.output}: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {args.output}")
+        return 0
+
+    print(json.dumps(execution_case.as_payload(), indent=2, sort_keys=True))
+    return 0
+
+
+def scenario_from_run_command(args: argparse.Namespace) -> int:
+    try:
+        execution_case = load_execution_case(args.case)
+        generated = generate_scenario(
+            execution_case.as_payload(),
+            args.program,
+            scenario_name=args.name,
+            import_policy=import_policy_from_args(args),
+        )
+    except (GwtError, OSError, ValueError) as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+    if args.output is not None:
+        try:
+            _write_text_atomically(args.output, generated.source)
+        except OSError as exc:
+            print(f"gwt: could not write scenario to {args.output}: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {args.output}")
+        return 0
+
+    print(generated.source, end="")
+    return 0
+
+
+def compare_command(args: argparse.Namespace) -> int:
+    try:
+        cases = [load_execution_case(path) for path in args.cases]
+        result = compare_execution_cases(
+            args.old,
+            args.new,
+            cases,
+            import_policy=import_policy_from_args(args),
+        )
+    except (GwtError, OSError, ValueError) as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(result.as_payload(), indent=2, sort_keys=True))
+    else:
+        print(result.as_text(), end="")
+    return 0
+
+
+def workbench_command(args: argparse.Namespace) -> int:
+    if (args.old is None) != (args.new is None):
+        print("gwt: --old and --new must be supplied together", file=sys.stderr)
+        return 2
+    if args.name is not None and args.program is None:
+        print("gwt: --name requires --program", file=sys.stderr)
+        return 2
+    if len(args.cases) > 1 and args.old is None and args.new is None:
+        print(
+            "gwt: multiple CASE files require --old and --new; the dossier uses "
+            "the first CASE as its primary case",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        cases = [load_execution_case(path) for path in args.cases]
+        comparison = None
+        if args.old is not None and args.new is not None:
+            comparison = compare_execution_cases(
+                args.old,
+                args.new,
+                cases,
+                import_policy=import_policy_from_args(args),
+            )
+        verified_scenario = None
+        if args.program is not None:
+            generated = generate_scenario(
+                cases[0].as_payload(),
+                args.program,
+                scenario_name=args.name,
+                import_policy=import_policy_from_args(args),
+            )
+            verified_scenario = generated.source
+        rendered = render_workbench_html(
+            cases[0],
+            comparison=comparison,
+            verified_scenario=verified_scenario,
+        )
+        _write_text_atomically(args.output, rendered)
+    except (GwtError, OSError, ValueError) as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Wrote {args.output}")
+    return 0
+
+
+def _write_text_atomically(path: Path, rendered: str) -> None:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(rendered)
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def types_command(args: argparse.Namespace) -> int:
@@ -730,6 +1141,10 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "check",
         "inspect",
         "explain",
+        "capture",
+        "scenario-from-run",
+        "compare",
+        "workbench",
         "validate",
         "format",
         "types",
@@ -753,6 +1168,20 @@ def _non_negative_int(value: str) -> int:
         raise argparse.ArgumentTypeError("expected a non-negative integer") from exc
     if parsed < 0:
         raise argparse.ArgumentTypeError("expected a non-negative integer")
+    return parsed
+
+
+def _positive_limit_or_none(value: str) -> int | None:
+    if value.lower() == "none":
+        return None
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "expected a positive integer or 'none'"
+        ) from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("expected a positive integer or 'none'")
     return parsed
 
 

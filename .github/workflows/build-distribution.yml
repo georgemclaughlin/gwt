@@ -1,0 +1,254 @@
+name: Build distribution candidate
+
+run-name: Distribution candidate for ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: distribution-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, install, and attest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONHASHSEED: "0"
+
+    steps:
+      - name: Check out selected revision
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Record deterministic build epoch
+        shell: bash
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >>"$GITHUB_ENV"
+          python --version
+          git rev-parse HEAD
+
+      - name: Install pinned build tooling
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "build==1.3.0" \
+            "setuptools==80.9.0" \
+            "wheel==0.45.1"
+
+      - name: Build source and wheel distributions
+        run: python -m build --no-isolation
+
+      - name: Inspect packaged runtime modules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tarfile
+          import zipfile
+
+          expected = {
+              "gwtlang/__init__.py",
+              "gwtlang/__main__.py",
+              "gwtlang/comparison.py",
+              "gwtlang/execution_case.py",
+              "gwtlang/explain.py",
+              "gwtlang/program_identity.py",
+              "gwtlang/runtime.py",
+              "gwtlang/scenario_generation.py",
+              "gwtlang/tracing.py",
+              "gwtlang/workbench.py",
+              "gwtlang/py.typed",
+          }
+          schema_files = {
+              "share/gwtlang/schemas/execution-case.schema.json",
+              "share/gwtlang/schemas/comparison.schema.json",
+          }
+          sdist_schema_files = {
+              "docs/schemas/execution-case.schema.json",
+              "docs/schemas/comparison.schema.json",
+          }
+          sdist_fixture_files = {
+              "tests/fixtures/v0.4/README.md",
+              "tests/fixtures/v0.4/library-change.comparison.json",
+              "tests/fixtures/v0.4/library-completed.execution-case.json",
+              "tests/fixtures/v0.4/library-omitted.execution-case.json",
+              "tests/fixtures/v0.4/shipping-contract-failure.execution-case.json",
+              "tests/fixtures/v0.4/shipping-runtime-failure.execution-case.json",
+          }
+          wheels = tuple(Path("dist").glob("*.whl"))
+          sdists = tuple(Path("dist").glob("*.tar.gz"))
+          if len(wheels) != 1 or len(sdists) != 1:
+              raise SystemExit(
+                  f"expected one wheel and one sdist, got {wheels!r} and {sdists!r}"
+              )
+
+          with zipfile.ZipFile(wheels[0]) as archive:
+              wheel_names = set(archive.namelist())
+          wheel_missing = sorted(expected - wheel_names)
+          if wheel_missing:
+              raise SystemExit(f"wheel is missing runtime files: {wheel_missing}")
+          schema_missing = sorted(
+              path
+              for path in schema_files
+              if not any(name.endswith(path) for name in wheel_names)
+          )
+          if schema_missing:
+              raise SystemExit(f"wheel is missing schemas: {schema_missing}")
+
+          with tarfile.open(sdists[0], "r:gz") as archive:
+              sdist_names = tuple(archive.getnames())
+          sdist_missing = sorted(
+              path
+              for path in expected
+              if not any(name.endswith(f"/{path}") for name in sdist_names)
+          )
+          if sdist_missing:
+              raise SystemExit(f"sdist is missing runtime files: {sdist_missing}")
+          sdist_schema_missing = sorted(
+              path
+              for path in sdist_schema_files
+              if not any(name.endswith(f"/{path}") for name in sdist_names)
+          )
+          if sdist_schema_missing:
+              raise SystemExit(f"sdist is missing schemas: {sdist_schema_missing}")
+          sdist_fixture_missing = sorted(
+              path
+              for path in sdist_fixture_files
+              if not any(name.endswith(f"/{path}") for name in sdist_names)
+          )
+          if sdist_fixture_missing:
+              raise SystemExit(
+                  f"sdist is missing compatibility fixtures: {sdist_fixture_missing}"
+              )
+          PY
+
+      - name: Smoke-test clean wheel installation
+        shell: bash
+        run: |
+          SMOKE_ROOT="$RUNNER_TEMP/gwt-distribution-smoke"
+          VENV="$RUNNER_TEMP/gwt-distribution-venv"
+          mkdir -p "$SMOKE_ROOT"
+          python -m venv "$VENV"
+          "$VENV/bin/python" -m pip install --disable-pip-version-check \
+            --no-deps dist/*.whl
+
+          cd "$SMOKE_ROOT"
+          "$VENV/bin/gwt" version --json | tee version.json
+          "$VENV/bin/gwt" --help | tee help.txt
+          grep -q "workbench" help.txt
+          "$VENV/bin/gwt" run "$GITHUB_WORKSPACE/examples/hello.gwt" \
+            --json >hello.json
+          "$VENV/bin/python" -m json.tool hello.json >/dev/null
+
+          cat >rules.gwt <<'GWT'
+          PROGRAM distribution candidate
+
+          RECORD Input
+            amount: number
+
+          RECORD Decision
+            status: text
+
+          REQUEST review amount
+            GIVEN request is Input
+            GIVEN decision is Decision
+              status: "new"
+            WHEN classify request into decision
+            OUTPUT decision is Decision
+
+          WHEN classify <request> into <decision>
+            GIVEN request is Input
+            AND decision is Decision
+            DECIDE
+              WHEN request.amount >= 10
+                set decision.status to "review"
+              ELSE
+                set decision.status to "approved"
+          GWT
+
+          cat >request.json <<'JSON'
+          {"request": {"amount": 12}}
+          JSON
+
+          "$VENV/bin/gwt" capture rules.gwt \
+            --import-root "$SMOKE_ROOT" \
+            --no-absolute-imports \
+            --json-input request.json \
+            --request "review amount" \
+            --output case.execution-case.json
+          "$VENV/bin/python" -m json.tool case.execution-case.json >/dev/null
+
+          "$VENV/bin/gwt" workbench case.execution-case.json \
+            --program rules.gwt \
+            --name "distribution candidate smoke" \
+            --import-root "$SMOKE_ROOT" \
+            --no-absolute-imports \
+            --output review.html
+          test -s review.html
+          grep -q "Behavior review dossier" review.html
+          grep -q "Verified scenario preview" review.html
+          test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
+
+      - name: Smoke-test clean source-distribution installation
+        shell: bash
+        run: |
+          SMOKE_ROOT="$RUNNER_TEMP/gwt-distribution-smoke"
+          VENV="$RUNNER_TEMP/gwt-sdist-venv"
+          python -m venv "$VENV"
+          "$VENV/bin/python" -m pip install --disable-pip-version-check \
+            "setuptools==80.9.0" \
+            "wheel==0.45.1"
+          "$VENV/bin/python" -m pip install --disable-pip-version-check \
+            --no-build-isolation --no-deps dist/*.tar.gz
+
+          cd "$SMOKE_ROOT"
+          "$VENV/bin/gwt" version --json >sdist-version.json
+          "$VENV/bin/gwt" --help >sdist-help.txt
+          grep -q "workbench" sdist-help.txt
+          "$VENV/bin/gwt" run "$GITHUB_WORKSPACE/examples/hello.gwt" \
+            --json >sdist-hello.json
+          "$VENV/bin/python" -m json.tool sdist-hello.json >/dev/null
+          "$VENV/bin/gwt" workbench case.execution-case.json \
+            --program rules.gwt \
+            --name "source distribution smoke" \
+            --import-root "$SMOKE_ROOT" \
+            --no-absolute-imports \
+            --output sdist-review.html
+          test -s sdist-review.html
+          test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
+
+      - name: Generate and verify SHA-256 checksums
+        shell: bash
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.whl | LC_ALL=C sort -k2 >SHA256SUMS
+          sha256sum --check SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attest distribution provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: "dist/gwtlang-*"
+
+      - name: Upload distribution candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwtlang-distribution-candidate-${{ github.sha }}
+          path: |
+            dist/*.tar.gz
+            dist/*.whl
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14

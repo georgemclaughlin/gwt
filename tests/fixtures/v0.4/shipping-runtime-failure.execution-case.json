@@ -1,0 +1,223 @@
+{
+  "evidence": [
+    {
+      "kind": "contract",
+      "label": "REQUEST",
+      "path": "shipment",
+      "result": true,
+      "sequence": 4,
+      "source": {
+        "column": 3,
+        "file": "./shipping-rules.gwt",
+        "line": 12,
+        "text": "REQUEST shipment is Shipment"
+      },
+      "summary": "REQUEST shipment is Shipment passed",
+      "valueType": "Shipment"
+    },
+    {
+      "callId": "call-1",
+      "depth": 0,
+      "kind": "behavior",
+      "parentCallId": null,
+      "phase": "enter",
+      "sequence": 8,
+      "signature": "calculate <shipment> into <quote>",
+      "source": {
+        "column": 8,
+        "file": "./shipping-rules.gwt",
+        "line": 16,
+        "text": "calculate shipment into quote"
+      },
+      "summary": "enter behavior calculate <shipment> into <quote>"
+    },
+    {
+      "expression": "shipment.weight > 0",
+      "kind": "condition",
+      "operands": {
+        "availability": "available",
+        "values": [
+          {
+            "name": "shipment.weight",
+            "value": 0,
+            "valueType": "integer"
+          }
+        ]
+      },
+      "result": false,
+      "sequence": 9,
+      "source": {
+        "column": 3,
+        "file": "./shipping-rules.gwt",
+        "line": 22,
+        "text": "REQUIRE shipment.weight > 0"
+      },
+      "summary": "shipment.weight > 0 -> false"
+    },
+    {
+      "behaviorOutcome": "failed",
+      "callId": "call-1",
+      "depth": 0,
+      "kind": "behavior",
+      "parentCallId": null,
+      "phase": "exit",
+      "sequence": 10,
+      "signature": "calculate <shipment> into <quote>",
+      "source": {
+        "column": 8,
+        "file": "./shipping-rules.gwt",
+        "line": 16,
+        "text": "calculate shipment into quote"
+      },
+      "summary": "exit behavior calculate <shipment> into <quote> failed"
+    }
+  ],
+  "execution": {
+    "capturePolicy": {
+      "onError": "record",
+      "values": "full"
+    },
+    "capturedAt": "2026-07-10T06:39:19.962205Z",
+    "error": {
+      "code": "execution-failed",
+      "kind": "GwtError",
+      "message": "requirement failed: shipment.weight > 0",
+      "messageAvailability": "available",
+      "source": {
+        "column": 1,
+        "file": "./shipping-rules.gwt",
+        "line": 22,
+        "text": "  REQUIRE shipment.weight > 0"
+      },
+      "stage": "execute"
+    },
+    "executionBudget": 100000,
+    "maxCallDepth": 100,
+    "outcome": "failed",
+    "reason": {
+      "availability": "unavailable"
+    },
+    "selectedDecision": null,
+    "status": {
+      "availability": "unavailable"
+    },
+    "traceId": "d2dd24405e4fd67cadaa41de0af74c70"
+  },
+  "integrity": {
+    "algorithm": "gwt-execution-case-sha256-v1",
+    "digest": "sha256:4d3a27e179e826847a18c104345205a0cca286a212dfb034d3a347f215643de9",
+    "scope": "artifact-without-integrity"
+  },
+  "kind": "gwt.execution-case",
+  "program": {
+    "file": "tests/fixtures/v0.4/shipping-rules.gwt",
+    "hash": "sha256:1b943733078721a4e54dd955ee7f9de809af1b6c598d613fd10603e29f416d6a",
+    "hashScope": "dependency-closure",
+    "identity": {
+      "algorithm": "gwt-program-closure-sha256-v1",
+      "digest": "sha256:1b943733078721a4e54dd955ee7f9de809af1b6c598d613fd10603e29f416d6a",
+      "entry": "./shipping-rules.gwt",
+      "modules": [
+        {
+          "digest": "sha256:2896d01159c4d5a2fb99fb5031032beab0c6a9e0767df71fc13e185b301ecf51",
+          "imports": [],
+          "specifier": "./shipping-rules.gwt"
+        }
+      ]
+    },
+    "importsDetected": false,
+    "importsIncludedInHash": true,
+    "limitations": [],
+    "name": "shipping quote fixture"
+  },
+  "redaction": {
+    "availability": {
+      "operandValues": "available-or-unavailable",
+      "programFile": "available",
+      "requestInput": "available",
+      "requestInputFile": "available",
+      "result": "unavailable",
+      "stateChangeValues": "available"
+    },
+    "mode": "none",
+    "redactedPaths": [],
+    "valuesIncluded": true
+  },
+  "request": {
+    "input": {
+      "shipment": {
+        "weight": 0,
+        "zone": "north"
+      }
+    },
+    "inputFile": "tests/fixtures/v0.4/shipping-runtime-failure.json",
+    "name": "quote shipment"
+  },
+  "result": {},
+  "schemaVersion": 1,
+  "stateChanges": [
+    {
+      "after": {
+        "present": true,
+        "value": "new"
+      },
+      "before": {
+        "present": false
+      },
+      "operation": "add",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/quote",
+          "value": {}
+        },
+        {
+          "op": "add",
+          "path": "/quote/status",
+          "value": "new"
+        }
+      ],
+      "path": "quote.status",
+      "pointer": "/quote/status",
+      "sequence": 5,
+      "source": {
+        "column": 5,
+        "file": "./shipping-rules.gwt",
+        "line": 14,
+        "text": "quote.status is \"new\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": 0
+      },
+      "before": {
+        "present": false
+      },
+      "operation": "add",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/quote/cost",
+          "value": 0
+        }
+      ],
+      "path": "quote.cost",
+      "pointer": "/quote/cost",
+      "sequence": 6,
+      "source": {
+        "column": 5,
+        "file": "./shipping-rules.gwt",
+        "line": 15,
+        "text": "quote.cost is 0"
+      }
+    }
+  ],
+  "versions": {
+    "languageSpecVersion": "v0.2",
+    "packageName": "gwtlang",
+    "packageVersion": "0.3.0",
+    "payloadSchemaVersion": 3
+  }
+}
