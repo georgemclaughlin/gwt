@@ -87,7 +87,7 @@ python -m gwtlang explain examples/vendor_onboarding/rules.gwt \
 Expected result excerpt:
 
 ```txt
-review vendor returned needs_review
+review vendor completed
 
 Input:
 vendor.vendor_name: "Cloud Ledger"
@@ -97,11 +97,36 @@ Result:
 decision.status: "needs_review"
 decision.reason: "manual_review_required"
 
-Cloud Ledger needs review because:
-- insurance is expired
-- security_questionnaire is missing
-- risk score 10 crossed the review threshold 6
+Selected branches:
+- DECIDE WHEN: decision.missing_document_count > 0 or decision.expired_document_count > 0 or decision.risk_points >= 6 at ./rules.gwt:138:10
+  observed: decision.missing_document_count = 1 (integer)
+
+Changed values:
+- decision.risk_points: 0 -> 10
+- decision.status: "new" -> "needs_review"
+- decision.reason: "new" -> "manual_review_required"
 ```
+
+The explanation stays domain-neutral and reports only facts captured from the
+executed program. To capture the complete run as a versioned Execution Case v1
+artifact, use the explicit `capture` command:
+
+```sh
+python -m gwtlang capture examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor" \
+  --output vendor-review.execution-case.json
+```
+
+The JSON artifact includes the program dependency-closure identity and hash,
+tooling versions, input and declared result, execution outcome, ordered
+source-linked evidence and state changes, semantic runtime limits, capture
+policy, and value-availability metadata. Full values and raised errors are the
+defaults. `--record-failures` records a normalized failed case;
+`--omit-values` removes runtime values and physical program/input-file paths.
+The flags may be combined for a value-omitted failure artifact.
+Omit `--output` to print canonical JSON to stdout. `gwt explain ... --json`
+remains available as a compatibility and convenience path to the same payload.
 
 4. Refresh generated host types when contracts change:
 

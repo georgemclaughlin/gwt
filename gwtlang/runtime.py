@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from difflib import get_close_matches
@@ -40,6 +41,9 @@ RESERVED_BEHAVIOR_NAMES = {
     "DECIDE",
 }
 _MISSING = object()
+DEFAULT_EXECUTION_BUDGET = 100_000
+DEFAULT_MAX_CALL_DEPTH = 100
+SourceLoader = Callable[[Path], str]
 
 
 @dataclass(frozen=True)
@@ -121,6 +125,7 @@ class IfBlock:
     condition: Line
     then_body: list[Any]
     else_body: list[Any]
+    else_line: Line | None = None
 
 
 @dataclass
@@ -467,6 +472,7 @@ def parse_program(
     initial_type_aliases: dict[str, TypeAliasDefinition] | None = None,
     allow_unknown_records: bool = False,
     import_policy: ImportPolicy | None = None,
+    source_loader: SourceLoader | None = None,
 ) -> Program:
     lines = _logical_lines(textwrap.dedent(source), filename)
     program = Program()
@@ -521,7 +527,14 @@ def parse_program(
             continue
 
         if text.startswith("USE "):
-            imported = _parse_import(text, line, filename, importing, import_policy)
+            imported = _parse_import(
+                text,
+                line,
+                filename,
+                importing,
+                import_policy,
+                source_loader,
+            )
             duplicate_types = sorted(
                 (
                     set(program.records)
@@ -712,7 +725,12 @@ class Runtime:
         program: Program,
         debugger: Any | None = None,
         tracer: GwtTraceRecorder | None = None,
+        *,
+        execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
+        max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
     ) -> None:
+        _validate_runtime_limit("execution_budget", execution_budget)
+        _validate_runtime_limit("max_call_depth", max_call_depth)
         self.program = program
         self.state: dict[str, Any] = {}
         self.output: list[str] = []
@@ -723,8 +741,12 @@ class Runtime:
         self.base_path_types = self._base_path_types()
         self.path_types: dict[str, str] = {}
         self._last_returned_state: dict[str, Any] | None = None
+        self.execution_budget = execution_budget
+        self.max_call_depth = max_call_depth
+        self._execution_steps = 0
 
     def run(self) -> RunResult:
+        self._reset_execution_budget()
         results: list[ScenarioResult] = []
         for scenario in self.program.scenarios:
             if scenario.examples:
@@ -743,6 +765,7 @@ class Runtime:
         json_filename: str | None = None,
         validate_contracts: bool = True,
     ) -> RunResult:
+        self._reset_execution_budget()
         if not isinstance(state, dict):
             raise GwtError("JSON input must be an object")
         json_state = cast(dict[object, object], state)
@@ -769,6 +792,9 @@ class Runtime:
             raise _with_line_context(json_line, exc) from exc
         finally:
             self.path_types = declared_path_types
+
+        if self.tracer is not None:
+            self.tracer.record_input_applied()
 
         for line in self.program.background.whens:
             self._run_when_step(line, {})
@@ -1006,6 +1032,7 @@ class Runtime:
                 raise GwtError(f"expected {path} to be {expected_type}, got {_value_type_name(value)}")
             items = cast(list[Any], value)
             for index, item in enumerate(items, start=1):
+                self._consume_execution(line)
                 items[index - 1] = self._validate_value_type(f"{path}[{index}]", item, item_type, line)
             return items
 
@@ -1274,6 +1301,7 @@ class Runtime:
                     raise GwtError(f"line {line.number}: sum requires a list")
                 total = 0
                 for value in cast(list[Any], values):
+                    self._consume_execution(line)
                     sum_env = dict(env)
                     sum_env[name] = value
                     item = self._eval_expression(projection_text, sum_env)
@@ -1288,6 +1316,7 @@ class Runtime:
                 raise GwtError(f"line {line.number}: sum requires a list")
             total = 0
             for value in cast(list[Any], values):
+                self._consume_execution(line)
                 if not _is_numeric_value(value):
                     raise GwtError(f"line {line.number}: sum requires a list of numbers")
                 total += value
@@ -1311,6 +1340,7 @@ class Runtime:
         if not isinstance(values, list):
             raise GwtError(f"line {line.number}: find requires a list")
         for value in cast(list[Any], values):
+            self._consume_execution(line)
             find_env = dict(env)
             find_env[name] = value
             if self._evaluate_condition(condition.strip(), find_env, line):
@@ -1330,6 +1360,7 @@ class Runtime:
             raise GwtError(f"line {line.number}: exists requires a list")
         found = False
         for value in cast(list[Any], values):
+            self._consume_execution(line)
             exists_env = dict(env)
             exists_env[name] = value
             if self._evaluate_condition(condition.strip(), exists_env, line):
@@ -1342,6 +1373,14 @@ class Runtime:
         for action in reversed(candidates):
             env = self._match_action(action, call, caller_env)
             if env is not None:
+                if self.max_call_depth is not None and len(self.call_stack) >= self.max_call_depth:
+                    raise _with_line_context(
+                        line,
+                        GwtError(
+                            "behavior call depth limit exceeded "
+                            f"(maximum {self.max_call_depth})"
+                        ),
+                    )
                 self._apply_action_contract(action, env, line)
                 frame = CallFrame(
                     action.signature_text or " ".join(action.signature),
@@ -1376,7 +1415,7 @@ class Runtime:
                     condition_result = self._evaluate_condition(statement.condition.text, env, statement.condition)
                 except GwtError as exc:
                     raise _with_line_context(statement.condition, exc) from exc
-                self._record_if_branch(statement, selected=condition_result)
+                self._record_if_branches(statement, condition_result=condition_result)
                 branch = statement.then_body if condition_result else statement.else_body
                 result = self._run_body(branch, env)
             elif isinstance(statement, ForBlock):
@@ -1398,6 +1437,7 @@ class Runtime:
         return None
 
     def _before_line(self, line: Line, env: dict[str, Any], *, trace_statement: bool = True) -> None:
+        self._consume_execution(line)
         stack = self._stack_frames(line, env)
         if self.debugger is not None:
             self.debugger.before_line(line, self.state, env, stack)
@@ -1434,19 +1474,35 @@ class Runtime:
             frames.append(StackFrame(caller_name, active.call_line, active.caller_env))
         return frames
 
-    def _record_if_branch(self, statement: IfBlock, *, selected: bool) -> None:
+    def _record_if_branches(
+        self,
+        statement: IfBlock,
+        *,
+        condition_result: bool,
+    ) -> None:
         if self.tracer is None:
             return
-        body = statement.then_body if selected else statement.then_body
-        start_line, end_line = _body_line_range(body)
+        start_line, end_line = _body_line_range(statement.then_body)
         self.tracer.record_branch(
             kind="IF",
+            label="THEN",
             condition=statement.condition.text,
-            selected=selected,
+            selected=condition_result,
             line=statement.condition,
             start_line=start_line,
             end_line=end_line,
         )
+        if statement.else_line is not None:
+            start_line, end_line = _body_line_range(statement.else_body)
+            self.tracer.record_branch(
+                kind="IF",
+                label="ELSE",
+                condition="ELSE",
+                selected=not condition_result,
+                line=statement.else_line,
+                start_line=start_line,
+                end_line=end_line,
+            )
 
     def _record_decision_branch(self, branch: DecisionBranch, *, selected: bool) -> None:
         if self.tracer is None:
@@ -1454,6 +1510,7 @@ class Runtime:
         start_line, end_line = _body_line_range(branch.body)
         self.tracer.record_branch(
             kind="DECIDE",
+            label="WHEN",
             condition=branch.condition.text,
             selected=selected,
             line=branch.condition,
@@ -1472,6 +1529,7 @@ class Runtime:
             raise GwtError(f"line {statement.iterable.number}: FOR requires a list")
 
         for value in cast(list[Any], values):
+            self._consume_execution(statement.where or statement.iterable)
             loop_env = dict(env)
             loop_env[statement.name] = value
             if statement.where is not None and not self._evaluate_condition(
@@ -1496,6 +1554,7 @@ class Runtime:
             raise GwtError(f"line {statement.iterable.number}: FIND requires a list")
 
         for value in cast(list[Any], values):
+            self._consume_execution(statement.condition)
             find_env = dict(env)
             find_env[statement.name] = value
             if self._evaluate_condition(statement.condition.text, find_env, statement.condition):
@@ -1516,6 +1575,17 @@ class Runtime:
             except GwtError as exc:
                 raise _with_line_context(branch.condition, exc) from exc
         self._before_line(statement.else_line, env)
+        if self.tracer is not None:
+            start_line, end_line = _body_line_range(statement.else_body)
+            self.tracer.record_branch(
+                kind="DECIDE",
+                label="ELSE",
+                condition="ELSE",
+                selected=True,
+                line=statement.else_line,
+                start_line=start_line,
+                end_line=end_line,
+            )
         return self._run_body(statement.else_body, env)
 
     def _run_match_block(self, statement: MatchBlock, env: dict[str, Any]) -> BehaviorReturn | None:
@@ -1533,20 +1603,59 @@ class Runtime:
             if not isinstance(kind, str):
                 raise GwtError(f"line {statement.expression.number}: DEPENDING ON record has no kind")
             for case in statement.cases:
-                if case.name == kind:
+                selected = case.name == kind
+                self._record_match_branch(case, selected=selected)
+                if selected:
                     return self._run_body(case.body, env)
             if statement.else_body:
+                self._record_match_else(statement)
                 return self._run_body(statement.else_body, env)
             raise GwtError(f"line {statement.expression.number}: DEPENDING ON has no branch for kind: {kind}")
 
         for case in statement.cases:
-            if _value_matches_literal(value, case.literal):
+            selected = _value_matches_literal(value, case.literal)
+            self._record_match_branch(case, selected=selected)
+            if selected:
                 return self._run_body(case.body, env)
         if statement.else_body:
+            self._record_match_else(statement)
             return self._run_body(statement.else_body, env)
         raise GwtError(
             f"line {statement.expression.number}: "
             f"DEPENDING ON has no branch for value: {_literal_value_text(value)}"
+        )
+
+    def _record_match_branch(self, case: MatchCase, *, selected: bool) -> None:
+        if self.tracer is None:
+            return
+        start_line, end_line = _body_line_range(case.body)
+        expression = (
+            f'kind == "{case.name}"'
+            if case.selector == "kind"
+            else f"value == {case.name}"
+        )
+        self.tracer.record_branch(
+            kind="DEPENDING",
+            label="WHEN",
+            condition=expression,
+            selected=selected,
+            line=case.line,
+            start_line=start_line,
+            end_line=end_line,
+        )
+
+    def _record_match_else(self, statement: MatchBlock) -> None:
+        if self.tracer is None or statement.else_line is None:
+            return
+        start_line, end_line = _body_line_range(statement.else_body)
+        self.tracer.record_branch(
+            kind="DEPENDING",
+            label="ELSE",
+            condition="ELSE",
+            selected=True,
+            line=statement.else_line,
+            start_line=start_line,
+            end_line=end_line,
         )
 
     def _match_action(self, action: Action, call: list[str], caller_env: dict[str, Any]) -> dict[str, Any] | None:
@@ -1583,18 +1692,48 @@ class Runtime:
         trace_kind: str = "condition",
     ) -> bool:
         expression = _condition_to_expression(text)
-        value = self._eval_expression(expression, env)
-        if not isinstance(value, bool):
-            raise GwtError(f"condition must evaluate to a boolean: {text}")
+        try:
+            if self.tracer is None:
+                value = self._eval_expression(expression, env)
+                operands: list[tuple[str, Any]] | None = None
+            else:
+                value, operands = self._eval_expression_with_operands(
+                    expression,
+                    env,
+                )
+            if not isinstance(value, bool):
+                raise GwtError(f"condition must evaluate to a boolean: {text}")
+        except GwtError as exc:
+            if line is not None:
+                raise _with_line_context(line, exc) from exc
+            raise
         if self.tracer is not None:
             if trace_kind == "assertion":
-                self.tracer.record_assertion(text=text, result=value, line=line)
+                self.tracer.record_assertion(
+                    text=text,
+                    result=value,
+                    line=line,
+                    operands=operands,
+                )
             else:
-                self.tracer.record_condition(text=text, result=value, line=line)
+                self.tracer.record_condition(
+                    text=text,
+                    result=value,
+                    line=line,
+                    operands=operands,
+                )
         return value
 
     def _eval_expression(self, text: str, env: dict[str, Any]) -> Any:
         return evaluate_expression(text, ExpressionScope(self, env))
+
+    def _eval_expression_with_operands(
+        self,
+        text: str,
+        env: dict[str, Any],
+    ) -> tuple[Any, list[tuple[str, Any]]]:
+        scope = ExpressionScope(self, env, record_operands=True)
+        return evaluate_expression(text, scope), scope.operands
 
     def _eval_expression_or_returning_action(self, text: str, line: Line, env: dict[str, Any]) -> Any:
         try:
@@ -1641,12 +1780,14 @@ class Runtime:
         return current
 
     def _set_path(self, path: str, value: Any, env: dict[str, Any], line: Line | None = None) -> None:
+        original_root = path.split(".", 1)[0]
+        targets_state = isinstance(env.get(original_root), PathRef)
         resolved = self._resolve_path(path, env)
         parts = resolved.split(".")
         if not all(parts):
             raise GwtError(f"invalid path: {path}")
 
-        if parts[0] in env and not isinstance(env[parts[0]], PathRef):
+        if not targets_state and parts[0] in env and not isinstance(env[parts[0]], PathRef):
             value = self._validate_assignment(resolved, value, line)
             if len(parts) == 1:
                 env[parts[0]] = value
@@ -1688,6 +1829,24 @@ class Runtime:
             if change is not None:
                 self.tracer.record_state_change(path=resolved, change=change, line=line)
 
+    def _reset_execution_budget(self) -> None:
+        self._execution_steps = 0
+
+    def _consume_expression_work(self) -> None:
+        self._execution_steps += 1
+        if self.execution_budget is None or self._execution_steps <= self.execution_budget:
+            return
+        raise GwtError(
+            "execution budget exceeded "
+            f"(maximum {self.execution_budget} steps)"
+        )
+
+    def _consume_execution(self, line: Line) -> None:
+        try:
+            self._consume_expression_work()
+        except GwtError as exc:
+            raise _with_line_context(line, exc) from exc
+
     def _path_exists(self, path: str) -> bool:
         current: object = self.state
         for part in path.split("."):
@@ -1711,12 +1870,26 @@ class Runtime:
 
 
 class ExpressionScope:
-    def __init__(self, runtime: Runtime, env: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        runtime: Runtime,
+        env: dict[str, Any],
+        *,
+        record_operands: bool = False,
+    ) -> None:
         self.runtime = runtime
         self.env = env
+        self.record_operands = record_operands
+        self.operands: list[tuple[str, Any]] = []
 
     def resolve_name(self, name: str) -> Any:
-        return self.runtime._resolve_name(name, self.env)
+        value = self.runtime._resolve_name(name, self.env)
+        if self.record_operands:
+            self.operands.append((name, value))
+        return value
+
+    def consume_expression_work(self) -> None:
+        self.runtime._consume_expression_work()
 
 
 def _body_line_range(body: list[Any]) -> tuple[int | None, int | None]:
@@ -2107,6 +2280,7 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
                 raise GwtError(f"{filename}:{line.number}: IF requires a body")
 
             else_body: list[Any] = []
+            else_line: Line | None = None
             if index < len(lines) and _indent_width(lines[index].text) == indent and lines[index].text.strip() == "ELSE":
                 else_line = lines[index]
                 index += 1
@@ -2114,7 +2288,14 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
                 if not else_body:
                     raise GwtError(f"{filename}:{else_line.number}: ELSE requires a body")
 
-            body.append(IfBlock(_derived_line(line, condition, len("IF ")), then_body, else_body))
+            body.append(
+                IfBlock(
+                    _derived_line(line, condition, len("IF ")),
+                    then_body,
+                    else_body,
+                    else_line,
+                )
+            )
             last_body_keyword = None
             continue
 
@@ -2591,6 +2772,7 @@ def _parse_import(
     filename: str,
     importing: set[Path],
     import_policy: ImportPolicy | None,
+    source_loader: SourceLoader | None,
 ) -> Program:
     tokens = _tokens(text, filename, line.number)
     if len(tokens) != 2:
@@ -2607,21 +2789,43 @@ def _parse_import(
 
     if import_path in importing:
         raise GwtError(f"{filename}:{line.number}: circular USE import: {import_path}")
-    if not import_path.exists():
-        raise GwtError(f"{filename}:{line.number}: USE file not found: {import_path}")
-    if not import_path.is_file():
-        raise GwtError(f"{filename}:{line.number}: USE path is not a file: {import_path}")
+    if source_loader is None:
+        if not import_path.exists():
+            raise GwtError(f"{filename}:{line.number}: USE file not found: {import_path}")
+        if not import_path.is_file():
+            raise GwtError(f"{filename}:{line.number}: USE path is not a file: {import_path}")
+        imported_source = _read_source(import_path)
+    else:
+        try:
+            imported_source = source_loader(import_path)
+        except (KeyError, FileNotFoundError):
+            raise GwtError(
+                f"{filename}:{line.number}: USE file not found: {import_path}"
+            ) from None
+        except IsADirectoryError:
+            raise GwtError(
+                f"{filename}:{line.number}: USE path is not a file: {import_path}"
+            ) from None
 
     importing.add(import_path)
     try:
         return parse_program(
-            import_path.read_text(),
+            imported_source,
             str(import_path),
             importing,
             import_policy=import_policy,
+            source_loader=source_loader,
         )
     finally:
         importing.remove(import_path)
+
+
+def _read_source(path: Path) -> str:
+    source_bytes = path.read_bytes()
+    try:
+        return source_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        raise GwtError(f"{path}: source is not valid UTF-8") from None
 
 
 def _parse_examples_table(
@@ -2791,6 +2995,13 @@ def _with_line_context(line: Line, error: GwtError) -> GwtError:
     if line.filename:
         return GwtError(f"{line.filename}:{line.number}: {message}")
     return GwtError(f"line {line.number}: {message}")
+
+
+def _validate_runtime_limit(name: str, value: object) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer or None")
 
 
 def _has_error_location(message: str) -> bool:

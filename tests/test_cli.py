@@ -222,21 +222,23 @@ class CliDiagnosticsTests(unittest.TestCase):
 
         output = stdout.getvalue()
         self.assertEqual(status, 0)
-        self.assertIn("review vendor returned needs_review", output)
+        self.assertIn("review vendor completed", output)
         self.assertIn("Input:", output)
         self.assertIn('vendor.vendor_name: "Cloud Ledger"', output)
         self.assertIn("Result:", output)
         self.assertIn('decision.status: "needs_review"', output)
-        self.assertIn('decision.reason: "manual_review_required"', output)
-        self.assertIn("Cloud Ledger needs review because:", output)
-        self.assertIn("- insurance is expired", output)
-        self.assertIn("- security_questionnaire is missing", output)
-        self.assertIn("- risk score 10 crossed the review threshold 6", output)
-        self.assertIn("Outcome rule:", output)
-        self.assertIn("line 138", output)
+        self.assertIn(
+            'decision.reason: "new" -> "manual_review_required"',
+            output,
+        )
+        self.assertIn("Selected branches:", output)
+        self.assertIn("DECIDE WHEN:", output)
+        self.assertIn("./rules.gwt:138:10", output)
         self.assertIn("decision.risk_points >= 6", output)
+        self.assertIn("observed: decision.missing_document_count = 1", output)
         self.assertIn("Changed values:", output)
         self.assertIn('decision.risk_points: 0 -> 10', output)
+        self.assertNotIn("because:", output)
 
     def test_cli_runs_program_with_json_input_file_and_named_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:

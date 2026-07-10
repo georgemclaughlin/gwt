@@ -155,8 +155,10 @@ class GwtTraceRecorder:
         self.include_values = include_values
         self.root_span_id = new_span_id()
         self._sequence = 0
+        self._behavior_call_sequence = 0
         self._spans: list[OtlpSpan] = []
         self._span_stack: list[OtlpSpan] = []
+        self._behavior_call_stack: list[str] = []
 
         root_name = f"POST {route_path}" if route_path else f"GWT REQUEST {request_name}"
         root = OtlpSpan(
@@ -218,16 +220,59 @@ class GwtTraceRecorder:
     def exit_request(self, *, error: str | None = None) -> None:
         self._pop_span(error=error)
 
-    def enter_behavior(self, signature: str, line: Any) -> None:
-        self._push_child_span(
-            f"GWT WHEN {signature}",
-            attributes={
-                "gwt.behavior.signature": signature,
-                **self._line_attributes(line),
-            },
+    def record_input_applied(self) -> None:
+        """Mark the effective-state baseline after GIVEN setup and JSON overlay."""
+
+        self._event(
+            "gwt.input.applied",
+            {"gwt.input.summary": "background setup and JSON input applied"},
         )
 
+    def enter_behavior(self, signature: str, line: Any) -> None:
+        self._behavior_call_sequence += 1
+        call_id = f"call-{self._behavior_call_sequence}"
+        parent_call_id = (
+            self._behavior_call_stack[-1]
+            if self._behavior_call_stack
+            else None
+        )
+        depth = len(self._behavior_call_stack)
+        attributes: dict[str, Any] = {
+            "gwt.behavior.signature": signature,
+            "gwt.behavior.phase": "enter",
+            "gwt.behavior.call_id": call_id,
+            "gwt.behavior.parent_call_id": parent_call_id,
+            "gwt.behavior.depth": depth,
+            "gwt.behavior.summary": f"enter behavior {signature}",
+            **self._line_attributes(line),
+        }
+        self._event("gwt.behavior.entered", attributes)
+        self._push_child_span(
+            f"GWT WHEN {signature}",
+            attributes=dict(attributes),
+        )
+        self._behavior_call_stack.append(call_id)
+
     def exit_behavior(self, *, error: str | None = None) -> None:
+        span = self._span_stack[-1]
+        signature = str(span.attributes.get("gwt.behavior.signature") or "")
+        call_id = str(span.attributes.get("gwt.behavior.call_id") or "")
+        outcome = "failed" if error is not None else "completed"
+        attributes: dict[str, Any] = {
+            "gwt.behavior.signature": signature,
+            "gwt.behavior.phase": "exit",
+            "gwt.behavior.call_id": call_id,
+            "gwt.behavior.parent_call_id": span.attributes.get(
+                "gwt.behavior.parent_call_id"
+            ),
+            "gwt.behavior.depth": span.attributes.get("gwt.behavior.depth", 0),
+            "gwt.behavior.outcome": outcome,
+            "gwt.behavior.summary": f"exit behavior {signature} {outcome}",
+            **_source_attributes(span.attributes),
+        }
+        self._event("gwt.behavior.exited", attributes)
+        if self._behavior_call_stack:
+            self._behavior_call_stack.pop()
         self._pop_span(error=error)
 
     def record_contract(
@@ -256,12 +301,20 @@ class GwtTraceRecorder:
         )
         self._event("gwt.contract.checked", attributes)
 
-    def record_condition(self, *, text: str, result: bool, line: Any | None = None) -> None:
+    def record_condition(
+        self,
+        *,
+        text: str,
+        result: bool,
+        line: Any | None = None,
+        operands: list[tuple[str, Any]] | None = None,
+    ) -> None:
         attributes: dict[str, Any] = {
             "gwt.condition.text": text,
             "gwt.condition.result": result,
             "gwt.condition.summary": f"{text} -> {_result_text(result)}",
         }
+        attributes.update(self._operand_attributes(operands))
         if line is not None:
             attributes.update(self._line_attributes(line))
         self._event("gwt.condition.evaluated", attributes)
@@ -270,6 +323,7 @@ class GwtTraceRecorder:
         self,
         *,
         kind: str,
+        label: str,
         condition: str,
         selected: bool,
         line: Any,
@@ -278,9 +332,17 @@ class GwtTraceRecorder:
     ) -> None:
         attributes: dict[str, Any] = {
             "gwt.branch.kind": kind,
+            "gwt.branch.label": label,
             "gwt.branch.condition": condition,
             "gwt.branch.selected": selected,
-            "gwt.branch.summary": _branch_summary(kind, condition, selected, start_line, end_line),
+            "gwt.branch.summary": _branch_summary(
+                kind,
+                label,
+                condition,
+                selected,
+                start_line,
+                end_line,
+            ),
             **self._line_attributes(line),
         }
         if start_line is not None:
@@ -289,12 +351,20 @@ class GwtTraceRecorder:
             attributes["gwt.branch.end_line"] = end_line
         self._event("gwt.branch.selected" if selected else "gwt.branch.skipped", attributes)
 
-    def record_assertion(self, *, text: str, result: bool, line: Any | None = None) -> None:
+    def record_assertion(
+        self,
+        *,
+        text: str,
+        result: bool,
+        line: Any | None = None,
+        operands: list[tuple[str, Any]] | None = None,
+    ) -> None:
         attributes: dict[str, Any] = {
             "gwt.assertion.text": text,
             "gwt.assertion.result": result,
             "gwt.assertion.summary": f"THEN {text} {'passed' if result else 'failed'}",
         }
+        attributes.update(self._operand_attributes(operands))
         if line is not None:
             attributes.update(self._line_attributes(line))
         self._event("gwt.assertion.checked", attributes)
@@ -408,6 +478,38 @@ class GwtTraceRecorder:
         if error is None or self.include_values:
             return error
         return "GWT error"
+
+    def _operand_attributes(
+        self,
+        operands: list[tuple[str, Any]] | None,
+    ) -> dict[str, Any]:
+        if not self.include_values:
+            return {"gwt.expression.operands.availability": "redacted"}
+        if operands is None:
+            return {
+                "gwt.expression.operands.availability": "unavailable",
+                "gwt.expression.operands.unavailable_reason": "not-observed",
+            }
+        encoded: list[dict[str, Any]] = []
+        for name, value in operands:
+            operand = _structured_operand(name, value)
+            if operand is None:
+                return {
+                    "gwt.expression.operands.availability": "unavailable",
+                    "gwt.expression.operands.unavailable_reason": (
+                        "unsupported-runtime-value"
+                    ),
+                }
+            encoded.append(operand)
+        return {
+            "gwt.expression.operands.availability": "available",
+            "gwt.expression.operands": json.dumps(
+                encoded,
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+            ),
+        }
 
     def _event(self, name: str, attributes: dict[str, Any]) -> None:
         self._sequence += 1
@@ -743,6 +845,89 @@ def _attribute_value(value: Any) -> Any:
     return value
 
 
+def _source_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: attributes[key]
+        for key in (
+            "code.file.path",
+            "code.line.number",
+            "code.column.number",
+            "gwt.source.text",
+        )
+        if key in attributes
+    }
+
+
+def _structured_operand(name: str, value: Any) -> dict[str, Any] | None:
+    if isinstance(value, Decimal):
+        encoded = str(value) if value.is_finite() else _UNAVAILABLE_OPERAND
+    else:
+        encoded = _structured_json_value(value)
+    if encoded is _UNAVAILABLE_OPERAND:
+        return None
+    return {
+        "name": name,
+        "valueType": _operand_value_type(value),
+        "value": encoded,
+    }
+
+
+_UNAVAILABLE_OPERAND = object()
+
+
+def _structured_json_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        # A Decimal nested in a list or record would lose its runtime type in
+        # plain JSON. Mark the whole operand unavailable rather than emit an
+        # ambiguous text value. Top-level Decimal operands are typed above.
+        return _UNAVAILABLE_OPERAND
+    if value is None or isinstance(value, str | bool | int):
+        return value
+    if isinstance(value, float):
+        if value != value or value in {float("inf"), float("-inf")}:
+            return _UNAVAILABLE_OPERAND
+        return value
+    if isinstance(value, list):
+        items: list[Any] = []
+        for item in cast(list[Any], value):
+            encoded = _structured_json_value(item)
+            if encoded is _UNAVAILABLE_OPERAND:
+                return _UNAVAILABLE_OPERAND
+            items.append(encoded)
+        return items
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, item in cast(dict[object, Any], value).items():
+            if not isinstance(key, str):
+                return _UNAVAILABLE_OPERAND
+            encoded = _structured_json_value(item)
+            if encoded is _UNAVAILABLE_OPERAND:
+                return _UNAVAILABLE_OPERAND
+            result[key] = encoded
+        return result
+    return _UNAVAILABLE_OPERAND
+
+
+def _operand_value_type(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, Decimal):
+        return "decimal"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "text"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "record"
+    return type(value).__name__
+
+
 def _flatten_scalar_paths(value: dict[str, Any]) -> dict[str, Any]:
     flattened: dict[str, Any] = {}
 
@@ -765,6 +950,7 @@ def _result_text(result: bool) -> str:
 
 def _branch_summary(
     kind: str,
+    label: str,
     condition: str,
     selected: bool,
     start_line: int | None,
@@ -774,12 +960,15 @@ def _branch_summary(
     line_text = ""
     if start_line is not None and end_line is not None:
         line_text = f" lines {start_line}-{end_line}" if start_line != end_line else f" line {start_line}"
-    return f"{kind} {condition} {action}{line_text}"
+    expression = f" {condition}" if condition and condition != label else ""
+    return f"{kind} {label}{expression} {action}{line_text}"
 
 
 def _event_summary(name: str, attributes: dict[str, Any]) -> str:
     for key in (
         "gwt.request.summary",
+        "gwt.input.summary",
+        "gwt.behavior.summary",
         "gwt.contract.summary",
         "gwt.condition.summary",
         "gwt.branch.summary",
