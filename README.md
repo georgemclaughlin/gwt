@@ -173,6 +173,32 @@ python -m gwtlang explain examples/vendor_onboarding/rules.gwt \
   --request "review vendor"
 ```
 
+Capture the same run as a versioned, machine-readable Execution Case:
+
+```sh
+python -m gwtlang capture examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor" \
+  --output vendor-review.execution-case.json
+```
+
+Render that case as a self-contained local behavior-review page, including a
+replay-verified scenario preview:
+
+```sh
+python -m gwtlang workbench vendor-review.execution-case.json \
+  --program examples/vendor_onboarding/rules.gwt \
+  --name "captured vendor review" \
+  --output vendor-review.html
+```
+
+Add paired `--old` and `--new` programs to make old/new behavior comparison the
+primary workbench view. Cases and HTML include full values, so review them
+before sharing or committing them. See
+[`docs/execution-cases.md`](docs/execution-cases.md) for artifact guidance and
+the [`v0.4 external pilot runbook`](docs/external-pilot-v0.4.md) for the
+two-workflow evaluation process.
+
 Install a local `gwt` command while developing:
 
 ```sh
@@ -193,10 +219,16 @@ For a quick public review, start with:
 | Artifact | Why |
 | --- | --- |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
+| [`examples/behavior_review`](examples/behavior_review) | Focused local capture, explanation, scenario, comparison, and workbench review loop |
 | [`examples/incident_triage`](examples/incident_triage) | v0.3 pilot artifact for deterministic incident escalation, JSON execution, generated Python host types, and a typed host call |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
-| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Active stabilization roadmap for the next language/tooling milestone |
+| [`docs/roadmap-v0.4.md`](docs/roadmap-v0.4.md) | Active roadmap for trustworthy execution evidence, factual explanations, generated scenarios, impact comparison, and a local behavior-review workbench |
+| [`docs/external-pilot-v0.4.md`](docs/external-pilot-v0.4.md) | Full capture-to-workbench runbook, privacy gate, and evidence template for two unrelated external workflows |
+| [`docs/release-v0.4-checklist.md`](docs/release-v0.4-checklist.md) | Publication gate with name, license, external-pilot, artifact-trust, packaging, and manual-release controls |
+| [`docs/release-notes-v0.4.md`](docs/release-notes-v0.4.md) | Draft candidate notes covering behavior-review tooling, compatibility, trust boundaries, and unresolved blockers |
+| [`docs/project-identity-v0.4.md`](docs/project-identity-v0.4.md) | Rename decision memo, CauSpec working candidate, collision evidence, and compatibility-first migration matrix |
+| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Preceding stabilization roadmap for the v0.3 language/tooling milestone |
 | [`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md) | Concrete v0.3 release-candidate gate, pilot evidence, deferred design pressure, and versioning checklist |
 | [`docs/release-notes-v0.3.md`](docs/release-notes-v0.3.md) | Prepared v0.3 package release notes covering stabilization scope, pilots, and version surfaces |
 | [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md) | Template for testing GWT against real workflows before adding syntax |
@@ -439,7 +471,12 @@ The CLI currently supports:
 ```sh
 gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
+gwt capture examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor" --output vendor-review.execution-case.json
+gwt scenario-from-run vendor-review.execution-case.json --program examples/vendor_onboarding/rules.gwt --output vendor-review-scenario.gwt
+gwt compare --old rules-v1.gwt --new rules-v2.gwt case-1.json case-2.json --json
+gwt workbench case-1.json case-2.json --old rules-v1.gwt --new rules-v2.gwt --output review.html
 gwt explain examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor"
+gwt explain examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
 gwt schema examples/deployable_api/rules.gwt --json
 gwt openapi examples/deployable_api/rules.gwt --json
@@ -467,11 +504,60 @@ named requests, behaviors, scenarios, and diagnostics. This is intentionally an
 inspection surface, not a separate graph or alternate source format.
 
 `gwt explain file.gwt --json-input request.json --request "<request name>"`
-runs a named JSON request with trace values enabled and prints the incoming
-request, declared result, changed output values, and a plain-language decision
-explanation with the selected outcome rule. This is an early decision-workbench
-surface focused on making captured behavior understandable before turning it
-into new scenario coverage.
+runs a named JSON request with trace values enabled. Its default output is a
+domain-neutral, source-faithful summary of the input, declared result, all
+recorded selected branches and evaluated operands, and changed values. It does
+not privilege a field named `status`, call a selected branch the cause of an
+output, or invent domain reasons that the program did not execute.
+
+`gwt capture file.gwt --json-input request.json --request "<request name>"`
+is the explicit Execution Case v1 capture path. It writes canonical pretty JSON
+to stdout, or atomically replaces `--output case.json` when an output path is
+provided. Pass `--json-input -` to read the input object from stdin. The
+artifact records the dependency-closure program identity and hash,
+language/package/payload versions, request input and declared result, execution
+outcome, the exact execution budget and call-depth limit, ordered semantic
+evidence with logical source references, ordered state changes, capture policy, and value
+availability metadata. The schema is
+[`docs/schemas/execution-case.schema.json`](docs/schemas/execution-case.schema.json).
+The identity, replay, integrity-digest threat model, and sensitivity guidance
+are documented in [`docs/execution-cases.md`](docs/execution-cases.md).
+
+`gwt explain ... --json` remains a compatibility and convenience path that
+emits the same Execution Case payload. Use `capture` when the artifact itself is
+the intended output, and `explain` without `--json` for the factual text view.
+
+By default, a GWT error is raised and full values are captured. Add
+`--record-failures` to return a normalized failed Execution Case, and
+`--omit-values` to execute without storing input, result, state-change,
+operand, physical program/input-file, or full error-detail values. The two
+flags compose. Use `--execution-budget N|none` and `--max-call-depth N|none`
+to select the recorded semantic limits. See the Execution Case documentation
+for the precise redacted, unavailable, absent, and present-value states.
+
+`gwt scenario-from-run case.json --program rules.gwt` converts a full-value,
+completed Execution Case into a canonical embedded `SCENARIO`. Generation only
+succeeds when the supplied program's dependency-closure identity matches the
+case, and the generated scenario passes formatting, checking, execution, and
+exact result replay. Use `--name` to set the scenario name and `--output` for an
+atomic file replacement.
+
+`gwt compare --old rules-v1.gwt --new rules-v2.gwt case.json ...` replays one
+or more Execution Cases against both program versions. The text view summarizes
+classifications and output changes; `--json` emits the versioned comparison
+payload. A case whose recorded hash does not match `--old` is reported as a
+`baseline_mismatch` and is not attributed to the candidate program.
+Omitted-value cases are reported as `unavailable` and are not run. Full-value
+failed cases are baseline-verified and can report unchanged, path-changed,
+failure-changed, resolved-failure, or incompatible candidate behavior.
+Comparison JSON includes evaluated predicates and last-change source evidence
+for declared-output differences, so mixed-corpus totals reconcile without
+false change attribution.
+
+`gwt workbench case.json ... --output review.html` writes a self-contained local
+HTML dossier over the same validated artifacts. Paired `--old` and `--new`
+programs add comparison; `--program` adds a replay-verified scenario preview
+for the first case. The renderer does not evaluate policy or contact a service.
 
 `gwt validate file.gwt` is the standard local/CI gate. It checks the program,
 verifies canonical formatting, and runs embedded scenarios when the file has
@@ -741,10 +827,12 @@ EBNF grammar is [`docs/grammar.md`](docs/grammar.md). Design intent and
 language-shape guardrails live in
 [`docs/design-principles.md`](docs/design-principles.md). The current
 variant/match design pressure from MiniLang is captured in
-[`docs/variant-match-design.md`](docs/variant-match-design.md). Active
-stabilization work is tracked in
-[`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md). The concrete release-candidate
-gate is [`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md),
+[`docs/variant-match-design.md`](docs/variant-match-design.md). Current
+behavior-review product work is tracked in
+[`docs/roadmap-v0.4.md`](docs/roadmap-v0.4.md). The preceding v0.3 stabilization
+roadmap is [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md), and its concrete
+release-candidate gate is
+[`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md),
 release notes are in [`docs/release-notes-v0.3.md`](docs/release-notes-v0.3.md),
 and real-workflow evaluation should use
 [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md).

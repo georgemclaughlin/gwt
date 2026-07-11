@@ -1,0 +1,8 @@
+{
+  "hold": {
+    "hold_id": "HOLD-100",
+    "days_waiting": 2,
+    "copies_available": 1,
+    "accessible_format_needed": false
+  }
+}

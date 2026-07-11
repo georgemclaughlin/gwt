@@ -1,0 +1,703 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/execution-case.schema.json",
+  "title": "GWT Execution Case",
+  "description": "Execution Case v1 records completed or failed named-request executions under an explicit value and error capture policy.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "program",
+    "versions",
+    "request",
+    "result",
+    "execution",
+    "evidence",
+    "stateChanges",
+    "redaction",
+    "integrity"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "gwt.execution-case" },
+    "program": { "$ref": "#/$defs/program" },
+    "versions": { "$ref": "#/$defs/versions" },
+    "request": { "$ref": "#/$defs/request" },
+    "result": { "type": "object" },
+    "execution": { "$ref": "#/$defs/execution" },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" }
+    },
+    "stateChanges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stateChange" }
+    },
+    "redaction": { "$ref": "#/$defs/redaction" },
+    "integrity": { "$ref": "#/$defs/integrity" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "redaction": {
+            "properties": { "mode": { "const": "omit-values" } },
+            "required": ["mode"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "properties": { "input": { "maxProperties": 0 } }
+          },
+          "result": { "maxProperties": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": { "outcome": { "const": "failed" } },
+            "required": ["outcome"]
+          }
+        },
+        "required": ["execution"]
+      },
+      "then": {
+        "properties": {
+          "result": { "maxProperties": 0 },
+          "execution": {
+            "properties": {
+              "capturePolicy": {
+                "properties": { "onError": { "const": "record" } }
+              },
+              "status": { "const": { "availability": "unavailable" } },
+              "reason": { "const": { "availability": "unavailable" } }
+            }
+          },
+          "redaction": {
+            "properties": {
+              "availability": {
+                "properties": { "result": { "const": "unavailable" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": { "outcome": { "const": "completed" } },
+            "required": ["outcome"]
+          }
+        },
+        "required": ["execution"]
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "status": { "type": "null" },
+              "reason": { "type": "null" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "redaction": {
+            "properties": { "mode": { "const": "none" } },
+            "required": ["mode"]
+          }
+        },
+        "required": ["redaction"]
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "capturePolicy": {
+                "properties": { "values": { "const": "full" } }
+              }
+            }
+          },
+          "evidence": {
+            "items": {
+              "if": { "required": ["operands"] },
+              "then": {
+                "properties": {
+                  "operands": {
+                    "not": {
+                      "properties": {
+                        "availability": { "const": "redacted" }
+                      },
+                      "required": ["availability"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "redaction": {
+            "properties": { "mode": { "const": "omit-values" } },
+            "required": ["mode"]
+          }
+        },
+        "required": ["redaction"]
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "capturePolicy": {
+                "properties": { "values": { "const": "omit" } }
+              }
+            }
+          },
+          "evidence": {
+            "items": {
+              "if": { "required": ["operands"] },
+              "then": {
+                "properties": {
+                  "operands": { "const": { "availability": "redacted" } }
+                }
+              }
+            }
+          },
+          "stateChanges": {
+            "items": {
+              "properties": {
+                "before": { "const": { "availability": "redacted" } },
+                "after": { "const": { "availability": "redacted" } },
+                "patch": { "maxItems": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["file", "line", "column", "text"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "nullableSource": {
+      "anyOf": [
+        { "$ref": "#/$defs/source" },
+        { "type": "null" }
+      ]
+    },
+    "program": {
+      "type": "object",
+      "required": [
+        "name",
+        "file",
+        "hash",
+        "hashScope",
+        "importsDetected",
+        "importsIncludedInHash",
+        "identity",
+        "limitations"
+      ],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "file": { "type": "string" },
+        "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "hashScope": { "const": "dependency-closure" },
+        "importsDetected": { "type": "boolean" },
+        "importsIncludedInHash": { "const": true },
+        "identity": { "$ref": "#/$defs/programIdentity" },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "maxItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "programIdentity": {
+      "type": "object",
+      "required": ["algorithm", "entry", "digest", "modules"],
+      "properties": {
+        "algorithm": { "const": "gwt-program-closure-sha256-v1" },
+        "entry": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "modules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/programModuleIdentity" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "programModuleIdentity": {
+      "type": "object",
+      "required": ["specifier", "digest", "imports"],
+      "properties": {
+        "specifier": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "imports": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "versions": {
+      "type": "object",
+      "required": [
+        "packageName",
+        "packageVersion",
+        "languageSpecVersion",
+        "payloadSchemaVersion"
+      ],
+      "properties": {
+        "packageName": { "const": "gwtlang" },
+        "packageVersion": { "type": "string" },
+        "languageSpecVersion": { "type": "string" },
+        "payloadSchemaVersion": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "type": "object",
+      "required": ["name", "input", "inputFile"],
+      "properties": {
+        "name": { "type": "string" },
+        "input": { "type": "object" },
+        "inputFile": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "namedValue": {
+      "type": "object",
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "type": "string" },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "valueMarker": {
+      "type": "object",
+      "required": ["availability"],
+      "properties": {
+        "availability": { "enum": ["redacted", "unavailable"] }
+      },
+      "additionalProperties": false
+    },
+    "observedNamedValue": {
+      "anyOf": [
+        { "$ref": "#/$defs/namedValue" },
+        { "$ref": "#/$defs/valueMarker" },
+        { "type": "null" }
+      ]
+    },
+    "selectedDecision": {
+      "type": "object",
+      "required": ["condition", "result", "source"],
+      "properties": {
+        "condition": { "type": "string" },
+        "result": { "const": true },
+        "source": { "$ref": "#/$defs/nullableSource" }
+      },
+      "additionalProperties": false
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "outcome",
+        "traceId",
+        "capturedAt",
+        "executionBudget",
+        "maxCallDepth",
+        "capturePolicy",
+        "status",
+        "reason",
+        "selectedDecision"
+      ],
+      "properties": {
+        "outcome": { "enum": ["completed", "failed"] },
+        "traceId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "executionBudget": {
+          "anyOf": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "maxCallDepth": {
+          "anyOf": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "capturePolicy": { "$ref": "#/$defs/capturePolicy" },
+        "status": { "$ref": "#/$defs/observedNamedValue" },
+        "reason": { "$ref": "#/$defs/observedNamedValue" },
+        "selectedDecision": {
+          "anyOf": [
+            { "$ref": "#/$defs/selectedDecision" },
+            { "type": "null" }
+          ]
+        },
+        "error": { "$ref": "#/$defs/executionError" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "outcome": { "const": "failed" } },
+            "required": ["outcome"]
+          },
+          "then": { "required": ["error"] },
+          "else": { "not": { "required": ["error"] } }
+        }
+      ]
+    },
+    "capturePolicy": {
+      "type": "object",
+      "required": ["onError", "values"],
+      "properties": {
+        "onError": { "enum": ["raise", "record"] },
+        "values": { "enum": ["full", "omit"] }
+      },
+      "additionalProperties": false
+    },
+    "executionError": {
+      "type": "object",
+      "required": [
+        "kind",
+        "code",
+        "stage",
+        "message",
+        "messageAvailability",
+        "source"
+      ],
+      "properties": {
+        "kind": { "const": "GwtError" },
+        "code": { "const": "execution-failed" },
+        "stage": { "enum": ["parse", "execute"] },
+        "message": { "type": "string", "minLength": 1 },
+        "messageAvailability": { "enum": ["available", "redacted"] },
+        "source": { "$ref": "#/$defs/nullableSource" }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["sequence", "kind", "summary", "source"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["contract", "condition", "branch", "assertion", "behavior"] },
+        "summary": { "type": "string" },
+        "source": { "$ref": "#/$defs/nullableSource" },
+        "label": { "type": "string" },
+        "path": { "type": "string" },
+        "valueType": { "type": "string" },
+        "expression": { "type": "string" },
+        "result": { "type": "boolean" },
+        "branchKind": { "type": "string" },
+        "branchLabel": { "type": "string" },
+        "selected": { "type": "boolean" },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "operands": { "$ref": "#/$defs/operands" },
+        "phase": { "enum": ["enter", "exit"] },
+        "signature": { "type": "string", "minLength": 1 },
+        "callId": { "type": "string", "minLength": 1 },
+        "parentCallId": { "type": ["string", "null"] },
+        "depth": { "type": "integer", "minimum": 0 },
+        "behaviorOutcome": { "enum": ["completed", "failed"] }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": { "enum": ["condition", "assertion"] }
+            },
+            "required": ["kind"]
+          },
+          "then": { "required": ["expression", "result", "operands"] }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "contract" } },
+            "required": ["kind"]
+          },
+          "then": { "required": ["label", "path", "valueType", "result"] }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "branch" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": [
+              "branchKind",
+              "branchLabel",
+              "expression",
+              "selected",
+              "startLine",
+              "endLine"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "behavior" } }
+          },
+          "then": {
+            "required": [
+              "phase",
+              "signature",
+              "callId",
+              "parentCallId",
+              "depth"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "behavior" },
+              "phase": { "const": "exit" }
+            },
+            "required": ["kind", "phase"]
+          },
+          "then": { "required": ["behaviorOutcome"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "behavior" },
+              "phase": { "const": "enter" }
+            },
+            "required": ["kind", "phase"]
+          },
+          "then": { "not": { "required": ["behaviorOutcome"] } }
+        }
+      ]
+    },
+    "operands": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["availability", "values"],
+          "properties": {
+            "availability": { "const": "available" },
+            "values": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/operand" }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["availability", "reason"],
+          "properties": {
+            "availability": { "const": "unavailable" },
+            "reason": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["availability"],
+          "properties": {
+            "availability": { "const": "redacted" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "operand": {
+      "type": "object",
+      "required": ["name", "valueType", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "valueType": { "type": "string", "minLength": 1 },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "caseValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["present"],
+          "properties": { "present": { "const": false } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["present", "value"],
+          "properties": {
+            "present": { "const": true },
+            "value": true
+          },
+          "additionalProperties": false
+        },
+        { "$ref": "#/$defs/valueMarker" }
+      ]
+    },
+    "patchOperation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["op", "path", "value"],
+          "properties": {
+            "op": { "enum": ["add", "replace"] },
+            "path": { "type": "string" },
+            "value": true
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["op", "path"],
+          "properties": {
+            "op": { "const": "remove" },
+            "path": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "stateChange": {
+      "type": "object",
+      "required": [
+        "sequence",
+        "path",
+        "pointer",
+        "operation",
+        "before",
+        "after",
+        "patch",
+        "source"
+      ],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "path": { "type": "string" },
+        "pointer": { "type": "string" },
+        "operation": { "enum": ["add", "replace", "remove"] },
+        "before": { "$ref": "#/$defs/caseValue" },
+        "after": { "$ref": "#/$defs/caseValue" },
+        "patch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/patchOperation" }
+        },
+        "source": { "$ref": "#/$defs/nullableSource" }
+      },
+      "additionalProperties": false
+    },
+    "redaction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["mode", "valuesIncluded", "redactedPaths", "availability"],
+          "properties": {
+            "mode": { "const": "none" },
+            "valuesIncluded": { "const": true },
+            "redactedPaths": {
+              "type": "array",
+              "items": { "type": "string" },
+              "maxItems": 0
+            },
+            "availability": { "$ref": "#/$defs/fullAvailability" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["mode", "valuesIncluded", "redactedPaths", "availability"],
+          "properties": {
+            "mode": { "const": "omit-values" },
+            "valuesIncluded": { "const": false },
+            "redactedPaths": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "availability": { "$ref": "#/$defs/omittedAvailability" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "fullAvailability": {
+      "type": "object",
+      "required": [
+        "programFile",
+        "requestInputFile",
+        "requestInput",
+        "result",
+        "stateChangeValues",
+        "operandValues"
+      ],
+      "properties": {
+        "programFile": { "const": "available" },
+        "requestInputFile": { "enum": ["available", "absent"] },
+        "requestInput": { "const": "available" },
+        "result": { "enum": ["available", "unavailable"] },
+        "stateChangeValues": { "const": "available" },
+        "operandValues": { "const": "available-or-unavailable" }
+      },
+      "additionalProperties": false
+    },
+    "omittedAvailability": {
+      "type": "object",
+      "required": [
+        "programFile",
+        "requestInputFile",
+        "requestInput",
+        "result",
+        "stateChangeValues",
+        "operandValues"
+      ],
+      "properties": {
+        "programFile": { "const": "redacted" },
+        "requestInputFile": { "enum": ["redacted", "absent"] },
+        "requestInput": { "const": "redacted" },
+        "result": { "enum": ["redacted", "unavailable"] },
+        "stateChangeValues": { "const": "redacted" },
+        "operandValues": { "const": "redacted" }
+      },
+      "additionalProperties": false
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "scope", "digest"],
+      "properties": {
+        "algorithm": { "const": "gwt-execution-case-sha256-v1" },
+        "scope": { "const": "artifact-without-integrity" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
