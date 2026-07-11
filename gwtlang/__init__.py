@@ -33,6 +33,21 @@ from .api import (
     validate_file,
 )
 from .checker import check_program
+from .comparison import (
+    COMPARISON_SCHEMA_VERSION,
+    CaseComparison,
+    ComparisonResult,
+    ComparisonTotals,
+    compare_execution_cases,
+)
+from .execution_case import (
+    EXECUTION_CASE_SCHEMA_VERSION,
+    ExecutionCase,
+    ExecutionCaseCapturePolicy,
+    capture_execution_case,
+    load_execution_case,
+)
+from .explain import ExplainResult, explain_json_file
 from .formatter import FormatResult, format_file, format_text, is_formatted
 from .host import GwtHostAdapter, HostContext, HostObservation
 from .http_server import (
@@ -53,11 +68,29 @@ from .payloads import (
     CompletionItemPayload,
     DebugLinePayload,
     DiagnosticPayload,
+    ExecutionCaseEvidencePayload,
+    ExecutionCaseErrorPayload,
+    ExecutionCaseModuleIdentityPayload,
+    ExecutionCasePayload,
+    ExecutionCaseProgramIdentityPayload,
+    ExecutionCaseProgramPayload,
+    ExecutionCaseSourcePayload,
+    ExecutionCaseStateChangePayload,
+    ExecutionCaseValueMarkerPayload,
     ExecutionPayload,
     InspectionPayload,
     JsonObject,
     JsonValue,
     ValidationPayload,
+)
+from .program_identity import (
+    PROGRAM_IDENTITY_ALGORITHM,
+    LoadedProgramModule,
+    LoadedProgramSnapshot,
+    ProgramIdentityManifest,
+    ProgramModuleIdentity,
+    build_program_identity,
+    load_program_snapshot,
 )
 from .runtime import (
     GwtError,
@@ -67,6 +100,7 @@ from .runtime import (
     run_request,
     run_source,
 )
+from .scenario_generation import ScenarioGenerationResult, generate_scenario
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
 from .tracing import (
@@ -92,16 +126,30 @@ from .version import (
     current_package_version,
     version_payload,
 )
+from .workbench import render_workbench_html
 
 __all__ = [
     "CheckResult",
     "CheckPayload",
     "CompiledProgram",
     "CompiledProgramPayload",
+    "COMPARISON_SCHEMA_VERSION",
+    "CaseComparison",
+    "ComparisonResult",
+    "ComparisonTotals",
     "CompletionItemPayload",
     "DEFAULT_MAX_REQUEST_BODY_BYTES",
     "DebugLinePayload",
     "DiagnosticPayload",
+    "EXECUTION_CASE_SCHEMA_VERSION",
+    "ExecutionCase",
+    "ExecutionCaseEvidencePayload",
+    "ExecutionCaseModuleIdentityPayload",
+    "ExecutionCasePayload",
+    "ExecutionCaseProgramIdentityPayload",
+    "ExecutionCaseProgramPayload",
+    "ExecutionCaseSourcePayload",
+    "ExecutionCaseStateChangePayload",
     "ExecutionResult",
     "ExecutionPayload",
     "FormatResult",
@@ -125,6 +173,8 @@ __all__ = [
     "JsonValue",
     "LANGUAGE_SPEC_PATH",
     "LANGUAGE_SPEC_VERSION",
+    "LoadedProgramModule",
+    "LoadedProgramSnapshot",
     "OpenApiResult",
     "OtlpHttpExporter",
     "OtlpMetric",
@@ -132,9 +182,13 @@ __all__ = [
     "OtlpSpan",
     "PACKAGE_NAME",
     "PACKAGE_VERSION",
+    "PROGRAM_IDENTITY_ALGORITHM",
     "PAYLOAD_SCHEMA_VERSION",
     "PythonTypesResult",
+    "ProgramIdentityManifest",
+    "ProgramModuleIdentity",
     "SPAN_KIND_CLIENT",
+    "ScenarioGenerationResult",
     "TypeScriptTypesResult",
     "VersionPayload",
     "AnalysisPayload",
@@ -143,26 +197,33 @@ __all__ = [
     "analyze_file",
     "analyze_source",
     "build_symbol_table",
+    "build_program_identity",
     "check_file",
     "check_program",
     "check_text",
+    "capture_execution_case",
     "compile_file",
     "compile_text",
+    "compare_execution_cases",
     "create_http_server",
     "current_package_version",
     "format_file",
     "format_text",
+    "explain_json_file",
     "generate_openapi_file",
     "generate_openapi_text",
     "generate_json_schema_file",
     "generate_json_schema_text",
     "generate_python_file",
     "generate_python_text",
+    "generate_scenario",
     "generate_typescript_file",
     "generate_typescript_text",
     "inspect_file",
     "inspect_source",
     "is_formatted",
+    "load_execution_case",
+    "load_program_snapshot",
     "make_traceparent",
     "new_span_id",
     "new_trace_id",
@@ -177,7 +238,9 @@ __all__ = [
     "run_result_payload",
     "run_request",
     "run_source",
+    "render_workbench_html",
     "run_text",
     "validate_file",
     "version_payload",
+    "ExplainResult",
 ]

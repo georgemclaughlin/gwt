@@ -1,0 +1,79 @@
+PROGRAM library hold routing candidate
+
+TYPE HoldQueue is "new" | "standard" | "priority"
+TYPE HoldStatus is "new" | "waiting" | "ready"
+TYPE HoldReason is "new" | "copy_available" | "accessible_format" | "wait_time_priority" | "awaiting_turn"
+
+RECORD HoldRequest
+  hold_id: text
+  days_waiting: integer
+  copies_available: integer
+  accessible_format_needed: boolean
+
+RECORD HoldDecision
+  queue: HoldQueue
+  status: HoldStatus
+  reason: HoldReason
+
+REQUEST route hold
+  GIVEN hold is HoldRequest
+
+  GIVEN decision is HoldDecision
+    queue: "new"
+    status: "new"
+    reason: "new"
+
+  WHEN route hold into decision
+
+  OUTPUT decision is HoldDecision
+
+  THEN decision.queue != "new"
+  AND decision.status != "new"
+  AND decision.reason != "new"
+
+WHEN route <hold> into <decision>
+  GIVEN hold is HoldRequest
+  AND decision is HoldDecision
+  DECIDE
+    WHEN hold.copies_available > 0
+      set decision.queue to "standard"
+      set decision.status to "ready"
+      set decision.reason to "copy_available"
+    WHEN hold.accessible_format_needed
+      set decision.queue to "priority"
+      set decision.status to "waiting"
+      set decision.reason to "accessible_format"
+    WHEN hold.days_waiting >= 5
+      set decision.queue to "priority"
+      set decision.status to "waiting"
+      set decision.reason to "wait_time_priority"
+    ELSE
+      set decision.queue to "standard"
+      set decision.status to "waiting"
+      set decision.reason to "awaiting_turn"
+
+SCENARIO available copy is ready for pickup
+GIVEN hold is HoldRequest
+  hold_id: "HOLD-100"
+  days_waiting: 2
+  copies_available: 1
+  accessible_format_needed: false
+
+REQUEST route hold
+
+THEN decision.queue == "standard"
+AND decision.status == "ready"
+AND decision.reason == "copy_available"
+
+SCENARIO five day wait enters the priority queue
+GIVEN hold is HoldRequest
+  hold_id: "HOLD-200"
+  days_waiting: 5
+  copies_available: 0
+  accessible_format_needed: false
+
+REQUEST route hold
+
+THEN decision.queue == "priority"
+AND decision.status == "waiting"
+AND decision.reason == "wait_time_priority"

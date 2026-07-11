@@ -63,10 +63,13 @@ class Unary(Expr):
 
     def evaluate(self, scope: Scope) -> Any:
         value = self.right.evaluate(scope)
-        if self.operator == "-":
-            return -value
-        if self.operator == "not":
-            return not _truthy(value)
+        try:
+            if self.operator == "-":
+                return -value
+            if self.operator == "not":
+                return not _truthy(value)
+        except (ArithmeticError, TypeError, ValueError) as exc:
+            raise _operation_error(self.operator, exc) from exc
         raise AssertionError(self.operator)
 
 
@@ -84,34 +87,44 @@ class Binary(Expr):
 
         left = self.left.evaluate(scope)
         right = self.right.evaluate(scope)
-        left, right = _coerce_mixed_float_decimal(left, right)
+        try:
+            left, right = _coerce_mixed_float_decimal(left, right)
 
-        if self.operator == "+":
-            return left + right
-        if self.operator == "-":
-            return left - right
-        if self.operator == "*":
-            return left * right
-        if self.operator == "/":
-            return left / right
-        if self.operator == "==":
-            return _equal_values(left, right)
-        if self.operator == "!=":
-            return not _equal_values(left, right)
-        if self.operator == ">":
-            return left > right
-        if self.operator == "<":
-            return left < right
-        if self.operator == ">=":
-            return left >= right
-        if self.operator == "<=":
-            return left <= right
-        if self.operator == "contains":
-            try:
-                return right in left
-            except TypeError as exc:
-                raise GwtError("contains requires a text, list, or mapping value on the left") from exc
+            if self.operator == "+":
+                return left + right
+            if self.operator == "-":
+                return left - right
+            if self.operator == "*":
+                return left * right
+            if self.operator == "/":
+                return left / right
+            if self.operator == "==":
+                return _equal_values(left, right, scope)
+            if self.operator == "!=":
+                return not _equal_values(left, right, scope)
+            if self.operator == ">":
+                return left > right
+            if self.operator == "<":
+                return left < right
+            if self.operator == ">=":
+                return left >= right
+            if self.operator == "<=":
+                return left <= right
+            if self.operator == "contains":
+                return _contains(left, right, scope)
+        except (ArithmeticError, TypeError, ValueError) as exc:
+            if self.operator == "contains":
+                raise GwtError(
+                    "contains requires a text, list, or mapping value on the left"
+                ) from exc
+            raise _operation_error(self.operator, exc) from exc
         raise AssertionError(self.operator)
+
+
+def _operation_error(operator: str, error: BaseException) -> GwtError:
+    if isinstance(error, ZeroDivisionError):
+        return GwtError("division by zero")
+    return GwtError(f"invalid operands for operator '{operator}': {error}")
 
 
 def _coerce_mixed_float_decimal(left: Any, right: Any) -> tuple[Any, Any]:
@@ -122,23 +135,88 @@ def _coerce_mixed_float_decimal(left: Any, right: Any) -> tuple[Any, Any]:
     return left, right
 
 
-def _equal_values(left: object, right: object) -> bool:
-    if isinstance(left, list) and isinstance(right, list):
-        left_items = cast(list[object], left)
-        right_items = cast(list[object], right)
-        return len(left_items) == len(right_items) and all(
-            _equal_values(left_item, right_item)
-            for left_item, right_item in zip(left_items, right_items)
-        )
-    if isinstance(left, dict) and isinstance(right, dict):
-        left_items = cast(dict[object, object], left)
-        right_items = cast(dict[object, object], right)
-        return left_items.keys() == right_items.keys() and all(
-            _equal_values(left_items[key], right_items[key])
-            for key in left_items
-        )
-    left, right = _coerce_mixed_float_decimal(left, right)
-    return left == right
+def _equal_values(left: object, right: object, scope: Scope) -> bool:
+    """Compare JSON-shaped values without unmetered recursive collection walks."""
+
+    tasks: list[tuple[str, object, object]] = [("compare", left, right)]
+    while tasks:
+        kind, first, second = tasks.pop()
+        if kind == "list-items":
+            iterator = cast(Any, first)
+            try:
+                left_item, right_item = next(iterator)
+            except StopIteration:
+                continue
+            _consume_collection_work(scope)
+            tasks.append((kind, iterator, second))
+            tasks.append(("compare", left_item, right_item))
+            continue
+        if kind == "mapping-items":
+            iterator = cast(Any, first)
+            left_items, right_items = cast(
+                tuple[dict[object, object], dict[object, object]],
+                second,
+            )
+            try:
+                key = next(iterator)
+            except StopIteration:
+                continue
+            _consume_collection_work(scope)
+            if key not in right_items:
+                return False
+            tasks.append((kind, iterator, second))
+            tasks.append(("compare", left_items[key], right_items[key]))
+            continue
+
+        current_left, current_right = _coerce_mixed_float_decimal(first, second)
+        if isinstance(current_left, list) and isinstance(current_right, list):
+            left_items = cast(list[object], current_left)
+            right_items = cast(list[object], current_right)
+            if len(left_items) != len(right_items):
+                return False
+            tasks.append(("list-items", iter(zip(left_items, right_items)), ()))
+            continue
+        if isinstance(current_left, dict) and isinstance(current_right, dict):
+            left_mapping = cast(dict[object, object], current_left)
+            right_mapping = cast(dict[object, object], current_right)
+            if len(left_mapping) != len(right_mapping):
+                return False
+            tasks.append(
+                (
+                    "mapping-items",
+                    iter(left_mapping),
+                    (left_mapping, right_mapping),
+                )
+            )
+            continue
+        if current_left != current_right:
+            return False
+    return True
+
+
+def _contains(left: object, right: object, scope: Scope) -> bool:
+    if isinstance(left, str):
+        if not isinstance(right, str):
+            raise TypeError("text membership requires text")
+        for _ in left:
+            _consume_collection_work(scope)
+        return right in left
+    if isinstance(left, list):
+        for item in cast(list[object], left):
+            _consume_collection_work(scope)
+            if _equal_values(item, right, scope):
+                return True
+        return False
+    if isinstance(left, dict):
+        _consume_collection_work(scope)
+        return right in left
+    raise TypeError("left operand is not text, list, or mapping")
+
+
+def _consume_collection_work(scope: Scope) -> None:
+    consume = getattr(scope, "consume_expression_work", None)
+    if callable(consume):
+        consume()
 
 
 class ExpressionParser:

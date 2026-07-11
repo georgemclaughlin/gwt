@@ -17,3 +17,9 @@ packages = ["gwtlang"]
 
 [tool.setuptools.package-data]
 gwtlang = ["py.typed"]
+
+[tool.setuptools.data-files]
+"share/gwtlang/schemas" = [
+  "docs/schemas/execution-case.schema.json",
+  "docs/schemas/comparison.schema.json",
+]

@@ -1,0 +1,431 @@
+{
+  "evidence": [
+    {
+      "kind": "contract",
+      "label": "REQUEST",
+      "path": "hold",
+      "result": true,
+      "sequence": 4,
+      "source": {
+        "column": 3,
+        "file": "./baseline.gwt",
+        "line": 19,
+        "text": "REQUEST hold is HoldRequest"
+      },
+      "summary": "REQUEST hold is HoldRequest passed",
+      "valueType": "HoldRequest"
+    },
+    {
+      "callId": "call-1",
+      "depth": 0,
+      "kind": "behavior",
+      "parentCallId": null,
+      "phase": "enter",
+      "sequence": 9,
+      "signature": "route <hold> into <decision>",
+      "source": {
+        "column": 8,
+        "file": "./baseline.gwt",
+        "line": 26,
+        "text": "route hold into decision"
+      },
+      "summary": "enter behavior route <hold> into <decision>"
+    },
+    {
+      "expression": "hold.copies_available > 0",
+      "kind": "condition",
+      "operands": {
+        "availability": "available",
+        "values": [
+          {
+            "name": "hold.copies_available",
+            "value": 1,
+            "valueType": "integer"
+          }
+        ]
+      },
+      "result": true,
+      "sequence": 11,
+      "source": {
+        "column": 10,
+        "file": "./baseline.gwt",
+        "line": 38,
+        "text": "hold.copies_available > 0"
+      },
+      "summary": "hold.copies_available > 0 -> true"
+    },
+    {
+      "branchKind": "DECIDE",
+      "branchLabel": "WHEN",
+      "endLine": 41,
+      "expression": "hold.copies_available > 0",
+      "kind": "branch",
+      "selected": true,
+      "sequence": 12,
+      "source": {
+        "column": 10,
+        "file": "./baseline.gwt",
+        "line": 38,
+        "text": "hold.copies_available > 0"
+      },
+      "startLine": 39,
+      "summary": "DECIDE WHEN hold.copies_available > 0 selected lines 39-41"
+    },
+    {
+      "behaviorOutcome": "completed",
+      "callId": "call-1",
+      "depth": 0,
+      "kind": "behavior",
+      "parentCallId": null,
+      "phase": "exit",
+      "sequence": 16,
+      "signature": "route <hold> into <decision>",
+      "source": {
+        "column": 8,
+        "file": "./baseline.gwt",
+        "line": 26,
+        "text": "route hold into decision"
+      },
+      "summary": "exit behavior route <hold> into <decision> completed"
+    },
+    {
+      "kind": "contract",
+      "label": "OUTPUT",
+      "path": "decision",
+      "result": true,
+      "sequence": 17,
+      "source": {
+        "column": 3,
+        "file": "./baseline.gwt",
+        "line": 28,
+        "text": "OUTPUT decision is HoldDecision"
+      },
+      "summary": "OUTPUT decision is HoldDecision passed",
+      "valueType": "HoldDecision"
+    },
+    {
+      "expression": "decision.queue != \"new\"",
+      "kind": "assertion",
+      "operands": {
+        "availability": "available",
+        "values": [
+          {
+            "name": "decision.queue",
+            "value": "standard",
+            "valueType": "text"
+          }
+        ]
+      },
+      "result": true,
+      "sequence": 18,
+      "source": {
+        "column": 8,
+        "file": "./baseline.gwt",
+        "line": 30,
+        "text": "decision.queue != \"new\""
+      },
+      "summary": "THEN decision.queue != \"new\" passed"
+    },
+    {
+      "expression": "decision.status != \"new\"",
+      "kind": "assertion",
+      "operands": {
+        "availability": "available",
+        "values": [
+          {
+            "name": "decision.status",
+            "value": "ready",
+            "valueType": "text"
+          }
+        ]
+      },
+      "result": true,
+      "sequence": 19,
+      "source": {
+        "column": 8,
+        "file": "./baseline.gwt",
+        "line": 31,
+        "text": "decision.status != \"new\""
+      },
+      "summary": "THEN decision.status != \"new\" passed"
+    },
+    {
+      "expression": "decision.reason != \"new\"",
+      "kind": "assertion",
+      "operands": {
+        "availability": "available",
+        "values": [
+          {
+            "name": "decision.reason",
+            "value": "copy_available",
+            "valueType": "text"
+          }
+        ]
+      },
+      "result": true,
+      "sequence": 20,
+      "source": {
+        "column": 8,
+        "file": "./baseline.gwt",
+        "line": 32,
+        "text": "decision.reason != \"new\""
+      },
+      "summary": "THEN decision.reason != \"new\" passed"
+    }
+  ],
+  "execution": {
+    "capturePolicy": {
+      "onError": "raise",
+      "values": "full"
+    },
+    "capturedAt": "2026-07-10T06:39:19.667791Z",
+    "executionBudget": 100000,
+    "maxCallDepth": 100,
+    "outcome": "completed",
+    "reason": null,
+    "selectedDecision": {
+      "condition": "hold.copies_available > 0",
+      "result": true,
+      "source": {
+        "column": 10,
+        "file": "./baseline.gwt",
+        "line": 38,
+        "text": "hold.copies_available > 0"
+      }
+    },
+    "status": null,
+    "traceId": "fe83a551173ad104fa31f1005573b09a"
+  },
+  "integrity": {
+    "algorithm": "gwt-execution-case-sha256-v1",
+    "digest": "sha256:cc9436c1dcb949113b69b06a0542f99ad6aec6532b26ef08b5103856c39c131d",
+    "scope": "artifact-without-integrity"
+  },
+  "kind": "gwt.execution-case",
+  "program": {
+    "file": "examples/behavior_review/baseline.gwt",
+    "hash": "sha256:2ebc626fddd374c1fa573937c0a4f0b20f3800a897fc3e756a1349dbeb0ae8d8",
+    "hashScope": "dependency-closure",
+    "identity": {
+      "algorithm": "gwt-program-closure-sha256-v1",
+      "digest": "sha256:2ebc626fddd374c1fa573937c0a4f0b20f3800a897fc3e756a1349dbeb0ae8d8",
+      "entry": "./baseline.gwt",
+      "modules": [
+        {
+          "digest": "sha256:f0ba0381e3100b18eecdd790b9af0b7fd0b253a3b198007fca112acef1f3a069",
+          "imports": [],
+          "specifier": "./baseline.gwt"
+        }
+      ]
+    },
+    "importsDetected": false,
+    "importsIncludedInHash": true,
+    "limitations": [],
+    "name": "library hold routing baseline"
+  },
+  "redaction": {
+    "availability": {
+      "operandValues": "available-or-unavailable",
+      "programFile": "available",
+      "requestInput": "available",
+      "requestInputFile": "available",
+      "result": "available",
+      "stateChangeValues": "available"
+    },
+    "mode": "none",
+    "redactedPaths": [],
+    "valuesIncluded": true
+  },
+  "request": {
+    "input": {
+      "hold": {
+        "accessible_format_needed": false,
+        "copies_available": 1,
+        "days_waiting": 2,
+        "hold_id": "HOLD-100"
+      }
+    },
+    "inputFile": "examples/behavior_review/available-copy.json",
+    "name": "route hold"
+  },
+  "result": {
+    "decision": {
+      "queue": "standard",
+      "reason": "copy_available",
+      "status": "ready"
+    }
+  },
+  "schemaVersion": 1,
+  "stateChanges": [
+    {
+      "after": {
+        "present": true,
+        "value": "new"
+      },
+      "before": {
+        "present": false
+      },
+      "operation": "add",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/decision",
+          "value": {}
+        },
+        {
+          "op": "add",
+          "path": "/decision/queue",
+          "value": "new"
+        }
+      ],
+      "path": "decision.queue",
+      "pointer": "/decision/queue",
+      "sequence": 5,
+      "source": {
+        "column": 5,
+        "file": "./baseline.gwt",
+        "line": 22,
+        "text": "decision.queue is \"new\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": "new"
+      },
+      "before": {
+        "present": false
+      },
+      "operation": "add",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/decision/status",
+          "value": "new"
+        }
+      ],
+      "path": "decision.status",
+      "pointer": "/decision/status",
+      "sequence": 6,
+      "source": {
+        "column": 5,
+        "file": "./baseline.gwt",
+        "line": 23,
+        "text": "decision.status is \"new\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": "new"
+      },
+      "before": {
+        "present": false
+      },
+      "operation": "add",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/decision/reason",
+          "value": "new"
+        }
+      ],
+      "path": "decision.reason",
+      "pointer": "/decision/reason",
+      "sequence": 7,
+      "source": {
+        "column": 5,
+        "file": "./baseline.gwt",
+        "line": 24,
+        "text": "decision.reason is \"new\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": "standard"
+      },
+      "before": {
+        "present": true,
+        "value": "new"
+      },
+      "operation": "replace",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/decision/queue",
+          "value": "standard"
+        }
+      ],
+      "path": "decision.queue",
+      "pointer": "/decision/queue",
+      "sequence": 13,
+      "source": {
+        "column": 7,
+        "file": "./baseline.gwt",
+        "line": 39,
+        "text": "set decision.queue to \"standard\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": "ready"
+      },
+      "before": {
+        "present": true,
+        "value": "new"
+      },
+      "operation": "replace",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/decision/status",
+          "value": "ready"
+        }
+      ],
+      "path": "decision.status",
+      "pointer": "/decision/status",
+      "sequence": 14,
+      "source": {
+        "column": 7,
+        "file": "./baseline.gwt",
+        "line": 40,
+        "text": "set decision.status to \"ready\""
+      }
+    },
+    {
+      "after": {
+        "present": true,
+        "value": "copy_available"
+      },
+      "before": {
+        "present": true,
+        "value": "new"
+      },
+      "operation": "replace",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/decision/reason",
+          "value": "copy_available"
+        }
+      ],
+      "path": "decision.reason",
+      "pointer": "/decision/reason",
+      "sequence": 15,
+      "source": {
+        "column": 7,
+        "file": "./baseline.gwt",
+        "line": 41,
+        "text": "set decision.reason to \"copy_available\""
+      }
+    }
+  ],
+  "versions": {
+    "languageSpecVersion": "v0.2",
+    "packageName": "gwtlang",
+    "packageVersion": "0.3.0",
+    "payloadSchemaVersion": 3
+  }
+}

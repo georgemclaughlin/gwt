@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/comparison.schema.json",
+  "title": "GWT Execution Case Comparison",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "oldProgram",
+    "newProgram",
+    "totals",
+    "cases"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "gwt.comparison" },
+    "oldProgram": { "$ref": "#/$defs/program" },
+    "newProgram": { "$ref": "#/$defs/program" },
+    "totals": { "$ref": "#/$defs/totals" },
+    "cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "program": {
+      "type": "object",
+      "required": ["hash", "entry"],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "entry": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "totals": {
+      "type": "object",
+      "required": [
+        "cases",
+        "unavailable",
+        "baselineMismatch",
+        "unchanged",
+        "pathChanged",
+        "outputChanged",
+        "newFailure",
+        "resolvedFailure",
+        "failureChanged",
+        "incompatible"
+      ],
+      "properties": {
+        "cases": { "type": "integer", "minimum": 0 },
+        "unavailable": { "type": "integer", "minimum": 0 },
+        "baselineMismatch": { "type": "integer", "minimum": 0 },
+        "unchanged": { "type": "integer", "minimum": 0 },
+        "pathChanged": { "type": "integer", "minimum": 0 },
+        "outputChanged": { "type": "integer", "minimum": 0 },
+        "newFailure": { "type": "integer", "minimum": 0 },
+        "resolvedFailure": { "type": "integer", "minimum": 0 },
+        "failureChanged": { "type": "integer", "minimum": 0 },
+        "incompatible": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "index",
+        "request",
+        "classification",
+        "recordedProgramHash",
+        "detail",
+        "outputDifferences",
+        "capturedSelectedDecision",
+        "oldSelectedDecision",
+        "newSelectedDecision",
+        "capturedEvaluatedConditions",
+        "oldEvaluatedConditions",
+        "newEvaluatedConditions",
+        "capturedEvidenceDigest",
+        "oldEvidenceDigest",
+        "newEvidenceDigest",
+        "oldError",
+        "newError"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "index": { "type": "integer", "minimum": 1 },
+        "request": { "type": "string" },
+        "classification": {
+          "enum": [
+            "unavailable",
+            "baseline_mismatch",
+            "unchanged",
+            "path_changed",
+            "output_changed",
+            "new_failure",
+            "resolved_failure",
+            "failure_changed",
+            "incompatible"
+          ]
+        },
+        "recordedProgramHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "detail": { "type": ["string", "null"] },
+        "outputDifferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/outputDifference" }
+        },
+        "capturedSelectedDecision": {
+          "$ref": "#/$defs/nullableSelectedDecision"
+        },
+        "oldSelectedDecision": {
+          "$ref": "#/$defs/nullableSelectedDecision"
+        },
+        "newSelectedDecision": {
+          "$ref": "#/$defs/nullableSelectedDecision"
+        },
+        "capturedEvaluatedConditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evaluatedCondition" }
+        },
+        "oldEvaluatedConditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evaluatedCondition" }
+        },
+        "newEvaluatedConditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evaluatedCondition" }
+        },
+        "capturedEvidenceDigest": { "$ref": "#/$defs/digest" },
+        "oldEvidenceDigest": { "$ref": "#/$defs/nullableDigest" },
+        "newEvidenceDigest": { "$ref": "#/$defs/nullableDigest" },
+        "oldError": { "$ref": "#/$defs/nullableError" },
+        "newError": { "$ref": "#/$defs/nullableError" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "classification": { "const": "unavailable" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "oldEvaluatedConditions": { "maxItems": 0 },
+              "newEvaluatedConditions": { "maxItems": 0 },
+              "oldEvidenceDigest": { "type": "null" },
+              "newEvidenceDigest": { "type": "null" },
+              "oldError": { "type": "null" },
+              "newError": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "baseline_mismatch" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "newEvaluatedConditions": { "maxItems": 0 },
+              "newEvidenceDigest": { "type": "null" },
+              "newError": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "output_changed" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "minItems": 1 },
+              "oldEvidenceDigest": { "$ref": "#/$defs/digest" },
+              "newEvidenceDigest": { "$ref": "#/$defs/digest" },
+              "oldError": { "type": "null" },
+              "newError": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "classification": { "enum": ["unchanged", "path_changed"] }
+            },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "oldEvidenceDigest": { "$ref": "#/$defs/digest" },
+              "newEvidenceDigest": { "$ref": "#/$defs/digest" }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "oldError": { "type": "null" },
+                  "newError": { "type": "null" }
+                }
+              },
+              {
+                "properties": {
+                  "oldError": { "$ref": "#/$defs/error" },
+                  "newError": { "$ref": "#/$defs/error" }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "new_failure" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "oldError": { "type": "null" },
+              "newError": { "$ref": "#/$defs/error" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "resolved_failure" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "oldError": { "$ref": "#/$defs/error" },
+              "newError": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "failure_changed" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "oldError": { "$ref": "#/$defs/error" },
+              "newError": { "$ref": "#/$defs/error" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "classification": { "const": "incompatible" } },
+            "required": ["classification"]
+          },
+          "then": {
+            "properties": {
+              "outputDifferences": { "maxItems": 0 },
+              "newError": { "$ref": "#/$defs/error" }
+            }
+          }
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nullableDigest": {
+      "anyOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "comparedValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["present"],
+          "properties": { "present": { "const": false } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["present", "value"],
+          "properties": {
+            "present": { "const": true },
+            "value": true
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "outputDifference": {
+      "type": "object",
+      "required": [
+        "path",
+        "old",
+        "new",
+        "oldLastChangeSource",
+        "newLastChangeSource"
+      ],
+      "properties": {
+        "path": { "type": "string", "pattern": "^/" },
+        "old": { "$ref": "#/$defs/comparedValue" },
+        "new": { "$ref": "#/$defs/comparedValue" },
+        "oldLastChangeSource": { "$ref": "#/$defs/nullableSource" },
+        "newLastChangeSource": { "$ref": "#/$defs/nullableSource" }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["file", "line", "column", "text"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "nullableSource": {
+      "anyOf": [
+        { "$ref": "#/$defs/source" },
+        { "type": "null" }
+      ]
+    },
+    "selectedDecision": {
+      "type": "object",
+      "required": ["condition", "result", "source"],
+      "properties": {
+        "condition": { "type": "string" },
+        "result": { "type": "boolean" },
+        "source": {
+          "anyOf": [
+            { "$ref": "#/$defs/source" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "evaluatedCondition": {
+      "type": "object",
+      "required": ["expression", "result", "operands", "source"],
+      "properties": {
+        "expression": { "type": "string" },
+        "result": { "type": "boolean" },
+        "operands": { "$ref": "#/$defs/operands" },
+        "source": { "$ref": "#/$defs/nullableSource" }
+      },
+      "additionalProperties": false
+    },
+    "operands": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["availability", "values"],
+          "properties": {
+            "availability": { "const": "available" },
+            "values": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/operand" }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["availability", "reason"],
+          "properties": {
+            "availability": { "const": "unavailable" },
+            "reason": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["availability"],
+          "properties": { "availability": { "const": "redacted" } },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "operand": {
+      "type": "object",
+      "required": ["name", "valueType", "value"],
+      "properties": {
+        "name": { "type": "string" },
+        "valueType": { "type": "string" },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "nullableSelectedDecision": {
+      "anyOf": [
+        { "$ref": "#/$defs/selectedDecision" },
+        { "type": "null" }
+      ]
+    },
+    "errorSource": {
+      "type": "object",
+      "required": ["file", "line", "column"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["kind", "message", "source"],
+      "properties": {
+        "kind": { "const": "GwtError" },
+        "message": { "type": "string" },
+        "source": {
+          "anyOf": [
+            { "$ref": "#/$defs/errorSource" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "nullableError": {
+      "anyOf": [
+        { "$ref": "#/$defs/error" },
+        { "type": "null" }
+      ]
+    }
+  }
+}

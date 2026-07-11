@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import patch
 
@@ -67,6 +68,9 @@ class TracingTests(unittest.TestCase):
         self.assertIn("GWT WHEN checkout <cart>", span_names)
         self.assertIn("gwt.statement.executed", event_names)
         self.assertIn("gwt.contract.checked", event_names)
+        self.assertIn("gwt.behavior.entered", event_names)
+        self.assertIn("gwt.behavior.exited", event_names)
+        self.assertIn("gwt.input.applied", event_names)
         self.assertIn("gwt.assertion.checked", event_names)
         self.assertIn("gwt.request.completed", event_names)
         self.assertTrue(
@@ -91,6 +95,34 @@ class TracingTests(unittest.TestCase):
                 and "cart.total=92" in event.attributes["gwt.event.summary"]
                 for event in events
             )
+        )
+
+        behavior_events = [
+            event for event in events
+            if event.name in {"gwt.behavior.entered", "gwt.behavior.exited"}
+        ]
+        self.assertEqual(
+            [event.attributes["gwt.behavior.phase"] for event in behavior_events],
+            ["enter", "exit"],
+        )
+        self.assertEqual(
+            behavior_events[0].attributes["gwt.behavior.call_id"],
+            behavior_events[1].attributes["gwt.behavior.call_id"],
+        )
+        self.assertEqual(behavior_events[0].attributes["gwt.behavior.depth"], 0)
+        assertion_event = next(
+            event for event in events
+            if event.name == "gwt.assertion.checked"
+        )
+        self.assertEqual(
+            json.loads(assertion_event.attributes["gwt.expression.operands"]),
+            [
+                {
+                    "name": "cart.total",
+                    "valueType": "integer",
+                    "value": 92,
+                }
+            ],
         )
 
         payload = otlp_traces_payload(recorder.spans)
@@ -162,7 +194,11 @@ class TracingTests(unittest.TestCase):
         self.assertTrue(
             any(
                 event.name == "gwt.branch.skipped"
-                and event.attributes["gwt.branch.summary"] == "IF ticket.has_outage skipped line 13"
+                and event.attributes["gwt.branch.label"] == "THEN"
+                and event.attributes["gwt.branch.condition"] == "ticket.has_outage"
+                and event.attributes["gwt.branch.selected"] is False
+                and event.attributes["gwt.branch.start_line"]
+                == event.attributes["gwt.branch.end_line"]
                 for event in events
             )
         )
@@ -172,6 +208,136 @@ class TracingTests(unittest.TestCase):
                 and event.attributes.get("gwt.statement.text") == "ticket.has_outage"
                 for event in events
             )
+        )
+
+    def test_trace_false_if_reports_the_else_body_range(self):
+        program = parse_program(
+            """GIVEN status is "new"
+
+WHEN choose status
+  IF false
+    set status to "unreachable"
+  ELSE
+    set status to "selected"
+
+WHEN choose status
+""",
+            filename="branch.gwt",
+        )
+        recorder = GwtTraceRecorder(
+            program_file="branch.gwt",
+            program_name="branch",
+            program_hash="sha256:" + ("c" * 64),
+            request_name="choose status",
+        )
+
+        Runtime(program, tracer=recorder).run()
+        recorder.finish()
+
+        branch_events = [
+            event
+            for span in recorder.spans
+            for event in span.events
+            if event.name in {"gwt.branch.skipped", "gwt.branch.selected"}
+        ]
+        self.assertEqual(len(branch_events), 2)
+        self.assertEqual(
+            branch_events[0].attributes["gwt.branch.summary"],
+            "IF THEN false skipped line 5",
+        )
+        self.assertEqual(
+            branch_events[1].attributes["gwt.branch.summary"],
+            "IF ELSE selected line 7",
+        )
+
+    def test_trace_records_decide_and_depending_else_selections(self):
+        program = parse_program(
+            '''GIVEN mode is "cancel"
+GIVEN decision.first is "new"
+GIVEN decision.second is "new"
+
+WHEN choose <mode>
+  DECIDE
+    WHEN false
+      set decision.first to "unreachable"
+    ELSE
+      set decision.first to "fallback"
+  DEPENDING ON mode
+    WHEN the value is "reserve"
+      set decision.second to "reserved"
+    ELSE
+      set decision.second to "fallback"
+
+WHEN choose mode
+''',
+            filename="alternate-branches.gwt",
+        )
+        recorder = GwtTraceRecorder(
+            program_file="alternate-branches.gwt",
+            program_name="alternate branches",
+            program_hash="sha256:" + ("d" * 64),
+            request_name="choose mode",
+        )
+
+        Runtime(program, tracer=recorder).run()
+        recorder.finish()
+
+        selected = [
+            event.attributes
+            for span in recorder.spans
+            for event in span.events
+            if event.name == "gwt.branch.selected"
+        ]
+        self.assertEqual(
+            [
+                (
+                    item["gwt.branch.kind"],
+                    item["gwt.branch.label"],
+                    item["gwt.branch.condition"],
+                )
+                for item in selected
+            ],
+            [
+                ("DECIDE", "ELSE", "ELSE"),
+                ("DEPENDING", "ELSE", "ELSE"),
+            ],
+        )
+
+    def test_path_reference_mutation_is_a_replayable_state_change_when_root_is_shadowed(self):
+        program = parse_program(
+            """GIVEN customer.status is "new"
+
+WHEN update <target> using <customer>
+  set target.status to customer
+
+WHEN update customer using closed
+""",
+            filename="path-ref.gwt",
+        )
+        recorder = GwtTraceRecorder(
+            program_file="path-ref.gwt",
+            program_name="path-ref",
+            program_hash="sha256:" + ("d" * 64),
+            request_name="update customer",
+        )
+
+        result = Runtime(program, tracer=recorder).run()
+        recorder.finish()
+
+        self.assertEqual(result.state["customer"]["status"], "closed")
+        state_events = [
+            event
+            for span in recorder.spans
+            for event in span.events
+            if event.name == "gwt.state.changed"
+            and event.attributes.get("gwt.state.path") == "customer.status"
+            and event.attributes.get("gwt.state.new") == "closed"
+        ]
+        self.assertEqual(len(state_events), 1)
+        self.assertEqual(state_events[0].attributes["gwt.state.operation"], "replace")
+        self.assertEqual(
+            state_events[0].attributes["gwt.state.patch"],
+            '[{"op":"replace","path":"/customer/status","value":"closed"}]',
         )
 
     def test_trace_does_not_record_state_change_when_mutation_fails(self):
@@ -208,6 +374,84 @@ class TracingTests(unittest.TestCase):
         self.assertFalse(
             any(event.attributes["gwt.state.path"] == "account.status" for event in state_events)
         )
+
+    def test_redacted_trace_does_not_export_observed_operand_values(self):
+        program = parse_program(
+            """
+            RECORD Credential
+              value: text
+              expected: text
+              matched: boolean
+
+            REQUEST verify credential
+              GIVEN credential is Credential
+              WHEN verify credential
+              OUTPUT credential is Credential
+
+            WHEN verify <credential>
+              IF credential.value == credential.expected
+                set credential.matched to true
+            """,
+            filename="credential.gwt",
+        )
+        recorder = GwtTraceRecorder(
+            program_file="credential.gwt",
+            program_name="credential",
+            program_hash="sha256:" + ("e" * 64),
+            request_name="verify credential",
+            include_values=False,
+        )
+        secret = "do-not-export-this-secret"
+
+        Runtime(program, tracer=recorder).run_json(
+            {
+                "credential": {
+                    "value": secret,
+                    "expected": secret,
+                    "matched": False,
+                }
+            },
+            "verify credential",
+        )
+        recorder.finish()
+
+        condition_event = next(
+            event
+            for span in recorder.spans
+            for event in span.events
+            if event.name == "gwt.condition.evaluated"
+        )
+        self.assertEqual(
+            condition_event.attributes["gwt.expression.operands.availability"],
+            "redacted",
+        )
+        self.assertNotIn("gwt.expression.operands", condition_event.attributes)
+        self.assertNotIn(secret, json.dumps(otlp_traces_payload(recorder.spans)))
+
+    def test_trace_marks_unrepresentable_operands_unavailable(self):
+        recorder = GwtTraceRecorder(
+            program_file="unsupported.gwt",
+            program_name="unsupported",
+            program_hash="sha256:" + ("f" * 64),
+            request_name="unsupported",
+        )
+
+        recorder.record_condition(
+            text="unsupported",
+            result=True,
+            operands=[("unsupported", object())],
+        )
+
+        event = recorder.spans[0].events[0]
+        self.assertEqual(
+            event.attributes["gwt.expression.operands.availability"],
+            "unavailable",
+        )
+        self.assertEqual(
+            event.attributes["gwt.expression.operands.unavailable_reason"],
+            "unsupported-runtime-value",
+        )
+        self.assertNotIn("gwt.expression.operands", event.attributes)
 
     def test_trace_endpoint_uses_standard_environment_fallback(self):
         with patch.dict("os.environ", {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318"}, clear=True):

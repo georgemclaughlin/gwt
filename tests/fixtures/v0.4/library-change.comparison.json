@@ -1,0 +1,413 @@
+{
+  "cases": [
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        },
+        {
+          "expression": "hold.accessible_format_needed",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.accessible_format_needed",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 42,
+            "text": "hold.accessible_format_needed"
+          }
+        },
+        {
+          "expression": "hold.days_waiting >= 7",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.days_waiting",
+                "value": 5,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 46,
+            "text": "hold.days_waiting >= 7"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:53951bb3dce8a914a0b5a60757334417795c1fce0ba91a8d5d3f7ed1631959f4",
+      "capturedSelectedDecision": {
+        "condition": "ELSE",
+        "result": true,
+        "source": {
+          "column": 5,
+          "file": "./baseline.gwt",
+          "line": 50,
+          "text": "ELSE"
+        }
+      },
+      "classification": "output_changed",
+      "detail": "declared output changed",
+      "id": "case-0001-route-hold",
+      "index": 1,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./candidate.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        },
+        {
+          "expression": "hold.accessible_format_needed",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.accessible_format_needed",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./candidate.gwt",
+            "line": 42,
+            "text": "hold.accessible_format_needed"
+          }
+        },
+        {
+          "expression": "hold.days_waiting >= 5",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.days_waiting",
+                "value": 5,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./candidate.gwt",
+            "line": 46,
+            "text": "hold.days_waiting >= 5"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:8c6aad48a03863079b02105c2c10763b1a83ac1c1e5030dbded71923d8a61c46",
+      "newSelectedDecision": {
+        "condition": "hold.days_waiting >= 5",
+        "result": true,
+        "source": {
+          "column": 10,
+          "file": "./candidate.gwt",
+          "line": 46,
+          "text": "hold.days_waiting >= 5"
+        }
+      },
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        },
+        {
+          "expression": "hold.accessible_format_needed",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.accessible_format_needed",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 42,
+            "text": "hold.accessible_format_needed"
+          }
+        },
+        {
+          "expression": "hold.days_waiting >= 7",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.days_waiting",
+                "value": 5,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 46,
+            "text": "hold.days_waiting >= 7"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:53951bb3dce8a914a0b5a60757334417795c1fce0ba91a8d5d3f7ed1631959f4",
+      "oldSelectedDecision": {
+        "condition": "ELSE",
+        "result": true,
+        "source": {
+          "column": 5,
+          "file": "./baseline.gwt",
+          "line": 50,
+          "text": "ELSE"
+        }
+      },
+      "outputDifferences": [
+        {
+          "new": {
+            "present": true,
+            "value": "priority"
+          },
+          "newLastChangeSource": {
+            "column": 7,
+            "file": "./candidate.gwt",
+            "line": 47,
+            "text": "set decision.queue to \"priority\""
+          },
+          "old": {
+            "present": true,
+            "value": "standard"
+          },
+          "oldLastChangeSource": {
+            "column": 7,
+            "file": "./baseline.gwt",
+            "line": 51,
+            "text": "set decision.queue to \"standard\""
+          },
+          "path": "/decision/queue"
+        },
+        {
+          "new": {
+            "present": true,
+            "value": "wait_time_priority"
+          },
+          "newLastChangeSource": {
+            "column": 7,
+            "file": "./candidate.gwt",
+            "line": 49,
+            "text": "set decision.reason to \"wait_time_priority\""
+          },
+          "old": {
+            "present": true,
+            "value": "awaiting_turn"
+          },
+          "oldLastChangeSource": {
+            "column": 7,
+            "file": "./baseline.gwt",
+            "line": 53,
+            "text": "set decision.reason to \"awaiting_turn\""
+          },
+          "path": "/decision/reason"
+        }
+      ],
+      "recordedProgramHash": "sha256:2ebc626fddd374c1fa573937c0a4f0b20f3800a897fc3e756a1349dbeb0ae8d8",
+      "request": "route hold"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:f30035e0f9eeb5539ceddd7be56eef10f2c772b39a4982f153abb3596457a3e2",
+      "capturedSelectedDecision": {
+        "condition": "hold.copies_available > 0",
+        "result": true,
+        "source": {
+          "column": 10,
+          "file": "./baseline.gwt",
+          "line": 38,
+          "text": "hold.copies_available > 0"
+        }
+      },
+      "classification": "unchanged",
+      "detail": null,
+      "id": "case-0002-route-hold",
+      "index": 2,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./candidate.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:f30035e0f9eeb5539ceddd7be56eef10f2c772b39a4982f153abb3596457a3e2",
+      "newSelectedDecision": {
+        "condition": "hold.copies_available > 0",
+        "result": true,
+        "source": {
+          "column": 10,
+          "file": "./candidate.gwt",
+          "line": 38,
+          "text": "hold.copies_available > 0"
+        }
+      },
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "hold.copies_available > 0",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "hold.copies_available",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./baseline.gwt",
+            "line": 38,
+            "text": "hold.copies_available > 0"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:f30035e0f9eeb5539ceddd7be56eef10f2c772b39a4982f153abb3596457a3e2",
+      "oldSelectedDecision": {
+        "condition": "hold.copies_available > 0",
+        "result": true,
+        "source": {
+          "column": 10,
+          "file": "./baseline.gwt",
+          "line": 38,
+          "text": "hold.copies_available > 0"
+        }
+      },
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:2ebc626fddd374c1fa573937c0a4f0b20f3800a897fc3e756a1349dbeb0ae8d8",
+      "request": "route hold"
+    }
+  ],
+  "kind": "gwt.comparison",
+  "newProgram": {
+    "entry": "./candidate.gwt",
+    "hash": "sha256:be549bb5060d6ada35e037baf7ccdaad2404e93fb29225cdf9b90bd4e47f48d3"
+  },
+  "oldProgram": {
+    "entry": "./baseline.gwt",
+    "hash": "sha256:2ebc626fddd374c1fa573937c0a4f0b20f3800a897fc3e756a1349dbeb0ae8d8"
+  },
+  "schemaVersion": 1,
+  "totals": {
+    "baselineMismatch": 0,
+    "cases": 2,
+    "failureChanged": 0,
+    "incompatible": 0,
+    "newFailure": 0,
+    "outputChanged": 1,
+    "pathChanged": 0,
+    "resolvedFailure": 0,
+    "unavailable": 0,
+    "unchanged": 1
+  }
+}
