@@ -479,7 +479,9 @@ gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfill
 gwt capture examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor" --output vendor-review.execution-case.json
 gwt scenario-from-run vendor-review.execution-case.json --program examples/vendor_onboarding/rules.gwt --output vendor-review-scenario.gwt
 gwt compare --old rules-v1.gwt --new rules-v2.gwt case-1.json case-2.json --json
+gwt compare --corpus review-corpus.json --old rules-v1.gwt --new rules-v2.gwt --json
 gwt workbench case-1.json case-2.json --old rules-v1.gwt --new rules-v2.gwt --output review.html
+gwt workbench --corpus review-corpus.json --old rules-v1.gwt --new rules-v2.gwt --output review.html
 gwt explain examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor"
 gwt explain examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor" --json
 gwt types examples/vendor_onboarding/rules.gwt --language typescript --output vendor-onboarding.d.ts
@@ -562,6 +564,18 @@ failure-changed, resolved-failure, or incompatible candidate behavior.
 Comparison JSON includes evaluated predicates and last-change source evidence
 for declared-output differences, so mixed-corpus totals reconcile without
 false change attribution.
+
+A Case Corpus v1 gives those immutable artifacts domain-facing references
+without changing Execution Case v1. `gwt compare --corpus corpus.json ...` and
+`gwt workbench --corpus corpus.json ...` validate the corpus digest, require
+unique references and case IDs, constrain relative artifact paths beneath the
+corpus directory without symbolic links, and verify that each declared case ID
+matches its artifact.
+Corpus-backed comparisons retain deterministic machine IDs and add the human
+reference plus authoritative Execution Case ID; the workbench displays both.
+References remain unauthenticated, potentially sensitive display text and
+never become GWT request input. The schema is
+[`docs/schemas/case-corpus.schema.json`](docs/schemas/case-corpus.schema.json).
 
 `gwt workbench case.json ... --output review.html` writes a self-contained local
 HTML dossier over the same validated artifacts. Paired `--old` and `--new`

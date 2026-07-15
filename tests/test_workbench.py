@@ -132,6 +132,8 @@ THEN decision.status == "needs_review"
         self.assertLess(rendered.index("Behavior comparison"), rendered.index("Case overview"))
         self.assertIn('data-classification-total="output_changed"', rendered)
         self.assertIn("Output changed", rendered)
+        self.assertIn("<h4>review item</h4>", rendered)
+        self.assertNotIn('<span class="muted">review item</span>', rendered)
         self.assertIn("1 of 1", rendered)
         self.assertIn("/decision/status", rendered)
         self.assertIn("needs_review", rendered)

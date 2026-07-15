@@ -4,8 +4,11 @@ import importlib.util
 import json
 from copy import deepcopy
 from pathlib import Path
+import shutil
+import tempfile
 import unittest
 
+from gwtlang.case_corpus import case_corpus_digest, load_case_corpus
 from gwtlang.comparison import compare_execution_cases
 from gwtlang.execution_case import load_execution_case
 
@@ -21,6 +24,31 @@ CASE_NAMES = (
 
 
 class V04ArtifactFixtureTests(unittest.TestCase):
+    def test_case_corpus_fixture_is_portable_and_schema_valid(self):
+        fixture_path = FIXTURE_ROOT / "library-holds.case-corpus.json"
+        expected = json.loads(fixture_path.read_text())
+        self.assertEqual(
+            expected["integrity"]["digest"],
+            case_corpus_digest(expected),
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            moved = Path(temp_dir) / "fixtures"
+            shutil.copytree(FIXTURE_ROOT, moved)
+            corpus = load_case_corpus(moved / fixture_path.name)
+
+        self.assertEqual(
+            corpus.references,
+            ("ready-for-pickup", "waiting-on-stock"),
+        )
+        self.assertEqual(len(corpus.cases), 2)
+        if importlib.util.find_spec("jsonschema") is not None:
+            from jsonschema import Draft202012Validator
+
+            schema = json.loads(
+                Path("docs/schemas/case-corpus.schema.json").read_text()
+            )
+            Draft202012Validator(schema).validate(expected)
+
     def test_execution_case_fixtures_cover_profiles_outcomes_and_domains(self):
         cases = {
             name: load_execution_case(FIXTURE_ROOT / name).as_payload()

@@ -15,9 +15,11 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang import (
+    CaseCorpusEntrySpec,
     ExecutionCase,
     compare_execution_cases,
     render_workbench_html,
+    write_case_corpus,
 )
 
 
@@ -60,7 +62,7 @@ def main() -> int:
     fixture_cases = cast(list[dict[str, Any]], fixture["cases"])
     server = _start_server(case_dir)
     captured: list[ExecutionCase] = []
-    case_manifest: list[dict[str, object]] = []
+    corpus_entries: list[CaseCorpusEntrySpec] = []
     try:
         for fixture_case in fixture_cases:
             pilot_case_id = cast(str, fixture_case["id"])
@@ -88,30 +90,31 @@ def main() -> int:
                 raise RuntimeError(f"{pilot_case_id}: static fact provenance was not captured")
 
             captured.append(execution_case)
-            case_manifest.append(
-                {
-                    "pilotCaseId": pilot_case_id,
-                    "executionCaseId": case_id,
-                    "artifact": str(case_path.relative_to(output_dir)),
-                    "release": cast(str, actual),
-                }
+            corpus_entries.append(
+                CaseCorpusEntrySpec(
+                    reference=pilot_case_id,
+                    case_id=case_id,
+                    artifact=case_path.relative_to(output_dir).as_posix(),
+                )
             )
     finally:
         _stop_server(server)
 
     candidate = output_dir / "candidate-rules.gwt"
     candidate.write_text(_mutated_candidate_source())
-    comparison = compare_execution_cases(RULES, candidate, captured)
+    corpus_path = output_dir / "corpus.json"
+    corpus = write_case_corpus(
+        corpus_path,
+        name="semantic-release commit-analyzer host-evaluated cases",
+        entries=corpus_entries,
+    )
+    comparison = compare_execution_cases(
+        RULES,
+        candidate,
+        corpus.cases,
+        case_references=corpus.references,
+    )
     comparison_payload = comparison.as_payload()
-    for manifest_item, compared_item in zip(
-        case_manifest,
-        comparison_payload["cases"],
-        strict=True,
-    ):
-        manifest_item["classification"] = compared_item["classification"]
-        manifest_item["outputDifferencePaths"] = [
-            difference["path"] for difference in compared_item["outputDifferences"]
-        ]
     comparison_path = output_dir / "comparison.json"
     _write_json(comparison_path, comparison_payload)
 
@@ -126,6 +129,7 @@ def main() -> int:
             ),
             old_label="Pinned GWT semantic-release pilot",
             new_label="Intentional inverted-priority candidate",
+            case_reference=corpus.references[0],
         )
     )
 
@@ -133,39 +137,21 @@ def main() -> int:
         item["classification"] for item in comparison_payload["cases"]
     )
     changed = len(captured) - classifications["unchanged"]
-    changed_pilot_ids = [
-        cast(str, item["pilotCaseId"])
-        for item in case_manifest
-        if item["classification"] != "unchanged"
-    ]
+    changed_pilot_ids: list[str] = []
+    for item in comparison_payload["cases"]:
+        if item["classification"] == "unchanged":
+            continue
+        reference = item.get("reference")
+        if reference is None:
+            raise RuntimeError("corpus comparison omitted a case reference")
+        changed_pilot_ids.append(reference)
     if changed == 0:
         raise RuntimeError("intentional candidate mutation produced no comparison changes")
-
-    manifest = {
-        "kind": "gwt.external-pilot-served-evidence-demo",
-        "source": fixture["source"],
-        "request": REQUEST_NAME,
-        "capture": {
-            "values": "full",
-            "factProvenance": str(FACT_PROVENANCE.relative_to(REPO_ROOT)),
-        },
-        "cases": case_manifest,
-        "candidate": {
-            "artifact": candidate.name,
-            "mutation": f"{MUTATION_BEFORE} -> {MUTATION_AFTER}",
-        },
-        "comparison": {
-            "artifact": comparison_path.name,
-            "totals": comparison_payload["totals"],
-        },
-        "workbench": workbench_path.name,
-    }
-    _write_json(output_dir / "manifest.json", manifest)
 
     print(f"served Execution Cases captured: {len(captured)}/{len(fixture_cases)}")
     print(f"candidate comparisons changed: {changed}/{len(captured)}")
     print(f"changed pilot cases: {', '.join(changed_pilot_ids)}")
-    print(f"evidence manifest: {output_dir / 'manifest.json'}")
+    print(f"case corpus: {corpus_path}")
     print(f"review workbench: {workbench_path}")
     return 0
 

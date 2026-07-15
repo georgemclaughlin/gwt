@@ -35,6 +35,9 @@ change is authorized by this document.
   changed, and resolved failures, incompatibilities, unavailable cases, and
   baseline mismatches. Field changes include last-change source evidence and
   comparisons carry old/new evaluated predicates.
+- Case Corpus v1 maps domain-facing references to integrity-checked Execution
+  Cases without changing their digests; `gwt compare` and `gwt workbench`
+  accept it through `--corpus`.
 - `gwt workbench` composes those same artifacts into a self-contained local
   HTML behavior-review dossier without a second evaluator or network service.
 
@@ -60,6 +63,11 @@ Comparison v1 is likewise versioned independently. Its totals account
 explicitly for every input case, including incompatibilities and baseline
 mismatches.
 
+Case Corpus v1 is a separate selection artifact. Its digest protects ordered
+membership, human references, and relative artifact mappings; each member's
+Execution Case digest is verified independently. It deliberately excludes
+candidate-specific classifications and does not authenticate its labels.
+
 Published candidate schemas live in [`docs/schemas`](schemas/). Historical
 artifact kind and schema identifiers must remain readable across any future
 project rename.
@@ -71,6 +79,7 @@ project rename.
 | Source language | Remains specification `v0.2`; no broad syntax release |
 | Existing run/check/inspect/validate JSON | Existing payload schema remains version `3` |
 | Execution Case | New independent `gwt.execution-case` schema version `1` |
+| Case Corpus | New independent `gwt.case-corpus` schema version `1` |
 | Comparison | New independent `gwt.comparison` schema version `1` |
 | Debugger and OTLP traces | Remain developer/operational surfaces, not canonical review evidence |
 | Stored cases after branding | Preserve v1 identifiers; do not rewrite evidence for presentation branding |

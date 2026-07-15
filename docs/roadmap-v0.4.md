@@ -276,7 +276,7 @@ example-specific policy code.
 
 Work:
 
-- consume a directory or manifest of validated Execution Cases
+- consume a versioned Case Corpus manifest of validated Execution Cases
 - verify each captured baseline against the old program before attributing a
   difference to the new program
 - check request and contract compatibility, preserving exact-number semantics

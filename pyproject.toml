@@ -22,4 +22,5 @@ gwtlang = ["py.typed"]
 "share/gwtlang/schemas" = [
   "docs/schemas/execution-case.schema.json",
   "docs/schemas/comparison.schema.json",
+  "docs/schemas/case-corpus.schema.json",
 ]

@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "artifact": "library-completed.execution-case.json",
+      "caseId": "sha256:1239276a8cb8f0995a66b877ceeae3f6879da994c71b9a216020c90f1ce06a4c",
+      "reference": "ready-for-pickup"
+    },
+    {
+      "artifact": "library-available.execution-case.json",
+      "caseId": "sha256:cc9436c1dcb949113b69b06a0542f99ad6aec6532b26ef08b5103856c39c131d",
+      "reference": "waiting-on-stock"
+    }
+  ],
+  "integrity": {
+    "algorithm": "gwt-case-corpus-sha256-v1",
+    "digest": "sha256:cb6d82332df5b7c966fa572686c2c883d8f8df58c191ecfb5f6f42ae556914d9",
+    "scope": "artifact-without-integrity"
+  },
+  "kind": "gwt.case-corpus",
+  "name": "Library hold review cases",
+  "schemaVersion": 1
+}

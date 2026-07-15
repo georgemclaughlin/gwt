@@ -1,4 +1,5 @@
 include README.md
 include docs/schemas/execution-case.schema.json
 include docs/schemas/comparison.schema.json
+include docs/schemas/case-corpus.schema.json
 recursive-include tests/fixtures/v0.4 *.json *.gwt *.md

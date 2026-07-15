@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 from typing import Literal, NotRequired, TypedDict, cast
 
+from .case_corpus import validate_case_reference
 from .execution_case import (
     ExecutionCase,
     ExecutionCaseCapturePolicy,
@@ -84,6 +85,8 @@ class ComparisonEvaluatedConditionPayload(TypedDict):
 
 class CaseComparisonPayload(TypedDict):
     id: str
+    reference: NotRequired[str]
+    executionCaseId: NotRequired[str]
     index: int
     request: str
     classification: ComparisonClassification
@@ -278,9 +281,23 @@ class CaseComparison:
     new_evidence_digest: str | None
     old_error: ComparisonError | None
     new_error: ComparisonError | None
+    reference: str | None = None
+    execution_case_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if (self.reference is None) != (self.execution_case_id is None):
+            raise ValueError(
+                "comparison reference and execution case ID must be supplied together"
+            )
+        if self.reference is not None:
+            validate_case_reference(self.reference)
+        if self.execution_case_id is not None and re.fullmatch(
+            r"sha256:[0-9a-f]{64}", self.execution_case_id
+        ) is None:
+            raise ValueError("comparison execution case ID must be a sha256 digest")
 
     def as_payload(self) -> CaseComparisonPayload:
-        return {
+        payload: CaseComparisonPayload = {
             "id": self.id,
             "index": self.index,
             "request": self.request,
@@ -321,6 +338,11 @@ class CaseComparison:
             "oldError": self.old_error.as_payload() if self.old_error is not None else None,
             "newError": self.new_error.as_payload() if self.new_error is not None else None,
         }
+        if self.reference is not None:
+            payload["reference"] = self.reference
+        if self.execution_case_id is not None:
+            payload["executionCaseId"] = self.execution_case_id
+        return payload
 
 
 @dataclass(frozen=True)
@@ -386,7 +408,10 @@ class ComparisonResult:
             _totals_text(self.totals),
         ]
         for case in self.cases:
-            lines.extend(("", f"{case.id} [{case.classification}] {case.request}"))
+            reference = f" ({case.reference})" if case.reference is not None else ""
+            lines.extend(
+                ("", f"{case.id}{reference} [{case.classification}] {case.request}")
+            )
             if case.detail:
                 lines.append(f"  {case.detail}")
             for difference in case.output_differences:
@@ -452,6 +477,8 @@ def _condition_text(
 @dataclass(frozen=True)
 class _CaseContext:
     id: str
+    reference: str | None
+    execution_case_id: str | None
     index: int
     request: str
     recorded_program_hash: str
@@ -466,6 +493,7 @@ def compare_execution_cases(
     cases: Iterable[ExecutionCase],
     *,
     import_policy: ImportPolicy | None = None,
+    case_references: Iterable[str] | None = None,
 ) -> ComparisonResult:
     """Compare captured inputs against old and new real GWT programs.
 
@@ -480,6 +508,14 @@ def compare_execution_cases(
     new_snapshot = load_program_snapshot(new_path, import_policy=import_policy)
     old_identity = old_snapshot.identity
     new_identity = new_snapshot.identity
+    loaded_cases = tuple(cases)
+    references = tuple(case_references) if case_references is not None else None
+    if references is not None:
+        if len(references) != len(loaded_cases):
+            raise ValueError("case references must align one-for-one with cases")
+        references = tuple(validate_case_reference(reference) for reference in references)
+        if len(set(references)) != len(references):
+            raise ValueError("case references must be unique")
 
     compared = tuple(
         _compare_case(
@@ -491,8 +527,13 @@ def compare_execution_cases(
             new_snapshot=new_snapshot,
             old_hash=old_identity.digest,
             import_policy=import_policy,
+            comparison_reference=(
+                references[index - 1]
+                if references is not None
+                else None
+            ),
         )
-        for index, execution_case in enumerate(cases, start=1)
+        for index, execution_case in enumerate(loaded_cases, start=1)
     )
     totals = _comparison_totals(compared)
     return ComparisonResult(
@@ -515,6 +556,7 @@ def _compare_case(
     new_snapshot: LoadedProgramSnapshot,
     old_hash: str,
     import_policy: ImportPolicy | None,
+    comparison_reference: str | None,
 ) -> CaseComparison:
     captured_payload = captured.as_payload()
     request = captured.request_name
@@ -524,6 +566,12 @@ def _compare_case(
     captured_evidence = _evidence_digest(captured)
     context = _CaseContext(
         id=_case_id(index, request),
+        reference=comparison_reference,
+        execution_case_id=(
+            captured_payload["integrity"]["digest"]
+            if comparison_reference is not None
+            else None
+        ),
         index=index,
         request=request,
         recorded_program_hash=recorded_hash,
@@ -822,6 +870,8 @@ def _case_comparison(
 ) -> CaseComparison:
     return CaseComparison(
         id=context.id,
+        reference=context.reference,
+        execution_case_id=context.execution_case_id,
         index=context.index,
         request=context.request,
         classification=classification,

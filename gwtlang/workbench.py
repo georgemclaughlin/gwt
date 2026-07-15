@@ -58,6 +58,7 @@ def render_workbench_html(
     review_notice: str | None = None,
     old_label: str = "Baseline program",
     new_label: str = "Candidate program",
+    case_reference: str | None = None,
 ) -> str:
     """Render a deterministic, self-contained local behavior-review dossier.
 
@@ -82,6 +83,7 @@ def render_workbench_html(
         "verifiedScenario": verified_scenario,
         "reviewNotice": review_notice,
         "programLabels": {"old": old_label, "new": new_label},
+        "caseReference": case_reference,
     }
 
     comparison_html = (
@@ -97,6 +99,16 @@ def render_workbench_html(
     )
     captured_at = str(execution["capturedAt"])
     program_name = program["name"] or "Unnamed program"
+    reference_meta = (
+        f'<span>Reference: {_h(case_reference)}</span><span aria-hidden="true">/</span>'
+        if case_reference is not None
+        else ""
+    )
+    reference_card = (
+        _overview_card("Corpus reference", case_reference, "reference")
+        if case_reference is not None
+        else ""
+    )
     selected_branches = _render_selected_branches(case_payload["evidence"])
     result_availability = case_payload["redaction"]["availability"]["result"]
     input_panel = _case_value_panel(
@@ -147,6 +159,7 @@ def render_workbench_html(
       <h1>{_h(request)}</h1>
       <p class="hero__lede">Source-linked facts from one executable behavior run, including an explicit failure when one occurred.</p>
       <div class="hero__meta" aria-label="Capture metadata">
+        {reference_meta}
         <span>{_h(str(program_name))}</span>
         <span aria-hidden="true">/</span>
         <time>{_h(captured_at)}</time>
@@ -169,6 +182,7 @@ def render_workbench_html(
       </div>
 
       <div class="overview-grid">
+        {reference_card}
         {_overview_card("Request", request, "request")}
         {_overview_card("Outcome", execution["outcome"], "outcome")}
         {_overview_card("Program closure", str(program["hash"]), "hash", mono=True)}
@@ -256,13 +270,17 @@ def _render_comparison(
             target = f"comparison-case-{position + 1}"
             selected = position == 0 and has_material_cases
             label = _classification_label(case.classification)
+            case_title = case.reference or case.request
+            case_subtitle = (
+                f"{case.request} · " if case.reference is not None else ""
+            )
             button = (
                 f'''<button class="impact-case{' is-selected' if selected else ''}" type="button"
                   data-case-choice data-classification="{case.classification}"
                   data-target="{target}" aria-controls="{target}" aria-pressed="{'true' if selected else 'false'}">
                   <span class="impact-case__top"><span class="classification classification--{case.classification}">{_h(label)}</span><span class="impact-case__id">{_h(case.id)}</span></span>
-                  <strong>{_h(case.request)}</strong>
-                  <span>{len(case.output_differences)} output difference{'s' if len(case.output_differences) != 1 else ''}</span>
+                  <strong>{_h(case_title)}</strong>
+                  <span>{_h(case_subtitle)}{len(case.output_differences)} output difference{'s' if len(case.output_differences) != 1 else ''}</span>
                 </button>'''
             )
             if case.classification == "path_changed":
@@ -445,16 +463,28 @@ def _render_comparison_case(
     )
     hidden_attribute = " hidden" if hidden else ""
     label = _classification_label(case.classification)
+    case_title = case.reference or case.request
+    request_subtitle = (
+        f'<span class="muted">{_h(case.request)}</span>'
+        if case.reference is not None
+        else ""
+    )
+    execution_case_id = (
+        f'<span>Execution Case <code>{_h(case.execution_case_id)}</code></span>'
+        if case.execution_case_id is not None
+        else ""
+    )
     return f'''
       <article id="{target}" class="impact-panel" data-case-panel{hidden_attribute}>
         <header>
-          <div><span class="classification classification--{case.classification}">{_h(label)}</span><h4>{_h(case.request)}</h4></div>
+          <div><span class="classification classification--{case.classification}">{_h(label)}</span><h4>{_h(case_title)}</h4>{request_subtitle}</div>
           <code>{_h(case.id)}</code>
         </header>
         {detail}
         <div class="impact-hashes">
           <span>Recorded closure <code>{_h(case.recorded_program_hash)}</code></span>
           <span>Captured evidence <code>{_h(case.captured_evidence_digest)}</code></span>
+          {execution_case_id}
           {_optional_digest(f"Baseline evidence · {old_label}", case.old_evidence_digest)}
           {_optional_digest(f"Candidate evidence · {new_label}", case.new_evidence_digest)}
         </div>
