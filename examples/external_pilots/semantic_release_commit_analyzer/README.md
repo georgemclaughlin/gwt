@@ -51,6 +51,10 @@ python -m gwtlang capture examples/external_pilots/semantic_release_commit_analy
   --request "select release from evaluated rules" \
   --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/evaluated-fact-provenance.json \
   --output /tmp/commit-selection.execution-case.json
+python -m gwtlang openapi examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --output /tmp/commit-analyzer-openapi.json
+python -m gwtlang serve examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --port 8080
 python examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py
 ```
 
@@ -58,6 +62,43 @@ The JSON example selects `major` through the breaking-feature rule. The
 optional provenance sidecar records which normalized facts remain owned by the
 host parser, configuration loader, and matcher; GWT validates the paths but
 does not authenticate the descriptions.
+
+## OpenAPI and `gwt serve`
+
+The host-evaluated request is projected as OpenAPI 3.1 operation
+`selectReleaseFromEvaluatedRules` at:
+
+```text
+POST /requests/select-release-from-evaluated-rules
+```
+
+Its request body is a closed `RuleEvaluation[]` contract and its successful
+response is the declared `AnalysisResult`. The `ReleaseOutcome` schema retains
+`"false"`, `"null"`, and `"undefined"` as explicit tagged strings because JSON
+cannot preserve JavaScript `undefined`; a JavaScript client can map those tags
+back to native values at its outer boundary.
+
+The live demo generates a temporary `typescript-fetch` client from the pilot's
+OpenAPI document, starts `gwt serve` on an ephemeral local port, and sends all
+20 pinned host-evaluated cases through HTTP:
+
+```sh
+node examples/external_pilots/semantic_release_commit_analyzer/openapi_client_demo.mjs \
+  /tmp/commit-analyzer
+```
+
+It requires the exact prepared upstream checkout described below, Node 20 or
+newer, npm/npx, and the Java runtime used by OpenAPI Generator. Generated files
+remain temporary and are not committed. The expected result is:
+
+```text
+generated OpenAPI client/gwt serve parity: 20/20
+```
+
+OpenAPI describes execution facts and results; it does not transport the
+optional Execution Case provenance sidecar. Capture and workbench artifacts
+retain that unauthenticated review metadata separately, so provenance does not
+become decision input.
 
 ## Differential conformance
 
@@ -92,6 +133,8 @@ Current live result:
 - the host-evaluated boundary has 20/20 parity, including the two glob cases,
   missing and null commit properties, falsy release outcomes, precedence, and
   the early stop at `major`.
+- the generated OpenAPI TypeScript client has the same 20/20 result through a
+  real `gwt serve` process.
 
 Both disagreements are classified as a known integration-boundary limitation,
 not an upstream defect or a GWT runtime bug. They do not justify adding a
@@ -158,6 +201,8 @@ host-provided match facts.
   evidence rather than helper-only tests.
 - Host-evaluated facts reduce the GWT contract while retaining the policy's
   unusual falsy precedence and early-stop behavior.
+- The same request contract produces a closed OpenAPI operation and generated
+  client without adding adapter-specific language syntax.
 
 ### Bad or awkward
 

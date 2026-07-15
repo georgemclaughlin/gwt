@@ -146,6 +146,29 @@ class HttpServerTests(unittest.TestCase):
             }.issubset(exported_trace_ids)
         )
 
+    def test_gwt_serve_runs_host_evaluated_commit_selection_request(self):
+        rules = "examples/external_pilots/semantic_release_commit_analyzer/rules.gwt"
+        with running_serve_process(rules) as base_url:
+            openapi_status, openapi = request_json(f"{base_url}/openapi.json")
+            route = route_for_request(openapi, "select release from evaluated rules")
+            status, payload = request_json(
+                f"{base_url}{route}",
+                {
+                    "evaluations": [
+                        {"id": "patch", "matched": True, "release": "patch"},
+                        {"id": "feature", "matched": True, "release": "minor"},
+                        {"id": "ignored", "matched": False, "release": "major"},
+                    ]
+                },
+                method="POST",
+            )
+
+        self.assertEqual(openapi_status, 200)
+        self.assertEqual(route, "/requests/select-release-from-evaluated-rules")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["result"]["release"], "minor")
+        self.assertEqual(payload["result"]["selected_rule_id"], "feature")
+
     def test_json_schema_client_demo_validates_request_and_response(self):
         if importlib.util.find_spec("jsonschema") is None:
             self.skipTest("jsonschema package is not installed")
