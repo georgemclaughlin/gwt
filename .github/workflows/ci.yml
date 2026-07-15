@@ -40,6 +40,13 @@ jobs:
             python -m gwtlang format "$file" --check >/dev/null || exit 1
           done
 
+      - name: Check external pilot Node adapters
+        run: |
+          node --check examples/external_pilots/semantic_release_commit_analyzer/host_match_core.mjs
+          node --check examples/external_pilots/semantic_release_commit_analyzer/host_match_adapter.mjs
+          node --check examples/external_pilots/semantic_release_commit_analyzer/upstream_oracle.mjs
+          node --check examples/external_pilots/semantic_release_commit_analyzer/openapi_client_demo.mjs
+
       - name: Check top-level examples
         run: |
           for file in examples/*.gwt; do
@@ -107,6 +114,18 @@ jobs:
           assert "/requests/triage-ticket" in document["paths"]
           assert "TriageTicketRequest" in document["components"]["schemas"]
           assert "TriageTicketOutput" in document["components"]["schemas"]
+          PY
+          python -m gwtlang openapi \
+            examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+            --output /tmp/gwt-commit-analyzer-openapi.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          document = json.loads(Path("/tmp/gwt-commit-analyzer-openapi.json").read_text())
+          operation = document["paths"]["/requests/select-release-from-evaluated-rules"]["post"]
+          assert operation["operationId"] == "selectReleaseFromEvaluatedRules"
+          assert "RuleEvaluation" in document["components"]["schemas"]
           PY
 
       - name: Install TypeScript client dependencies

@@ -33,6 +33,54 @@ SPREE_REQUEST = "assess item total eligibility"
 
 
 class ExternalPilotRegressionTests(unittest.TestCase):
+    def test_commit_analyzer_host_evaluated_openapi_contract_is_closed(self):
+        openapi = GwtClient(SEMANTIC_RULES).openapi().as_payload()
+        operation = openapi["paths"][
+            "/requests/select-release-from-evaluated-rules"
+        ]["post"]
+        schemas = openapi["components"]["schemas"]
+
+        self.assertEqual(operation["operationId"], "selectReleaseFromEvaluatedRules")
+        self.assertEqual(
+            operation["requestBody"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/SelectReleaseFromEvaluatedRulesRequest"},
+        )
+        self.assertEqual(
+            operation["responses"]["200"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/SelectReleaseFromEvaluatedRulesOutput"},
+        )
+        self.assertEqual(
+            schemas["SelectReleaseFromEvaluatedRulesRequest"],
+            {
+                "type": "object",
+                "properties": {
+                    "evaluations": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/RuleEvaluation"},
+                    }
+                },
+                "required": ["evaluations"],
+                "additionalProperties": False,
+            },
+        )
+        self.assertEqual(schemas["RuleEvaluation"]["required"], ["id", "matched", "release"])
+        self.assertFalse(schemas["RuleEvaluation"]["additionalProperties"])
+        self.assertEqual(
+            schemas["ReleaseOutcome"]["enum"],
+            [
+                "major",
+                "premajor",
+                "minor",
+                "preminor",
+                "patch",
+                "prepatch",
+                "prerelease",
+                "false",
+                "null",
+                "undefined",
+            ],
+        )
+
     def test_commit_analyzer_conformance_slice_retains_parity_and_known_gaps(self):
         fixture = json.loads(SEMANTIC_CONFORMANCE.read_text())
         self.assertEqual(
