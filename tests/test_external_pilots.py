@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from gwtlang import GwtClient
+from gwtlang import ExecutionCase, GwtClient
 from gwtlang.comparison import compare_execution_cases
 from gwtlang.execution_case import capture_execution_case
 
@@ -23,6 +23,7 @@ SEMANTIC_RULES = SEMANTIC_PILOT / "rules.gwt"
 SEMANTIC_REQUEST = "analyze normalized commit"
 SEMANTIC_CONFORMANCE = SEMANTIC_PILOT / "conformance_cases.json"
 SEMANTIC_RUNNER = SEMANTIC_PILOT / "run_conformance.py"
+SEMANTIC_EVIDENCE_DEMO = SEMANTIC_PILOT / "served_evidence_demo.py"
 SEMANTIC_EVALUATED_REQUEST = SEMANTIC_PILOT / "evaluated-request.json"
 SEMANTIC_EVALUATED_PROVENANCE = SEMANTIC_PILOT / "evaluated-fact-provenance.json"
 SEMANTIC_EVALUATED_REQUEST_NAME = "select release from evaluated rules"
@@ -152,6 +153,62 @@ class ExternalPilotRegressionTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_commit_analyzer_served_evidence_lifecycle(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "evidence"
+            completed = subprocess.run(
+                [sys.executable, str(SEMANTIC_EVIDENCE_DEMO), str(output_dir)],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=30,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            manifest = json.loads((output_dir / "manifest.json").read_text())
+            comparison = json.loads((output_dir / "comparison.json").read_text())
+            workbench = (output_dir / "workbench.html").read_text()
+            candidate = (output_dir / "candidate-rules.gwt").read_text()
+            loaded_cases = [
+                ExecutionCase.load(output_dir / item["artifact"])
+                for item in manifest["cases"]
+            ]
+
+        self.assertIn("served Execution Cases captured: 20/20", completed.stdout)
+        self.assertIn("candidate comparisons changed: 3/20", completed.stdout)
+        self.assertEqual(
+            manifest["kind"],
+            "gwt.external-pilot-served-evidence-demo",
+        )
+        self.assertEqual(len(manifest["cases"]), 20)
+        self.assertEqual(len(loaded_cases), 20)
+        self.assertEqual(
+            len({item["executionCaseId"] for item in manifest["cases"]}),
+            20,
+        )
+        for item, execution_case in zip(manifest["cases"], loaded_cases):
+            self.assertEqual(
+                execution_case.as_payload()["integrity"]["digest"],
+                item["executionCaseId"],
+            )
+            self.assertEqual(
+                execution_case.fact_provenance[0]["path"],
+                "evaluations",
+            )
+        self.assertEqual(comparison["totals"]["cases"], 20)
+        self.assertEqual(comparison["totals"]["unchanged"], 17)
+        self.assertEqual(comparison["totals"]["outputChanged"], 3)
+        self.assertEqual(
+            {
+                item["pilotCaseId"]
+                for item in manifest["cases"]
+                if item["classification"] != "unchanged"
+            },
+            {"patch-then-minor", "minor-then-patch", "prerelease-ladder"},
+        )
+        self.assertIn("Local evidence lifecycle demo", workbench)
+        self.assertIn("IF rank < result.release_rank", candidate)
 
     def test_seeded_fact_provenance_sidecars_match_declared_pilot_inputs(self):
         pilots = (
