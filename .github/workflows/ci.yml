@@ -127,6 +127,20 @@ jobs:
           assert operation["operationId"] == "selectReleaseFromEvaluatedRules"
           assert "RuleEvaluation" in document["components"]["schemas"]
           PY
+          python -m gwtlang openapi \
+            examples/external_pilots/spree_item_total/rules.gwt \
+            --output /tmp/gwt-spree-openapi.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          document = json.loads(Path("/tmp/gwt-spree-openapi.json").read_text())
+          facts = document["components"]["schemas"]["ItemTotalFacts"]
+          assert "amount_max" not in facts["required"]
+          assert {"type": "null"} in facts["properties"]["amount_max"]["anyOf"]
+          decimal_types = [item["type"] for item in facts["properties"]["amount_min"]["anyOf"]]
+          assert decimal_types == ["string", "integer"]
+          PY
 
       - name: Install TypeScript client dependencies
         working-directory: clients/typescript

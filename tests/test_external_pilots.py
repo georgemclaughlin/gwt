@@ -33,6 +33,29 @@ SPREE_REQUEST = "assess item total eligibility"
 
 
 class ExternalPilotRegressionTests(unittest.TestCase):
+    def test_spree_openapi_preserves_exact_and_optional_decimal_boundary(self):
+        openapi = GwtClient(SPREE_RULES).openapi().as_payload()
+        operation = openapi["paths"][
+            "/requests/assess-item-total-eligibility"
+        ]["post"]
+        schemas = openapi["components"]["schemas"]
+        facts = schemas["ItemTotalFacts"]
+
+        self.assertEqual(operation["operationId"], "assessItemTotalEligibility")
+        self.assertEqual(
+            operation["requestBody"]["content"]["application/json"]["schema"],
+            {"$ref": "#/components/schemas/AssessItemTotalEligibilityRequest"},
+        )
+        self.assertNotIn("amount_max", facts["required"])
+        self.assertIn({"type": "null"}, facts["properties"]["amount_max"]["anyOf"])
+        decimal_input = facts["properties"]["amount_min"]
+        self.assertEqual(
+            [branch["type"] for branch in decimal_input["anyOf"]],
+            ["string", "integer"],
+        )
+        self.assertEqual(decimal_input["x-gwt-json-input"], "decimal string or integer")
+        self.assertEqual(decimal_input["x-gwt-json-output"], "decimal string")
+
     def test_commit_analyzer_host_evaluated_openapi_contract_is_closed(self):
         openapi = GwtClient(SEMANTIC_RULES).openapi().as_payload()
         operation = openapi["paths"][
