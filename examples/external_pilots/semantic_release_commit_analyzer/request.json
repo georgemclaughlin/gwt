@@ -1,0 +1,32 @@
+{
+  "commit": {
+    "type_state": "present",
+    "type_value": "feat",
+    "scope_state": "present",
+    "scope_value": "core-api",
+    "has_breaking_note": true,
+    "is_revert": false
+  },
+  "rules": [
+    {
+      "id": "feature",
+      "match_type": true,
+      "type_value": "feat",
+      "match_scope": false,
+      "scope_value": "",
+      "requires_breaking": false,
+      "requires_revert": false,
+      "release": "minor"
+    },
+    {
+      "id": "breaking-feature",
+      "match_type": true,
+      "type_value": "feat",
+      "match_scope": false,
+      "scope_value": "",
+      "requires_breaking": true,
+      "requires_revert": false,
+      "release": "major"
+    }
+  ]
+}

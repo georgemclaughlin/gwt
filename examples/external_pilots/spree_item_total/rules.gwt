@@ -1,0 +1,154 @@
+PROGRAM Spree item total promotion rule pilot
+
+TYPE MinimumMode is "gt" | "gte"
+TYPE MaximumMode is "lt" | "lte"
+TYPE EligibilityError is "none" | "item_total_more_than_or_equal" | "item_total_more_than" | "item_total_less_than_or_equal" | "item_total_less_than"
+
+RECORD ItemTotalFacts
+  item_total: decimal
+  amount_min: decimal
+  minimum_mode: MinimumMode
+  amount_max: optional<decimal>
+  maximum_mode: MaximumMode
+
+RECORD EligibilityDecision
+  eligible: boolean
+  first_error: EligibilityError
+  error_count: integer
+
+REQUEST assess item total eligibility
+  GIVEN facts is ItemTotalFacts
+  GIVEN decision is EligibilityDecision
+    eligible: true
+    first_error: "none"
+    error_count: 0
+  WHEN assess item total facts into decision
+  OUTPUT decision is EligibilityDecision
+
+WHEN item total <item_total> meets minimum <amount_min> using <mode>
+  GIVEN item_total is decimal
+  AND amount_min is decimal
+  AND mode is MinimumMode
+  THEN returns boolean
+  IF mode == "gte"
+    RETURN item_total >= amount_min
+  RETURN item_total > amount_min
+
+WHEN item total <item_total> meets maximum <amount_max> using <mode>
+  GIVEN item_total is decimal
+  AND amount_max is optional<decimal>
+  AND mode is MaximumMode
+  THEN returns boolean
+  IF amount_max is present
+    IF mode == "lte"
+      RETURN item_total <= amount_max
+    RETURN item_total < amount_max
+  ELSE
+    RETURN true
+
+WHEN record maximum failure from <facts> into <decision>
+  GIVEN facts is ItemTotalFacts
+  AND decision is EligibilityDecision
+  set decision.eligible to false
+  add 1 to decision.error_count
+  IF facts.maximum_mode == "lt"
+    set decision.first_error to "item_total_more_than_or_equal"
+  ELSE
+    set decision.first_error to "item_total_more_than"
+
+WHEN record minimum failure from <facts> into <decision>
+  GIVEN facts is ItemTotalFacts
+  AND decision is EligibilityDecision
+  set decision.eligible to false
+  add 1 to decision.error_count
+  IF decision.first_error == "none"
+    IF facts.minimum_mode == "gte"
+      set decision.first_error to "item_total_less_than"
+    ELSE
+      set decision.first_error to "item_total_less_than_or_equal"
+
+WHEN assess item total <facts> into <decision>
+  GIVEN facts is ItemTotalFacts
+  AND decision is EligibilityDecision
+  LET lower_limit_met be item total facts.item_total meets minimum facts.amount_min using facts.minimum_mode
+  LET upper_limit_met be item total facts.item_total meets maximum facts.amount_max using facts.maximum_mode
+  IF upper_limit_met == false
+    record maximum failure from facts into decision
+  IF lower_limit_met == false
+    record minimum failure from facts into decision
+
+SCENARIO strict limits accept an interior total
+GIVEN facts is ItemTotalFacts
+  item_total: 51
+  amount_min: 50
+  minimum_mode: "gt"
+  amount_max: 60
+  maximum_mode: "lt"
+REQUEST assess item total eligibility
+THEN decision.eligible == true
+AND decision.first_error == "none"
+AND decision.error_count == 0
+
+SCENARIO strict minimum rejects equality
+GIVEN facts is ItemTotalFacts
+  item_total: 50
+  amount_min: 50
+  minimum_mode: "gt"
+  amount_max: 60
+  maximum_mode: "lt"
+REQUEST assess item total eligibility
+THEN decision.eligible == false
+AND decision.first_error == "item_total_less_than_or_equal"
+AND decision.error_count == 1
+
+SCENARIO inclusive minimum accepts equality
+GIVEN facts is ItemTotalFacts
+  item_total: 50
+  amount_min: 50
+  minimum_mode: "gte"
+  amount_max: 60
+  maximum_mode: "lt"
+REQUEST assess item total eligibility
+THEN decision.eligible == true
+
+SCENARIO strict maximum rejects equality
+GIVEN facts is ItemTotalFacts
+  item_total: 60
+  amount_min: 50
+  minimum_mode: "gte"
+  amount_max: 60
+  maximum_mode: "lt"
+REQUEST assess item total eligibility
+THEN decision.eligible == false
+AND decision.first_error == "item_total_more_than_or_equal"
+
+SCENARIO inclusive maximum accepts equality
+GIVEN facts is ItemTotalFacts
+  item_total: 60
+  amount_min: 50
+  minimum_mode: "gt"
+  amount_max: 60
+  maximum_mode: "lte"
+REQUEST assess item total eligibility
+THEN decision.eligible == true
+
+SCENARIO absent maximum imposes no upper limit
+GIVEN facts is ItemTotalFacts
+  item_total: 1000
+  amount_min: 50
+  minimum_mode: "gt"
+  maximum_mode: "lt"
+REQUEST assess item total eligibility
+THEN decision.eligible == true
+
+SCENARIO contradictory limits preserve maximum error precedence
+GIVEN facts is ItemTotalFacts
+  item_total: 55
+  amount_min: 60
+  minimum_mode: "gte"
+  amount_max: 50
+  maximum_mode: "lte"
+REQUEST assess item total eligibility
+THEN decision.eligible == false
+AND decision.first_error == "item_total_more_than"
+AND decision.error_count == 2
