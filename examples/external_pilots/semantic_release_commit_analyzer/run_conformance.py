@@ -14,7 +14,9 @@ PILOT_DIR = Path(__file__).resolve().parent
 RULES = PILOT_DIR / "rules.gwt"
 CASES = PILOT_DIR / "conformance_cases.json"
 ORACLE = PILOT_DIR / "upstream_oracle.mjs"
+HOST_ADAPTER = PILOT_DIR / "host_match_adapter.mjs"
 REQUEST = "analyze normalized commit"
+HOST_REQUEST = "select release from evaluated rules"
 UPSTREAM_COMMIT = "f16dd2e9fbf4fc17ab6fefb171a6c6e0645b6758"
 RELEASE_TYPES = {
     "major",
@@ -123,6 +125,40 @@ def _upstream_results(upstream_root: Path, cases: list[dict[str, Any]]) -> dict[
     return {item["id"]: item["release"] for item in values}
 
 
+def _snapshot_evaluations(case: dict[str, Any]) -> list[dict[str, object]]:
+    rules = cast(list[dict[str, Any]], case["rules"])
+    matches = cast(list[bool], case["host_matches"])
+    if len(rules) != len(matches):
+        raise ValueError(f"{case['id']}: host match snapshot has the wrong length")
+    return [
+        {
+            "id": f"rule-{index}",
+            "matched": matched,
+            "release": _release_token(rule.get("release")),
+        }
+        for index, (rule, matched) in enumerate(zip(rules, matches), start=1)
+    ]
+
+
+def _host_evaluations(
+    upstream_root: Path,
+    cases: list[dict[str, Any]],
+) -> dict[str, list[dict[str, object]]]:
+    payload = [
+        {"id": case["id"], "commit": case["commit"], "rules": case["rules"]}
+        for case in cases
+    ]
+    output = _run(
+        ["node", str(HOST_ADAPTER), str(upstream_root)],
+        input_text=json.dumps(payload),
+    )
+    values = cast(list[dict[str, Any]], json.loads(output))
+    return {
+        cast(str, item["id"]): cast(list[dict[str, object]], item["evaluations"])
+        for item in values
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Compare the pinned commit-analyzer decision core with GWT"
@@ -144,6 +180,14 @@ def main() -> int:
         if args.upstream_root is not None
         else {case["id"]: case["expected"]["upstream"] for case in cases}
     )
+    host_evaluations = (
+        _host_evaluations(args.upstream_root.resolve(), cases)
+        if args.upstream_root is not None
+        else {
+            cast(str, case["id"]): _snapshot_evaluations(case)
+            for case in cases
+        }
+    )
 
     compiled = GwtClient(RULES).compile(
         import_roots=[RULES.parent],
@@ -151,30 +195,47 @@ def main() -> int:
     )
     failures: list[str] = []
     classifications: Counter[str] = Counter()
+    host_parity = 0
     for case in cases:
         case_id = cast(str, case["id"])
         expected = cast(dict[str, str], case["expected"])
-        gwt = compiled.run_json(
+        direct_gwt = compiled.run_json(
             _normalize_case(case),
             request=REQUEST,
+        ).as_payload()["result"]["result"]["release"]
+        expected_evaluations = _snapshot_evaluations(case)
+        if host_evaluations[case_id] != expected_evaluations:
+            failures.append(f"{case_id}: live host evaluations drifted from the snapshot")
+        host_gwt = compiled.run_json(
+            {"evaluations": host_evaluations[case_id]},
+            request=HOST_REQUEST,
         ).as_payload()["result"]["result"]["release"]
         if upstream[case_id] != expected["upstream"]:
             failures.append(
                 f"{case_id}: upstream {upstream[case_id]!r}, expected {expected['upstream']!r}"
             )
-        if gwt != expected["gwt"]:
-            failures.append(f"{case_id}: GWT {gwt!r}, expected {expected['gwt']!r}")
+        if direct_gwt != expected["gwt"]:
+            failures.append(
+                f"{case_id}: direct GWT {direct_gwt!r}, expected {expected['gwt']!r}"
+            )
+        if host_gwt != upstream[case_id]:
+            failures.append(
+                f"{case_id}: host/GWT {host_gwt!r}, upstream {upstream[case_id]!r}"
+            )
+        else:
+            host_parity += 1
         classification = cast(str, case["classification"])
         classifications[classification] += 1
-        if classification == "exact_parity" and upstream[case_id] != gwt:
+        if classification == "exact_parity" and upstream[case_id] != direct_gwt:
             failures.append(f"{case_id}: expected exact upstream/GWT parity")
-        if classification == "known_boundary_gap" and upstream[case_id] == gwt:
+        if classification == "known_boundary_gap" and upstream[case_id] == direct_gwt:
             failures.append(f"{case_id}: expected the documented boundary gap")
 
     if failures:
         parser.error("conformance failures:\n  " + "\n  ".join(failures))
-    print(f"exact upstream/GWT parity: {classifications['exact_parity']}/18")
-    print(f"documented boundary gaps: {classifications['known_boundary_gap']}/2")
+    print(f"direct exact upstream/GWT parity: {classifications['exact_parity']}/18")
+    print(f"direct documented boundary gaps: {classifications['known_boundary_gap']}/2")
+    print(f"host-adapter upstream/GWT parity: {host_parity}/{len(cases)}")
     print(f"upstream: semantic-release/commit-analyzer@{UPSTREAM_COMMIT}")
     print("oracle: live checkout" if args.upstream_root is not None else "oracle: pinned snapshot")
     return 0

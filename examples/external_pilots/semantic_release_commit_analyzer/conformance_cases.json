@@ -11,6 +11,7 @@
       "classification": "exact_parity",
       "commit": {"notes": [{"title": "BREAKING CHANGE"}]},
       "rules": [{"breaking": true, "release": "major"}],
+      "host_matches": [true],
       "expected": {"upstream": "major", "gwt": "major"}
     },
     {
@@ -18,6 +19,7 @@
       "classification": "exact_parity",
       "commit": {"revert": {"header": "revert feature"}},
       "rules": [{"revert": true, "release": "patch"}],
+      "host_matches": [true],
       "expected": {"upstream": "patch", "gwt": "patch"}
     },
     {
@@ -25,6 +27,7 @@
       "classification": "exact_parity",
       "commit": {"type": "feat", "notes": [{"title": "BREAKING CHANGE"}]},
       "rules": [{"type": "feat", "breaking": true, "release": "major"}],
+      "host_matches": [true],
       "expected": {"upstream": "major", "gwt": "major"}
     },
     {
@@ -32,6 +35,7 @@
       "classification": "exact_parity",
       "commit": {"type": "feat", "revert": {"header": "revert feature"}},
       "rules": [{"type": "feat", "revert": true, "release": "major"}],
+      "host_matches": [true],
       "expected": {"upstream": "major", "gwt": "major"}
     },
     {
@@ -39,6 +43,7 @@
       "classification": "exact_parity",
       "commit": {"type": "docs", "scope": "api"},
       "rules": [{"type": "docs", "scope": "api", "release": "minor"}],
+      "host_matches": [true],
       "expected": {"upstream": "minor", "gwt": "minor"}
     },
     {
@@ -46,6 +51,7 @@
       "classification": "exact_parity",
       "commit": {"type": "docs", "scope": "cli"},
       "rules": [{"type": "docs", "scope": "api", "release": "minor"}],
+      "host_matches": [false],
       "expected": {"upstream": "undefined", "gwt": "undefined"}
     },
     {
@@ -53,6 +59,7 @@
       "classification": "exact_parity",
       "commit": {"type": "fix"},
       "rules": [{"type": "feat", "release": "minor"}],
+      "host_matches": [false],
       "expected": {"upstream": "undefined", "gwt": "undefined"}
     },
     {
@@ -60,6 +67,7 @@
       "classification": "exact_parity",
       "commit": {"type": null},
       "rules": [{"type": "feat", "release": "minor"}],
+      "host_matches": [false],
       "expected": {"upstream": "undefined", "gwt": "undefined"}
     },
     {
@@ -67,6 +75,7 @@
       "classification": "exact_parity",
       "commit": {},
       "rules": [{"type": "feat", "release": "minor"}],
+      "host_matches": [false],
       "expected": {"upstream": "undefined", "gwt": "undefined"}
     },
     {
@@ -74,6 +83,7 @@
       "classification": "exact_parity",
       "commit": {"type": "fix"},
       "rules": [{"type": "fix", "release": false}],
+      "host_matches": [true],
       "expected": {"upstream": "false", "gwt": "false"}
     },
     {
@@ -81,6 +91,7 @@
       "classification": "exact_parity",
       "commit": {"type": "fix"},
       "rules": [{"type": "fix", "release": null}],
+      "host_matches": [true],
       "expected": {"upstream": "null", "gwt": "null"}
     },
     {
@@ -91,6 +102,7 @@
         {"type": "fix", "release": "patch"},
         {"type": "fix", "release": false}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "false", "gwt": "false"}
     },
     {
@@ -101,6 +113,7 @@
         {"type": "fix", "release": false},
         {"type": "fix", "release": "patch"}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "patch", "gwt": "patch"}
     },
     {
@@ -111,6 +124,7 @@
         {"type": "feat", "release": null},
         {"type": "feat", "release": "minor"}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "minor", "gwt": "minor"}
     },
     {
@@ -121,6 +135,7 @@
         {"type": "feat", "release": "patch"},
         {"type": "feat", "release": "minor"}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "minor", "gwt": "minor"}
     },
     {
@@ -131,6 +146,7 @@
         {"type": "feat", "release": "minor"},
         {"type": "feat", "release": "patch"}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "minor", "gwt": "minor"}
     },
     {
@@ -142,6 +158,7 @@
         {"type": "build", "release": "prepatch"},
         {"type": "build", "release": "preminor"}
       ],
+      "host_matches": [true, true, true],
       "expected": {"upstream": "preminor", "gwt": "preminor"}
     },
     {
@@ -152,6 +169,7 @@
         {"type": "feat", "breaking": true, "release": "major"},
         {"type": "feat", "release": false}
       ],
+      "host_matches": [true, true],
       "expected": {"upstream": "major", "gwt": "major"}
     },
     {
@@ -159,6 +177,7 @@
       "classification": "known_boundary_gap",
       "commit": {"type": "docs", "scope": "bar"},
       "rules": [{"type": "docs", "scope": "b*", "release": "minor"}],
+      "host_matches": [true],
       "expected": {"upstream": "minor", "gwt": "undefined"}
     },
     {
@@ -166,6 +185,7 @@
       "classification": "known_boundary_gap",
       "commit": {"type": "fix"},
       "rules": [{"type": "f*", "release": "patch"}],
+      "host_matches": [true],
       "expected": {"upstream": "patch", "gwt": "undefined"}
     }
   ]

@@ -23,6 +23,9 @@ SEMANTIC_RULES = SEMANTIC_PILOT / "rules.gwt"
 SEMANTIC_REQUEST = "analyze normalized commit"
 SEMANTIC_CONFORMANCE = SEMANTIC_PILOT / "conformance_cases.json"
 SEMANTIC_RUNNER = SEMANTIC_PILOT / "run_conformance.py"
+SEMANTIC_EVALUATED_REQUEST = SEMANTIC_PILOT / "evaluated-request.json"
+SEMANTIC_EVALUATED_PROVENANCE = SEMANTIC_PILOT / "evaluated-fact-provenance.json"
+SEMANTIC_EVALUATED_REQUEST_NAME = "select release from evaluated rules"
 SPREE_PILOT = ROOT / "examples/external_pilots/spree_item_total"
 SPREE_RULES = SPREE_PILOT / "rules.gwt"
 SPREE_SLICE = SPREE_PILOT / "oracle_slice.json"
@@ -41,6 +44,8 @@ class ExternalPilotRegressionTests(unittest.TestCase):
             Counter(case["classification"] for case in fixture["cases"]),
             {"exact_parity": 18, "known_boundary_gap": 2},
         )
+        for case in fixture["cases"]:
+            self.assertEqual(len(case["host_matches"]), len(case["rules"]))
 
         completed = subprocess.run(
             [sys.executable, str(SEMANTIC_RUNNER)],
@@ -50,8 +55,32 @@ class ExternalPilotRegressionTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("exact upstream/GWT parity: 18/18", completed.stdout)
-        self.assertIn("documented boundary gaps: 2/2", completed.stdout)
+        self.assertIn("direct exact upstream/GWT parity: 18/18", completed.stdout)
+        self.assertIn("direct documented boundary gaps: 2/2", completed.stdout)
+        self.assertIn("host-adapter upstream/GWT parity: 20/20", completed.stdout)
+
+    def test_commit_analyzer_host_match_facts_have_declared_provenance(self):
+        request = json.loads(SEMANTIC_EVALUATED_REQUEST.read_text())
+        provenance = json.loads(SEMANTIC_EVALUATED_PROVENANCE.read_text())
+        execution_case = capture_execution_case(
+            SEMANTIC_RULES,
+            request,
+            request=SEMANTIC_EVALUATED_REQUEST_NAME,
+            fact_provenance=provenance,
+        )
+        self.assertEqual(
+            execution_case.fact_provenance,
+            [
+                {
+                    "path": "evaluations",
+                    "source": "host commit matcher: micromatch-backed RuleEvaluation facts",
+                    "description": (
+                        "Ordered rule outcomes after the adapter applies breaking/revert "
+                        "gates and micromatch criteria; GWT owns only release selection."
+                    ),
+                }
+            ],
+        )
 
     def test_seeded_fact_provenance_sidecars_match_declared_pilot_inputs(self):
         pilots = (

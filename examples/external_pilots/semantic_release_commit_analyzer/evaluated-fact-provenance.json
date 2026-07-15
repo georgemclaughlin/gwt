@@ -1,0 +1,6 @@
+{
+  "evaluations": {
+    "description": "Ordered rule outcomes after the adapter applies breaking/revert gates and micromatch criteria; GWT owns only release selection.",
+    "source": "host commit matcher: micromatch-backed RuleEvaluation facts"
+  }
+}
