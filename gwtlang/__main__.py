@@ -306,6 +306,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--name",
         help="Scenario name when --program is supplied.",
     )
+    workbench_parser.add_argument(
+        "--review-notice",
+        help="Prominent provenance or scope notice shown in the dossier.",
+    )
+    workbench_parser.add_argument(
+        "--old-label",
+        default="Baseline program",
+        help="Human-readable provenance label for the baseline program.",
+    )
+    workbench_parser.add_argument(
+        "--new-label",
+        default="Candidate program",
+        help="Human-readable provenance label for the candidate program.",
+    )
     add_import_policy_arguments(workbench_parser)
 
     validate_parser = subparsers.add_parser(
@@ -965,6 +979,9 @@ def workbench_command(args: argparse.Namespace) -> int:
             cases[0],
             comparison=comparison,
             verified_scenario=verified_scenario,
+            review_notice=args.review_notice,
+            old_label=args.old_label,
+            new_label=args.new_label,
         )
         _write_text_atomically(args.output, rendered)
     except (GwtError, OSError, ValueError) as exc:
