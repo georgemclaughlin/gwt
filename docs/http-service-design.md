@@ -128,6 +128,42 @@ CLI envelope is useful for local runners, scenario state, print output, and
 debugging. The service should start with the API contract that host clients
 expect from OpenAPI: request body in, declared response body out.
 
+## Opt-In Execution Case Evidence
+
+`gwt serve` can persist the exact evaluator trace behind a served decision as a
+versioned Execution Case:
+
+```sh
+python -m gwtlang serve examples/deployable_api/rules.gwt \
+  --port 8080 \
+  --capture-dir /tmp/gwt-cases
+```
+
+The service runs the named request once, then reuses that completed trace to
+build the same artifact format as `gwt capture`. Successful writes add
+`x-gwt-case-id` to the HTTP response; the ID is both the artifact integrity
+digest and the content-addressed filename. OpenAPI advertises this optional
+header on success and error responses. Capture also creates trace correlation
+headers even when OTLP export is disabled.
+
+The default is `values: "omit"` with failed GWT executions recorded. This is a
+reviewable execution shape, not replay evidence. `--capture-values` preserves
+the request, declared output, operands, state changes, and error detail so the
+case can drive `gwt compare`, scenario generation, and the workbench. It should
+therefore be enabled only where those values may be stored. Repeated
+`--capture-request` flags constrain recording to named request contracts.
+
+`--fact-provenance` is static server-side configuration validated at startup;
+it is not accepted from callers and cannot influence the decision. A sidecar
+used for more than one selected request must contain only paths valid for each
+of those contracts. Shape-only capture omits provenance descriptions while
+recording that the field was redacted.
+
+Transport failures occur before evaluator execution and are not cases. Runtime
+and contract failures are cases. Artifact write errors remain out-of-band: the
+server logs them, omits `x-gwt-case-id`, and preserves the original decision or
+error response.
+
 ## Experimental OpenTelemetry Export
 
 `gwt serve` can export request execution traces and metrics over OTLP/HTTP

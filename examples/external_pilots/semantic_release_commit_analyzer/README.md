@@ -54,7 +54,11 @@ python -m gwtlang capture examples/external_pilots/semantic_release_commit_analy
 python -m gwtlang openapi examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
   --output /tmp/commit-analyzer-openapi.json
 python -m gwtlang serve examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
-  --port 8080
+  --port 8080 \
+  --capture-dir /tmp/commit-analyzer-cases \
+  --capture-request "select release from evaluated rules" \
+  --capture-values \
+  --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/evaluated-fact-provenance.json
 python examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py
 ```
 
@@ -98,7 +102,10 @@ generated OpenAPI client/gwt serve parity: 20/20
 OpenAPI describes execution facts and results; it does not transport the
 optional Execution Case provenance sidecar. Capture and workbench artifacts
 retain that unauthenticated review metadata separately, so provenance does not
-become decision input.
+become decision input. The served-capture command above makes the integration
+boundary concrete: each selected HTTP decision returns an `x-gwt-case-id` and
+writes the corresponding replayable case under `/tmp/commit-analyzer-cases`.
+Omit `--capture-values` for shape-only evidence when inputs must not be retained.
 
 ## Differential conformance
 

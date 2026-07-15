@@ -108,9 +108,14 @@ class OpenApiGenerationTests(unittest.TestCase):
         for status in ("200", "400", "413", "415", "500"):
             headers = operation["responses"][status]["headers"]
             self.assertEqual(headers["traceparent"]["schema"], {"type": "string"})
-            self.assertIn("OpenTelemetry export is enabled", headers["traceparent"]["description"])
+            self.assertIn("Execution Case capture is enabled", headers["traceparent"]["description"])
             self.assertEqual(headers["x-gwt-trace-id"]["schema"], {"type": "string"})
-            self.assertIn("OpenTelemetry export is enabled", headers["x-gwt-trace-id"]["description"])
+            self.assertIn("Execution Case capture is enabled", headers["x-gwt-trace-id"]["description"])
+            self.assertEqual(
+                headers["x-gwt-case-id"]["schema"],
+                {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            )
+            self.assertIn("written successfully", headers["x-gwt-case-id"]["description"])
 
         self.assertEqual(schemas["CartStatus"]["enum"], ["new", "priced"])
         self.assertEqual(

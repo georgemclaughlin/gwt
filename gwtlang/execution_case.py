@@ -318,6 +318,67 @@ def capture_execution_case(
     )
 
 
+def _execution_case_from_completed_trace(
+    snapshot: LoadedProgramSnapshot,
+    program: Program,
+    json_state: JsonObject,
+    *,
+    request: str,
+    recorder: GwtTraceRecorder,
+    program_file: str | Path,
+    fact_provenance: FactProvenanceInput | None = None,
+    policy: ExecutionCaseCapturePolicy,
+    declared_result: JsonObject | None = None,
+    failure: GwtError | None = None,
+    execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
+    max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
+) -> ExecutionCase:
+    """Build an Execution Case from a request run already traced by a host.
+
+    This internal seam lets `gwt serve` execute a decision exactly once while
+    reusing the versioned artifact builder and redaction rules used by
+    `gwt capture`.
+    """
+
+    if (declared_result is None) == (failure is None):
+        raise ValueError("completed trace requires exactly one result or failure")
+    if failure is not None and policy.on_error != "record":
+        raise ValueError("failed completed trace requires on_error='record'")
+    _validate_execution_limit("execution_budget", execution_budget)
+    _validate_execution_limit("max_call_depth", max_call_depth)
+    _validate_capture_value(json_state, label="request input")
+    try:
+        input_state = cast(JsonObject, _jsonable(deepcopy(json_state)))
+    except RecursionError:
+        raise GwtError(
+            "execution case input exceeds the supported nesting depth"
+        ) from None
+    normalized_fact_provenance = _normalize_fact_provenance(fact_provenance)
+    _validate_fact_provenance_paths(normalized_fact_provenance, program, request)
+
+    normalized_result: JsonObject | None = None
+    if declared_result is not None:
+        _validate_capture_value(declared_result, label="declared result")
+        normalized_result = cast(JsonObject, _jsonable(deepcopy(declared_result)))
+
+    return _build_execution_case(
+        program_file=Path(program_file),
+        snapshot=snapshot,
+        program_name=program.name,
+        request=request,
+        json_file=None,
+        input_state=input_state,
+        recorder=recorder,
+        capture_policy=policy,
+        execution_budget=execution_budget,
+        max_call_depth=max_call_depth,
+        declared_result=normalized_result,
+        failure=failure,
+        failure_stage="execute" if failure is not None else None,
+        fact_provenance=normalized_fact_provenance,
+    )
+
+
 def _capture_execution_case_from_snapshot(
     snapshot: LoadedProgramSnapshot,
     json_state: JsonObject,

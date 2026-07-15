@@ -620,6 +620,17 @@ OTLP trace and metric exports in a background worker and uses a bounded flush
 on graceful shutdown. Served traces redact state, output, and print values by
 default; pass `--trace-values` for local diagnostic runs that need full values.
 
+Pass `--capture-dir cases` to record served GWT executions as versioned local
+Execution Cases. Served capture is deliberately opt-in and shape-only by
+default: inputs, outputs, operands, error details, and optional fact provenance
+are omitted. A successfully written artifact is identified by the
+`x-gwt-case-id` response header, whose value is its integrity digest. Repeat
+`--capture-request "name"` to select requests. Use `--capture-values` only for
+local inputs that may be retained; full-value cases can be replayed and
+compared, while shape-only cases cannot. `--fact-provenance path.json` attaches
+static server configuration to full-value cases and never accepts provenance
+from the HTTP request body.
+
 `gwt lsp` starts a minimal Language Server Protocol server over stdio. It
 publishes diagnostics and supports document symbols, hover, go-to-definition for
 behavior calls, and completions for known language symbols.

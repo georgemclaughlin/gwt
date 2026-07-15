@@ -15,7 +15,21 @@ from urllib.parse import urlparse
 
 from .api import CompiledProgram, compile_text, generate_openapi_text, run_result_payload
 from .errors import GwtError
-from .runtime import ContractBinding, Runtime
+from .execution_case import (
+    ExecutionCaseCapturePolicy,
+    FactProvenanceInput,
+    _execution_case_from_completed_trace,
+    _normalize_fact_provenance,
+    _validate_fact_provenance_paths,
+)
+from .program_identity import LoadedProgramSnapshot, load_program_snapshot
+from .runtime import (
+    DEFAULT_EXECUTION_BUDGET,
+    DEFAULT_MAX_CALL_DEPTH,
+    ContractBinding,
+    ImportPolicy,
+    Runtime,
+)
 from .tracing import (
     GwtTraceRecorder,
     OtlpExportError,
@@ -60,6 +74,26 @@ class _ContractPathNode:
 
 
 @dataclass(frozen=True)
+class HttpExecutionCaseConfig:
+    """Opt-in local Execution Case recording for served named requests."""
+
+    directory: Path
+    request_names: frozenset[str] | None = None
+    fact_provenance: FactProvenanceInput | None = None
+    include_values: bool = False
+
+    def captures(self, request_name: str) -> bool:
+        return self.request_names is None or request_name in self.request_names
+
+    @property
+    def policy(self) -> ExecutionCaseCapturePolicy:
+        return ExecutionCaseCapturePolicy(
+            on_error="record",
+            values="full" if self.include_values else "omit",
+        )
+
+
+@dataclass(frozen=True)
 class GwtHttpService:
     """Compiled HTTP view of a GWT file's named REQUEST contracts.
 
@@ -71,8 +105,10 @@ class GwtHttpService:
     compiled: CompiledProgram
     openapi_document: dict[str, Any]
     routes: dict[str, HttpRequestRoute]
+    program_snapshot: LoadedProgramSnapshot
     trace_config: HttpTraceConfig | None = None
     metrics_config: HttpMetricsConfig | None = None
+    capture_config: HttpExecutionCaseConfig | None = None
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES
     background_exporter: _BackgroundOtlpExporter | None = None
 
@@ -85,13 +121,16 @@ class GwtHttpService:
         allow_absolute_imports: bool = True,
         trace_config: HttpTraceConfig | None = None,
         metrics_config: HttpMetricsConfig | None = None,
+        capture_config: HttpExecutionCaseConfig | None = None,
         max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
         background_exports: bool = False,
     ) -> GwtHttpService:
         """Compile a GWT file and build its OpenAPI-backed HTTP route table."""
 
         file_path = Path(path)
-        source = file_path.read_text()
+        import_policy = _http_import_policy(import_roots, allow_absolute_imports)
+        snapshot = load_program_snapshot(file_path, import_policy=import_policy)
+        source = snapshot.entry_source
         filename = str(file_path)
         compiled = compile_text(
             source,
@@ -105,12 +144,19 @@ class GwtHttpService:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         ).as_payload()
+        _prepare_capture_config(
+            capture_config,
+            compiled=compiled,
+            trace_config=trace_config,
+        )
         return cls(
             compiled=compiled,
             openapi_document=openapi_document,
             routes=_routes_from_openapi(openapi_document),
+            program_snapshot=snapshot,
             trace_config=trace_config,
             metrics_config=metrics_config,
+            capture_config=capture_config,
             max_request_body_bytes=max_request_body_bytes,
             background_exporter=(
                 _BackgroundOtlpExporter()
@@ -260,17 +306,35 @@ class GwtHttpService:
         except GwtError as exc:
             error_status = _status_for_gwt_error(str(exc))
             self._finish_trace(recorder, error=str(exc))
+            case_id = self._capture_execution_case(
+                route,
+                json_state,
+                recorder,
+                failure=exc,
+            )
             raise HttpServiceError(
                 error_status,
                 str(exc),
                 "GWT_REQUEST_FAILED",
                 traceparent=recorder.traceparent if recorder is not None else None,
+                case_id=case_id,
             ) from exc
 
         result = run_result_payload(run_result, file=self.compiled.file)["result"]
         if result is None:
             self._finish_trace(recorder)
-            return HttpRouteResult({}, traceparent=recorder.traceparent if recorder is not None else None)
+            declared_result: dict[str, Any] = {}
+            case_id = self._capture_execution_case(
+                route,
+                json_state,
+                recorder,
+                declared_result=declared_result,
+            )
+            return HttpRouteResult(
+                declared_result,
+                traceparent=recorder.traceparent if recorder is not None else None,
+                case_id=case_id,
+            )
         if not isinstance(result, dict):
             error = "GWT request returned a non-object response"
             self._finish_trace(recorder, error=error)
@@ -281,10 +345,63 @@ class GwtHttpService:
                 traceparent=recorder.traceparent if recorder is not None else None,
             )
         self._finish_trace(recorder)
-        return HttpRouteResult(
-            cast(dict[str, Any], result),
-            traceparent=recorder.traceparent if recorder is not None else None,
+        declared_result = cast(dict[str, Any], result)
+        case_id = self._capture_execution_case(
+            route,
+            json_state,
+            recorder,
+            declared_result=declared_result,
         )
+        return HttpRouteResult(
+            declared_result,
+            traceparent=recorder.traceparent if recorder is not None else None,
+            case_id=case_id,
+        )
+
+    def _capture_execution_case(
+        self,
+        route: HttpRequestRoute,
+        json_state: dict[str, Any],
+        recorder: GwtTraceRecorder | None,
+        *,
+        declared_result: dict[str, Any] | None = None,
+        failure: GwtError | None = None,
+    ) -> str | None:
+        config = self.capture_config
+        if config is None or not config.captures(route.request_name):
+            return None
+        if recorder is None:
+            print(
+                f"gwt: execution case capture skipped for {route.request_name!r}: missing trace recorder",
+                file=sys.stderr,
+            )
+            return None
+        try:
+            execution_case = _execution_case_from_completed_trace(
+                self.program_snapshot,
+                self.compiled.program,
+                json_state,
+                request=route.request_name,
+                recorder=recorder,
+                program_file=self.compiled.file,
+                fact_provenance=config.fact_provenance,
+                policy=config.policy,
+                declared_result=declared_result,
+                failure=failure,
+                execution_budget=DEFAULT_EXECUTION_BUDGET,
+                max_call_depth=DEFAULT_MAX_CALL_DEPTH,
+            )
+            payload = execution_case.as_payload()
+            case_id = payload["integrity"]["digest"]
+            filename = f"{case_id.removeprefix('sha256:')}.execution-case.json"
+            execution_case.write(config.directory / filename)
+            return case_id
+        except Exception as exc:
+            print(
+                f"gwt: execution case capture failed for {route.request_name!r}: {exc}",
+                file=sys.stderr,
+            )
+            return None
 
     def _validate_declared_input_keys(
         self,
@@ -300,8 +417,20 @@ class GwtHttpService:
         route: HttpRequestRoute,
         traceparent: str | None,
     ) -> GwtTraceRecorder | None:
-        if self.trace_config is None:
+        capture_enabled = (
+            self.capture_config is not None
+            and self.capture_config.captures(route.request_name)
+        )
+        if self.trace_config is None and not capture_enabled:
             return None
+        include_values = (
+            (self.trace_config.include_values if self.trace_config is not None else False)
+            or (
+                self.capture_config.include_values
+                if capture_enabled and self.capture_config is not None
+                else False
+            )
+        )
         return GwtTraceRecorder(
             program_file=self.compiled.file,
             program_name=self.program_name,
@@ -309,8 +438,12 @@ class GwtHttpService:
             request_name=route.request_name,
             route_path=route.path,
             context=parse_traceparent(traceparent),
-            service_name=self.trace_config.service_name,
-            include_values=self.trace_config.include_values,
+            service_name=(
+                self.trace_config.service_name
+                if self.trace_config is not None
+                else "gwt-serve"
+            ),
+            include_values=include_values,
         )
 
     def _export_trace(self, recorder: GwtTraceRecorder | None) -> None:
@@ -513,15 +646,25 @@ class HttpMetricsConfig:
 class HttpRouteResult:
     body: dict[str, Any]
     traceparent: str | None = None
+    case_id: str | None = None
 
 
 class HttpServiceError(Exception):
-    def __init__(self, status: int, message: str, code: str, *, traceparent: str | None = None) -> None:
+    def __init__(
+        self,
+        status: int,
+        message: str,
+        code: str,
+        *,
+        traceparent: str | None = None,
+        case_id: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.status = status
         self.message = message
         self.code = code
         self.traceparent = traceparent
+        self.case_id = case_id
 
 
 class GwtHttpServer(ThreadingHTTPServer):
@@ -563,7 +706,20 @@ def run_http_server(
     trace_values: bool = False,
     otlp_metrics_endpoint: str | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+    capture_directory: str | Path | None = None,
+    capture_request_names: Iterable[str] | None = None,
+    capture_values: bool = False,
+    fact_provenance: FactProvenanceInput | None = None,
 ) -> int:
+    if capture_directory is None and (
+        capture_request_names is not None
+        or capture_values
+        or fact_provenance is not None
+    ):
+        raise ValueError(
+            "capture request selection, values, and fact provenance require "
+            "a capture directory"
+        )
     resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
     resolved_otlp_metrics_endpoint = resolve_otlp_metrics_endpoint(otlp_metrics_endpoint)
     service = GwtHttpService.from_file(
@@ -578,6 +734,20 @@ def run_http_server(
         metrics_config=(
             HttpMetricsConfig(resolved_otlp_metrics_endpoint)
             if resolved_otlp_metrics_endpoint is not None
+            else None
+        ),
+        capture_config=(
+            HttpExecutionCaseConfig(
+                directory=Path(capture_directory),
+                request_names=(
+                    frozenset(capture_request_names)
+                    if capture_request_names is not None
+                    else None
+                ),
+                fact_provenance=fact_provenance,
+                include_values=capture_values,
+            )
+            if capture_directory is not None
             else None
         ),
         max_request_body_bytes=max_request_body_bytes,
@@ -624,7 +794,11 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
         except HttpServiceError as exc:
             self._write_error(exc)
             return
-        self._write_json(200, result.body, headers=_trace_headers(result.traceparent))
+        self._write_json(
+            200,
+            result.body,
+            headers=_response_headers(result.traceparent, result.case_id),
+        )
 
     def log_message(self, format: str, *args: object) -> None:
         return
@@ -658,7 +832,7 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
                     "message": error.message,
                 },
             },
-            headers=_trace_headers(error.traceparent),
+            headers=_response_headers(error.traceparent, error.case_id),
         )
 
 
@@ -680,6 +854,46 @@ def _routes_from_openapi(document: dict[str, Any]) -> dict[str, HttpRequestRoute
         if isinstance(request_name, str) and isinstance(operation_id, str):
             routes[path] = HttpRequestRoute(path, request_name, operation_id)
     return routes
+
+
+def _http_import_policy(
+    import_roots: Iterable[str | Path] | None,
+    allow_absolute_imports: bool,
+) -> ImportPolicy | None:
+    if import_roots is None and allow_absolute_imports:
+        return None
+    roots = tuple(Path(root).resolve() for root in import_roots or ())
+    return ImportPolicy(roots, allow_absolute_imports)
+
+
+def _prepare_capture_config(
+    config: HttpExecutionCaseConfig | None,
+    *,
+    compiled: CompiledProgram,
+    trace_config: HttpTraceConfig | None,
+) -> None:
+    if config is None:
+        return
+    if config.include_values and trace_config is not None and not trace_config.include_values:
+        raise ValueError(
+            "full Execution Case capture cannot share a redacted OTLP trace; "
+            "also enable trace values or omit captured values"
+        )
+    available = set(compiled.program.requests)
+    selected = set(config.request_names) if config.request_names is not None else available
+    if not selected:
+        raise ValueError("execution case capture requires at least one named REQUEST")
+    unknown = sorted(selected - available)
+    if unknown:
+        raise ValueError(f"unknown capture request: {unknown[0]}")
+    normalized_provenance = _normalize_fact_provenance(config.fact_provenance)
+    for request_name in sorted(selected):
+        _validate_fact_provenance_paths(
+            normalized_provenance,
+            compiled.program,
+            request_name,
+        )
+    config.directory.mkdir(parents=True, exist_ok=True)
 
 
 def _contract_path_tree(bindings: Iterable[ContractBinding]) -> _ContractPathNode:
@@ -797,15 +1011,23 @@ def _failure_metric_specs(error_message: str | None) -> list[tuple[str, str]]:
     return specs
 
 
-def _trace_headers(traceparent: str | None) -> dict[str, str]:
-    if traceparent is None:
-        return {}
-    parts = traceparent.split("-")
-    trace_id = parts[1] if len(parts) == 4 else ""
-    return {
-        "traceparent": traceparent,
-        "x-gwt-trace-id": trace_id,
-    }
+def _response_headers(
+    traceparent: str | None,
+    case_id: str | None,
+) -> dict[str, str]:
+    headers: dict[str, str] = {}
+    if traceparent is not None:
+        parts = traceparent.split("-")
+        trace_id = parts[1] if len(parts) == 4 else ""
+        headers.update(
+            {
+                "traceparent": traceparent,
+                "x-gwt-trace-id": trace_id,
+            }
+        )
+    if case_id is not None:
+        headers["x-gwt-case-id"] = case_id
+    return headers
 
 
 def _with_traceparent(
@@ -819,6 +1041,7 @@ def _with_traceparent(
         error.message,
         error.code,
         traceparent=recorder.traceparent,
+        case_id=error.case_id,
     )
 
 

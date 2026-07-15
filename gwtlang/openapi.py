@@ -650,15 +650,23 @@ def _trace_response_headers() -> dict[str, Any]:
         "traceparent": {
             "description": (
                 "W3C trace context for the served GWT request. Present when "
-                "OpenTelemetry export is enabled."
+                "OpenTelemetry export is enabled or Execution Case capture is enabled."
             ),
             "schema": {"type": "string"},
         },
         "x-gwt-trace-id": {
             "description": (
                 "Trace ID for the served GWT request. Present when OpenTelemetry "
-                "export is enabled."
+                "export is enabled or Execution Case capture is enabled."
             ),
             "schema": {"type": "string"},
+        },
+        "x-gwt-case-id": {
+            "description": (
+                "Integrity digest identifying a locally recorded Execution Case. "
+                "Present when served capture is enabled for the request and the "
+                "artifact is written successfully."
+            ),
+            "schema": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
         },
     }
