@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "item_total": "60.00",
+    "amount_min": "50.00",
+    "minimum_mode": "gt",
+    "amount_max": "60.00",
+    "maximum_mode": "lte"
+  }
+}

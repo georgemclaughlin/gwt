@@ -1,0 +1,20 @@
+{
+  "facts": {
+    "approved_itt_provider": false,
+    "childminder": false,
+    "childminder_entitled": false,
+    "cohort_funded": true,
+    "course": "npq_leading_literacy",
+    "employment_kind": "none",
+    "inside_catchment": true,
+    "institution_eligible": true,
+    "institution_pp50": false,
+    "institution_rise": false,
+    "local_authority_nursery": false,
+    "new_headteacher": false,
+    "preschool_class_as_part_of_school": false,
+    "previously_funded": false,
+    "referred_by_return_to_teaching_adviser": false,
+    "work_policy": "school"
+  }
+}

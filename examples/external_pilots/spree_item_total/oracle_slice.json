@@ -1,0 +1,60 @@
+{
+  "schema": "gwt.external-pilot-oracle-slice.v1",
+  "source": {
+    "repository": "https://github.com/spree/spree",
+    "commit": "249dbf3c68461288f8444d754bcf27d0fa962250",
+    "oracle": "spree/core/app/models/spree/promotion/rules/item_total.rb"
+  },
+  "cases": [
+    {
+      "id": "strict-interior",
+      "facts": {"item_total": "51.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": true, "first_error": "none", "error_count": 0}
+    },
+    {
+      "id": "below-strict-minimum",
+      "facts": {"item_total": "49.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": false, "first_error": "item_total_less_than_or_equal", "error_count": 1}
+    },
+    {
+      "id": "equal-strict-minimum",
+      "facts": {"item_total": "50.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": false, "first_error": "item_total_less_than_or_equal", "error_count": 1}
+    },
+    {
+      "id": "equal-inclusive-minimum",
+      "facts": {"item_total": "50.00", "amount_min": "50.00", "minimum_mode": "gte", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": true, "first_error": "none", "error_count": 0}
+    },
+    {
+      "id": "equal-strict-maximum",
+      "facts": {"item_total": "60.00", "amount_min": "50.00", "minimum_mode": "gte", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": false, "first_error": "item_total_more_than_or_equal", "error_count": 1}
+    },
+    {
+      "id": "equal-inclusive-maximum",
+      "facts": {"item_total": "60.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lte"},
+      "expected": {"eligible": true, "first_error": "none", "error_count": 0}
+    },
+    {
+      "id": "above-inclusive-maximum",
+      "facts": {"item_total": "61.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lte"},
+      "expected": {"eligible": false, "first_error": "item_total_more_than", "error_count": 1}
+    },
+    {
+      "id": "no-maximum",
+      "facts": {"item_total": "1000.00", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": false, "amount_max": "0.00", "maximum_mode": "lt"},
+      "expected": {"eligible": true, "first_error": "none", "error_count": 0}
+    },
+    {
+      "id": "contradictory-limits",
+      "facts": {"item_total": "55.00", "amount_min": "60.00", "minimum_mode": "gte", "has_maximum": true, "amount_max": "50.00", "maximum_mode": "lte"},
+      "expected": {"eligible": false, "first_error": "item_total_more_than", "error_count": 2}
+    },
+    {
+      "id": "fractional-interior",
+      "facts": {"item_total": "50.01", "amount_min": "50.00", "minimum_mode": "gt", "has_maximum": true, "amount_max": "60.00", "maximum_mode": "lt"},
+      "expected": {"eligible": true, "first_error": "none", "error_count": 0}
+    }
+  ]
+}

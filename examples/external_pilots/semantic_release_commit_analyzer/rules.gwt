@@ -1,0 +1,376 @@
+PROGRAM semantic release commit analyzer pilot
+
+# This is a normalized, fixed-shape boundary for the upstream JavaScript data.
+# A host adapter must distinguish missing, null, and present scalar properties.
+TYPE PropertyState is "missing" | "null" | "present"
+TYPE ReleaseOutcome is "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease" | "false" | "null" | "undefined"
+
+RECORD NormalizedCommit
+  type_state: PropertyState
+  type_value: text
+  scope_state: PropertyState
+  scope_value: text
+  has_breaking_note: boolean
+  is_revert: boolean
+
+RECORD NormalizedRule
+  id: text
+  match_type: boolean
+  type_value: text
+  match_scope: boolean
+  scope_value: text
+  requires_breaking: boolean
+  requires_revert: boolean
+  release: ReleaseOutcome
+
+RECORD AnalysisResult
+  matched: boolean
+  release: ReleaseOutcome
+  release_rank: integer
+  selected_rule_id: text
+  stopped_at_major: boolean
+
+REQUEST analyze normalized commit
+  GIVEN commit is NormalizedCommit
+  AND rules is list<NormalizedRule>
+
+  GIVEN result is AnalysisResult
+    matched: false
+    release: "undefined"
+    release_rank: 0
+    selected_rule_id: ""
+    stopped_at_major: false
+
+  WHEN analyze commit against rules into result
+
+  OUTPUT result is AnalysisResult
+
+WHEN release rank for <release>
+  GIVEN release is ReleaseOutcome
+  THEN returns integer
+  IF release == "major"
+    RETURN 7
+  ELSE
+    IF release == "premajor"
+      RETURN 6
+    ELSE
+      IF release == "minor"
+        RETURN 5
+      ELSE
+        IF release == "preminor"
+          RETURN 4
+        ELSE
+          IF release == "patch"
+            RETURN 3
+          ELSE
+            IF release == "prepatch"
+              RETURN 2
+            ELSE
+              IF release == "prerelease"
+                RETURN 1
+              ELSE
+                RETURN 0
+
+WHEN matches <rule> against <commit>
+  GIVEN rule is NormalizedRule
+  AND commit is NormalizedCommit
+  THEN returns boolean
+  IF rule.requires_breaking and commit.has_breaking_note == false
+    RETURN false
+  IF rule.requires_revert and commit.is_revert == false
+    RETURN false
+  IF rule.match_type and commit.type_state != "present"
+    RETURN false
+  IF rule.match_type and commit.type_value != rule.type_value
+    RETURN false
+  IF rule.match_scope and commit.scope_state != "present"
+    RETURN false
+  IF rule.match_scope and commit.scope_value != rule.scope_value
+    RETURN false
+  RETURN true
+
+WHEN choose <rule> into <result>
+  GIVEN rule is NormalizedRule
+  AND result is AnalysisResult
+  LET rank be release rank for rule.release
+  set result.matched to true
+  set result.release to rule.release
+  set result.release_rank to rank
+  set result.selected_rule_id to rule.id
+  IF rule.release == "major"
+    set result.stopped_at_major to true
+
+WHEN consider <rule> into <result>
+  GIVEN rule is NormalizedRule
+  AND result is AnalysisResult
+  IF result.matched == false
+    choose rule into result
+  ELSE
+    # The upstream comparator treats a current false/null as falsy, so the next
+    # match replaces it regardless of rank.
+    IF result.release == "false" or result.release == "null"
+      choose rule into result
+    ELSE
+      # A candidate false/null has an upstream release-type index of -1 and
+      # therefore replaces a currently selected named release.
+      IF rule.release == "false" or rule.release == "null"
+        choose rule into result
+      ELSE
+        LET rank be release rank for rule.release
+        IF rank > result.release_rank
+          choose rule into result
+
+WHEN analyze <commit> against <rules> into <result>
+  GIVEN commit is NormalizedCommit
+  AND rules is list<NormalizedRule>
+  AND result is AnalysisResult
+  FOR rule in rules
+    IF result.stopped_at_major == false
+      LET rule_matches be matches rule against commit
+      IF rule_matches
+        consider rule into result
+
+SCENARIO breaking note satisfies a breaking rule
+GIVEN commit is NormalizedCommit
+  type_state: "missing"
+  type_value: ""
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: true
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id         | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "breaking" | false      | ""         | false       | ""          | true              | false           | "major" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == true
+AND result.release == "major"
+AND result.selected_rule_id == "breaking"
+AND result.stopped_at_major == true
+
+SCENARIO revert marker satisfies a revert rule
+GIVEN commit is NormalizedCommit
+  type_state: "missing"
+  type_value: ""
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: true
+
+GIVEN rules are NormalizedRule
+  | id       | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "revert" | false      | ""         | false       | ""          | false             | true            | "patch" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == true
+AND result.release == "patch"
+
+SCENARIO every declared criterion must match
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: true
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id             | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "ordinary-fix" | true       | "fix"      | false       | ""          | false             | false           | "minor" |
+  | "breaking-fix" | true       | "fix"      | false       | ""          | true              | false           | "major" |
+
+REQUEST analyze normalized commit
+
+THEN result.release == "major"
+AND result.selected_rule_id == "breaking-fix"
+
+SCENARIO highest matching named release wins
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "feat"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: true
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id              | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "feature"       | true       | "feat"     | false       | ""          | false             | false           | "minor" |
+  | "breaking-note" | false      | ""         | false       | ""          | true              | false           | "minor" |
+  | "breaking-feat" | true       | "feat"     | false       | ""          | true              | false           | "major" |
+
+REQUEST analyze normalized commit
+
+THEN result.release == "major"
+AND result.selected_rule_id == "breaking-feat"
+
+SCENARIO no rule match remains explicitly undefined
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: true
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id             | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "feature-only" | true       | "feat"     | false       | ""          | true              | false           | "major" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == false
+AND result.release == "undefined"
+AND result.selected_rule_id == ""
+
+SCENARIO null commit property does not equal a text criterion
+GIVEN commit is NormalizedCommit
+  type_state: "null"
+  type_value: ""
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id             | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "feature-only" | true       | "feat"     | false       | ""          | false             | false           | "minor" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == false
+AND result.release == "undefined"
+
+SCENARIO exact type and scope criteria both match
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "docs"
+  scope_state: "present"
+  scope_value: "bar"
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id         | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "docs-bar" | true       | "docs"     | true        | "bar"       | false             | false           | "minor" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == true
+AND result.release == "minor"
+
+SCENARIO exact scope criterion rejects a different scope
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "docs"
+  scope_state: "present"
+  scope_value: "foo"
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id         | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "docs-bar" | true       | "docs"     | true        | "bar"       | false             | false           | "minor" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == false
+
+SCENARIO false release remains distinct from no match
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id         | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "skip-fix" | true       | "fix"      | false       | ""          | false             | false           | "false" |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == true
+AND result.release == "false"
+AND result.selected_rule_id == "skip-fix"
+
+SCENARIO null release remains distinct from no match
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id         | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "null-fix" | true       | "fix"      | false       | ""          | false             | false           | "null"  |
+
+REQUEST analyze normalized commit
+
+THEN result.matched == true
+AND result.release == "null"
+AND result.selected_rule_id == "null-fix"
+
+SCENARIO later false outcome replaces a named release
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id          | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "patch-fix" | true       | "fix"      | false       | ""          | false             | false           | "patch" |
+  | "skip-fix"  | true       | "fix"      | false       | ""          | false             | false           | "false" |
+
+REQUEST analyze normalized commit
+
+THEN result.release == "false"
+AND result.selected_rule_id == "skip-fix"
+
+SCENARIO named release after false replaces the falsy current outcome
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "fix"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: false
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id          | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "skip-fix"  | true       | "fix"      | false       | ""          | false             | false           | "false" |
+  | "patch-fix" | true       | "fix"      | false       | ""          | false             | false           | "patch" |
+
+REQUEST analyze normalized commit
+
+THEN result.release == "patch"
+AND result.selected_rule_id == "patch-fix"
+
+SCENARIO major stops later no-release rule evaluation
+GIVEN commit is NormalizedCommit
+  type_state: "present"
+  type_value: "feat"
+  scope_state: "missing"
+  scope_value: ""
+  has_breaking_note: true
+  is_revert: false
+
+GIVEN rules are NormalizedRule
+  | id                 | match_type | type_value | match_scope | scope_value | requires_breaking | requires_revert | release |
+  | "breaking-feat"    | true       | "feat"     | false       | ""          | true              | false           | "major" |
+  | "later-no-release" | true       | "feat"     | false       | ""          | false             | false           | "false" |
+
+REQUEST analyze normalized commit
+
+THEN result.release == "major"
+AND result.selected_rule_id == "breaking-feat"
+AND result.stopped_at_major == true

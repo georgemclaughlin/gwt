@@ -1,0 +1,282 @@
+PROGRAM DfE NPQ funding eligibility pilot
+
+TYPE CourseIdentifier is "npq_additional_support_offer" | "npq_early_headship_coaching_offer" | "npq_early_years_leadership" | "npq_executive_leadership" | "npq_headship" | "npq_leading_behaviour_culture" | "npq_leading_literacy" | "npq_leading_primary_mathematics" | "npq_leading_teaching" | "npq_leading_teaching_development" | "npq_senco" | "npq_senior_leadership"
+TYPE WorkPolicy is "school" | "childcare" | "another_setting" | "other"
+TYPE EmploymentKind is "none" | "hospital_school" | "lead_mentor_for_accredited_itt_provider" | "local_authority_supply_teacher" | "local_authority_virtual_school" | "young_offender_institution"
+TYPE EligibilityOutcome is "funded" | "subject_to_review" | "not_funded"
+TYPE EligibilityStatusCode is "new" | "funded" | "subject_to_review" | "ineligible_establishment_type" | "ineligible_establishment_not_a_pp50" | "ineligible_institution_type" | "previously_funded" | "referred_by_return_to_teaching_adviser" | "not_new_headteacher_requesting_ehco" | "early_years_invalid_npq" | "not_entitled_childminder" | "not_lead_mentor_course" | "unfunded_cohort" | "not_in_england"
+TYPE FundingDescription is "new" | "scholarship_eligibility" | "unfunded_cohort" | "outside_catchment" | "ineligible_setting" | "not_a_pp50" | "not_entitled_childminder" | "not_eligible_ehco" | "previously_funded" | "subject_to_review"
+
+RECORD EligibilityFacts
+  cohort_funded: boolean
+  inside_catchment: boolean
+  previously_funded: boolean
+  course: CourseIdentifier
+  work_policy: WorkPolicy
+  new_headteacher: boolean
+  institution_rise: boolean
+  institution_eligible: boolean
+  institution_pp50: boolean
+  local_authority_nursery: boolean
+  childminder: boolean
+  childminder_entitled: boolean
+  preschool_class_as_part_of_school: boolean
+  employment_kind: EmploymentKind
+  approved_itt_provider: boolean
+  referred_by_return_to_teaching_adviser: boolean
+
+RECORD FundingDecision
+  outcome: EligibilityOutcome
+  status_code: EligibilityStatusCode
+  description: FundingDescription
+
+REQUEST assess funding eligibility
+  GIVEN facts is EligibilityFacts
+
+  GIVEN decision is FundingDecision
+    outcome: "not_funded"
+    status_code: "new"
+    description: "new"
+
+  WHEN assess facts into decision
+
+  OUTPUT decision is FundingDecision
+
+  THEN decision.status_code != "new"
+  AND decision.description != "new"
+
+WHEN record status <code> outcome <outcome> description <description> into <decision>
+  GIVEN code is EligibilityStatusCode
+  AND outcome is EligibilityOutcome
+  AND description is FundingDescription
+  AND decision is FundingDecision
+  set decision.status_code to code
+  set decision.outcome to outcome
+  set decision.description to description
+
+WHEN assess childcare policy for <facts> into <decision>
+  GIVEN facts is EligibilityFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.course == "npq_early_years_leadership" and facts.preschool_class_as_part_of_school
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.course == "npq_early_years_leadership" and facts.childminder == false
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.course == "npq_early_years_leadership" and facts.childminder_entitled
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.course == "npq_early_years_leadership"
+      record status "not_entitled_childminder" outcome "not_funded" description "not_entitled_childminder" into decision
+    WHEN facts.local_authority_nursery and (facts.course == "npq_senco" or facts.course == "npq_headship" or facts.course == "npq_senior_leadership")
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    ELSE
+      record status "early_years_invalid_npq" outcome "not_funded" description "ineligible_setting" into decision
+
+WHEN assess school policy for <facts> into <decision>
+  GIVEN facts is EligibilityFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.institution_rise
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.institution_eligible == false
+      record status "ineligible_establishment_type" outcome "not_funded" description "ineligible_setting" into decision
+    WHEN facts.course == "npq_early_years_leadership"
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN (facts.course == "npq_executive_leadership" or facts.course == "npq_leading_behaviour_culture" or facts.course == "npq_leading_literacy" or facts.course == "npq_leading_primary_mathematics" or facts.course == "npq_leading_teaching" or facts.course == "npq_leading_teaching_development") and facts.institution_pp50
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.course == "npq_executive_leadership" or facts.course == "npq_leading_behaviour_culture" or facts.course == "npq_leading_literacy" or facts.course == "npq_leading_primary_mathematics" or facts.course == "npq_leading_teaching" or facts.course == "npq_leading_teaching_development"
+      record status "ineligible_establishment_not_a_pp50" outcome "not_funded" description "not_a_pp50" into decision
+    ELSE
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+
+WHEN assess another setting policy for <facts> into <decision>
+  GIVEN facts is EligibilityFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.employment_kind == "lead_mentor_for_accredited_itt_provider" and facts.course == "npq_leading_teaching_development" and facts.approved_itt_provider
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.employment_kind == "lead_mentor_for_accredited_itt_provider" and facts.course == "npq_leading_teaching_development"
+      record status "ineligible_establishment_type" outcome "not_funded" description "ineligible_setting" into decision
+    WHEN facts.employment_kind == "lead_mentor_for_accredited_itt_provider"
+      record status "not_lead_mentor_course" outcome "not_funded" description "ineligible_setting" into decision
+    WHEN (facts.employment_kind == "local_authority_virtual_school" or facts.employment_kind == "hospital_school" or facts.employment_kind == "young_offender_institution" or facts.employment_kind == "local_authority_supply_teacher") and (facts.course == "npq_headship" or facts.course == "npq_senco" or facts.course == "npq_senior_leadership")
+      record status "subject_to_review" outcome "subject_to_review" description "subject_to_review" into decision
+    ELSE
+      record status "ineligible_establishment_type" outcome "not_funded" description "ineligible_setting" into decision
+
+WHEN assess other setting policy for <facts> into <decision>
+  GIVEN facts is EligibilityFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.referred_by_return_to_teaching_adviser
+      record status "referred_by_return_to_teaching_adviser" outcome "subject_to_review" description "subject_to_review" into decision
+    ELSE
+      record status "ineligible_establishment_type" outcome "not_funded" description "ineligible_setting" into decision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is EligibilityFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.cohort_funded == false
+      record status "unfunded_cohort" outcome "not_funded" description "unfunded_cohort" into decision
+    WHEN facts.inside_catchment == false
+      record status "not_in_england" outcome "not_funded" description "outside_catchment" into decision
+    WHEN facts.previously_funded
+      record status "previously_funded" outcome "not_funded" description "previously_funded" into decision
+    WHEN facts.course == "npq_early_headship_coaching_offer" and facts.new_headteacher
+      record status "funded" outcome "funded" description "scholarship_eligibility" into decision
+    WHEN facts.course == "npq_early_headship_coaching_offer"
+      record status "not_new_headteacher_requesting_ehco" outcome "not_funded" description "not_eligible_ehco" into decision
+    WHEN facts.work_policy == "childcare"
+      assess childcare policy for facts into decision
+    WHEN facts.work_policy == "school"
+      assess school policy for facts into decision
+    WHEN facts.work_policy == "another_setting"
+      assess another setting policy for facts into decision
+    WHEN facts.work_policy == "other"
+      assess other setting policy for facts into decision
+    ELSE
+      record status "ineligible_establishment_type" outcome "not_funded" description "ineligible_setting" into decision
+
+SCENARIO an unfunded cohort takes priority over other facts
+GIVEN facts is EligibilityFacts
+  cohort_funded: false
+  inside_catchment: false
+  previously_funded: true
+  course: "npq_headship"
+  work_policy: "school"
+  new_headteacher: false
+  institution_rise: true
+  institution_eligible: true
+  institution_pp50: true
+  local_authority_nursery: false
+  childminder: false
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "none"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: false
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "not_funded"
+AND decision.status_code == "unfunded_cohort"
+
+SCENARIO a RISE school is funded before the PP50 restriction
+GIVEN facts is EligibilityFacts
+  cohort_funded: true
+  inside_catchment: true
+  previously_funded: false
+  course: "npq_executive_leadership"
+  work_policy: "school"
+  new_headteacher: false
+  institution_rise: true
+  institution_eligible: true
+  institution_pp50: false
+  local_authority_nursery: false
+  childminder: false
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "none"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: false
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "funded"
+AND decision.status_code == "funded"
+
+SCENARIO a specialist course requires a PP50 institution
+GIVEN facts is EligibilityFacts
+  cohort_funded: true
+  inside_catchment: true
+  previously_funded: false
+  course: "npq_leading_literacy"
+  work_policy: "school"
+  new_headteacher: false
+  institution_rise: false
+  institution_eligible: true
+  institution_pp50: false
+  local_authority_nursery: false
+  childminder: false
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "none"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: false
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "not_funded"
+AND decision.status_code == "ineligible_establishment_not_a_pp50"
+
+SCENARIO an unlisted childminder is not entitled
+GIVEN facts is EligibilityFacts
+  cohort_funded: true
+  inside_catchment: true
+  previously_funded: false
+  course: "npq_early_years_leadership"
+  work_policy: "childcare"
+  new_headteacher: false
+  institution_rise: false
+  institution_eligible: false
+  institution_pp50: false
+  local_authority_nursery: false
+  childminder: true
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "none"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: false
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "not_funded"
+AND decision.status_code == "not_entitled_childminder"
+
+SCENARIO an eligible another setting is reviewed
+GIVEN facts is EligibilityFacts
+  cohort_funded: true
+  inside_catchment: true
+  previously_funded: false
+  course: "npq_senco"
+  work_policy: "another_setting"
+  new_headteacher: false
+  institution_rise: false
+  institution_eligible: false
+  institution_pp50: false
+  local_authority_nursery: false
+  childminder: false
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "hospital_school"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: false
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "subject_to_review"
+AND decision.status_code == "subject_to_review"
+
+SCENARIO a referred applicant has a distinct review reason
+GIVEN facts is EligibilityFacts
+  cohort_funded: true
+  inside_catchment: true
+  previously_funded: false
+  course: "npq_headship"
+  work_policy: "other"
+  new_headteacher: false
+  institution_rise: false
+  institution_eligible: false
+  institution_pp50: false
+  local_authority_nursery: false
+  childminder: false
+  childminder_entitled: false
+  preschool_class_as_part_of_school: false
+  employment_kind: "none"
+  approved_itt_provider: false
+  referred_by_return_to_teaching_adviser: true
+
+REQUEST assess funding eligibility
+
+THEN decision.outcome == "subject_to_review"
+AND decision.status_code == "referred_by_return_to_teaching_adviser"

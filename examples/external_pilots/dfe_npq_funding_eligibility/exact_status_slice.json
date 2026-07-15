@@ -1,0 +1,191 @@
+{
+  "schema": "gwt.external-pilot-exact-status-slice.v1",
+  "source": {
+    "repository": "https://github.com/DFE-Digital/npq-registration",
+    "commit": "f3601047213660121a5b8e0850c8ecef798f8e03",
+    "oracle": "app/services/funding_eligibility.rb",
+    "ruby": "3.4.9"
+  },
+  "defaults": {
+    "approved_itt_provider": false,
+    "childminder": false,
+    "childminder_entitled": false,
+    "cohort_funded": true,
+    "course": "npq_headship",
+    "employment_kind": "none",
+    "inside_catchment": true,
+    "institution_eligible": true,
+    "institution_pp50": false,
+    "institution_rise": false,
+    "local_authority_nursery": false,
+    "new_headteacher": false,
+    "preschool_class_as_part_of_school": false,
+    "previously_funded": false,
+    "referred_by_return_to_teaching_adviser": false,
+    "work_policy": "school"
+  },
+  "cases": [
+    {
+      "id": "unfunded-and-outside-catchment",
+      "fixture_row": 447,
+      "input_overrides": {
+        "cohort_funded": false,
+        "inside_catchment": false
+      },
+      "expected": {
+        "outcome": "not_funded",
+        "status_code": "unfunded_cohort",
+        "description": "unfunded_cohort"
+      }
+    },
+    {
+      "id": "funded-cohort-outside-catchment",
+      "fixture_row": 1107,
+      "input_overrides": {
+        "inside_catchment": false
+      },
+      "expected": {
+        "outcome": "not_funded",
+        "status_code": "not_in_england",
+        "description": "outside_catchment"
+      }
+    },
+    {
+      "id": "previously-funded",
+      "fixture_row": 776,
+      "input_overrides": {
+        "previously_funded": true
+      },
+      "expected": {
+        "outcome": "not_funded",
+        "status_code": "previously_funded",
+        "description": "previously_funded"
+      }
+    },
+    {
+      "id": "rise-overrides-pp50",
+      "fixture_row": 775,
+      "input_overrides": {
+        "course": "npq_executive_leadership",
+        "institution_rise": true
+      },
+      "expected": {
+        "outcome": "funded",
+        "status_code": "funded",
+        "description": "scholarship_eligibility"
+      }
+    },
+    {
+      "id": "specialist-course-without-pp50",
+      "fixture_row": 1348,
+      "input_overrides": {
+        "course": "npq_leading_literacy"
+      },
+      "expected": {
+        "outcome": "not_funded",
+        "status_code": "ineligible_establishment_not_a_pp50",
+        "description": "not_a_pp50"
+      }
+    },
+    {
+      "id": "specialist-course-with-pp50",
+      "fixture_row": 1324,
+      "input_overrides": {
+        "course": "npq_leading_literacy",
+        "institution_pp50": true
+      },
+      "expected": {
+        "outcome": "funded",
+        "status_code": "funded",
+        "description": "scholarship_eligibility"
+      }
+    },
+    {
+      "id": "unlisted-childminder",
+      "fixture_row": 729,
+      "input_overrides": {
+        "childminder": true,
+        "course": "npq_early_years_leadership",
+        "institution_eligible": false,
+        "work_policy": "childcare"
+      },
+      "expected": {
+        "outcome": "not_funded",
+        "status_code": "not_entitled_childminder",
+        "description": "not_entitled_childminder"
+      }
+    },
+    {
+      "id": "preschool-class",
+      "fixture_row": 685,
+      "input_overrides": {
+        "course": "npq_early_years_leadership",
+        "institution_eligible": false,
+        "preschool_class_as_part_of_school": true,
+        "work_policy": "childcare"
+      },
+      "expected": {
+        "outcome": "funded",
+        "status_code": "funded",
+        "description": "scholarship_eligibility"
+      }
+    },
+    {
+      "id": "local-authority-nursery",
+      "fixture_row": 667,
+      "input_overrides": {
+        "local_authority_nursery": true,
+        "work_policy": "childcare"
+      },
+      "expected": {
+        "outcome": "funded",
+        "status_code": "funded",
+        "description": "scholarship_eligibility"
+      }
+    },
+    {
+      "id": "another-setting-review",
+      "fixture_row": 843,
+      "input_overrides": {
+        "employment_kind": "hospital_school",
+        "institution_eligible": false,
+        "work_policy": "another_setting"
+      },
+      "expected": {
+        "outcome": "subject_to_review",
+        "status_code": "subject_to_review",
+        "description": "subject_to_review"
+      }
+    },
+    {
+      "id": "approved-lead-mentor",
+      "fixture_row": 875,
+      "input_overrides": {
+        "approved_itt_provider": true,
+        "course": "npq_leading_teaching_development",
+        "employment_kind": "lead_mentor_for_accredited_itt_provider",
+        "institution_eligible": false,
+        "work_policy": "another_setting"
+      },
+      "expected": {
+        "outcome": "funded",
+        "status_code": "funded",
+        "description": "scholarship_eligibility"
+      }
+    },
+    {
+      "id": "return-to-teaching-referral",
+      "fixture_row": 953,
+      "input_overrides": {
+        "institution_eligible": false,
+        "referred_by_return_to_teaching_adviser": true,
+        "work_policy": "other"
+      },
+      "expected": {
+        "outcome": "subject_to_review",
+        "status_code": "referred_by_return_to_teaching_adviser",
+        "description": "subject_to_review"
+      }
+    }
+  ]
+}
