@@ -43,12 +43,46 @@ python -m gwtlang capture examples/external_pilots/semantic_release_commit_analy
   --request "analyze normalized commit" \
   --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/fact-provenance.json \
   --output /tmp/commit-analysis.execution-case.json
+python examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py
 ```
 
 The JSON example selects `major` through the breaking-feature rule. The
 optional provenance sidecar records which normalized facts remain owned by the
 host parser, configuration loader, and matcher; GWT validates the paths but
 does not authenticate the descriptions.
+
+## Differential conformance
+
+[`conformance_cases.json`](conformance_cases.json) pins 20 upstream-shaped
+commit/rule inputs and their observed results at the reviewed commit. The
+offline command above checks the GWT side against that snapshot. For a live
+comparison, prepare an exact upstream checkout and pass it to the runner:
+
+```sh
+git clone https://github.com/semantic-release/commit-analyzer.git /tmp/commit-analyzer
+git -C /tmp/commit-analyzer checkout f16dd2e9fbf4fc17ab6fefb171a6c6e0645b6758
+npm --prefix /tmp/commit-analyzer ci --omit=dev --ignore-scripts
+python examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py \
+  /tmp/commit-analyzer
+```
+
+The live oracle imports the pinned upstream `lib/analyze-commit.js`; it does
+not reimplement the JavaScript decision. The runner verifies the checkout
+commit before executing it.
+
+Current result:
+
+- 18 cases have exact upstream/GWT parity, including missing and null commit
+  properties, false and null release outcomes, precedence, and the early stop
+  at `major`;
+- 2 cases intentionally disagree: upstream micromatch patterns `b*` and `f*`
+  match, while the normalized GWT pilot treats them as exact text.
+
+Both disagreements are classified as a known integration-boundary limitation,
+not an upstream defect or a GWT runtime bug. They do not justify adding a
+general pattern language to GWT: a host adapter can calculate rule matches and
+leave the reviewable precedence decision in GWT. The harness will make that
+tradeoff visible if future evidence changes it.
 
 ## Normalized boundary
 

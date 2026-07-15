@@ -1,0 +1,172 @@
+{
+  "schema": "gwt.external-pilot-conformance.v1",
+  "source": {
+    "repository": "https://github.com/semantic-release/commit-analyzer",
+    "commit": "f16dd2e9fbf4fc17ab6fefb171a6c6e0645b6758",
+    "oracle": "lib/analyze-commit.js"
+  },
+  "cases": [
+    {
+      "id": "breaking-major",
+      "classification": "exact_parity",
+      "commit": {"notes": [{"title": "BREAKING CHANGE"}]},
+      "rules": [{"breaking": true, "release": "major"}],
+      "expected": {"upstream": "major", "gwt": "major"}
+    },
+    {
+      "id": "revert-patch",
+      "classification": "exact_parity",
+      "commit": {"revert": {"header": "revert feature"}},
+      "rules": [{"revert": true, "release": "patch"}],
+      "expected": {"upstream": "patch", "gwt": "patch"}
+    },
+    {
+      "id": "type-and-breaking",
+      "classification": "exact_parity",
+      "commit": {"type": "feat", "notes": [{"title": "BREAKING CHANGE"}]},
+      "rules": [{"type": "feat", "breaking": true, "release": "major"}],
+      "expected": {"upstream": "major", "gwt": "major"}
+    },
+    {
+      "id": "type-and-revert",
+      "classification": "exact_parity",
+      "commit": {"type": "feat", "revert": {"header": "revert feature"}},
+      "rules": [{"type": "feat", "revert": true, "release": "major"}],
+      "expected": {"upstream": "major", "gwt": "major"}
+    },
+    {
+      "id": "exact-type-and-scope",
+      "classification": "exact_parity",
+      "commit": {"type": "docs", "scope": "api"},
+      "rules": [{"type": "docs", "scope": "api", "release": "minor"}],
+      "expected": {"upstream": "minor", "gwt": "minor"}
+    },
+    {
+      "id": "scope-mismatch",
+      "classification": "exact_parity",
+      "commit": {"type": "docs", "scope": "cli"},
+      "rules": [{"type": "docs", "scope": "api", "release": "minor"}],
+      "expected": {"upstream": "undefined", "gwt": "undefined"}
+    },
+    {
+      "id": "type-mismatch",
+      "classification": "exact_parity",
+      "commit": {"type": "fix"},
+      "rules": [{"type": "feat", "release": "minor"}],
+      "expected": {"upstream": "undefined", "gwt": "undefined"}
+    },
+    {
+      "id": "null-type",
+      "classification": "exact_parity",
+      "commit": {"type": null},
+      "rules": [{"type": "feat", "release": "minor"}],
+      "expected": {"upstream": "undefined", "gwt": "undefined"}
+    },
+    {
+      "id": "missing-type",
+      "classification": "exact_parity",
+      "commit": {},
+      "rules": [{"type": "feat", "release": "minor"}],
+      "expected": {"upstream": "undefined", "gwt": "undefined"}
+    },
+    {
+      "id": "false-release",
+      "classification": "exact_parity",
+      "commit": {"type": "fix"},
+      "rules": [{"type": "fix", "release": false}],
+      "expected": {"upstream": "false", "gwt": "false"}
+    },
+    {
+      "id": "null-release",
+      "classification": "exact_parity",
+      "commit": {"type": "fix"},
+      "rules": [{"type": "fix", "release": null}],
+      "expected": {"upstream": "null", "gwt": "null"}
+    },
+    {
+      "id": "patch-then-false",
+      "classification": "exact_parity",
+      "commit": {"type": "fix"},
+      "rules": [
+        {"type": "fix", "release": "patch"},
+        {"type": "fix", "release": false}
+      ],
+      "expected": {"upstream": "false", "gwt": "false"}
+    },
+    {
+      "id": "false-then-patch",
+      "classification": "exact_parity",
+      "commit": {"type": "fix"},
+      "rules": [
+        {"type": "fix", "release": false},
+        {"type": "fix", "release": "patch"}
+      ],
+      "expected": {"upstream": "patch", "gwt": "patch"}
+    },
+    {
+      "id": "null-then-minor",
+      "classification": "exact_parity",
+      "commit": {"type": "feat"},
+      "rules": [
+        {"type": "feat", "release": null},
+        {"type": "feat", "release": "minor"}
+      ],
+      "expected": {"upstream": "minor", "gwt": "minor"}
+    },
+    {
+      "id": "patch-then-minor",
+      "classification": "exact_parity",
+      "commit": {"type": "feat"},
+      "rules": [
+        {"type": "feat", "release": "patch"},
+        {"type": "feat", "release": "minor"}
+      ],
+      "expected": {"upstream": "minor", "gwt": "minor"}
+    },
+    {
+      "id": "minor-then-patch",
+      "classification": "exact_parity",
+      "commit": {"type": "feat"},
+      "rules": [
+        {"type": "feat", "release": "minor"},
+        {"type": "feat", "release": "patch"}
+      ],
+      "expected": {"upstream": "minor", "gwt": "minor"}
+    },
+    {
+      "id": "prerelease-ladder",
+      "classification": "exact_parity",
+      "commit": {"type": "build"},
+      "rules": [
+        {"type": "build", "release": "prerelease"},
+        {"type": "build", "release": "prepatch"},
+        {"type": "build", "release": "preminor"}
+      ],
+      "expected": {"upstream": "preminor", "gwt": "preminor"}
+    },
+    {
+      "id": "major-short-circuits-false",
+      "classification": "exact_parity",
+      "commit": {"type": "feat", "notes": [{"title": "BREAKING CHANGE"}]},
+      "rules": [
+        {"type": "feat", "breaking": true, "release": "major"},
+        {"type": "feat", "release": false}
+      ],
+      "expected": {"upstream": "major", "gwt": "major"}
+    },
+    {
+      "id": "scope-glob-gap",
+      "classification": "known_boundary_gap",
+      "commit": {"type": "docs", "scope": "bar"},
+      "rules": [{"type": "docs", "scope": "b*", "release": "minor"}],
+      "expected": {"upstream": "minor", "gwt": "undefined"}
+    },
+    {
+      "id": "type-glob-gap",
+      "classification": "known_boundary_gap",
+      "commit": {"type": "fix"},
+      "rules": [{"type": "f*", "release": "patch"}],
+      "expected": {"upstream": "patch", "gwt": "undefined"}
+    }
+  ]
+}
