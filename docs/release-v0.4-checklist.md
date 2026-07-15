@@ -45,6 +45,7 @@ values unchanged.
 | Language specification | `v0.2` | Remain `v0.2` unless source syntax/semantics intentionally change with full spec alignment |
 | Existing execution payload | schema version `3` | Preserve `ExecutionResult.as_payload`; incompatible change requires an explicit version and migration |
 | Execution Case | artifact kind `gwt.execution-case`, schema version `1` | Preserve historical kind across branding changes; freeze fixtures before release |
+| Case Corpus | artifact kind `gwt.case-corpus`, schema version `1` | Freeze membership, path, and integrity semantics before release |
 | Comparison | artifact kind `gwt.comparison`, schema version `1` | Freeze schema and fixtures before release |
 
 - [ ] `pyproject.toml` and `gwtlang/version.py` agree on the authorized package
@@ -68,6 +69,8 @@ The v0.4 roadmap exit criteria remain normative. In particular:
 - [ ] Execution Case v1 has schema-validated, round-tripping fixtures for full
   value, redacted/omitted, success, contract failure, and runtime failure from
   unrelated domains.
+- [ ] Case Corpus v1 has a schema-validated fixture covering portable paths,
+  domain references, corpus integrity, and member case-ID verification.
 - [ ] Capture/read/write boundaries validate artifact structure, canonical
   integrity, redaction availability, and evidence ordering.
 - [ ] Generic explanation has no domain-field heuristics and handles success,
@@ -151,7 +154,7 @@ no package-registry or release-publishing step.
   workflow attestation with the candidate record.
 - [ ] Inspect both archives; confirm they include `gwtlang/execution_case.py`,
   `program_identity.py`, `comparison.py`, `scenario_generation.py`,
-  `workbench.py`, `py.typed`, both v1 JSON schemas, and all existing runtime
+  `workbench.py`, `py.typed`, all three v1 JSON schemas, and all existing runtime
   modules.
 - [ ] Install the wheel with `--no-deps` in a clean environment and run:
 

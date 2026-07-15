@@ -33,6 +33,15 @@ from .api import (
     validate_file,
 )
 from .checker import check_program
+from .case_corpus import (
+    CASE_CORPUS_SCHEMA_VERSION,
+    CaseCorpus,
+    CaseCorpusEntry,
+    CaseCorpusEntrySpec,
+    case_corpus_digest,
+    load_case_corpus,
+    write_case_corpus,
+)
 from .comparison import (
     COMPARISON_SCHEMA_VERSION,
     CaseComparison,
@@ -137,6 +146,10 @@ __all__ = [
     "CompiledProgram",
     "CompiledProgramPayload",
     "COMPARISON_SCHEMA_VERSION",
+    "CASE_CORPUS_SCHEMA_VERSION",
+    "CaseCorpus",
+    "CaseCorpusEntry",
+    "CaseCorpusEntrySpec",
     "CaseComparison",
     "ComparisonResult",
     "ComparisonTotals",
@@ -208,6 +221,7 @@ __all__ = [
     "check_program",
     "check_text",
     "capture_execution_case",
+    "case_corpus_digest",
     "compile_file",
     "compile_text",
     "compare_execution_cases",
@@ -229,6 +243,7 @@ __all__ = [
     "inspect_source",
     "is_formatted",
     "load_execution_case",
+    "load_case_corpus",
     "load_program_snapshot",
     "make_traceparent",
     "new_span_id",
@@ -247,6 +262,7 @@ __all__ = [
     "render_workbench_html",
     "run_text",
     "validate_file",
+    "write_case_corpus",
     "version_payload",
     "ExplainResult",
 ]

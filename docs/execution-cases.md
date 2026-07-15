@@ -264,3 +264,76 @@ Optional host fact provenance is deterministic caller-supplied metadata. It is
 covered by the case integrity digest and preserved in the primary workbench
 case, but it does not affect replay, scenario generation, or old/new behavior
 classification.
+
+## Case Corpora And Human References
+
+An Execution Case integrity digest is the precise identity of one artifact,
+but it is not a useful domain label. Case Corpus v1 keeps those concerns
+separate. It maps a locally meaningful reference to an immutable case ID and a
+portable relative artifact path:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "gwt.case-corpus",
+  "name": "semantic-release priority cases",
+  "cases": [
+    {
+      "reference": "patch-then-minor",
+      "caseId": "sha256:...",
+      "artifact": "cases/....execution-case.json"
+    }
+  ],
+  "integrity": {
+    "algorithm": "gwt-case-corpus-sha256-v1",
+    "scope": "artifact-without-integrity",
+    "digest": "sha256:..."
+  }
+}
+```
+
+The corpus digest protects its name, membership, ordering, references, and
+mappings. Every referenced Execution Case retains its own independent digest.
+Neither digest authenticates who chose a reference or assembled the corpus.
+The same case may appear under different references in distinct corpora
+without changing its evidence identity.
+
+The corpus digest input is the complete corpus with the top-level `integrity`
+member removed, encoded as UTF-8 JSON with lexicographically sorted object
+keys, no insignificant whitespace, unescaped Unicode, and non-finite numbers
+rejected. Arrays retain their declared order. The digest is SHA-256 prefixed
+with `sha256:`. This matches the Execution Case canonicalization shape while
+using the distinct `gwt-case-corpus-sha256-v1` algorithm identifier.
+
+Strings use JSON escaping for quotation marks, reverse solidus, and control
+characters; non-ASCII characters remain literal UTF-8 and `/` is not escaped.
+For example, this unsigned value:
+
+```json
+{"cases":[{"artifact":"cases/one.json","caseId":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reference":"réf \"one/two\""}],"kind":"gwt.case-corpus","name":"Café \"A/B\"","schemaVersion":1}
+```
+
+has corpus digest
+`sha256:424ccc1d98e551fd221d69445d0c162a0e628451f36aca797e4553cc15f76d94`.
+
+Corpus readers preserve declared order, require unique references and case IDs
+within one corpus, reject missing artifacts and digest mismatches, and accept
+only normalized relative POSIX paths that resolve beneath the corpus
+directory without symbolic links. A corpus cannot overwrite one of its own
+member artifacts. References are untrusted, potentially sensitive display text. They
+are escaped by the workbench, do not affect replay or classification, and are
+never accepted by `gwt serve` as decision input or capture metadata.
+
+Use a corpus directly with the review tools:
+
+```sh
+gwt compare --corpus corpus.json --old rules-v1.gwt --new rules-v2.gwt --json
+gwt workbench --corpus corpus.json --old rules-v1.gwt --new rules-v2.gwt \
+  --output review.html
+```
+
+The comparison retains its deterministic `case.id` and adds optional
+`reference` plus authoritative `executionCaseId` fields for corpus-backed
+runs. Candidate-specific classifications and output differences remain only
+in the independent `gwt.comparison` artifact; they are not stored as corpus
+membership metadata.

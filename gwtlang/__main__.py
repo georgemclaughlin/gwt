@@ -19,9 +19,11 @@ from .api import (
     run_result_payload,
 )
 from .checker import Diagnostic
+from .case_corpus import load_case_corpus
 from .comparison import compare_execution_cases
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .execution_case import (
+    ExecutionCase,
     ExecutionCaseCapturePolicy,
     FactProvenanceInput,
     capture_execution_case,
@@ -245,9 +247,14 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument(
         "cases",
         type=Path,
-        nargs="+",
+        nargs="*",
         metavar="CASE",
-        help="One or more Execution Case JSON files.",
+        help="Execution Case JSON files; omit when using --corpus.",
+    )
+    compare_parser.add_argument(
+        "--corpus",
+        type=Path,
+        help="Versioned Case Corpus supplying ordered cases and references.",
     )
     compare_parser.add_argument(
         "--old",
@@ -275,9 +282,14 @@ def build_parser() -> argparse.ArgumentParser:
     workbench_parser.add_argument(
         "cases",
         type=Path,
-        nargs="+",
+        nargs="*",
         metavar="CASE",
-        help="One or more validated Execution Case JSON files.",
+        help="Validated Execution Case JSON files; omit when using --corpus.",
+    )
+    workbench_parser.add_argument(
+        "--corpus",
+        type=Path,
+        help="Versioned Case Corpus supplying ordered cases and references.",
     )
     workbench_parser.add_argument(
         "--output",
@@ -977,13 +989,17 @@ def scenario_from_run_command(args: argparse.Namespace) -> int:
 
 
 def compare_command(args: argparse.Namespace) -> int:
+    if bool(args.cases) == (args.corpus is not None):
+        print("gwt: supply CASE files or --corpus, but not both", file=sys.stderr)
+        return 2
     try:
-        cases = [load_execution_case(path) for path in args.cases]
+        cases, references = _case_selection(args.cases, args.corpus)
         result = compare_execution_cases(
             args.old,
             args.new,
             cases,
             import_policy=import_policy_from_args(args),
+            case_references=references,
         )
     except (GwtError, OSError, ValueError) as exc:
         print(f"gwt: {exc}", file=sys.stderr)
@@ -997,6 +1013,9 @@ def compare_command(args: argparse.Namespace) -> int:
 
 
 def workbench_command(args: argparse.Namespace) -> int:
+    if bool(args.cases) == (args.corpus is not None):
+        print("gwt: supply CASE files or --corpus, but not both", file=sys.stderr)
+        return 2
     if (args.old is None) != (args.new is None):
         print("gwt: --old and --new must be supplied together", file=sys.stderr)
         return 2
@@ -1010,9 +1029,15 @@ def workbench_command(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
-
     try:
-        cases = [load_execution_case(path) for path in args.cases]
+        cases, references = _case_selection(args.cases, args.corpus)
+        if len(cases) > 1 and args.old is None and args.new is None:
+            print(
+                "gwt: multiple corpus cases require --old and --new; the dossier "
+                "uses the first case as its primary case",
+                file=sys.stderr,
+            )
+            return 2
         comparison = None
         if args.old is not None and args.new is not None:
             comparison = compare_execution_cases(
@@ -1020,6 +1045,7 @@ def workbench_command(args: argparse.Namespace) -> int:
                 args.new,
                 cases,
                 import_policy=import_policy_from_args(args),
+                case_references=references,
             )
         verified_scenario = None
         if args.program is not None:
@@ -1037,6 +1063,7 @@ def workbench_command(args: argparse.Namespace) -> int:
             review_notice=args.review_notice,
             old_label=args.old_label,
             new_label=args.new_label,
+            case_reference=(references[0] if references is not None else None),
         )
         _write_text_atomically(args.output, rendered)
     except (GwtError, OSError, ValueError) as exc:
@@ -1045,6 +1072,16 @@ def workbench_command(args: argparse.Namespace) -> int:
 
     print(f"Wrote {args.output}")
     return 0
+
+
+def _case_selection(
+    case_paths: list[Path],
+    corpus_path: Path | None,
+) -> tuple[list[ExecutionCase], tuple[str, ...] | None]:
+    if corpus_path is not None:
+        corpus = load_case_corpus(corpus_path)
+        return list(corpus.cases), corpus.references
+    return [load_execution_case(path) for path in case_paths], None
 
 
 def _write_text_atomically(path: Path, rendered: str) -> None:

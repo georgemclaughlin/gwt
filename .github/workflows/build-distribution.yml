@@ -59,6 +59,7 @@ jobs:
           expected = {
               "gwtlang/__init__.py",
               "gwtlang/__main__.py",
+              "gwtlang/case_corpus.py",
               "gwtlang/comparison.py",
               "gwtlang/execution_case.py",
               "gwtlang/explain.py",
@@ -72,14 +73,18 @@ jobs:
           schema_files = {
               "share/gwtlang/schemas/execution-case.schema.json",
               "share/gwtlang/schemas/comparison.schema.json",
+              "share/gwtlang/schemas/case-corpus.schema.json",
           }
           sdist_schema_files = {
               "docs/schemas/execution-case.schema.json",
               "docs/schemas/comparison.schema.json",
+              "docs/schemas/case-corpus.schema.json",
           }
           sdist_fixture_files = {
               "tests/fixtures/v0.4/README.md",
               "tests/fixtures/v0.4/library-change.comparison.json",
+              "tests/fixtures/v0.4/library-holds.case-corpus.json",
+              "tests/fixtures/v0.4/library-available.execution-case.json",
               "tests/fixtures/v0.4/library-completed.execution-case.json",
               "tests/fixtures/v0.4/library-omitted.execution-case.json",
               "tests/fixtures/v0.4/shipping-contract-failure.execution-case.json",
@@ -187,8 +192,25 @@ jobs:
             --request "review amount" \
             --output case.execution-case.json
           "$VENV/bin/python" -m json.tool case.execution-case.json >/dev/null
+          "$VENV/bin/python" - <<'PY'
+          from gwtlang import CaseCorpusEntrySpec, ExecutionCase, write_case_corpus
 
-          "$VENV/bin/gwt" workbench case.execution-case.json \
+          case = ExecutionCase.load("case.execution-case.json")
+          case_id = case.as_payload()["integrity"]["digest"]
+          write_case_corpus(
+              "smoke.case-corpus.json",
+              name="Distribution candidate smoke",
+              entries=[
+                  CaseCorpusEntrySpec(
+                      "review-amount",
+                      case_id,
+                      "case.execution-case.json",
+                  )
+              ],
+          )
+          PY
+
+          "$VENV/bin/gwt" workbench --corpus smoke.case-corpus.json \
             --program rules.gwt \
             --name "distribution candidate smoke" \
             --import-root "$SMOKE_ROOT" \
@@ -199,6 +221,7 @@ jobs:
           grep -q "Verified scenario preview" review.html
           test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
           test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/case-corpus.schema.json"
 
       - name: Smoke-test clean source-distribution installation
         shell: bash
@@ -219,7 +242,7 @@ jobs:
           "$VENV/bin/gwt" run "$GITHUB_WORKSPACE/examples/hello.gwt" \
             --json >sdist-hello.json
           "$VENV/bin/python" -m json.tool sdist-hello.json >/dev/null
-          "$VENV/bin/gwt" workbench case.execution-case.json \
+          "$VENV/bin/gwt" workbench --corpus smoke.case-corpus.json \
             --program rules.gwt \
             --name "source distribution smoke" \
             --import-root "$SMOKE_ROOT" \
@@ -228,6 +251,7 @@ jobs:
           test -s sdist-review.html
           test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
           test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/case-corpus.schema.json"
 
       - name: Generate and verify SHA-256 checksums
         shell: bash

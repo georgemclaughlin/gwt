@@ -124,7 +124,7 @@ python examples/external_pilots/semantic_release_commit_analyzer/served_evidence
 The output directory must be new or empty. It receives:
 
 - `cases/`: 20 content-addressed Execution Cases;
-- `manifest.json`: the pilot case ID to Execution Case ID mapping;
+- `corpus.json`: the integrity-checked pilot case ID to Execution Case mapping;
 - `candidate-rules.gwt`: the explicitly synthetic local mutation;
 - `comparison.json`: the versioned old/new comparison;
 - `workbench.html`: a local review dossier over the same corpus.

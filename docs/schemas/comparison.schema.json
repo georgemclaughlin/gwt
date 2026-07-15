@@ -66,6 +66,10 @@
     },
     "case": {
       "type": "object",
+      "dependentRequired": {
+        "reference": ["executionCaseId"],
+        "executionCaseId": ["reference"]
+      },
       "required": [
         "id",
         "index",
@@ -88,6 +92,16 @@
       ],
       "properties": {
         "id": { "type": "string" },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?=\\S)(?=.*\\S$)[^\\u0000-\\u001f\\u007f-\\u009f\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u206f\\ufeff]+(?![\\s\\S])"
+        },
+        "executionCaseId": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
         "index": { "type": "integer", "minimum": 1 },
         "request": { "type": "string" },
         "classification": {

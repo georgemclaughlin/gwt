@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/case-corpus.schema.json",
+  "title": "GWT Execution Case Corpus",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "name", "cases", "integrity"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "gwt.case-corpus" },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^(?=\\S)(?=.*\\S$)[^\\u0000-\\u001f\\u007f-\\u009f\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u206f\\ufeff]+(?![\\s\\S])"
+    },
+    "cases": {
+      "$comment": "Readers require reference and caseId values to be unique within this array.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    },
+    "integrity": { "$ref": "#/$defs/integrity" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "case": {
+      "type": "object",
+      "required": ["reference", "caseId", "artifact"],
+      "properties": {
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?=\\S)(?=.*\\S$)[^\\u0000-\\u001f\\u007f-\\u009f\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u206f\\ufeff]+(?![\\s\\S])"
+        },
+        "caseId": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "artifact": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?!.*//)(?!.*(?:^|/)\\.(?:/|$))(?!.*\\/$)[^\\u0000-\\u001f\\u007f-\\u009f\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u206f\\ufeff]+(?![\\s\\S])"
+        }
+      },
+      "additionalProperties": false
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "scope", "digest"],
+      "properties": {
+        "algorithm": { "const": "gwt-case-corpus-sha256-v1" },
+        "scope": { "const": "artifact-without-integrity" },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

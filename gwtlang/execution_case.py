@@ -111,7 +111,7 @@ class ExecutionCase:
     def load(cls, path: str | Path) -> ExecutionCase:
         case_path = Path(path)
         try:
-            payload = json.loads(case_path.read_text())
+            payload = json.loads(case_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise ValueError(
                 f"{case_path}: invalid execution case JSON at line {exc.lineno}, "

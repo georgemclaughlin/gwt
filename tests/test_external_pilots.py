@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from gwtlang import ExecutionCase, GwtClient
+from gwtlang import GwtClient, load_case_corpus
 from gwtlang.comparison import compare_execution_cases
 from gwtlang.execution_case import capture_execution_case
 
@@ -166,31 +166,22 @@ class ExternalPilotRegressionTests(unittest.TestCase):
                 timeout=30,
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            manifest = json.loads((output_dir / "manifest.json").read_text())
+            corpus = load_case_corpus(output_dir / "corpus.json")
             comparison = json.loads((output_dir / "comparison.json").read_text())
             workbench = (output_dir / "workbench.html").read_text()
             candidate = (output_dir / "candidate-rules.gwt").read_text()
-            loaded_cases = [
-                ExecutionCase.load(output_dir / item["artifact"])
-                for item in manifest["cases"]
-            ]
+            loaded_cases = corpus.cases
 
         self.assertIn("served Execution Cases captured: 20/20", completed.stdout)
         self.assertIn("candidate comparisons changed: 3/20", completed.stdout)
-        self.assertEqual(
-            manifest["kind"],
-            "gwt.external-pilot-served-evidence-demo",
-        )
-        self.assertEqual(len(manifest["cases"]), 20)
+        self.assertEqual(corpus.as_payload()["kind"], "gwt.case-corpus")
+        self.assertEqual(len(corpus.entries), 20)
         self.assertEqual(len(loaded_cases), 20)
-        self.assertEqual(
-            len({item["executionCaseId"] for item in manifest["cases"]}),
-            20,
-        )
-        for item, execution_case in zip(manifest["cases"], loaded_cases):
+        self.assertEqual(len({entry.case_id for entry in corpus.entries}), 20)
+        for entry, execution_case in zip(corpus.entries, loaded_cases):
             self.assertEqual(
                 execution_case.as_payload()["integrity"]["digest"],
-                item["executionCaseId"],
+                entry.case_id,
             )
             self.assertEqual(
                 execution_case.fact_provenance[0]["path"],
@@ -201,8 +192,8 @@ class ExternalPilotRegressionTests(unittest.TestCase):
         self.assertEqual(comparison["totals"]["outputChanged"], 3)
         self.assertEqual(
             {
-                item["pilotCaseId"]
-                for item in manifest["cases"]
+                item["reference"]
+                for item in comparison["cases"]
                 if item["classification"] != "unchanged"
             },
             {"patch-then-minor", "minor-then-patch", "prerelease-ladder"},
