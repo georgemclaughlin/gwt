@@ -126,6 +126,40 @@ class TypeGenerationTests(unittest.TestCase):
         self.assertIn("DecisionHistory: TypeAlias = list[DecisionStatus]", python)
         self.assertIn("status: DecisionStatus", python)
 
+    def test_generation_maps_optional_fields_to_host_optional_shapes(self):
+        source = """
+        TYPE MaybeAmount is optional<decimal>
+
+        RECORD Limits
+          amount_min: decimal
+          amount_max: optional<decimal>
+          amount_override: MaybeAmount
+          notes: list<optional<text>>
+
+        REQUEST assess limits
+          GIVEN limits is Limits
+          AND metadata.trace_id is optional<text>
+          WHEN print limits.amount_min
+          OUTPUT limits is Limits
+        """
+
+        typescript = generate_typescript_text(source).source
+        python = generate_python_text(source).source
+
+        self.assertIn("amount_max?: string | null;", typescript)
+        self.assertIn("export type MaybeAmount = string | null;", typescript)
+        self.assertIn("amount_override?: MaybeAmount;", typescript)
+        self.assertIn("notes: (string | null)[];", typescript)
+        self.assertIn("metadata?: {", typescript)
+        self.assertIn("trace_id?: string | null;", typescript)
+        self.assertIn("from typing import Any, Literal, NotRequired", python)
+        self.assertIn("MaybeAmount: TypeAlias = str | None", python)
+        self.assertIn("amount_max: NotRequired[str | None]", python)
+        self.assertIn("amount_override: NotRequired[MaybeAmount]", python)
+        self.assertIn("notes: list[str | None]", python)
+        self.assertIn("metadata: NotRequired[AssessLimitsRequestMetadata]", python)
+        self.assertIn("trace_id: NotRequired[str | None]", python)
+
     def test_python_generation_emits_exact_numeric_types_request_constant_and_client(self):
         result = generate_python_text(
             """

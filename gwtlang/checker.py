@@ -7,7 +7,7 @@ import re
 from typing import Any, cast
 
 from .errors import GwtError
-from .expressions import Binary, Expr, ListLiteral, Literal, Name, Unary, parse_expression
+from .expressions import Binary, Expr, ListLiteral, Literal, Name, Presence, Unary, parse_expression
 from .runtime import (
     Action,
     ContractBinding,
@@ -35,6 +35,7 @@ from .runtime import (
     _literal_union_base_type,
     _literal_union_values,
     _list_item_type,
+    _optional_item_type,
     _parse_exists_statement,
     _parse_find_statement,
     _parse_sum_projection,
@@ -374,6 +375,8 @@ class Checker:
             field_path = f"{binding.path}.{field}"
             actual_type = scope.types.get(field_path)
             if actual_type is None:
+                if self._optional_item_type(expected_type) is not None:
+                    continue
                 if saw_descendant:
                     self._add_line(
                         call.line,
@@ -598,9 +601,16 @@ class Checker:
     def _check_body(self, body: list[Any], scope: Scope, expected_return: str | None = None) -> None:
         for statement in body:
             if isinstance(statement, IfBlock):
-                self._check_condition(statement.condition)
-                self._check_body(statement.then_body, scope.copy(), expected_return)
-                self._check_body(statement.else_body, scope.copy(), expected_return)
+                self._check_condition_with_scope(statement.condition, scope)
+                then_scope = scope.copy()
+                else_scope = scope.copy()
+                self._narrow_presence_scopes(
+                    statement.condition,
+                    then_scope,
+                    else_scope,
+                )
+                self._check_body(statement.then_body, then_scope, expected_return)
+                self._check_body(statement.else_body, else_scope, expected_return)
             elif isinstance(statement, ForBlock):
                 self._check_for(statement, scope, expected_return)
             elif isinstance(statement, FindBlock):
@@ -616,7 +626,7 @@ class Checker:
         if statement.name in scope.names:
             self._add_line(statement.name_line or statement.iterable, f"FOR cannot overwrite: {statement.name}", "GWT008")
 
-        expression = self._check_expression(statement.iterable.text, statement.iterable)
+        expression = self._check_expression(statement.iterable.text, statement.iterable, scope)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
             self._add_line(statement.iterable, "FOR requires a list", "GWT013")
@@ -638,7 +648,7 @@ class Checker:
         if statement.name in scope.names:
             self._add_line(statement.name_line or statement.iterable, f"FIND cannot overwrite: {statement.name}", "GWT008")
 
-        expression = self._check_expression(statement.iterable.text, statement.iterable)
+        expression = self._check_expression(statement.iterable.text, statement.iterable, scope)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if isinstance(expression, Literal) and not isinstance(expression.value, list):
             self._add_line(statement.iterable, "FIND requires a list", "GWT013")
@@ -668,7 +678,7 @@ class Checker:
         self._check_body(statement.else_body, scope.copy(), expected_return)
 
     def _check_match_block(self, statement: MatchBlock, scope: Scope, expected_return: str | None = None) -> None:
-        expression = self._check_expression(statement.expression.text, statement.expression)
+        expression = self._check_expression(statement.expression.text, statement.expression, scope)
         expression_type = _infer_expression_type(expression, scope) if expression is not None else None
         selector = statement.cases[0].selector if statement.cases else "kind"
         if any(case.selector != selector for case in statement.cases):
@@ -828,7 +838,11 @@ class Checker:
 
         actual_fields = set(statement.rows[0])
         expected_fields = set(record.fields)
-        missing = sorted(expected_fields - actual_fields)
+        missing = sorted(
+            field
+            for field in expected_fields - actual_fields
+            if self._optional_item_type(record.fields[field]) is None
+        )
         if missing:
             self._add_line(statement.line, f"GIVEN table for {statement.item_type} missing field: {missing[0]}", "GWT014")
         extra = sorted(actual_fields - expected_fields)
@@ -871,7 +885,11 @@ class Checker:
 
         actual_fields = set(statement.fields)
         expected_fields = set(case.fields)
-        missing = sorted(expected_fields - actual_fields)
+        missing = sorted(
+            field
+            for field in expected_fields - actual_fields
+            if self._optional_item_type(case.fields[field]) is None
+        )
         if missing:
             self._add_line(statement.line, f"GIVEN {variant.name} kind {case.name} missing field: {missing[0]}", "GWT014")
         extra = sorted(actual_fields - expected_fields)
@@ -992,7 +1010,7 @@ class Checker:
             path = tokens[1]
             self._check_path(path, line)
             expression = line.text.split(" to ", 1)[1].strip() if " to " in line.text else ""
-            parsed = self._check_expression(expression, line)
+            parsed = self._check_expression(expression, line, scope)
             actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             self._check_assignment_type("set", path, actual_type, line, scope, parsed)
             return
@@ -1007,7 +1025,7 @@ class Checker:
                 self._add_line(line, str(exc), "GWT006")
                 return
             path = path.strip()
-            parsed = self._check_expression(value.strip(), line)
+            parsed = self._check_expression(value.strip(), line, scope)
             actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             self._check_path(path, line)
             self._check_add_type(path, actual_type, line, scope)
@@ -1023,7 +1041,7 @@ class Checker:
                 self._add_line(line, str(exc), "GWT006")
                 return
             path = path.strip()
-            parsed = self._check_expression(value.strip(), line)
+            parsed = self._check_expression(value.strip(), line, scope)
             actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             self._check_path(path, line)
             self._check_subtract_type(path, actual_type, line, scope)
@@ -1039,7 +1057,7 @@ class Checker:
                 self._add_line(line, str(exc), "GWT006")
                 return
             path = path.strip()
-            parsed = self._check_expression(value.strip(), line)
+            parsed = self._check_expression(value.strip(), line, scope)
             actual_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             self._check_path(path, line)
             self._check_append_type(path, actual_type, line, scope)
@@ -1055,7 +1073,7 @@ class Checker:
                 self._add_line(line, str(exc), "GWT006")
                 return
             path = path.strip()
-            parsed = self._check_expression(value.strip(), line)
+            parsed = self._check_expression(value.strip(), line, scope)
             value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             if value_type is not None and not self._is_collection_type(value_type):
                 self._add_line(line, f"count requires a list, got {value_type}", "GWT016")
@@ -1077,7 +1095,7 @@ class Checker:
                 self._add_line(line, str(exc), "GWT006")
                 return
             path = path.strip()
-            parsed = self._check_expression(value.strip(), line)
+            parsed = self._check_expression(value.strip(), line, scope)
             value_type = _infer_expression_type(parsed, scope) if parsed is not None else None
             if value_type is not None and not self._is_collection_type(value_type):
                 self._add_line(line, f"sum requires a list, got {value_type}", "GWT016")
@@ -1100,7 +1118,7 @@ class Checker:
             if not expression:
                 self._add_line(line, "print requires a value", "GWT006")
                 return
-            self._check_expression(expression, line)
+            self._check_expression(expression, line, scope)
 
     def _check_assignment_type(
         self,
@@ -1161,7 +1179,7 @@ class Checker:
         scope: Scope,
     ) -> None:
         projection_text, name, iterable_text, path = projection
-        expression = self._check_expression(iterable_text.strip(), line)
+        expression = self._check_expression(iterable_text.strip(), line, scope)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"sum requires a list, got {iterable_type}", "GWT016")
@@ -1174,7 +1192,7 @@ class Checker:
             projection_scope.names.add(name)
             projection_scope.types[name] = "any"
 
-        projected = self._check_expression(projection_text, line)
+        projected = self._check_expression(projection_text, line, projection_scope)
         projected_type = _infer_expression_type(projected, projection_scope) if projected is not None else None
         if projected_type is not None and projected_type != "any" and not self._is_numeric_type(projected_type):
             self._add_line(line, f"sum projection expected number, got {projected_type}", "GWT016")
@@ -1188,7 +1206,7 @@ class Checker:
             self._add_line(line, "expected 'find [optional] name in list where condition into path'", "GWT006")
             return
         _optional, name, iterable_text, condition, path = parsed
-        expression = self._check_expression(iterable_text.strip(), line)
+        expression = self._check_expression(iterable_text.strip(), line, scope)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"find requires a list, got {iterable_type}", "GWT016")
@@ -1211,7 +1229,7 @@ class Checker:
             self._add_line(line, "expected 'exists name in list where condition into path'", "GWT006")
             return
         name, iterable_text, condition, path = parsed
-        expression = self._check_expression(iterable_text.strip(), line)
+        expression = self._check_expression(iterable_text.strip(), line, scope)
         iterable_type = _infer_expression_type(expression, scope) if expression is not None else None
         if iterable_type is not None and not self._is_collection_type(iterable_type):
             self._add_line(line, f"exists requires a list, got {iterable_type}", "GWT016")
@@ -1238,13 +1256,47 @@ class Checker:
         except GwtError as exc:
             self._add_line(line, str(exc), "GWT010")
             return
-        expression = self._check_expression(expression_text, line)
+        expression = self._check_expression(expression_text, line, scope)
         if isinstance(expression, Literal) and not isinstance(expression.value, bool):
             self._add_line(line, "condition must evaluate to a boolean", "GWT010")
         elif (
             expression_type := _infer_expression_type(expression, scope) if expression is not None else None
         ) is not None and expression_type != "boolean":
             self._add_line(line, "condition must evaluate to a boolean", "GWT010")
+
+    def _narrow_presence_scopes(
+        self,
+        line: Line,
+        then_scope: Scope,
+        else_scope: Scope,
+    ) -> None:
+        try:
+            expression = parse_expression(_condition_to_expression(line.text))
+        except GwtError:
+            return
+        narrowing = _presence_narrowing(expression)
+        if narrowing is None:
+            return
+        path, present_in_then = narrowing
+        value_type = then_scope.types.get(path)
+        item_type = self._optional_item_type(value_type)
+        if item_type is None:
+            return
+        target = then_scope if present_in_then else else_scope
+        target.types[path] = item_type
+
+    def _check_optional_expression_usage(
+        self,
+        expression: Expr,
+        line: Line,
+        scope: Scope,
+    ) -> None:
+        for path, message in _optional_expression_errors(expression, scope):
+            self._add_line(
+                line,
+                f"optional value {path} {message}; guard it with '{path} is present'",
+                "GWT016",
+            )
 
     def _check_expression_or_action(
         self,
@@ -1258,6 +1310,7 @@ class Checker:
             return None
         try:
             expression = parse_expression(text)
+            self._check_optional_expression_usage(expression, line, scope)
             if isinstance(expression, Name):
                 matches = self._matching_actions([expression.value])
                 if matches and require_return_value and not any(_body_has_return(action.body) for action in matches):
@@ -1351,9 +1404,12 @@ class Checker:
         ):
             return True
         item_type = _list_item_type(value_type)
-        if item_type is None:
-            return False
-        return self._is_known_resolved_type(item_type)
+        if item_type is not None:
+            return self._is_known_resolved_type(item_type)
+        optional_item_type = _optional_item_type(value_type)
+        if optional_item_type is not None:
+            return self._is_known_resolved_type(optional_item_type)
+        return False
 
     def _resolve_type(self, value_type: str) -> str:
         return _resolve_type_alias(value_type, self.program.type_aliases)
@@ -1371,6 +1427,11 @@ class Checker:
         if value_type is None:
             return None
         return _list_item_type(self._resolve_type_or_original(value_type))
+
+    def _optional_item_type(self, value_type: str | None) -> str | None:
+        if value_type is None:
+            return None
+        return _optional_item_type(self._resolve_type_or_original(value_type))
 
     def _is_collection_type(self, value_type: str) -> bool:
         resolved_type = self._resolve_type_or_original(value_type)
@@ -1402,11 +1463,19 @@ class Checker:
             self._resolve_type_or_original(expression_type),
         )
 
-    def _check_expression(self, text: str, line: Line) -> Expr | None:
+    def _check_expression(
+        self,
+        text: str,
+        line: Line,
+        scope: Scope | None = None,
+    ) -> Expr | None:
         if _has_placeholder(text):
             return None
         try:
-            return parse_expression(text)
+            expression = parse_expression(text)
+            if scope is not None:
+                self._check_optional_expression_usage(expression, line, scope)
+            return expression
         except GwtError as exc:
             self._add_line(line, f"invalid expression: {exc}", "GWT010")
             return None
@@ -1550,6 +1619,8 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
         return "list"
     if isinstance(expression, Name):
         return scope.types.get(expression.value)
+    if isinstance(expression, Presence):
+        return "boolean"
     if isinstance(expression, Unary):
         if expression.operator == "not":
             return "boolean"
@@ -1576,6 +1647,15 @@ def _infer_expression_type(expression: Expr, scope: Scope) -> str | None:
 def _assignable(actual_type: str, expected_type: str) -> bool:
     if expected_type == "any" or actual_type == "any" or actual_type == expected_type:
         return True
+    expected_optional = _optional_item_type(expected_type)
+    if expected_optional is not None:
+        actual_optional = _optional_item_type(actual_type)
+        return _assignable(
+            actual_optional if actual_optional is not None else actual_type,
+            expected_optional,
+        )
+    if _optional_item_type(actual_type) is not None:
+        return False
     expected_literal_base = _literal_union_base_type(expected_type)
     if expected_literal_base is not None:
         return actual_type == expected_literal_base
@@ -1595,6 +1675,61 @@ def _assignable(actual_type: str, expected_type: str) -> bool:
     if actual_item is not None and expected_item is not None:
         return _assignable(actual_item, expected_item)
     return False
+
+
+def _presence_narrowing(expression: Expr) -> tuple[str, bool] | None:
+    if isinstance(expression, Presence) and isinstance(expression.value, Name):
+        return expression.value.value, expression.present
+    if isinstance(expression, Unary) and expression.operator == "not":
+        narrowed = _presence_narrowing(expression.right)
+        if narrowed is not None:
+            path, present_in_then = narrowed
+            return path, not present_in_then
+    return None
+
+
+def _optional_expression_errors(
+    expression: Expr,
+    scope: Scope,
+) -> tuple[tuple[str, str], ...]:
+    errors: dict[str, str] = {}
+
+    def optional_name(value: Expr) -> str | None:
+        if not isinstance(value, Name):
+            return None
+        value_type = scope.types.get(value.value)
+        if value_type is None or _optional_item_type(value_type) is None:
+            return None
+        return value.value
+
+    def visit(value: Expr) -> None:
+        if isinstance(value, Presence):
+            return
+        if isinstance(value, Binary):
+            for operand in (value.left, value.right):
+                path = optional_name(operand)
+                if path is not None:
+                    errors.setdefault(
+                        path,
+                        f"cannot be used by operator '{value.operator}' while absent",
+                    )
+                visit(operand)
+            return
+        if isinstance(value, Unary):
+            path = optional_name(value.right)
+            if path is not None:
+                errors.setdefault(
+                    path,
+                    f"cannot be used by operator '{value.operator}' while absent",
+                )
+            visit(value.right)
+            return
+        if isinstance(value, ListLiteral):
+            for item in value.values:
+                visit(item)
+
+    visit(expression)
+    return tuple(errors.items())
 
 
 def _has_descendant_path(scope: Scope, path: str) -> bool:

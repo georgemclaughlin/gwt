@@ -23,6 +23,7 @@ from .runtime import (
     Runtime,
     _literal_union_values,
     _list_item_type,
+    _optional_item_type,
     _resolve_type_alias,
     parse_program,
 )
@@ -139,8 +140,6 @@ def generate_scenario(
 
     request_name = _required_string(request_payload, "name", "execution case request")
     raw_input = _required_mapping(request_payload, "input", "execution case request")
-    _reject_nulls(raw_input, "request.input")
-    _reject_nulls(result_payload, "result")
     input_state = _normalize_path_object(raw_input, "request.input")
     expected_result = _normalize_path_object(result_payload, "result")
 
@@ -159,6 +158,15 @@ def generate_scenario(
     given_lines: list[str] = []
     for binding in request.inputs.values():
         present, value = _value_at_path(input_state, binding.path)
+        if present:
+            renderer.reject_unrepresentable_nulls(
+                value,
+                binding.value_type,
+                f"request.input.{binding.path}",
+            )
+        optional_item_type = _optional_item_type(renderer._resolve(binding.value_type))
+        if optional_item_type is not None and (not present or value is None):
+            continue
         if not present:
             _refuse(f"request.input is missing declared input: {binding.path}")
         if value is None:
@@ -168,6 +176,16 @@ def generate_scenario(
     assertions: list[str] = []
     for binding in request.outputs.values():
         present, value = _value_at_path(expected_result, binding.path)
+        if present:
+            renderer.reject_unrepresentable_nulls(
+                value,
+                binding.value_type,
+                f"result.{binding.path}",
+            )
+        optional_item_type = _optional_item_type(renderer._resolve(binding.value_type))
+        if optional_item_type is not None and (not present or value is None):
+            assertions.append(f"{binding.path} is absent")
+            continue
         if not present:
             _refuse(f"result is missing declared output: {binding.path}")
         if value is None:
@@ -227,8 +245,69 @@ class _ScenarioRenderer:
     def __init__(self, program: Program) -> None:
         self.program = program
 
+    def reject_unrepresentable_nulls(
+        self,
+        value: Any,
+        value_type: str,
+        evidence_path: str,
+    ) -> None:
+        resolved = self._resolve(value_type)
+        optional_item_type = _optional_item_type(resolved)
+        if optional_item_type is not None:
+            if value is None:
+                return
+            self.reject_unrepresentable_nulls(value, optional_item_type, evidence_path)
+            return
+        if value is None:
+            _refuse(f"execution case contains null data at {evidence_path}")
+
+        record = self.program.records.get(resolved)
+        if record is not None and isinstance(value, Mapping):
+            record_value = cast(Mapping[str, Any], value)
+            for field_path, field_type in record.fields.items():
+                present, field_value = _value_at_path(record_value, field_path)
+                if present:
+                    self.reject_unrepresentable_nulls(
+                        field_value,
+                        field_type,
+                        f"{evidence_path}.{field_path}",
+                    )
+            return
+
+        item_type = _list_item_type(resolved)
+        if item_type is not None and isinstance(value, list):
+            for index, item in enumerate(value, start=1):
+                self.reject_unrepresentable_nulls(
+                    item,
+                    item_type,
+                    f"{evidence_path}[{index}]",
+                )
+            return
+
+        # Raw `any` values can contain arbitrary nested host data, but current
+        # GWT source still has no literal for a null nested inside that data.
+        if isinstance(value, Mapping):
+            for key, item in value.items():
+                self.reject_unrepresentable_nulls(
+                    item,
+                    "any",
+                    f"{evidence_path}.{key}",
+                )
+        elif isinstance(value, list):
+            for index, item in enumerate(value, start=1):
+                self.reject_unrepresentable_nulls(
+                    item,
+                    "any",
+                    f"{evidence_path}[{index}]",
+                )
+
     def given(self, path: str, value: Any, value_type: str) -> list[str]:
         resolved = self._resolve(value_type)
+        optional_item_type = _optional_item_type(resolved)
+        if optional_item_type is not None:
+            if value is None:
+                return []
+            return self.given(path, value, optional_item_type)
         record = self.program.records.get(resolved)
         if record is not None:
             if not isinstance(value, dict):
@@ -249,6 +328,14 @@ class _ScenarioRenderer:
 
     def assertions(self, path: str, value: Any, value_type: str) -> list[str]:
         resolved = self._resolve(value_type)
+        optional_item_type = _optional_item_type(resolved)
+        if optional_item_type is not None:
+            if value is None:
+                return [f"{path} is absent"]
+            return [
+                f"{path} is present",
+                *self.assertions(path, value, optional_item_type),
+            ]
         record = self.program.records.get(resolved)
         if record is not None:
             if not isinstance(value, dict):
@@ -258,6 +345,11 @@ class _ScenarioRenderer:
             for field_path, field_type in record.fields.items():
                 present, field_value = _value_at_path(record_value, field_path)
                 full_path = f"{path}.{field_path}"
+                if _optional_item_type(self._resolve(field_type)) is not None and (
+                    not present or field_value is None
+                ):
+                    lines.append(f"{full_path} is absent")
+                    continue
                 if not present:
                     _refuse(f"result is missing declared output leaf: {full_path}")
                 lines.extend(self.assertions(full_path, field_value, field_type))
@@ -293,6 +385,11 @@ class _ScenarioRenderer:
                 continue
             present, field_value = _value_at_path(value, field_path)
             full_path = f"{path}.{field_path}"
+            resolved_field_type = self._resolve(field_type)
+            if _optional_item_type(resolved_field_type) is not None and (
+                not present or field_value is None
+            ):
+                continue
             if not present:
                 _refuse(f"request.input is missing declared record field: {full_path}")
             preseeded.extend(self.given(full_path, field_value, field_type))
@@ -325,6 +422,12 @@ class _ScenarioRenderer:
     ) -> None:
         for field_name, child in node.children.items():
             full_path = f"{path}.{field_name}"
+            if child.value_type is not None:
+                resolved = self._resolve(child.value_type)
+                if _optional_item_type(resolved) is not None and (
+                    field_name not in value or value[field_name] is None
+                ):
+                    continue
             if field_name not in value:
                 _refuse(f"request.input is missing declared record field: {full_path}")
             field_value = value[field_name]
@@ -400,6 +503,11 @@ class _ScenarioRenderer:
         return lines
 
     def _literal(self, value: Any, value_type: str, path: str) -> str:
+        optional_item_type = _optional_item_type(value_type)
+        if optional_item_type is not None:
+            if value is None:
+                _refuse(f"optional value is absent at {path} and has no source literal")
+            return self._literal(value, optional_item_type, path)
         if value is None:
             _refuse(f"value is null at {path}")
         union_values = _literal_union_values(value_type)
@@ -574,17 +682,6 @@ def _value_at_path(value: Mapping[str, Any], path: str) -> tuple[bool, Any]:
             return False, None
         current = cast(dict[str, Any], current)[part]
     return True, current
-
-
-def _reject_nulls(value: Any, path: str) -> None:
-    if value is None:
-        _refuse(f"execution case contains null data at {path}")
-    if isinstance(value, dict):
-        for key, item in cast(dict[str, Any], value).items():
-            _reject_nulls(item, f"{path}.{key}")
-    elif isinstance(value, list):
-        for index, item in enumerate(cast(list[Any], value), start=1):
-            _reject_nulls(item, f"{path}[{index}]")
 
 
 def _boolean_literal(value: Any, path: str) -> str:

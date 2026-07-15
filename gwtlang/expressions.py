@@ -49,6 +49,16 @@ class Name(Expr):
 
 
 @dataclass(frozen=True)
+class Presence(Expr):
+    value: Expr
+    present: bool
+
+    def evaluate(self, scope: Scope) -> Any:
+        is_present = self.value.evaluate(scope) is not None
+        return is_present if self.present else not is_present
+
+
+@dataclass(frozen=True)
 class ListLiteral(Expr):
     values: list[Expr]
 
@@ -256,6 +266,13 @@ class ExpressionParser:
 
     def _comparison(self) -> Expr:
         expression = self._term()
+        if self._match("word", "is"):
+            if self._match("word", "present"):
+                expression = Presence(expression, True)
+            elif self._match("word", "absent"):
+                expression = Presence(expression, False)
+            else:
+                raise GwtError("expected 'present' or 'absent' after 'is'")
         while True:
             if self._match("operator", ">", "<", ">=", "<="):
                 operator = self._previous().value
@@ -359,7 +376,12 @@ def _scan(text: str) -> list[Token]:
             tokens.append(Token("number", value))
         elif char.isalpha() or char == "_":
             value, index = _scan_identifier(text, index)
-            kind = "word" if value in {"and", "or", "not", "true", "false"} else "identifier"
+            kind = (
+                "word"
+                if value
+                in {"and", "or", "not", "true", "false", "is", "present", "absent"}
+                else "identifier"
+            )
             tokens.append(Token(kind, value))
         elif char in "()[]":
             kind = {

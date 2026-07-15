@@ -124,6 +124,36 @@ class ScenarioGenerationTests(unittest.TestCase):
 
         self.assertTrue(generated.source.startswith("SCENARIO regression for Ada\n"))
 
+    def test_generates_absence_assertions_and_omits_absent_optional_inputs(self):
+        source = '''RECORD Limits
+  amount_min: decimal
+  amount_max: optional<decimal>
+
+REQUEST inspect limits
+  GIVEN limits is Limits
+  WHEN inspect limits
+
+  OUTPUT observed_maximum is optional<decimal>
+
+WHEN inspect <limits>
+  GIVEN limits is Limits
+  PASS
+'''
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program_path = Path(temp_dir) / "rules.gwt"
+            program_path.write_text(source)
+            case = capture_execution_case(
+                program_path,
+                {"limits": {"amount_min": "10.00"}},
+                request="inspect limits",
+            ).as_payload()
+
+            generated = generate_scenario(case, program_path)
+
+        self.assertIn("  amount_min: 10.00", generated.source)
+        self.assertNotIn("amount_max:", generated.source)
+        self.assertIn("THEN observed_maximum is absent", generated.source)
+
     def test_refuses_redacted_case(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program_path, case = self._captured_case(temp_dir)
