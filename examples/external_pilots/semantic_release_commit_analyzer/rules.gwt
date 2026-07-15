@@ -23,6 +23,11 @@ RECORD NormalizedRule
   requires_revert: boolean
   release: ReleaseOutcome
 
+RECORD RuleEvaluation
+  id: text
+  matched: boolean
+  release: ReleaseOutcome
+
 RECORD AnalysisResult
   matched: boolean
   release: ReleaseOutcome
@@ -42,6 +47,20 @@ REQUEST analyze normalized commit
     stopped_at_major: false
 
   WHEN analyze commit against rules into result
+
+  OUTPUT result is AnalysisResult
+
+REQUEST select release from evaluated rules
+  GIVEN evaluations is list<RuleEvaluation>
+
+  GIVEN result is AnalysisResult
+    matched: false
+    release: "undefined"
+    release_rank: 0
+    selected_rule_id: ""
+    stopped_at_major: false
+
+  WHEN select evaluated rules evaluations into result
 
   OUTPUT result is AnalysisResult
 
@@ -89,36 +108,38 @@ WHEN matches <rule> against <commit>
     RETURN false
   RETURN true
 
-WHEN choose <rule> into <result>
-  GIVEN rule is NormalizedRule
+WHEN choose release <release> from <rule_id> into <result>
+  GIVEN release is ReleaseOutcome
+  AND rule_id is text
   AND result is AnalysisResult
-  LET rank be release rank for rule.release
+  LET rank be release rank for release
   set result.matched to true
-  set result.release to rule.release
+  set result.release to release
   set result.release_rank to rank
-  set result.selected_rule_id to rule.id
-  IF rule.release == "major"
+  set result.selected_rule_id to rule_id
+  IF release == "major"
     set result.stopped_at_major to true
 
-WHEN consider <rule> into <result>
-  GIVEN rule is NormalizedRule
+WHEN consider release <release> from <rule_id> into <result>
+  GIVEN release is ReleaseOutcome
+  AND rule_id is text
   AND result is AnalysisResult
   IF result.matched == false
-    choose rule into result
+    choose release release from rule_id into result
   ELSE
     # The upstream comparator treats a current false/null as falsy, so the next
     # match replaces it regardless of rank.
     IF result.release == "false" or result.release == "null"
-      choose rule into result
+      choose release release from rule_id into result
     ELSE
       # A candidate false/null has an upstream release-type index of -1 and
       # therefore replaces a currently selected named release.
-      IF rule.release == "false" or rule.release == "null"
-        choose rule into result
+      IF release == "false" or release == "null"
+        choose release release from rule_id into result
       ELSE
-        LET rank be release rank for rule.release
+        LET rank be release rank for release
         IF rank > result.release_rank
-          choose rule into result
+          choose release release from rule_id into result
 
 WHEN analyze <commit> against <rules> into <result>
   GIVEN commit is NormalizedCommit
@@ -128,7 +149,14 @@ WHEN analyze <commit> against <rules> into <result>
     IF result.stopped_at_major == false
       LET rule_matches be matches rule against commit
       IF rule_matches
-        consider rule into result
+        consider release rule.release from rule.id into result
+
+WHEN select evaluated rules <evaluations> into <result>
+  GIVEN evaluations is list<RuleEvaluation>
+  AND result is AnalysisResult
+  FOR evaluation in evaluations
+    IF result.stopped_at_major == false and evaluation.matched
+      consider release evaluation.release from evaluation.id into result
 
 SCENARIO breaking note satisfies a breaking rule
 GIVEN commit is NormalizedCommit
@@ -373,4 +401,28 @@ REQUEST analyze normalized commit
 
 THEN result.release == "major"
 AND result.selected_rule_id == "breaking-feat"
+AND result.stopped_at_major == true
+
+SCENARIO host evaluated matches retain release precedence
+GIVEN evaluations are RuleEvaluation
+  | id             | matched | release |
+  | "patch-rule"   | true    | "patch" |
+  | "feature-rule" | true    | "minor" |
+  | "ignored-rule" | false   | "major" |
+
+REQUEST select release from evaluated rules
+
+THEN result.release == "minor"
+AND result.selected_rule_id == "feature-rule"
+
+SCENARIO host evaluated major still stops later falsy outcomes
+GIVEN evaluations are RuleEvaluation
+  | id             | matched | release |
+  | "breaking"     | true    | "major" |
+  | "later-ignore" | true    | "false" |
+
+REQUEST select release from evaluated rules
+
+THEN result.release == "major"
+AND result.selected_rule_id == "breaking"
 AND result.stopped_at_major == true

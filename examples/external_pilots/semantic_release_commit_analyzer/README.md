@@ -43,6 +43,14 @@ python -m gwtlang capture examples/external_pilots/semantic_release_commit_analy
   --request "analyze normalized commit" \
   --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/fact-provenance.json \
   --output /tmp/commit-analysis.execution-case.json
+python -m gwtlang run examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --json-input examples/external_pilots/semantic_release_commit_analyzer/evaluated-request.json \
+  --request "select release from evaluated rules" --json
+python -m gwtlang capture examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --json-input examples/external_pilots/semantic_release_commit_analyzer/evaluated-request.json \
+  --request "select release from evaluated rules" \
+  --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/evaluated-fact-provenance.json \
+  --output /tmp/commit-selection.execution-case.json
 python examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py
 ```
 
@@ -70,19 +78,26 @@ The live oracle imports the pinned upstream `lib/analyze-commit.js`; it does
 not reimplement the JavaScript decision. The runner verifies the checkout
 commit before executing it.
 
-Current result:
+The harness compares two GWT boundaries. The direct boundary lets GWT match
+the normalized `type` and `scope` facts. The host-evaluated boundary uses
+[`host_match_adapter.mjs`](host_match_adapter.mjs) to apply the upstream
+checkout's micromatch dependency and passes ordered `RuleEvaluation` facts to
+GWT for release selection.
 
-- 18 cases have exact upstream/GWT parity, including missing and null commit
-  properties, false and null release outcomes, precedence, and the early stop
-  at `major`;
-- 2 cases intentionally disagree: upstream micromatch patterns `b*` and `f*`
-  match, while the normalized GWT pilot treats them as exact text.
+Current live result:
+
+- the direct boundary has 18 exact matches and 2 intentional disagreements:
+  upstream micromatch patterns `b*` and `f*` match, while GWT exact text does
+  not;
+- the host-evaluated boundary has 20/20 parity, including the two glob cases,
+  missing and null commit properties, falsy release outcomes, precedence, and
+  the early stop at `major`.
 
 Both disagreements are classified as a known integration-boundary limitation,
 not an upstream defect or a GWT runtime bug. They do not justify adding a
-general pattern language to GWT: a host adapter can calculate rule matches and
-leave the reviewable precedence decision in GWT. The harness will make that
-tradeoff visible if future evidence changes it.
+general pattern language to GWT: the second path proves that a host adapter can
+calculate rule matches and leave the reviewable precedence decision in GWT.
+The harness will make that tradeoff visible if future evidence changes it.
 
 ## Normalized boundary
 
@@ -99,8 +114,10 @@ pilot makes an adapter boundary explicit:
 - missing or false `breaking`/`revert` rule flags both normalize to a false
   `requires_*` flag, matching the upstream truthiness gates.
 
-This makes absence visible and contract-checkable. It also means a real host
-integration needs a small JavaScript adapter before invoking GWT.
+This makes absence visible and contract-checkable. The alternative
+`RuleEvaluation` boundary is smaller: each row contains only a host-owned
+`matched` fact plus the rule id and release outcome. Its provenance sidecar
+explicitly labels those matching facts as host-derived.
 The shared `ReleaseOutcome` type permits `"undefined"` in a normalized rule for
 assignment compatibility with the result record; the adapter must reject that
 value for rules. This is a limitation of the pilot contract, not upstream
@@ -108,12 +125,11 @@ behavior.
 
 ## Deliberate scope limits
 
-The model supports exact text matching for the conventional `type` and `scope`
-fields plus breaking-note and revert gates. It does **not** claim compatibility
+The direct model supports exact text matching for the conventional `type` and
+`scope` fields plus breaking-note and revert gates. The checked-in host adapter
+adds micromatch for those two fields only. Neither path claims compatibility
 with the full upstream matcher:
 
-- no micromatch glob syntax, negation, arrays of patterns, or other micromatch
-  features;
 - no arbitrary dynamic commit/rule properties such as `tag`, `emoji`, or
   parser-specific fields;
 - no non-text scalar criteria such as the numeric `scope` case in the upstream
@@ -122,10 +138,10 @@ with the full upstream matcher:
   revert filtering, or aggregation across multiple commits;
 - no validation/loading of user configuration.
 
-Adding fake partial glob behavior would make the pilot look more compatible
-than it is. A production integration would need either a host-provided
-`rule_matches` fact, a narrowly specified pattern feature, or micromatch kept
-outside the GWT decision.
+Adding fake partial matching inside GWT would make the direct pilot look more
+compatible than it is. The evaluated-rule request demonstrates the preferred
+production seam: keep micromatch outside the GWT decision and pass explicit
+host-provided match facts.
 
 ## Fit findings
 
@@ -140,6 +156,8 @@ outside the GWT decision.
   normalized input fail before rule evaluation.
 - Each scenario calls the public request, so examples are executable interface
   evidence rather than helper-only tests.
+- Host-evaluated facts reduce the GWT contract while retaining the policy's
+  unusual falsy precedence and early-stop behavior.
 
 ### Bad or awkward
 
@@ -185,5 +203,6 @@ against its behavior-oriented design.
 For a real integration, keep commit parsing, dynamic property matching, and
 micromatch in JavaScript. Pass the ordered matching rule outcomes—or a narrow
 normalized commit/rule shape agreed by one deployment—into GWT for the
-reviewable selection policy. Do not broaden GWT syntax solely to achieve drop-in
+reviewable selection policy. The 20/20 host-adapter result validates that seam
+for the pinned corpus. Do not broaden GWT syntax solely to achieve drop-in
 compatibility with this package.
