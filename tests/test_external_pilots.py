@@ -16,6 +16,9 @@ DFE_PILOT = ROOT / "examples/external_pilots/dfe_npq_funding_eligibility"
 DFE_RULES = DFE_PILOT / "rules.gwt"
 DFE_SLICE = DFE_PILOT / "exact_status_slice.json"
 DFE_REQUEST = "assess funding eligibility"
+SEMANTIC_PILOT = ROOT / "examples/external_pilots/semantic_release_commit_analyzer"
+SEMANTIC_RULES = SEMANTIC_PILOT / "rules.gwt"
+SEMANTIC_REQUEST = "analyze normalized commit"
 SPREE_PILOT = ROOT / "examples/external_pilots/spree_item_total"
 SPREE_RULES = SPREE_PILOT / "rules.gwt"
 SPREE_SLICE = SPREE_PILOT / "oracle_slice.json"
@@ -23,6 +26,29 @@ SPREE_REQUEST = "assess item total eligibility"
 
 
 class ExternalPilotRegressionTests(unittest.TestCase):
+    def test_seeded_fact_provenance_sidecars_match_declared_pilot_inputs(self):
+        pilots = (
+            (DFE_PILOT, DFE_RULES, DFE_REQUEST),
+            (SEMANTIC_PILOT, SEMANTIC_RULES, SEMANTIC_REQUEST),
+            (SPREE_PILOT, SPREE_RULES, SPREE_REQUEST),
+        )
+        for pilot, rules, request_name in pilots:
+            with self.subTest(pilot=pilot.name):
+                request = json.loads((pilot / "request.json").read_text())
+                provenance = json.loads(
+                    (pilot / "fact-provenance.json").read_text()
+                )
+                execution_case = capture_execution_case(
+                    rules,
+                    request,
+                    request=request_name,
+                    fact_provenance=provenance,
+                )
+                self.assertEqual(
+                    [item["path"] for item in execution_case.fact_provenance],
+                    sorted(provenance),
+                )
+
     def test_spree_pinned_oracle_snapshot_retains_exact_boundary_results(self):
         fixture = json.loads(SPREE_SLICE.read_text())
         self.assertEqual(

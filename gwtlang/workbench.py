@@ -27,6 +27,7 @@ from .execution_case import ExecutionCase
 from .payloads import (
     ExecutionCaseErrorPayload,
     ExecutionCaseEvidencePayload,
+    ExecutionCaseFactProvenancePayload,
     ExecutionCaseOperandsPayload,
     ExecutionCaseRedactionPayload,
     ExecutionCaseSourcePayload,
@@ -70,6 +71,10 @@ def render_workbench_html(
     program = case_payload["program"]
     execution = case_payload["execution"]
     sensitivity_notice = _render_sensitivity_notice(case_payload["redaction"])
+    fact_provenance_html = _render_fact_provenance(
+        case_payload.get("factProvenance", []),
+        redacted="/factProvenance" in case_payload["redaction"]["redactedPaths"],
+    )
 
     dossier_data: dict[str, object] = {
         "executionCase": case_payload,
@@ -176,6 +181,7 @@ def render_workbench_html(
         {result_panel}
       </div>
 
+      {fact_provenance_html}
       {failure_html}
       {selected_branches}
     </section>
@@ -348,6 +354,51 @@ def _render_sensitivity_notice(redaction: ExecutionCaseRedactionPayload) -> str:
       <div><strong>{_h(title)}</strong><p>{_h(detail)}</p></div>
       <span>{_h(badge)}</span>
     </aside>'''
+
+
+def _render_fact_provenance(
+    provenance: list[ExecutionCaseFactProvenancePayload],
+    *,
+    redacted: bool,
+) -> str:
+    if not provenance and not redacted:
+        return ""
+    count_label = (
+        "omitted"
+        if redacted
+        else f"{len(provenance)} fact{'s' if len(provenance) != 1 else ''}"
+    )
+    if redacted:
+        body = '''
+        <div class="empty-state compact">
+          <span aria-hidden="true">—</span>
+          <p>Host fact provenance was omitted by the capture policy.</p>
+        </div>'''
+    else:
+        cards = ""
+        for item in provenance:
+            description = (
+                f"<div><dt>Description</dt><dd>{_h(item['description'])}</dd></div>"
+                if "description" in item
+                else ""
+            )
+            cards += f'''<article class="fact-provenance-card">
+              <code>{_h(item['path'])}</code>
+              <dl>
+                <div><dt>Host source</dt><dd>{_h(item['source'])}</dd></div>
+                {description}
+              </dl>
+            </article>'''
+        body = f'<div class="fact-provenance-grid">{cards}</div>'
+    return f'''
+      <section class="fact-provenance" aria-labelledby="fact-provenance-heading">
+        <div class="fact-provenance__heading">
+          <div><p class="eyebrow">Normalized input boundary</p><h3 id="fact-provenance-heading">Host fact provenance</h3></div>
+          <span class="count-chip">{count_label}</span>
+        </div>
+        <p class="muted">Host-supplied, unauthenticated metadata. GWT validates each request path but does not verify the source claim.</p>
+        {body}
+      </section>'''
 
 
 def _render_comparison_case(
@@ -1224,6 +1275,17 @@ code, pre { font-family: var(--mono); }
 .overview-card__value { overflow-wrap: anywhere; font-size: 19px; line-height: 1.2; letter-spacing: -.02em; }
 .overview-card__value--mono { font: 10px/1.5 var(--mono); letter-spacing: 0; }
 .data-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.fact-provenance { margin-top: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 15px; background: #fbfaf6; }
+.fact-provenance__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.fact-provenance__heading h3 { margin: 3px 0 0; font-size: 18px; }
+.fact-provenance > .muted { margin: 8px 0 14px; }
+.fact-provenance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fact-provenance-card { min-width: 0; padding: 13px; border: 1px solid #dce6df; border-radius: 11px; background: white; }
+.fact-provenance-card > code { color: var(--forest); font-weight: 800; overflow-wrap: anywhere; }
+.fact-provenance-card dl { margin: 9px 0 0; }
+.fact-provenance-card dl div + div { margin-top: 7px; }
+.fact-provenance-card dt { color: var(--ink-soft); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.fact-provenance-card dd { margin: 2px 0 0; overflow-wrap: anywhere; font-size: 12px; }
 .json-panel { min-width: 0; overflow: hidden; background: #14231e; border: 1px solid #203b33; border-radius: 16px; }
 .json-panel header { min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: #d9e7e1; background: #1a3029; border-bottom: 1px solid rgba(255,255,255,.08); }
 .json-panel h3 { font-size: 13px; letter-spacing: 0; }
@@ -1318,7 +1380,7 @@ button:focus-visible, a:focus-visible, pre:focus-visible { outline: 3px solid #e
   .masthead__inner, .hero, .page-shell, .footer { width: min(100% - 28px, 1440px); }
   .hero { padding: 54px 0 62px; }
   .section { padding: 22px; border-radius: 18px; }
-  .impact-layout, .data-grid, .state-list { grid-template-columns: 1fr; }
+  .impact-layout, .data-grid, .fact-provenance-grid, .state-list { grid-template-columns: 1fr; }
   .impact-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .json-panel pre { min-height: 220px; }
 }

@@ -1,0 +1,14 @@
+{
+  "commit.has_breaking_note": {
+    "description": "Normalized from parsed conventional-commit notes before rule selection.",
+    "source": "host commit parser: breaking-change notes"
+  },
+  "commit.type_state": {
+    "description": "Preserves whether the parsed commit type was missing, null, or present.",
+    "source": "host commit parser: commit.type"
+  },
+  "rules": {
+    "description": "Ordered normalized outcomes after host-side configuration loading and matcher scoping.",
+    "source": "commit-analyzer host adapter: releaseRules"
+  }
+}

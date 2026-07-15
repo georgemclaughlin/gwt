@@ -17,6 +17,7 @@ from compare_corpus import normalize
 
 PILOT_DIR = Path(__file__).resolve().parent
 RULES = PILOT_DIR / "rules.gwt"
+FACT_PROVENANCE = PILOT_DIR / "fact-provenance.json"
 RUBY_ORACLE = PILOT_DIR / "ruby_oracle.rb"
 REQUEST_NAME = "assess funding eligibility"
 UPSTREAM_COMMIT = "f3601047213660121a5b8e0850c8ecef798f8e03"
@@ -304,6 +305,8 @@ def _write_review_artifacts(
                 str(input_path),
                 "--request",
                 REQUEST_NAME,
+                "--fact-provenance",
+                str(FACT_PROVENANCE),
                 "--output",
                 str(case_path),
             ]

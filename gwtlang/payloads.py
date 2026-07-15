@@ -288,6 +288,12 @@ class ExecutionCaseRequestPayload(TypedDict):
     inputFile: str | None
 
 
+class ExecutionCaseFactProvenancePayload(TypedDict, total=False):
+    path: Required[str]
+    source: Required[str]
+    description: str
+
+
 class ExecutionCaseNamedValuePayload(TypedDict):
     path: str
     value: JsonValue
@@ -421,6 +427,7 @@ class ExecutionCasePayload(TypedDict):
     program: ExecutionCaseProgramPayload
     versions: ExecutionCaseVersionsPayload
     request: ExecutionCaseRequestPayload
+    factProvenance: NotRequired[list[ExecutionCaseFactProvenancePayload]]
     result: JsonObject
     execution: ExecutionCaseExecutionPayload
     evidence: list[ExecutionCaseEvidencePayload]

@@ -23,6 +23,7 @@ from .comparison import compare_execution_cases
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .execution_case import (
     ExecutionCaseCapturePolicy,
+    FactProvenanceInput,
     capture_execution_case,
     load_execution_case,
 )
@@ -524,6 +525,14 @@ def add_import_policy_arguments(parser: argparse.ArgumentParser) -> None:
 
 def add_execution_case_capture_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
+        "--fact-provenance",
+        type=Path,
+        help=(
+            "Path to optional host fact provenance JSON keyed by declared "
+            "request input path."
+        ),
+    )
+    parser.add_argument(
         "--record-failures",
         action="store_true",
         help=(
@@ -793,6 +802,17 @@ def _execution_case_policy_from_args(
     )
 
 
+def _fact_provenance_from_args(
+    args: argparse.Namespace,
+) -> FactProvenanceInput | None:
+    path = args.fact_provenance
+    if path is None:
+        return None
+    if path == Path("-"):
+        raise ValueError("--fact-provenance must name a file, not stdin")
+    return cast(FactProvenanceInput, _load_json_input(path))
+
+
 def format_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
@@ -829,6 +849,7 @@ def explain_command(args: argparse.Namespace) -> int:
             args.file,
             json_state,
             request=args.request,
+            fact_provenance=_fact_provenance_from_args(args),
             json_file=args.json_input if args.json_input != Path("-") else None,
             import_policy=import_policy_from_args(args),
             policy=_execution_case_policy_from_args(args),
@@ -863,6 +884,7 @@ def capture_command(args: argparse.Namespace) -> int:
             args.file,
             json_state,
             request=args.request,
+            fact_provenance=_fact_provenance_from_args(args),
             json_file=args.json_input if args.json_input != Path("-") else None,
             import_policy=import_policy_from_args(args),
             policy=_execution_case_policy_from_args(args),

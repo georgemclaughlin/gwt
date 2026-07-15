@@ -18,6 +18,7 @@ from typing import Any, Literal, cast
 from .payloads import (
     ExecutionCaseErrorPayload,
     ExecutionCaseEvidencePayload,
+    ExecutionCaseFactProvenancePayload,
     ExecutionCaseNamedValuePayload,
     ExecutionCaseOperandPayload,
     ExecutionCaseOperandsPayload,
@@ -41,7 +42,11 @@ from .runtime import (
     DEFAULT_MAX_CALL_DEPTH,
     GwtError,
     ImportPolicy,
+    Program,
     Runtime,
+    _list_item_type,
+    _optional_item_type,
+    _resolve_type_alias,
     parse_program,
 )
 from .tracing import GwtTraceRecorder, OtlpSpan
@@ -58,7 +63,13 @@ EXECUTION_CASE_INTEGRITY_ALGORITHM = "gwt-execution-case-sha256-v1"
 EXECUTION_CASE_INTEGRITY_SCOPE = "artifact-without-integrity"
 _SHA256_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TRACE_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+_FACT_PATH_PATTERN = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$"
+)
 MAX_EXECUTION_CASE_VALUE_DEPTH = 128
+
+
+FactProvenanceInput = Mapping[str, Mapping[str, str]]
 
 
 @dataclass(frozen=True)
@@ -142,6 +153,10 @@ class ExecutionCase:
     def selected_decision(self) -> ExecutionCaseSelectedDecisionPayload | None:
         return deepcopy(self._payload["execution"]["selectedDecision"])
 
+    @property
+    def fact_provenance(self) -> list[ExecutionCaseFactProvenancePayload]:
+        return deepcopy(self._payload.get("factProvenance", []))
+
     def as_payload(self) -> ExecutionCasePayload:
         return deepcopy(self._payload)
 
@@ -175,11 +190,107 @@ def load_execution_case(path: str | Path) -> ExecutionCase:
     return ExecutionCase.load(path)
 
 
+def _normalize_fact_provenance(
+    value: object | None,
+) -> list[ExecutionCaseFactProvenancePayload]:
+    if value is None:
+        return []
+    if not isinstance(value, Mapping):
+        raise ValueError("fact provenance must be an object keyed by request input path")
+
+    normalized: list[ExecutionCaseFactProvenancePayload] = []
+    provenance = cast(Mapping[object, object], value)
+    for path, detail_value in provenance.items():
+        if not isinstance(path, str) or _FACT_PATH_PATTERN.fullmatch(path) is None:
+            raise ValueError(f"fact provenance path is invalid: {path!r}")
+        if not isinstance(detail_value, Mapping):
+            raise ValueError(f"fact provenance for {path} must be an object")
+        detail = cast(Mapping[str, object], detail_value)
+        unexpected = sorted(set(detail).difference({"source", "description"}))
+        if unexpected:
+            raise ValueError(
+                f"fact provenance for {path} has unknown field: {unexpected[0]}"
+            )
+        source = detail.get("source")
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError(
+                f"fact provenance for {path} requires a non-empty source"
+            )
+        item: ExecutionCaseFactProvenancePayload = {
+            "path": path,
+            "source": source,
+        }
+        if "description" in detail:
+            description = detail["description"]
+            if not isinstance(description, str) or not description.strip():
+                raise ValueError(
+                    f"fact provenance for {path} description must be non-empty"
+                )
+            item["description"] = description
+        normalized.append(item)
+    return sorted(normalized, key=lambda item: item["path"])
+
+
+def _validate_fact_provenance_paths(
+    provenance: list[ExecutionCaseFactProvenancePayload],
+    program: Program,
+    request_name: str,
+) -> None:
+    if not provenance:
+        return
+    request = program.requests.get(request_name)
+    if request is None:
+        raise ValueError(
+            f"fact provenance cannot be validated: no REQUEST named {request_name!r}"
+        )
+    allowed = _declared_request_input_paths(program, request_name)
+    for item in provenance:
+        if item["path"] not in allowed:
+            raise ValueError(
+                f"fact provenance path is not a declared request input: {item['path']}"
+            )
+
+
+def _declared_request_input_paths(program: Program, request_name: str) -> set[str]:
+    request = program.requests[request_name]
+    paths: set[str] = set()
+
+    def add_type(path: str, value_type: str, seen: set[str]) -> None:
+        paths.add(path)
+        resolved = _resolve_type_alias(value_type, program.type_aliases)
+        optional_item_type = _optional_item_type(resolved)
+        if optional_item_type is not None:
+            resolved = optional_item_type
+        record = program.records.get(resolved)
+        if record is not None and resolved not in seen:
+            nested_seen = {*seen, resolved}
+            for field_path, field_type in record.fields.items():
+                add_type(f"{path}.{field_path}", field_type, nested_seen)
+            return
+        variant = program.variants.get(resolved)
+        if variant is not None and resolved not in seen:
+            paths.add(f"{path}.kind")
+            nested_seen = {*seen, resolved}
+            for case in variant.cases.values():
+                for field_path, field_type in case.fields.items():
+                    add_type(f"{path}.{field_path}", field_type, nested_seen)
+            return
+        # Lists are provenance-addressed as a whole. Individual indexes are
+        # runtime data locations rather than declared GWT request paths.
+        if _list_item_type(resolved) is not None:
+            return
+
+    for binding in request.inputs.values():
+        add_type(binding.path, binding.value_type, set())
+    return paths
+
+
 def capture_execution_case(
     path: str | Path,
     json_state: JsonObject,
     *,
     request: str,
+    fact_provenance: FactProvenanceInput | None = None,
     json_file: str | Path | None = None,
     import_policy: ImportPolicy | None = None,
     policy: ExecutionCaseCapturePolicy | None = None,
@@ -197,6 +308,7 @@ def capture_execution_case(
         snapshot,
         json_state,
         request=request,
+        fact_provenance=fact_provenance,
         program_file=Path(path),
         json_file=json_file,
         import_policy=import_policy,
@@ -211,6 +323,7 @@ def _capture_execution_case_from_snapshot(
     json_state: JsonObject,
     *,
     request: str,
+    fact_provenance: FactProvenanceInput | None = None,
     program_file: Path | None = None,
     json_file: str | Path | None = None,
     import_policy: ImportPolicy | None = None,
@@ -221,6 +334,7 @@ def _capture_execution_case_from_snapshot(
     """Capture against sources already bound to a dependency-closure identity."""
 
     capture_policy = policy or ExecutionCaseCapturePolicy()
+    normalized_fact_provenance = _normalize_fact_provenance(fact_provenance)
     _validate_execution_limit("execution_budget", execution_budget)
     _validate_execution_limit("max_call_depth", max_call_depth)
     program_path = snapshot.entry_path
@@ -250,6 +364,10 @@ def _capture_execution_case_from_snapshot(
         )
     except GwtError as exc:
         recorder.finish(error=str(exc))
+        if normalized_fact_provenance:
+            raise ValueError(
+                "fact provenance requires a program that parses successfully"
+            ) from exc
         if capture_policy.on_error == "raise":
             raise
         return _build_execution_case(
@@ -266,12 +384,18 @@ def _capture_execution_case_from_snapshot(
             declared_result=None,
             failure=exc,
             failure_stage="parse",
+            fact_provenance=[],
         )
 
     # The program name is known only after parsing; retain it on the root span
     # without changing the trace's ordering or identity.
     if program.name is not None:
         recorder.spans[0].attributes["gwt.program.name"] = program.name
+    _validate_fact_provenance_paths(
+        normalized_fact_provenance,
+        program,
+        request,
+    )
     try:
         result = Runtime(
             program,
@@ -302,6 +426,7 @@ def _capture_execution_case_from_snapshot(
             declared_result=None,
             failure=exc,
             failure_stage="execute",
+            fact_provenance=normalized_fact_provenance,
         )
     recorder.finish()
 
@@ -322,6 +447,7 @@ def _capture_execution_case_from_snapshot(
         declared_result=declared_result,
         failure=None,
         failure_stage=None,
+        fact_provenance=normalized_fact_provenance,
     )
 
 
@@ -340,6 +466,7 @@ def _build_execution_case(
     declared_result: JsonObject | None,
     failure: GwtError | None,
     failure_stage: str | None,
+    fact_provenance: list[ExecutionCaseFactProvenancePayload],
 ) -> ExecutionCase:
     program_path = snapshot.entry_path
     identity = snapshot.identity
@@ -388,6 +515,7 @@ def _build_execution_case(
         capture_policy,
         outcome="completed" if failure is None else "failed",
         input_file_present=json_file is not None,
+        fact_provenance_present=bool(fact_provenance),
     )
     payload_without_integrity: dict[str, object] = {
         "schemaVersion": EXECUTION_CASE_SCHEMA_VERSION,
@@ -431,6 +559,8 @@ def _build_execution_case(
         ),
         "redaction": redaction,
     }
+    if values_included and fact_provenance:
+        payload_without_integrity["factProvenance"] = deepcopy(fact_provenance)
     payload_without_integrity["integrity"] = _integrity_payload(payload_without_integrity)
     return ExecutionCase.from_payload(payload_without_integrity)
 
@@ -440,6 +570,7 @@ def _redaction_payload(
     *,
     outcome: str,
     input_file_present: bool,
+    fact_provenance_present: bool,
 ) -> dict[str, object]:
     if policy.values == "full":
         return {
@@ -471,6 +602,8 @@ def _redaction_payload(
     ]
     if outcome == "failed":
         redacted_paths.append("/execution/error/message")
+    if fact_provenance_present:
+        redacted_paths.append("/factProvenance")
     return {
         "mode": "omit-values",
         "valuesIncluded": False,
@@ -664,7 +797,7 @@ def _validate_execution_case_payload(payload: dict[str, object]) -> None:
     missing = sorted(required.difference(payload))
     if missing:
         raise ValueError(f"execution case is missing required field: {missing[0]}")
-    unexpected = sorted(set(payload).difference(required))
+    unexpected = sorted(set(payload).difference({*required, "factProvenance"}))
     if unexpected:
         raise ValueError(f"execution case has unknown field: {unexpected[0]}")
     if payload.get("kind") != "gwt.execution-case":
@@ -803,6 +936,7 @@ def _validate_execution_case_payload(payload: dict[str, object]) -> None:
         raise ValueError("execution case request.inputFile must be a string or null")
     if not isinstance(payload.get("result"), dict):
         raise ValueError("execution case result must be an object")
+    _validate_fact_provenance_payload(payload.get("factProvenance"))
 
     execution = _case_mapping(payload, "execution")
     required_execution = {
@@ -1022,6 +1156,58 @@ def _validate_named_or_marked_value(value: object, label: str) -> None:
             "availability marker"
         )
     _case_string(item, "path", label)
+
+
+def _validate_fact_provenance_payload(value: object) -> None:
+    if value is None:
+        return
+    if not isinstance(value, list) or not value:
+        raise ValueError(
+            "execution case factProvenance must be a non-empty array when present"
+        )
+    previous_path: str | None = None
+    for index, item_value in enumerate(cast(list[object], value)):
+        if not isinstance(item_value, dict):
+            raise ValueError(
+                f"execution case factProvenance[{index}] must be an object"
+            )
+        item = cast(dict[str, object], item_value)
+        if set(item).difference({"path", "source", "description"}):
+            unexpected = sorted(
+                set(item).difference({"path", "source", "description"})
+            )[0]
+            raise ValueError(
+                f"execution case factProvenance[{index}] has unknown field: "
+                f"{unexpected}"
+            )
+        if not {"path", "source"}.issubset(item):
+            missing = sorted({"path", "source"}.difference(item))[0]
+            raise ValueError(
+                f"execution case factProvenance[{index}] is missing required "
+                f"field: {missing}"
+            )
+        path = item.get("path")
+        if not isinstance(path, str) or _FACT_PATH_PATTERN.fullmatch(path) is None:
+            raise ValueError(
+                f"execution case factProvenance[{index}].path is invalid"
+            )
+        source = item.get("source")
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError(
+                f"execution case factProvenance[{index}].source must be non-empty"
+            )
+        if "description" in item:
+            description = item["description"]
+            if not isinstance(description, str) or not description.strip():
+                raise ValueError(
+                    f"execution case factProvenance[{index}].description must be "
+                    "non-empty"
+                )
+        if previous_path is not None and path <= previous_path:
+            raise ValueError(
+                "execution case factProvenance paths must be unique and sorted"
+            )
+        previous_path = path
 
 
 def _validate_execution_error(
@@ -1250,6 +1436,10 @@ def _validate_redaction_profile(
     ):
         raise ValueError(
             "omit-value execution case requires redaction mode 'omit-values'"
+        )
+    if "factProvenance" in payload:
+        raise ValueError(
+            "omit-value execution case must not contain factProvenance"
         )
     program = _case_mapping(payload, "program")
     identity = _case_mapping(program, "identity", label="program")
