@@ -276,7 +276,8 @@ class _ScenarioRenderer:
 
         item_type = _list_item_type(resolved)
         if item_type is not None and isinstance(value, list):
-            for index, item in enumerate(value, start=1):
+            list_value = cast(list[Any], value)
+            for index, item in enumerate(list_value, start=1):
                 self.reject_unrepresentable_nulls(
                     item,
                     item_type,
@@ -287,14 +288,16 @@ class _ScenarioRenderer:
         # Raw `any` values can contain arbitrary nested host data, but current
         # GWT source still has no literal for a null nested inside that data.
         if isinstance(value, Mapping):
-            for key, item in value.items():
+            mapping_value = cast(Mapping[str, Any], value)
+            for key, item in mapping_value.items():
                 self.reject_unrepresentable_nulls(
                     item,
                     "any",
                     f"{evidence_path}.{key}",
                 )
         elif isinstance(value, list):
-            for index, item in enumerate(value, start=1):
+            list_value = cast(list[Any], value)
+            for index, item in enumerate(list_value, start=1):
                 self.reject_unrepresentable_nulls(
                     item,
                     "any",
