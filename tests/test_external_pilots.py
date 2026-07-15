@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import Counter
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -19,6 +21,8 @@ DFE_REQUEST = "assess funding eligibility"
 SEMANTIC_PILOT = ROOT / "examples/external_pilots/semantic_release_commit_analyzer"
 SEMANTIC_RULES = SEMANTIC_PILOT / "rules.gwt"
 SEMANTIC_REQUEST = "analyze normalized commit"
+SEMANTIC_CONFORMANCE = SEMANTIC_PILOT / "conformance_cases.json"
+SEMANTIC_RUNNER = SEMANTIC_PILOT / "run_conformance.py"
 SPREE_PILOT = ROOT / "examples/external_pilots/spree_item_total"
 SPREE_RULES = SPREE_PILOT / "rules.gwt"
 SPREE_SLICE = SPREE_PILOT / "oracle_slice.json"
@@ -26,6 +30,29 @@ SPREE_REQUEST = "assess item total eligibility"
 
 
 class ExternalPilotRegressionTests(unittest.TestCase):
+    def test_commit_analyzer_conformance_slice_retains_parity_and_known_gaps(self):
+        fixture = json.loads(SEMANTIC_CONFORMANCE.read_text())
+        self.assertEqual(
+            fixture["source"]["commit"],
+            "f16dd2e9fbf4fc17ab6fefb171a6c6e0645b6758",
+        )
+        self.assertEqual(len(fixture["cases"]), 20)
+        self.assertEqual(
+            Counter(case["classification"] for case in fixture["cases"]),
+            {"exact_parity": 18, "known_boundary_gap": 2},
+        )
+
+        completed = subprocess.run(
+            [sys.executable, str(SEMANTIC_RUNNER)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("exact upstream/GWT parity: 18/18", completed.stdout)
+        self.assertIn("documented boundary gaps: 2/2", completed.stdout)
+
     def test_seeded_fact_provenance_sidecars_match_declared_pilot_inputs(self):
         pilots = (
             (DFE_PILOT, DFE_RULES, DFE_REQUEST),
