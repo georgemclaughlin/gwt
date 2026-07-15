@@ -302,6 +302,95 @@ GIVEN items are Item
                 request="review decision",
             )
 
+    def test_optional_values_accept_missing_and_null_and_narrow_in_guarded_branches(self):
+        source = """
+        TYPE MaybeMaximum is optional<decimal>
+
+        RECORD Limits
+          amount_min: decimal
+          amount_max: MaybeMaximum
+
+        RECORD Decision
+          status: text
+          observed_maximum: optional<decimal>
+
+        REQUEST assess limits
+          GIVEN limits is Limits
+
+          GIVEN decision is Decision
+            status: "new"
+
+          WHEN assess limits into decision
+
+          OUTPUT decision is Decision
+
+        WHEN assess <limits> into <decision>
+          GIVEN limits is Limits
+          AND decision is Decision
+          IF limits.amount_max is present
+            set decision.status to "bounded"
+            set decision.observed_maximum to limits.amount_max
+          ELSE
+            set decision.status to "unbounded"
+
+        SCENARIO omitted optional field is absent
+        GIVEN limits is Limits
+          amount_min: 10.00
+        REQUEST assess limits
+        THEN decision.status == "unbounded"
+        AND decision.observed_maximum is absent
+        """
+
+        missing = run_json_text(
+            source,
+            {"limits": {"amount_min": "10.00"}},
+            request="assess limits",
+        ).as_payload()["result"]
+        explicit_null = run_json_text(
+            source,
+            {"limits": {"amount_min": "10.00", "amount_max": None}},
+            request="assess limits",
+        ).as_payload()["result"]
+        present = run_json_text(
+            source,
+            {"limits": {"amount_min": "10.00", "amount_max": "20.00"}},
+            request="assess limits",
+        ).as_payload()["result"]
+
+        self.assertEqual(missing, explicit_null)
+        self.assertEqual(
+            missing,
+            {
+                "decision": {
+                    "status": "unbounded",
+                    "observed_maximum": None,
+                }
+            },
+        )
+        self.assertEqual(present["decision"]["status"], "bounded")
+        self.assertEqual(present["decision"]["observed_maximum"], "20.00")
+        self.assertEqual(run_text(source).scenarios[0].name, "omitted optional field is absent")
+
+    def test_optional_value_use_without_presence_guard_is_rejected(self):
+        result = check_text(
+            """
+            RECORD Limits
+              amount_max: optional<decimal>
+
+            WHEN reject unsafe <limits>
+              GIVEN limits is Limits
+              IF limits.amount_max > 10.00
+                PASS
+            """
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn(
+            "optional value limits.amount_max cannot be used by operator '>' while absent; "
+            "guard it with 'limits.amount_max is present'",
+            [diagnostic.message for diagnostic in result.diagnostics],
+        )
+
     def test_api_payloads_inspection_and_type_generation_use_named_requests(self):
         source = """
         PROGRAM host contract

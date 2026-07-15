@@ -28,7 +28,11 @@ record_field   = name ":" type | name ":", record_definition_block ;
 one_of_record  = "RECORD" name "is one of", one_of_kind+ ;
 one_of_kind    = name ":", one_of_field+ ;
 one_of_field   = name ":" type ;
-type           = primitive_type | name | "list<", type, ">" | literal_union ;
+type           = primitive_type
+               | name
+               | "list<", type, ">"
+               | "optional<", type, ">"
+               | literal_union ;
 primitive_type = "number" | "integer" | "decimal" | "text" | "boolean" | "list" | "any" ;
 literal_union  = literal, "|", literal, ("|", literal)* ;
 
@@ -144,7 +148,8 @@ logical_or     = logical_and, ("or", logical_and)* ;
 logical_and    = negation, ("and", negation)* ;
 negation       = "not", negation | equality ;
 equality       = comparison, (("==" | "!="), comparison)* ;
-comparison     = term, ((">" | "<" | ">=" | "<=" | "contains"), term)* ;
+comparison     = term, ["is", ("present" | "absent")],
+                 ((">" | "<" | ">=" | "<=" | "contains"), term)* ;
 term           = factor, (("+" | "-"), factor)* ;
 factor         = unary, (("*" | "/"), unary)* ;
 unary          = "-", unary | primary ;
@@ -171,6 +176,11 @@ Indentation is significant:
 `TYPE Name is Type` declares a named alias for an existing type expression, such
 as a literal union or typed list. Type aliases are contracts only; they do not
 create runtime values.
+
+`optional<Type>` is a boundary contract for a value that may be omitted or
+JSON `null`. Both cases become one absent value at runtime. GWT has no
+source-level `null` literal; conditions inspect optional values with
+`path is present` and `path is absent`.
 
 `REQUEST path is Type` is no longer a top-level program contract. At the top
 level, `REQUEST name` with an indented body declares a public callable request.

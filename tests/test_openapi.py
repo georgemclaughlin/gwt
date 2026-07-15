@@ -12,6 +12,26 @@ from gwtlang.version import PACKAGE_VERSION
 
 
 class OpenApiGenerationTests(unittest.TestCase):
+    def test_optional_nested_request_path_is_nullable_without_requiring_ancestors(self):
+        result = generate_openapi_text(
+            """
+            REQUEST inspect metadata
+              GIVEN metadata.trace_id is optional<text>
+              WHEN inspect metadata
+
+            WHEN inspect metadata
+              PASS
+            """
+        )
+
+        request = result.as_payload()["components"]["schemas"]["InspectMetadataRequest"]
+        self.assertEqual(request["required"], [])
+        self.assertEqual(request["properties"]["metadata"]["required"], [])
+        self.assertEqual(
+            request["properties"]["metadata"]["properties"]["trace_id"],
+            {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        )
+
     def test_generates_paths_and_schemas_from_named_requests(self):
         result = generate_openapi_text(
             """

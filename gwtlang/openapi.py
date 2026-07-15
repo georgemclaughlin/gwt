@@ -18,6 +18,7 @@ from .runtime import (
     VariantDefinition,
     _list_item_type,
     _literal_union_values,
+    _optional_item_type,
 )
 from .service import analyze_source
 from .version import current_package_version
@@ -348,7 +349,8 @@ class _GwtSchemaBuilder:
         required: list[str] = []
         for name, node in root.children.items():
             properties[name] = self._property_schema(node, mode=mode)
-            required.append(name)
+            if not self._is_optional_node(node):
+                required.append(name)
         return {
             "type": "object",
             "properties": properties,
@@ -364,6 +366,14 @@ class _GwtSchemaBuilder:
         return self._schema_for_type(node.value_type or "any", mode=mode)
 
     def _schema_for_type(self, value_type: str, *, mode: _SchemaMode) -> dict[str, Any]:
+        optional_item_type = _optional_item_type(value_type)
+        if optional_item_type is not None:
+            return {
+                "anyOf": [
+                    self._schema_for_type(optional_item_type, mode=mode),
+                    {"type": "null"},
+                ]
+            }
         literal_values = _literal_union_values(value_type)
         if literal_values is not None:
             return _literal_union_schema(literal_values, mode=mode)
@@ -401,6 +411,23 @@ class _GwtSchemaBuilder:
 
         raise GwtError(f"unknown GWT type for JSON schema: {value_type}")
 
+    def _is_optional_type(self, value_type: str) -> bool:
+        seen: set[str] = set()
+        current = value_type
+        while current in self.program.type_aliases:
+            if current in seen:
+                return False
+            seen.add(current)
+            current = self.program.type_aliases[current].value_type
+        return _optional_item_type(current) is not None
+
+    def _is_optional_node(self, node: _PropertyNode) -> bool:
+        if node.value_type is not None:
+            return self._is_optional_type(node.value_type)
+        return bool(node.children) and all(
+            self._is_optional_node(child) for child in node.children.values()
+        )
+
     def _unique_schema_name(self, preferred: str) -> str:
         return _unique_schema_name(preferred, self.used_schema_names)
 
@@ -410,6 +437,9 @@ class _GwtSchemaBuilder:
         return name
 
     def _type_needs_output_schema(self, value_type: str, seen: set[str] | None = None) -> bool:
+        optional_item_type = _optional_item_type(value_type)
+        if optional_item_type is not None:
+            return self._type_needs_output_schema(optional_item_type, seen=seen)
         literal_values = _literal_union_values(value_type)
         if literal_values is not None:
             return any(isinstance(value, Decimal) for value in literal_values)

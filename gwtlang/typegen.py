@@ -16,6 +16,7 @@ from .runtime import (
     VariantDefinition,
     _list_item_type,
     _literal_union_values,
+    _optional_item_type,
 )
 from .service import analyze_source
 
@@ -95,20 +96,21 @@ def _checked_program(source: str, filename: str) -> Program:
 
 def _emit_typescript(program: Program, filename: str) -> str:
     lines = [f"// Generated from {filename}. Do not edit by hand.", ""]
+    optional_aliases = _optional_alias_names(program)
 
     for alias in program.type_aliases.values():
         lines.extend(_emit_typescript_alias(alias.name, alias.value_type))
         lines.append("")
 
     for record in program.records.values():
-        lines.extend(_emit_record(record))
+        lines.extend(_emit_record(record, optional_aliases))
         lines.append("")
 
     for variant in program.variants.values():
-        lines.extend(_emit_variant(variant))
+        lines.extend(_emit_variant(variant, optional_aliases))
         lines.append("")
 
-    request_lines = _emit_named_request_types(program)
+    request_lines = _emit_named_request_types(program, optional_aliases)
     if request_lines:
         lines.extend(request_lines)
         lines.append("")
@@ -120,15 +122,15 @@ def _emit_typescript_alias(name: str, value_type: str) -> list[str]:
     return [f"export type {name} = {_typescript_type(value_type)};"]
 
 
-def _emit_record(record: RecordDefinition) -> list[str]:
+def _emit_record(record: RecordDefinition, optional_aliases: set[str]) -> list[str]:
     root = _build_property_tree(record.fields.items())
     lines = [f"export interface {record.name} {{"]
-    lines.extend(_emit_properties(root.children, 2))
+    lines.extend(_emit_properties(root.children, 2, optional_aliases))
     lines.append("}")
     return lines
 
 
-def _emit_variant(variant: VariantDefinition) -> list[str]:
+def _emit_variant(variant: VariantDefinition, optional_aliases: set[str]) -> list[str]:
     lines = [f"export type {variant.name} ="]
     cases = list(variant.cases.values())
     for index, case in enumerate(cases):
@@ -136,20 +138,27 @@ def _emit_variant(variant: VariantDefinition) -> list[str]:
         lines.append("  | {")
         lines.append(f"      kind: {_literal_type(case.name)};")
         for field_name, value_type in case.fields.items():
-            lines.append(f"      {_property_name(field_name)}: {_typescript_type(value_type)};")
+            optional = "?" if _is_optional_type(value_type, optional_aliases) else ""
+            lines.append(
+                f"      {_property_name(field_name)}{optional}: {_typescript_type(value_type)};"
+            )
         lines.append(close)
     return lines
 
 
-def _emit_contract_interface(name: str, bindings: Iterable[ContractBinding]) -> list[str]:
+def _emit_contract_interface(
+    name: str,
+    bindings: Iterable[ContractBinding],
+    optional_aliases: set[str],
+) -> list[str]:
     root = _build_property_tree((binding.path, binding.value_type) for binding in bindings)
     lines = [f"export interface {name} {{"]
-    lines.extend(_emit_properties(root.children, 2))
+    lines.extend(_emit_properties(root.children, 2, optional_aliases))
     lines.append("}")
     return lines
 
 
-def _emit_named_request_types(program: Program) -> list[str]:
+def _emit_named_request_types(program: Program, optional_aliases: set[str]) -> list[str]:
     requests = list(program.requests.values())
     if not requests:
         return []
@@ -173,9 +182,13 @@ def _emit_named_request_types(program: Program) -> list[str]:
         output_name = _unique_type_name(f"{base}Output", used_names)
         used_names.add(output_name)
         names[request.name] = (input_name, output_name)
-        lines.extend(_emit_contract_interface(input_name, request.inputs.values()))
+        lines.extend(
+            _emit_contract_interface(input_name, request.inputs.values(), optional_aliases)
+        )
         lines.append("")
-        lines.extend(_emit_contract_interface(output_name, request.outputs.values()))
+        lines.extend(
+            _emit_contract_interface(output_name, request.outputs.values(), optional_aliases)
+        )
         lines.append("")
 
     request_names = [request.name for request in requests]
@@ -246,26 +259,38 @@ def _build_property_tree(bindings: Iterable[tuple[str, str]]) -> _PropertyNode:
     return root
 
 
-def _emit_properties(nodes: dict[str, _PropertyNode], indent: int) -> list[str]:
+def _emit_properties(
+    nodes: dict[str, _PropertyNode],
+    indent: int,
+    optional_aliases: set[str],
+) -> list[str]:
     lines: list[str] = []
     for name, node in nodes.items():
-        lines.extend(_emit_property(name, node, indent))
+        lines.extend(_emit_property(name, node, indent, optional_aliases))
     return lines
 
 
-def _emit_property(name: str, node: _PropertyNode, indent: int) -> list[str]:
+def _emit_property(
+    name: str,
+    node: _PropertyNode,
+    indent: int,
+    optional_aliases: set[str],
+) -> list[str]:
     space = " " * indent
     property_name = _property_name(name)
     if not node.children:
-        return [f"{space}{property_name}: {_typescript_type(node.value_type or 'any')};"]
+        value_type = node.value_type or "any"
+        optional = "?" if _is_optional_type(value_type, optional_aliases) else ""
+        return [f"{space}{property_name}{optional}: {_typescript_type(value_type)};"]
 
+    optional = "?" if _property_node_is_optional(node, optional_aliases) else ""
     if node.value_type is None:
-        header = f"{space}{property_name}: {{"
+        header = f"{space}{property_name}{optional}: {{"
     else:
-        header = f"{space}{property_name}: {_typescript_type(node.value_type)} & {{"
+        header = f"{space}{property_name}{optional}: {_typescript_type(node.value_type)} & {{"
 
     lines = [header]
-    lines.extend(_emit_properties(node.children, indent + 2))
+    lines.extend(_emit_properties(node.children, indent + 2, optional_aliases))
     lines.append(f"{space}}};")
     return lines
 
@@ -290,7 +315,13 @@ def _typescript_type(value_type: str) -> str:
 
     item_type = _list_item_type(value_type)
     if item_type is not None:
-        return f"{_typescript_type(item_type)}[]"
+        generated_item_type = _typescript_type(item_type)
+        if " | " in generated_item_type:
+            generated_item_type = f"({generated_item_type})"
+        return f"{generated_item_type}[]"
+    optional_item_type = _optional_item_type(value_type)
+    if optional_item_type is not None:
+        return f"{_typescript_type(optional_item_type)} | null"
 
     return value_type
 
@@ -331,6 +362,7 @@ class _PythonEmitter:
             "compile_file",
         }
         self.type_names: dict[str, str] = {}
+        self.optional_aliases = _optional_alias_names(program)
         for alias_name in program.type_aliases:
             self.type_names[alias_name] = self._unique_type_name(_python_type_name(alias_name))
         for record_name in program.records:
@@ -339,13 +371,18 @@ class _PythonEmitter:
             self.type_names[variant_name] = self._unique_type_name(_python_type_name(variant_name))
 
     def emit(self) -> str:
+        typing_import = (
+            "from typing import Any, Literal, NotRequired, TypeAlias, TypedDict, cast"
+            if _program_uses_optional(self.program)
+            else "from typing import Any, Literal, TypeAlias, TypedDict, cast"
+        )
         lines = [
             f"# Generated from {self.filename}. Do not edit by hand.",
             "from __future__ import annotations",
             "",
             "from collections.abc import Iterable",
             "from pathlib import Path",
-            "from typing import Any, Literal, TypeAlias, TypedDict, cast",
+            typing_import,
             "",
             "from gwtlang import CompiledProgram, ExecutionResult, compile_file",
             "",
@@ -535,8 +572,13 @@ class _PythonEmitter:
                 child_fields = self._python_fields(node.children, field_type, nested)
                 nested.extend(self._emit_typed_dict(field_type, child_fields))
                 nested.append("")
+                if _property_node_is_optional(node, self.optional_aliases):
+                    field_type = f"NotRequired[{field_type}]"
             else:
-                field_type = self._python_type(node.value_type or "any")
+                value_type = node.value_type or "any"
+                field_type = self._python_type(value_type)
+                if _is_optional_type(value_type, self.optional_aliases):
+                    field_type = f"NotRequired[{field_type}]"
             fields.append((name, field_type))
         return fields
 
@@ -563,6 +605,9 @@ class _PythonEmitter:
         item_type = _list_item_type(value_type)
         if item_type is not None:
             return f"list[{self._python_type(item_type)}]"
+        optional_item_type = _optional_item_type(value_type)
+        if optional_item_type is not None:
+            return f"{self._python_type(optional_item_type)} | None"
 
         return self.type_names.get(value_type, value_type)
 
@@ -611,6 +656,55 @@ def _python_type_name(name: str) -> str:
     if not type_name[0].isalpha() and type_name[0] != "_":
         type_name = f"Generated{type_name}"
     return type_name
+
+
+def _program_uses_optional(program: Program) -> bool:
+    value_types = [
+        *(alias.value_type for alias in program.type_aliases.values()),
+        *(value_type for record in program.records.values() for value_type in record.fields.values()),
+        *(
+            value_type
+            for variant in program.variants.values()
+            for case in variant.cases.values()
+            for value_type in case.fields.values()
+        ),
+        *(
+            binding.value_type
+            for request in program.requests.values()
+            for binding in [*request.inputs.values(), *request.outputs.values()]
+        ),
+    ]
+    return any("optional<" in value_type for value_type in value_types)
+
+
+def _optional_alias_names(program: Program) -> set[str]:
+    optional_aliases: set[str] = set()
+    changed = True
+    while changed:
+        changed = False
+        for name, alias in program.type_aliases.items():
+            if name in optional_aliases:
+                continue
+            if _optional_item_type(alias.value_type) is not None or alias.value_type in optional_aliases:
+                optional_aliases.add(name)
+                changed = True
+    return optional_aliases
+
+
+def _is_optional_type(value_type: str, optional_aliases: set[str]) -> bool:
+    return _optional_item_type(value_type) is not None or value_type in optional_aliases
+
+
+def _property_node_is_optional(
+    node: _PropertyNode,
+    optional_aliases: set[str],
+) -> bool:
+    if node.value_type is not None:
+        return _is_optional_type(node.value_type, optional_aliases)
+    return bool(node.children) and all(
+        _property_node_is_optional(child, optional_aliases)
+        for child in node.children.values()
+    )
 
 
 def _python_method_name(name: str) -> str:

@@ -160,6 +160,10 @@ type aliases, typed collections such as `list<CartItem>` or
 `"new" | "approved" | "denied"`. Typed collections can also use inline literal
 unions such as `list<"ready" | "manual_review">`.
 
+An `optional<Type>` field may be omitted or supplied as JSON `null`; a present
+value must satisfy `Type`. Missing and explicit null normalize to the same
+absent value. Other record fields remain required.
+
 `integer` is an exact whole number. `decimal` is a finite exact base-10 decimal value.
 `number` is the legacy broad numeric type. `integer` can be assigned to
 `decimal` or `number`; `decimal` can be assigned to `number`. At JSON
@@ -282,12 +286,14 @@ REQUEST checkout cart
 Request and output contracts are checked separately, so a `REQUEST` path may
 overlap an `OUTPUT` path.
 
-GWT v0.2 does not have a source-level `null` literal. JSON input can still
-contain `null` at raw integration boundaries, but typed contracts reject it for
-`number`, `integer`, `decimal`, `text`, `boolean`, `list`, records, typed
-lists, and literal unions.
-Use `any` for raw input that may contain JSON nulls, then normalize that input
-into explicit domain state such as status fields or one-of records.
+GWT v0.2 does not have a source-level `null` literal. JSON input can contain
+`null` where a contract is `optional<Type>` or `any`; other typed contracts
+reject it. An optional contract also accepts an omitted field or contract path.
+Missing and JSON null intentionally collapse to the same absent value.
+
+Use `optional<Type>` when absence is the only fact behavior needs. Use `any`
+for raw untyped input, or normalize into status fields or one-of records when
+missing, unknown, and not-applicable have different domain meanings.
 
 Declared record, request input, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
@@ -403,10 +409,11 @@ validates `OUTPUT`, and returns the same stable execution envelope used by
 `.gwt` request files. `EXPORT` and raw behavior-call execution are not part of
 the v0.2 public interface.
 
-JSON `null` values are accepted only where the receiving contract is `any`.
-They do not match typed records or primitive fields. Prefer a normalization
-behavior that turns nullable raw payloads into explicit state before the rest of
-the workflow runs.
+JSON `null` values are accepted where the receiving contract is `any` or
+`optional<Type>`. An optional path may also be omitted; both representations
+become the same absent runtime value. They do not match other typed records or
+primitive fields. Prefer explicit domain state when different kinds of absence
+affect behavior.
 
 ## Embedding API
 
@@ -491,6 +498,8 @@ TypeScript maps
 `integer` and `number` to `number`, and maps `decimal` to `string` at the JSON
 boundary. These declarations are integration helpers for host code; the `.gwt`
 source remains the normative contract.
+For `optional<Type>`, generated record and request properties use
+`property?: Type | null`.
 Generated TypeScript uses nested object shape for dotted contract paths. Raw
 CLI JSON input may still provide state through dotted path keys such as
 `"cart.total"`, or through nested objects that produce the same state.
@@ -528,6 +537,8 @@ records, per-request request/output shapes, `GwtRequestName`, `GwtRequest`,
 `GwtOutput`, request-name constants, and a program-specific client wrapper.
 Generated Python maps `integer` to `int`, `number` to `int | float`, and
 `decimal` to `str` at the JSON boundary.
+For `optional<Type>`, generated record and request properties use
+`NotRequired[Type | None]`.
 
 ```python
 from rules_types import PricingClient, PriceCartRequest
@@ -648,8 +659,10 @@ Supported values:
 - lists: `[10, 20, 30]`
 - paths: `account.balance`, `count`
 
-There is no `null` source literal in GWT source. Model missing, unknown, or
-not-applicable values explicitly instead of writing null-like placeholders.
+There is no `null` source literal in GWT source. Optional values come from
+typed boundaries and are inspected with `is present` or `is absent`. Model
+missing, unknown, or not-applicable as explicit domain cases when those states
+have different meanings.
 
 ## State
 
@@ -978,6 +991,8 @@ account.status == "open" and account.balance >= amount
 response.body contains "200"
 not response.body contains "500"
 not account.locked
+limits.amount_max is present
+limits.amount_max is absent
 ```
 
 Supported operators:
@@ -985,12 +1000,27 @@ Supported operators:
 - arithmetic: `+`, `-`, `*`, `/`
 - comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`, `contains`
 - boolean: `and`, `or`, `not`
+- presence: `is present`, `is absent`
 
 `contains` checks substrings for text values and membership for lists.
 `not` negates a whole comparison before combining with `and` or `or`, so
 `not tags contains "xml"` means `not (tags contains "xml")`. In conditions,
 `value does not contain item` is also accepted as a readable alias for
 `not (value contains item)`.
+
+Presence checks are intended for `optional<Type>` paths. The checker narrows a
+directly guarded path inside the matching branch:
+
+```gwt
+IF limits.amount_max is present
+  REQUIRE item_total <= limits.amount_max
+ELSE
+  PASS
+```
+
+The inner value cannot be used by operators until it is guarded. Narrowing is
+branch-local; it does not currently propagate through compound conditions or
+after a branch returns.
 
 ## Behavior
 

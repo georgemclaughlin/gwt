@@ -198,14 +198,20 @@ initialization helpers and first-match collection, are tracked in
 ## Missing Values
 
 GWT should treat missing, unknown, and not-applicable values as domain states,
-not as silent placeholders. JSON integrations may receive nulls, but durable
-GWT behavior should normalize those boundary values into explicit fields or
-one-of records before typed workflow logic depends on them.
+not as silent placeholders. When those cases have different meanings, durable
+GWT behavior should normalize boundary data into explicit fields or one-of
+records before workflow logic depends on it.
 
-Do not add a nullable type or source-level `null` literal just because host data
-can contain JSON nulls. First look for a domain-shaped representation such as
-`has_middle_name: boolean`, `status: "provided" | "missing"`, or a one-of record
-with `provided`, `missing`, and `not_applicable` cases.
+`optional<Type>` is the deliberately narrow exception for a boundary where
+absence is the only relevant fact. A missing property and JSON `null` collapse
+to the same absent value, there is no source-level `null` literal, and behavior
+must use an explicit `is present` guard before operating on the inner value.
+Do not use `optional<Type>` when the distinction between missing, unknown, and
+not-applicable matters. Prefer a domain-shaped representation such as
+`status: "provided" | "missing"`, or a one-of record with `provided`, `missing`,
+and `not_applicable` cases. A separate `has_value` boolean is only useful when
+that boolean is independently meaningful; it should not be boilerplate that
+duplicates an optional field's presence.
 
 ## Scenarios As Evidence
 

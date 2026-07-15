@@ -18,6 +18,7 @@ from .tracing import GwtTraceRecorder, state_change_for_set
 CONNECTORS = {"from", "into", "to", "with", "by", "for", "using", "as"}
 RECORD_TYPES = {"number", "integer", "decimal", "text", "boolean", "list", "any"}
 LIST_TYPE_PATTERN = re.compile(r"^list<(.+)>$")
+OPTIONAL_TYPE_PATTERN = re.compile(r"^optional<(.+)>$")
 SIGNATURE_PARAMETER_PATTERN = re.compile(r"^<([A-Za-z_][A-Za-z0-9_]*)>$")
 RESERVED_BEHAVIOR_NAMES = {
     "set",
@@ -987,7 +988,17 @@ class Runtime:
         expected_fields = set(record.fields)
         actual_fields = set(flat_value)
 
-        missing = sorted(expected_fields - actual_fields)
+        missing_fields = expected_fields - actual_fields
+        for field in sorted(missing_fields):
+            if _optional_item_type(self._resolve_type_alias(record.fields[field])) is not None:
+                flat_value[field] = None
+                _set_flat_record_value(value, field, None)
+
+        missing = sorted(
+            field
+            for field in missing_fields
+            if _optional_item_type(self._resolve_type_alias(record.fields[field])) is None
+        )
         if missing:
             raise GwtError(f"record {record.name} missing field: {base_path}.{missing[0]}")
 
@@ -1004,6 +1015,11 @@ class Runtime:
         expected_type = self._resolve_type_alias(expected_type)
         if expected_type == "any":
             return value
+        optional_item_type = _optional_item_type(expected_type)
+        if optional_item_type is not None:
+            if value is None:
+                return None
+            return self._validate_value_type(path, value, optional_item_type, line)
         literal_values = _literal_union_values(expected_type)
         if literal_values is not None:
             candidate = value
@@ -1066,7 +1082,17 @@ class Runtime:
         expected_fields = {"kind", *case.fields}
         actual_fields = set(flat_value)
 
-        missing = sorted(expected_fields - actual_fields)
+        missing_fields = expected_fields - actual_fields
+        for field in sorted(missing_fields):
+            if _optional_item_type(self._resolve_type_alias(case.fields[field])) is not None:
+                flat_value[field] = None
+                _set_flat_record_value(record, field, None)
+
+        missing = sorted(
+            field
+            for field in missing_fields
+            if _optional_item_type(self._resolve_type_alias(case.fields[field])) is None
+        )
         if missing:
             raise GwtError(f"record {variant.name} missing field: {path}.{missing[0]}")
 
@@ -1082,7 +1108,14 @@ class Runtime:
     def _validate_contract_bindings(self, bindings: dict[str, ContractBinding], label: str) -> None:
         for binding in bindings.values():
             try:
-                value = self._get_path(binding.path, {})
+                try:
+                    value = self._get_path(binding.path, {})
+                except GwtError:
+                    resolved_type = self._resolve_type_alias(binding.value_type)
+                    if _optional_item_type(resolved_type) is None:
+                        raise
+                    value = None
+                    self._set_path(binding.path, None, {}, binding.line)
                 normalized = self._validate_value_type(binding.path, value, binding.value_type, binding.line)
                 self._set_path(binding.path, normalized, {}, binding.line)
             except GwtError as exc:
@@ -2045,7 +2078,7 @@ def _looks_like_removed_request_contract(statement: str) -> bool:
 def _looks_like_type_name(value_type: str) -> bool:
     if not _is_type_syntax(value_type):
         return False
-    if value_type in RECORD_TYPES or value_type.startswith("list<"):
+    if value_type in RECORD_TYPES or value_type.startswith(("list<", "optional<")):
         return True
     if "|" in value_type:
         return True
@@ -3191,13 +3224,24 @@ def _is_type_syntax(value_type: str) -> bool:
     if _literal_union_values(value_type) is not None:
         return True
     item_type = _list_item_type(value_type)
-    if item_type is None:
-        return False
-    return _is_type_syntax(item_type)
+    if item_type is not None:
+        return _is_type_syntax(item_type)
+    optional_item_type = _optional_item_type(value_type)
+    if optional_item_type is not None:
+        return _is_type_syntax(optional_item_type)
+    return False
 
 
 def _list_item_type(value_type: str) -> str | None:
     match = LIST_TYPE_PATTERN.match(value_type.strip())
+    if match is None:
+        return None
+    item_type = match.group(1).strip()
+    return item_type or None
+
+
+def _optional_item_type(value_type: str) -> str | None:
+    match = OPTIONAL_TYPE_PATTERN.match(value_type.strip())
     if match is None:
         return None
     item_type = match.group(1).strip()
@@ -3219,6 +3263,9 @@ def _resolve_type_alias(
     item_type = _list_item_type(current)
     if item_type is not None:
         return f"list<{_resolve_type_alias(item_type, aliases, seen)}>"
+    optional_item_type = _optional_item_type(current)
+    if optional_item_type is not None:
+        return f"optional<{_resolve_type_alias(optional_item_type, aliases, seen)}>"
     return current
 
 

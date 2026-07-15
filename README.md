@@ -581,6 +581,11 @@ declarations from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts. Use
 shapes plus a program-specific client wrapper. The generated types are
 integration helpers; the `.gwt` file remains the source of truth.
 
+Contracts can use `optional<Type>` at host boundaries. Omitted fields and JSON
+`null` both become an absent value; behavior checks `path is present` or
+`path is absent` before using the inner value. Generated TypeScript, Python,
+JSON Schema, and OpenAPI artifacts preserve the optional and nullable boundary.
+
 `gwt schema file.gwt` generates a JSON Schema Draft 2020-12 catalog from
 `TYPE`, `RECORD`, named `REQUEST`, and `OUTPUT` contracts. GWT type definitions
 and request input/output object schemas are emitted under `$defs`, and `x-gwt`

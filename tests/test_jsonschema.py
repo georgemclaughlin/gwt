@@ -14,6 +14,54 @@ from gwtlang.version import PACKAGE_VERSION
 
 
 class JsonSchemaGenerationTests(unittest.TestCase):
+    def test_optional_fields_are_nullable_and_not_required(self):
+        result = generate_json_schema_text(
+            """
+            TYPE MaybeAmount is optional<decimal>
+
+            RECORD Limits
+              amount_min: decimal
+              amount_max: optional<decimal>
+              amount_override: MaybeAmount
+
+            REQUEST assess limits
+              GIVEN limits is Limits
+              AND metadata.trace_id is optional<text>
+              WHEN print limits.amount_min
+              OUTPUT limits is Limits
+            """
+        )
+
+        limits = result.as_payload()["$defs"]["Limits"]
+        self.assertEqual(limits["required"], ["amount_min"])
+        self.assertEqual(
+            limits["properties"]["amount_override"],
+            {"$ref": "#/$defs/MaybeAmount"},
+        )
+        request = result.as_payload()["$defs"]["AssessLimitsRequest"]
+        self.assertEqual(request["required"], ["limits"])
+        self.assertEqual(request["properties"]["metadata"]["required"], [])
+        self.assertEqual(
+            limits["properties"]["amount_max"],
+            {
+                "anyOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "decimal",
+                                "pattern": DECIMAL_STRING_PATTERN,
+                            },
+                            {"type": "integer"},
+                        ],
+                        "x-gwt-json-input": "decimal string or integer",
+                        "x-gwt-json-output": "decimal string",
+                    },
+                    {"type": "null"},
+                ]
+            },
+        )
+
     def test_generates_schema_catalog_from_contracts(self):
         result = generate_json_schema_text(
             """
