@@ -53,6 +53,10 @@ def render_workbench_html(
     execution_case: ExecutionCase,
     comparison: ComparisonResult | None = None,
     verified_scenario: str | None = None,
+    *,
+    review_notice: str | None = None,
+    old_label: str = "Baseline program",
+    new_label: str = "Candidate program",
 ) -> str:
     """Render a deterministic, self-contained local behavior-review dossier.
 
@@ -71,11 +75,16 @@ def render_workbench_html(
         "executionCase": case_payload,
         "comparison": comparison.as_payload() if comparison is not None else None,
         "verifiedScenario": verified_scenario,
+        "reviewNotice": review_notice,
+        "programLabels": {"old": old_label, "new": new_label},
     }
 
     comparison_html = (
-        _render_comparison(comparison) if comparison is not None else ""
+        _render_comparison(comparison, old_label=old_label, new_label=new_label)
+        if comparison is not None
+        else ""
     )
+    review_notice_html = _render_review_notice(review_notice)
     scenario_html = (
         _render_scenario(verified_scenario)
         if verified_scenario is not None
@@ -141,6 +150,7 @@ def render_workbench_html(
   </header>
 
   <main id="main-content" class="page-shell">
+    {review_notice_html}
     {sensitivity_notice}
     {comparison_html}
 
@@ -187,10 +197,22 @@ def render_workbench_html(
 '''
 
 
-def _render_comparison(comparison: ComparisonResult) -> str:
+def _render_comparison(
+    comparison: ComparisonResult,
+    *,
+    old_label: str,
+    new_label: str,
+) -> str:
     totals = comparison.totals
     attention_cases = tuple(
-        case for case in comparison.cases if case.classification != "unchanged"
+        sorted(
+            (
+                case
+                for case in comparison.cases
+                if case.classification != "unchanged"
+            ),
+            key=lambda case: _comparison_priority(case.classification),
+        )
     )
     total_cards = "".join(
         _total_card(classification, label, _classification_count(totals, classification))
@@ -218,13 +240,17 @@ def _render_comparison(comparison: ComparisonResult) -> str:
                     f'<button class="filter-button" type="button" data-filter="{classification}" aria-pressed="false">{_h(label)} <span>{count}</span></button>'
                 )
 
-        case_buttons: list[str] = []
+        material_case_buttons: list[str] = []
+        path_case_buttons: list[str] = []
         case_panels: list[str] = []
+        has_material_cases = any(
+            case.classification != "path_changed" for case in attention_cases
+        )
         for position, case in enumerate(attention_cases):
             target = f"comparison-case-{position + 1}"
-            selected = position == 0
+            selected = position == 0 and has_material_cases
             label = _classification_label(case.classification)
-            case_buttons.append(
+            button = (
                 f'''<button class="impact-case{' is-selected' if selected else ''}" type="button"
                   data-case-choice data-classification="{case.classification}"
                   data-target="{target}" aria-controls="{target}" aria-pressed="{'true' if selected else 'false'}">
@@ -233,15 +259,42 @@ def _render_comparison(comparison: ComparisonResult) -> str:
                   <span>{len(case.output_differences)} output difference{'s' if len(case.output_differences) != 1 else ''}</span>
                 </button>'''
             )
+            if case.classification == "path_changed":
+                path_case_buttons.append(button)
+            else:
+                material_case_buttons.append(button)
             case_panels.append(
-                _render_comparison_case(case, target, hidden=not selected)
+                _render_comparison_case(
+                    case,
+                    target,
+                    hidden=not selected,
+                    old_label=old_label,
+                    new_label=new_label,
+                )
             )
+
+        path_queue = ""
+        if path_case_buttons:
+            count = len(path_case_buttons)
+            path_queue = f'''
+              <details class="path-change-queue" data-path-queue>
+                <summary>Path-only changes <span>{count}</span></summary>
+                <div>{''.join(path_case_buttons)}</div>
+              </details>'''
+
+        path_placeholder = ""
+        if not has_material_cases:
+            path_placeholder = '''
+              <div class="path-change-placeholder" data-path-placeholder>
+                <strong>Only execution paths changed</strong>
+                <p>Open the path-only queue to inspect the lower-priority evidence.</p>
+              </div>'''
 
         cases_html = f'''
           <div class="filter-row" aria-label="Filter changed cases">{''.join(filter_buttons)}</div>
           <div class="impact-layout">
-            <nav class="impact-list" aria-label="Changed cases">{''.join(case_buttons)}</nav>
-            <div class="impact-detail" aria-live="polite">{''.join(case_panels)}</div>
+            <nav class="impact-list" aria-label="Changed cases">{''.join(material_case_buttons)}{path_queue}</nav>
+            <div class="impact-detail" aria-live="polite">{path_placeholder}{''.join(case_panels)}</div>
           </div>'''
 
     return f'''
@@ -255,9 +308,9 @@ def _render_comparison(comparison: ComparisonResult) -> str:
       </div>
 
       <div class="program-compare" aria-label="Compared program identities">
-        <div><span>Old closure</span><code>{_h(comparison.old_program_hash)}</code></div>
+        <div><span>Baseline · {_h(old_label)}</span><code>{_h(comparison.old_program_hash)}</code></div>
         <span class="program-compare__arrow" aria-hidden="true">→</span>
-        <div><span>New closure</span><code>{_h(comparison.new_program_hash)}</code></div>
+        <div><span>Candidate · {_h(new_label)}</span><code>{_h(comparison.new_program_hash)}</code></div>
       </div>
 
       <div class="totals-grid" data-testid="comparison-totals">{total_cards}</div>
@@ -268,6 +321,16 @@ def _render_comparison(comparison: ComparisonResult) -> str:
       </div>
       {cases_html}
     </section>'''
+
+
+def _render_review_notice(review_notice: str | None) -> str:
+    if review_notice is None:
+        return ""
+    return f'''
+    <aside class="review-notice" role="note" aria-label="Review provenance">
+      <div class="review-notice__icon" aria-hidden="true">i</div>
+      <div><strong>Review provenance</strong><p>{_h(review_notice)}</p></div>
+    </aside>'''
 
 
 def _render_sensitivity_notice(redaction: ExecutionCaseRedactionPayload) -> str:
@@ -292,9 +355,15 @@ def _render_comparison_case(
     target: str,
     *,
     hidden: bool,
+    old_label: str,
+    new_label: str,
 ) -> str:
     difference_html = "".join(
-        _render_output_difference(difference)
+        _render_output_difference(
+            difference,
+            old_label=old_label,
+            new_label=new_label,
+        )
         for difference in case.output_differences
     )
     if not difference_html:
@@ -302,17 +371,20 @@ def _render_comparison_case(
 
     decisions = f'''
       <div class="decision-pair">
-        {_comparison_decision("Old selected DECIDE branch", case.old_selected_decision)}
-        {_comparison_decision("New selected DECIDE branch", case.new_selected_decision)}
+        {_comparison_decision(f"Baseline · {old_label}", case.old_selected_decision)}
+        {_comparison_decision(f"Candidate · {new_label}", case.new_selected_decision)}
       </div>'''
     conditions = f'''
       <div class="decision-pair">
-        {_comparison_conditions("Old evaluated predicates", case.old_evaluated_conditions)}
-        {_comparison_conditions("New evaluated predicates", case.new_evaluated_conditions)}
+        {_comparison_conditions(f"Baseline · {old_label}", case.old_evaluated_conditions)}
+        {_comparison_conditions(f"Candidate · {new_label}", case.new_evaluated_conditions)}
       </div>'''
     errors = "".join(
         _render_error(label, error)
-        for label, error in (("Old error", case.old_error), ("New error", case.new_error))
+        for label, error in (
+            (f"Baseline error · {old_label}", case.old_error),
+            (f"Candidate error · {new_label}", case.new_error),
+        )
         if error is not None
     )
     detail = (
@@ -332,8 +404,8 @@ def _render_comparison_case(
         <div class="impact-hashes">
           <span>Recorded closure <code>{_h(case.recorded_program_hash)}</code></span>
           <span>Captured evidence <code>{_h(case.captured_evidence_digest)}</code></span>
-          {_optional_digest("Old evidence", case.old_evidence_digest)}
-          {_optional_digest("New evidence", case.new_evidence_digest)}
+          {_optional_digest(f"Baseline evidence · {old_label}", case.old_evidence_digest)}
+          {_optional_digest(f"Candidate evidence · {new_label}", case.new_evidence_digest)}
         </div>
         <div class="impact-block"><h5>Declared output differences</h5>{difference_html}</div>
         <div class="impact-block"><h5>Selected DECIDE branches</h5>{decisions}</div>
@@ -342,15 +414,20 @@ def _render_comparison_case(
       </article>'''
 
 
-def _render_output_difference(difference: OutputDifference) -> str:
+def _render_output_difference(
+    difference: OutputDifference,
+    *,
+    old_label: str,
+    new_label: str,
+) -> str:
     old_source = _comparison_source(difference.old_last_change_source)
     new_source = _comparison_source(difference.new_last_change_source)
     return f'''
       <div class="field-diff">
         <code class="field-diff__path">{_h(difference.path)}</code>
-        <div><span>Old</span>{_compared_value(difference.old)}{old_source}</div>
+        <div><span>Baseline · {_h(old_label)}</span>{_compared_value(difference.old)}{old_source}</div>
         <span class="field-diff__arrow" aria-hidden="true">→</span>
-        <div><span>New</span>{_compared_value(difference.new)}{new_source}</div>
+        <div><span>Candidate · {_h(new_label)}</span>{_compared_value(difference.new)}{new_source}</div>
       </div>'''
 
 
@@ -685,6 +762,20 @@ def _classification_label(classification: ComparisonClassification) -> str:
     return dict(_CLASSIFICATIONS)[classification]
 
 
+def _comparison_priority(classification: ComparisonClassification) -> int:
+    return {
+        "output_changed": 0,
+        "new_failure": 1,
+        "failure_changed": 2,
+        "resolved_failure": 3,
+        "baseline_mismatch": 4,
+        "incompatible": 5,
+        "unavailable": 6,
+        "path_changed": 7,
+        "unchanged": 8,
+    }[classification]
+
+
 def _execution_source(source: ExecutionCaseSourcePayload | None) -> str:
     if source is None:
         return '<span class="source-link source-link--missing">No source location recorded</span>'
@@ -884,6 +975,22 @@ code, pre { font-family: var(--mono); }
 .hero__meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 28px; color: #9fbab1; font: 12px/1.4 var(--mono); }
 
 .page-shell { padding: 42px 0 80px; }
+.review-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+  padding: 17px 19px;
+  color: #e8f3ef;
+  background: var(--forest);
+  border: 1px solid #2c695b;
+  border-radius: 15px;
+  box-shadow: 0 10px 28px rgba(16, 62, 53, .12);
+}
+.review-notice__icon { width: 34px; height: 34px; display: grid; place-items: center; color: var(--forest); background: var(--lime); border-radius: 10px; font-weight: 900; }
+.review-notice strong { font-size: 13px; }
+.review-notice p { margin: 2px 0 0; color: #bdd4cc; font-size: 12px; }
 .sensitivity-notice {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1010,6 +1117,30 @@ code, pre { font-family: var(--mono); }
 
 .impact-layout { display: grid; grid-template-columns: minmax(230px, .62fr) minmax(0, 1.38fr); gap: 16px; }
 .impact-list { display: flex; flex-direction: column; gap: 8px; }
+.path-change-queue {
+  padding: 10px;
+  background: #f4ead4;
+  border: 1px solid #dfc98f;
+  border-radius: 14px;
+}
+.path-change-queue > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: #604a1e;
+  font-size: 11px;
+  font-weight: 800;
+  list-style: none;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.path-change-queue > summary::-webkit-details-marker { display: none; }
+.path-change-queue > summary span { padding: 2px 7px; background: #f7dfae; border-radius: 999px; font: 10px/1.4 var(--mono); }
+.path-change-queue > div { display: grid; gap: 8px; margin-top: 10px; }
+.path-change-placeholder { padding: 22px; color: #604a1e; background: #fbf4e6; border: 1px dashed #cdb574; border-radius: 16px; }
+.path-change-placeholder p { margin: 5px 0 0; color: var(--ink-soft); font-size: 12px; }
 .impact-case {
   width: 100%;
   display: grid;
@@ -1239,6 +1370,8 @@ _SCRIPT = r'''
   const filters = Array.from(comparison.querySelectorAll("[data-filter]"));
   const choices = Array.from(comparison.querySelectorAll("[data-case-choice]"));
   const panels = Array.from(comparison.querySelectorAll("[data-case-panel]"));
+  const pathQueue = comparison.querySelector("[data-path-queue]");
+  const pathPlaceholder = comparison.querySelector("[data-path-placeholder]");
 
   const selectCase = (choice) => {
     const target = choice.getAttribute("data-target");
@@ -1248,6 +1381,7 @@ _SCRIPT = r'''
       item.setAttribute("aria-pressed", selected ? "true" : "false");
     });
     panels.forEach((panel) => { panel.hidden = panel.id !== target; });
+    if (pathPlaceholder) pathPlaceholder.hidden = true;
   };
 
   const applyFilter = (classification) => {
@@ -1261,6 +1395,7 @@ _SCRIPT = r'''
       choice.hidden = !show;
       return show;
     });
+    if (pathQueue && classification === "path_changed") pathQueue.open = true;
     const selected = choices.find((choice) => choice.getAttribute("aria-pressed") === "true");
     if (!selected || selected.hidden) {
       if (visible.length) selectCase(visible[0]);

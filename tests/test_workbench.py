@@ -89,6 +89,49 @@ THEN decision.status == "needs_review"
             + totals.incompatible,
         )
 
+    def test_prioritizes_output_changes_and_collapses_path_only_queue(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            old = self._write_program(root / "old.gwt")
+            new = self._write_program(
+                root / "new.gwt",
+                high_status="rejected",
+                threshold=11,
+            )
+            low_case = capture_execution_case(
+                old,
+                {"request": {"value": 2, "note": "low"}},
+                request="review item",
+            )
+            high_case = self._capture(old)
+            comparison = compare_execution_cases(old, new, [low_case, high_case])
+
+            rendered = render_workbench_html(
+                low_case,
+                comparison,
+                review_notice="Pinned upstream oracle; local evaluation only.",
+                old_label="upstream service @ abc123",
+                new_label="GWT seeded candidate",
+            )
+            path_only = compare_execution_cases(old, new, [low_case])
+            path_only_rendered = render_workbench_html(low_case, path_only)
+
+        self.assertEqual(comparison.cases[0].classification, "path_changed")
+        self.assertEqual(comparison.cases[1].classification, "output_changed")
+        self.assertLess(
+            rendered.index('data-classification="output_changed"'),
+            rendered.index('data-classification="path_changed"'),
+        )
+        self.assertIn('<details class="path-change-queue" data-path-queue>', rendered)
+        self.assertIn("Path-only changes", rendered)
+        self.assertIn("Review provenance", rendered)
+        self.assertIn("Pinned upstream oracle; local evaluation only.", rendered)
+        self.assertIn("Baseline · upstream service @ abc123", rendered)
+        self.assertIn("Candidate · GWT seeded candidate", rendered)
+        self.assertIn("Only execution paths changed", path_only_rendered)
+        self.assertIn("Open the path-only queue", path_only_rendered)
+        self.assertNotIn('class="impact-case is-selected"', path_only_rendered)
+
     def test_escapes_html_and_embeds_round_trippable_safe_json(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = self._write_program(Path(temp_dir) / "rules.gwt")
@@ -97,7 +140,12 @@ THEN decision.status == "needs_review"
 
         scenario = f"SCENARIO {attack}\n"
 
-        rendered = render_workbench_html(malicious, verified_scenario=scenario)
+        rendered = render_workbench_html(
+            malicious,
+            verified_scenario=scenario,
+            review_notice=attack,
+            old_label=attack,
+        )
 
         self.assertNotIn('</script><img src=x', rendered)
         self.assertNotIn('<img src=x', rendered)
@@ -117,6 +165,8 @@ THEN decision.status == "needs_review"
             attack,
         )
         self.assertEqual(embedded["verifiedScenario"], scenario)
+        self.assertEqual(embedded["reviewNotice"], attack)
+        self.assertEqual(embedded["programLabels"]["old"], attack)
 
     def test_rendering_is_deterministic_and_has_no_network_or_evaluator_surface(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -164,6 +214,7 @@ THEN decision.status == "needs_review"
         path: Path,
         *,
         high_status: str = "needs_review",
+        threshold: int = 10,
     ) -> Path:
         path.write_text(
             f'''PROGRAM workbench
@@ -188,7 +239,7 @@ WHEN review <request> into <decision>
   GIVEN request is Input
   AND decision is Decision
   DECIDE
-    WHEN request.value >= 10
+    WHEN request.value >= {threshold}
       set decision.status to "{high_status}"
       set decision.reason to "threshold_reached"
     ELSE

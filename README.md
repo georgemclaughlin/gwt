@@ -557,7 +557,11 @@ false change attribution.
 `gwt workbench case.json ... --output review.html` writes a self-contained local
 HTML dossier over the same validated artifacts. Paired `--old` and `--new`
 programs add comparison; `--program` adds a replay-verified scenario preview
-for the first case. The renderer does not evaluate policy or contact a service.
+for the first case. Use `--review-notice` for a prominent scope/provenance note
+and `--old-label` / `--new-label` to identify the compared sources beside their
+hashes and evidence. Output changes are shown first; path-only cases remain in
+a collapsed queue until requested. The renderer does not evaluate policy or
+contact a service.
 
 `gwt validate file.gwt` is the standard local/CI gate. It checks the program,
 verifies canonical formatting, and runs embedded scenarios when the file has

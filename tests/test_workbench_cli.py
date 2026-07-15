@@ -63,6 +63,12 @@ class WorkbenchCliTests(unittest.TestCase):
                         str(old),
                         "--name",
                         "captured regression",
+                        "--review-notice",
+                        "Pinned local comparison; no upstream contact.",
+                        "--old-label",
+                        "upstream snapshot @ abc123",
+                        "--new-label",
+                        "local GWT candidate",
                         "--output",
                         str(output),
                     ]
@@ -79,6 +85,9 @@ class WorkbenchCliTests(unittest.TestCase):
         self.assertIn("/decision/status", rendered)
         self.assertIn("Verified scenario preview", rendered)
         self.assertIn("SCENARIO captured regression", rendered)
+        self.assertIn("Pinned local comparison; no upstream contact.", rendered)
+        self.assertIn("Baseline · upstream snapshot @ abc123", rendered)
+        self.assertIn("Candidate · local GWT candidate", rendered)
         self.assertIn("No policy was evaluated by this renderer.", rendered)
         self.assertEqual(temporary_files, [])
 
