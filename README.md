@@ -671,7 +671,7 @@ active behavior calls, frame locals, and current state while paused.
 | [`examples/minilang2_vm`](examples/minilang2_vm) | Bytecode VM pressure test with modules, closures, stack traces, debugger state, and REPL-like execution |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical typed workflow demo with embedded scenario assertions and JSON request execution |
 | [`examples/release_readiness`](examples/release_readiness) | Pilot evidence example for deterministic release decisions, public request invariants, and generated Python host types |
-| [`examples/external_pilots/semantic_release_commit_analyzer`](examples/external_pilots/semantic_release_commit_analyzer) | Pinned 20-case commit-analysis conformance harness with a host matcher, generated OpenAPI client, and `gwt serve` integration |
+| [`examples/external_pilots/semantic_release_commit_analyzer`](examples/external_pilots/semantic_release_commit_analyzer) | Pinned 20-case commit-analysis harness with a host matcher, generated OpenAPI client, and served evidence-to-workbench lifecycle |
 | [`examples/external_pilots/dfe_npq_funding_eligibility`](examples/external_pilots/dfe_npq_funding_eligibility) | Local DfE NPQ funding-rules corpus comparison and behavior-review pilot |
 | [`examples/external_pilots/spree_item_total`](examples/external_pilots/spree_item_total) | Spree parity and `optional<decimal>` pressure test with a generated Ruby client over `gwt serve` |
 

@@ -107,6 +107,36 @@ boundary concrete: each selected HTTP decision returns an `x-gwt-case-id` and
 writes the corresponding replayable case under `/tmp/commit-analyzer-cases`.
 Omit `--capture-values` for shape-only evidence when inputs must not be retained.
 
+## Served evidence lifecycle
+
+The local lifecycle demo runs the complete pinned host-evaluated corpus through
+the actual HTTP service, verifies every `x-gwt-case-id` against the written
+full-value artifact, and attaches the static matcher provenance. It then makes
+a temporary candidate that intentionally reverses the named-release priority
+comparison, compares all captured cases, and renders a self-contained review
+workbench:
+
+```sh
+python examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py \
+  /tmp/commit-analyzer-evidence
+```
+
+The output directory must be new or empty. It receives:
+
+- `cases/`: 20 content-addressed Execution Cases;
+- `manifest.json`: the pilot case ID to Execution Case ID mapping;
+- `candidate-rules.gwt`: the explicitly synthetic local mutation;
+- `comparison.json`: the versioned old/new comparison;
+- `workbench.html`: a local review dossier over the same corpus.
+
+The expected result is 20/20 verified served captures, 17 unchanged cases, and
+3 `output_changed` cases. Those three are the precedence-sensitive
+`patch-then-minor`, `minor-then-patch`, and `prerelease-ladder` inputs. This
+demo uses the checked-in host-match observations and does not require an
+upstream checkout, network access, generated client, or contact with the
+external maintainer. The cases and HTML contain full request and output values;
+keep them local and apply the same retention rules as the underlying corpus.
+
 ## Differential conformance
 
 [`conformance_cases.json`](conformance_cases.json) pins 20 upstream-shaped

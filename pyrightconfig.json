@@ -5,7 +5,8 @@
     "examples/incident_triage",
     "examples/vendor_onboarding",
     "examples/release_readiness",
-    "examples/exact_pricing"
+    "examples/exact_pricing",
+    "examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py"
   ],
   "typeCheckingMode": "strict",
   "pythonVersion": "3.11",
