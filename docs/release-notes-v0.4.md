@@ -22,6 +22,9 @@ change is authorized by this document.
 - `gwt capture` writes a versioned Execution Case for a completed named JSON
   request; `--record-failures` records normalized failures and `--omit-values`
   records a shape-only, explicitly redacted value profile.
+- `--fact-provenance` can attach validated, host-supplied derivation notes to
+  request facts without changing runtime state or language syntax; the
+  workbench labels these notes as unauthenticated metadata.
 - `gwt explain` renders generic execution facts rather than example-specific
   business prose; `--json` uses the same Execution Case path.
 - `gwt scenario-from-run` emits a formatted, checked scenario only after the

@@ -8,6 +8,7 @@ from typing import cast
 from .execution_case import (
     ExecutionCase,
     ExecutionCaseCapturePolicy,
+    FactProvenanceInput,
     capture_execution_case,
 )
 from .payloads import ExecutionCasePayload, JsonObject, JsonValue
@@ -129,6 +130,7 @@ def explain_json_file(
     json_state: JsonObject,
     *,
     request: str,
+    fact_provenance: FactProvenanceInput | None = None,
     json_file: str | Path | None = None,
     import_policy: ImportPolicy | None = None,
     policy: ExecutionCaseCapturePolicy | None = None,
@@ -140,6 +142,7 @@ def explain_json_file(
             path,
             json_state,
             request=request,
+            fact_provenance=fact_provenance,
             json_file=json_file,
             import_policy=import_policy,
             policy=policy,

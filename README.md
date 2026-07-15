@@ -182,6 +182,11 @@ python -m gwtlang capture examples/vendor_onboarding/rules.gwt \
   --output vendor-review.execution-case.json
 ```
 
+An optional `--fact-provenance provenance.json` sidecar can associate declared
+request paths with host-owned derivation notes. GWT validates the paths and
+includes the sorted metadata in the case, but does not authenticate the source
+claims. The workbench presents them as host-supplied boundary context.
+
 Render that case as a self-contained local behavior-review page, including a
 replay-verified scenario preview:
 
@@ -534,6 +539,10 @@ operand, physical program/input-file, or full error-detail values. The two
 flags compose. Use `--execution-budget N|none` and `--max-call-depth N|none`
 to select the recorded semantic limits. See the Execution Case documentation
 for the precise redacted, unavailable, absent, and present-value states.
+If `--fact-provenance FILE` is supplied, the JSON file is keyed by declared
+request input path and each value contains `source` plus an optional
+`description`. The metadata is omitted under `--omit-values` and
+`/factProvenance` is recorded in `redactedPaths`.
 
 `gwt scenario-from-run case.json --program rules.gwt` converts a full-value,
 completed Execution Case into a canonical embedded `SCENARIO`. Generation only

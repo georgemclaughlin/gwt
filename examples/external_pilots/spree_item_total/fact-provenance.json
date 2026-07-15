@@ -1,0 +1,14 @@
+{
+  "facts.amount_max": {
+    "description": "Optional promotion-rule preference; missing and Ruby nil normalize to GWT absence.",
+    "source": "Spree::Promotion::Rules::ItemTotal preference :amount_max"
+  },
+  "facts.item_total": {
+    "description": "Exact order item total supplied as a decimal string at the GWT boundary.",
+    "source": "Spree::Order#item_total"
+  },
+  "facts.maximum_mode": {
+    "description": "Normalized strict or inclusive maximum comparison preference.",
+    "source": "Spree::Promotion::Rules::ItemTotal preference :operator_max"
+  }
+}

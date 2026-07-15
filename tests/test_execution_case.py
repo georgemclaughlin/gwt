@@ -12,6 +12,7 @@ from unittest.mock import patch
 from gwtlang import (
     EXECUTION_CASE_SCHEMA_VERSION,
     ExecutionCase,
+    ExecutionCaseCapturePolicy,
     capture_execution_case,
     explain_json_file,
     load_execution_case,
@@ -27,6 +28,69 @@ from gwtlang.version import (
 
 
 class ExecutionCaseTests(unittest.TestCase):
+    def test_capture_validates_sorts_and_redacts_host_fact_provenance(self):
+        input_state = {
+            "cart": {
+                "mode": "reserve",
+                "quantity": 2,
+                "unit_price": "12.30",
+                "total": "0.00",
+                "status": "pending",
+            }
+        }
+        provenance = {
+            "cart.unit_price": {
+                "source": "pricing-service#line-item-price",
+                "description": "Exact host price before GWT execution.",
+            },
+            "cart.quantity": {
+                "source": "order.items[0].quantity",
+            },
+        }
+
+        execution_case = capture_execution_case(
+            "examples/exact_pricing/rules.gwt",
+            input_state,
+            request="price cart",
+            fact_provenance=provenance,
+        )
+        payload = execution_case.as_payload()
+
+        self.assertEqual(
+            [item["path"] for item in payload["factProvenance"]],
+            ["cart.quantity", "cart.unit_price"],
+        )
+        self.assertEqual(execution_case.fact_provenance, payload["factProvenance"])
+        ExecutionCase.from_payload(payload)
+        if importlib.util.find_spec("jsonschema") is not None:
+            from jsonschema import Draft202012Validator
+
+            schema = json.loads(
+                Path("docs/schemas/execution-case.schema.json").read_text()
+            )
+            Draft202012Validator(schema).validate(payload)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "fact provenance path is not a declared request input: host.secret",
+        ):
+            capture_execution_case(
+                "examples/exact_pricing/rules.gwt",
+                input_state,
+                request="price cart",
+                fact_provenance={"host.secret": {"source": "unsafe"}},
+            )
+
+        omitted = capture_execution_case(
+            "examples/exact_pricing/rules.gwt",
+            input_state,
+            request="price cart",
+            fact_provenance=provenance,
+            policy=ExecutionCaseCapturePolicy(values="omit"),
+        ).as_payload()
+        self.assertNotIn("factProvenance", omitted)
+        self.assertIn("/factProvenance", omitted["redaction"]["redactedPaths"])
+
     def test_capture_is_generic_across_decisions_and_non_decision_result(self):
         cases = [
             (
@@ -187,6 +251,42 @@ class ExecutionCaseTests(unittest.TestCase):
         self.assertEqual(payload["request"]["input"], input_state)
         self.assertIsNone(payload["request"]["inputFile"])
         self.assertEqual(payload["result"]["cart"]["total"], "24.60")
+
+    def test_capture_cli_reads_fact_provenance_sidecar(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            provenance_path = Path(temp_dir) / "fact-provenance.json"
+            provenance_path.write_text(
+                json.dumps(
+                    {
+                        "vendor.country": {
+                            "source": "crm.vendor.country",
+                            "description": "Normalized by the host adapter.",
+                        }
+                    }
+                )
+            )
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "capture",
+                        "examples/vendor_onboarding/rules.gwt",
+                        "--json-input",
+                        "examples/vendor_onboarding/request.json",
+                        "--request",
+                        "review vendor",
+                        "--fact-provenance",
+                        str(provenance_path),
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["factProvenance"][0]["path"], "vendor.country")
+        self.assertEqual(
+            payload["factProvenance"][0]["source"],
+            "crm.vendor.country",
+        )
 
     def test_capture_cli_reports_invalid_json_input(self):
         with tempfile.TemporaryDirectory() as temp_dir:

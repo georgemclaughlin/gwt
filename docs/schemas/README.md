@@ -29,6 +29,10 @@ compatibility and convenience path. Readers verify the artifact's canonical
 content digest; see the linked Execution Case contract for availability-state
 semantics and its deliberately limited threat model.
 
+The optional `factProvenance` array stores sorted host-supplied source notes for
+validated request input paths. It is descriptive, unauthenticated metadata and
+is omitted when the `omit-values` profile is used.
+
 Schemas are additive contracts. New optional fields may be added as tooling
 evolves; incompatible shape changes should bump the payload `schemaVersion`.
 Distribution candidates also install the Execution Case and Comparison v1

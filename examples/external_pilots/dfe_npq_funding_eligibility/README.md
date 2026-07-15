@@ -155,7 +155,10 @@ Pass `--json` to the comparison command for a machine-readable report including
 the first mismatches, if any. The review-zero command prints the temporary
 artifact directory containing the 12 captured cases, exact-parity manifest,
 seeded candidate, comparison JSON/text, generated scenario, and local
-workbench HTML. Use `--output-dir` only with a new directory.
+workbench HTML. Each captured case includes the host-supplied paths in
+`fact-provenance.json`, so the dossier identifies where selected normalized
+facts were derived without treating those claims as verified GWT evidence.
+Use `--output-dir` only with a new directory.
 
 ## What fit well
 

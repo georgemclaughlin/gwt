@@ -1,0 +1,14 @@
+{
+  "facts.cohort_funded": {
+    "description": "Normalized from the cohort funding configuration before GWT execution.",
+    "source": "NPQ host adapter: cohort funding lookup"
+  },
+  "facts.institution_rise": {
+    "description": "Derived from the applicant institution and the current RISE list.",
+    "source": "NPQ host adapter: institution RISE lookup"
+  },
+  "facts.previously_funded": {
+    "description": "Combines registration, acceptance, eligibility, funded-place, and rebranded-course state.",
+    "source": "FundingEligibility#previously_funded?"
+  }
+}

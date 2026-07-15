@@ -38,9 +38,17 @@ python -m gwtlang test examples/external_pilots/semantic_release_commit_analyzer
 python -m gwtlang run examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
   --json-input examples/external_pilots/semantic_release_commit_analyzer/request.json \
   --request "analyze normalized commit" --json
+python -m gwtlang capture examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --json-input examples/external_pilots/semantic_release_commit_analyzer/request.json \
+  --request "analyze normalized commit" \
+  --fact-provenance examples/external_pilots/semantic_release_commit_analyzer/fact-provenance.json \
+  --output /tmp/commit-analysis.execution-case.json
 ```
 
-The JSON example selects `major` through the breaking-feature rule.
+The JSON example selects `major` through the breaking-feature rule. The
+optional provenance sidecar records which normalized facts remain owned by the
+host parser, configuration loader, and matcher; GWT validates the paths but
+does not authenticate the descriptions.
 
 ## Normalized boundary
 

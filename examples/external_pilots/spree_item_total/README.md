@@ -44,12 +44,19 @@ python -m gwtlang test examples/external_pilots/spree_item_total/rules.gwt
 python -m gwtlang run examples/external_pilots/spree_item_total/rules.gwt \
   --json-input examples/external_pilots/spree_item_total/request.json \
   --request "assess item total eligibility" --json
+python -m gwtlang capture examples/external_pilots/spree_item_total/rules.gwt \
+  --json-input examples/external_pilots/spree_item_total/request.json \
+  --request "assess item total eligibility" \
+  --fact-provenance examples/external_pilots/spree_item_total/fact-provenance.json \
+  --output /tmp/spree-item-total.execution-case.json
 python examples/external_pilots/spree_item_total/run_pilot.py /path/to/pinned/spree
 ```
 
 The last command requires Docker and rejects a checkout at any other commit.
 The checked-in oracle slice lets ordinary tests preserve the verified outputs
-without Docker or a Spree checkout.
+without Docker or a Spree checkout. The optional provenance sidecar documents
+which order and preference facts are normalized by the Ruby host boundary;
+those descriptions are explicitly unauthenticated metadata.
 
 ## What fit well
 

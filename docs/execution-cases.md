@@ -60,6 +60,37 @@ The Python API expresses the same choices with
 `ExecutionCaseCapturePolicy(on_error="raise" | "record", values="full" |
 "omit")` passed as `policy=`, plus `execution_budget=` and `max_call_depth=`.
 
+### Host Fact Provenance
+
+A host adapter can optionally attach descriptive provenance to normalized
+request facts:
+
+```json
+{
+  "facts.previously_funded": {
+    "source": "FundingEligibility#previously_funded?",
+    "description": "Derived from registration and funded-place state."
+  }
+}
+```
+
+Pass the file with `--fact-provenance provenance.json` to `gwt capture` or
+`gwt explain`. The Python capture and explanation APIs accept the same mapping
+as `fact_provenance=`. GWT requires `source`, permits an optional non-empty
+`description`, rejects unknown fields, sorts entries by path, and verifies that
+every path is a declared request input or a declared field beneath a record
+input. Lists are provenance-addressed as a whole rather than by runtime index.
+
+This metadata is context supplied by the host, not evaluator observation. GWT
+does not contact, authenticate, or verify the named source. The integrity
+digest protects the exact claim stored in one artifact but does not make the
+claim true or establish who supplied it. The workbench labels this distinction
+explicitly.
+
+Fact provenance may itself contain sensitive operational information. Under
+`--omit-values`, GWT removes the entire optional field and records
+`/factProvenance` in `redaction.redactedPaths` when a sidecar was supplied.
+
 The JSON contract is published at
 [`schemas/execution-case.schema.json`](schemas/execution-case.schema.json).
 Readers reject unsupported versions, malformed identities, non-JSON values,
@@ -171,6 +202,8 @@ Operational traces and omitted-value Execution Cases never emit structured
 operand names or values; they carry a redacted-availability marker. Redacted
 failure text is the fixed message `GWT execution failed; error detail omitted
 by capture policy`, while source location remains factual and portable.
+Supplied host fact provenance is also omitted rather than attempting to redact
+free-form descriptions selectively.
 
 ## Stable And Unstable Fields
 
@@ -181,3 +214,8 @@ input file labels are capture provenance and can differ between otherwise
 equivalent executions. The integrity digest covers them because it protects a
 specific artifact; semantic comparison deliberately normalizes or excludes
 capture-only provenance where appropriate.
+
+Optional host fact provenance is deterministic caller-supplied metadata. It is
+covered by the case integrity digest and preserved in the primary workbench
+case, but it does not affect replay, scenario generation, or old/new behavior
+classification.

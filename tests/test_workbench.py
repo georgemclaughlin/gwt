@@ -7,11 +7,74 @@ import tempfile
 import unittest
 
 from gwtlang.comparison import compare_execution_cases
-from gwtlang.execution_case import ExecutionCase, capture_execution_case
+from gwtlang.execution_case import (
+    ExecutionCase,
+    ExecutionCaseCapturePolicy,
+    capture_execution_case,
+)
 from gwtlang.workbench import render_workbench_html
 
 
 class WorkbenchRendererTests(unittest.TestCase):
+    def test_renders_host_fact_provenance_without_treating_it_as_verified(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = self._write_program(Path(temp_dir) / "rules.gwt")
+            execution_case = capture_execution_case(
+                program,
+                {"request": {"value": 12, "note": "fixture"}},
+                request="review item",
+                fact_provenance={
+                    "request.value": {
+                        "source": "orders-service#normalized-score",
+                        "description": "Derived from the host's current order.",
+                    }
+                },
+            )
+
+            rendered = render_workbench_html(execution_case)
+
+        self.assertIn("Host fact provenance", rendered)
+        self.assertIn("request.value", rendered)
+        self.assertIn("orders-service#normalized-score", rendered)
+        self.assertIn("Derived from the host&#x27;s current order.", rendered)
+        self.assertIn("Host-supplied, unauthenticated metadata", rendered)
+        match = re.search(
+            r'<script type="application/json" id="gwt-dossier-data">(.*?)</script>',
+            rendered,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        assert match is not None
+        embedded = json.loads(match.group(1))
+        self.assertEqual(
+            embedded["executionCase"]["factProvenance"],
+            execution_case.as_payload()["factProvenance"],
+        )
+
+    def test_marks_fact_provenance_omitted_without_leaking_descriptions(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = self._write_program(Path(temp_dir) / "rules.gwt")
+            execution_case = capture_execution_case(
+                program,
+                {"request": {"value": 12, "note": "fixture"}},
+                request="review item",
+                fact_provenance={
+                    "request.value": {
+                        "source": "sensitive host source",
+                        "description": "sensitive derivation detail",
+                    }
+                },
+                policy=ExecutionCaseCapturePolicy(values="omit"),
+            )
+
+            rendered = render_workbench_html(execution_case)
+
+        self.assertIn("Host fact provenance", rendered)
+        self.assertIn("Host fact provenance was omitted by the capture policy", rendered)
+        self.assertIn('<span class="count-chip">omitted</span>', rendered)
+        self.assertNotIn("sensitive host source", rendered)
+        self.assertNotIn("sensitive derivation detail", rendered)
+
     def test_renders_exact_case_facts_and_verified_scenario(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = self._write_program(Path(temp_dir) / "rules.gwt")
