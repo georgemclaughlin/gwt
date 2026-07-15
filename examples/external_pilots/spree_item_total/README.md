@@ -28,6 +28,14 @@ exact Ruby/GWT parity: 10/10
 upstream: spree/spree@249dbf3c68461288f8444d754bcf27d0fa962250
 ```
 
+`openapi_client_demo.py` takes the next integration step: it generates a Ruby
+client from the GWT OpenAPI document, starts `gwt serve`, and sends the same
+upstream-verified cases through HTTP. That result is also exact:
+
+```text
+generated Ruby OpenAPI client/gwt serve parity: 10/10
+```
+
 The slice covers totals below, equal to, inside, and above the configured
 range; all four operator combinations at their important boundaries; an absent
 maximum; a fractional interior value; and contradictory bounds that produce
@@ -49,7 +57,13 @@ python -m gwtlang capture examples/external_pilots/spree_item_total/rules.gwt \
   --request "assess item total eligibility" \
   --fact-provenance examples/external_pilots/spree_item_total/fact-provenance.json \
   --output /tmp/spree-item-total.execution-case.json
+python -m gwtlang openapi examples/external_pilots/spree_item_total/rules.gwt \
+  --output /tmp/spree-item-total.openapi.json
+python -m gwtlang serve examples/external_pilots/spree_item_total/rules.gwt \
+  --port 8080
 python examples/external_pilots/spree_item_total/run_pilot.py /path/to/pinned/spree
+python examples/external_pilots/spree_item_total/openapi_client_demo.py \
+  /path/to/pinned/spree
 ```
 
 The last command requires Docker and rejects a checkout at any other commit.
@@ -58,6 +72,38 @@ without Docker or a Spree checkout. The optional provenance sidecar documents
 which order and preference facts are normalized by the Ruby host boundary;
 those descriptions are explicitly unauthenticated metadata.
 
+The OpenAPI demo additionally requires Node/npm, the Java runtime used by
+OpenAPI Generator, and Docker. Ruby and the generated client's dependencies
+run in the pinned `ruby:3.4.9-alpine` container using Docker host networking;
+generated files are temporary and `gwt serve` remains bound to loopback.
+
+## OpenAPI findings
+
+The generated operation is:
+
+```text
+POST /requests/assess-item-total-eligibility
+```
+
+GWT's OpenAPI 3.1 document preserves the intended boundary:
+
+- `item_total` and `amount_min` accept decimal strings or integers;
+- `amount_max` is not required and also accepts JSON `null`;
+- the service treats omitted and explicit-null `amount_max` as the same absent
+  optional value;
+- the response contains only the declared `EligibilityDecision` output.
+
+One generator-specific caveat is material for money. Ruby OpenAPI Generator
+otherwise interprets the custom `format: decimal` as `Float`, despite the
+schema's `type: string`. The demo passes `--type-mappings decimal=String` and
+asserts that the generated union is `String|Integer`, never `Float|Integer`.
+This is an integration-tool mapping requirement, not a GWT runtime mismatch,
+and should remain visible anywhere exact decimals drive client generation.
+
+As in the commit-analyzer pilot, OpenAPI transports execution input and output;
+the optional fact-provenance sidecar remains separate Execution Case review
+metadata rather than becoming policy input.
+
 ## What fit well
 
 - This is an excellent scale for a first external shadow: two numeric bounds,
@@ -65,6 +111,8 @@ those descriptions are explicitly unauthenticated metadata.
 - GWT's exact `decimal` values map cleanly to Spree's `BigDecimal` comparisons;
   the JSON boundary keeps them as strings rather than passing through binary
   floating point.
+- The same exact values survive a generated Ruby client and `gwt serve` when
+  the generator's decimal mapping is configured explicitly.
 - GWT scenarios make `>`, `>=`, `<`, and `<=` equality behavior much harder to
   skim past than nested RSpec contexts.
 - The explicit behavior signature reads in domain terms, and evidence identifies
@@ -77,6 +125,8 @@ those descriptions are explicitly unauthenticated metadata.
 - Missing and JSON `null` intentionally collapse to one GWT absence. That fits
   Spree's `nil` maximum here, but would be insufficient for a domain where
   omitted and explicitly cleared values mean different things.
+- OpenAPI Generator's default Ruby mapping for the custom decimal format is
+  lossy; integrations must opt into the checked `decimal=String` mapping.
 - The upstream public errors include localized, currency-formatted messages.
   The pilot compares the internal translation keys and ordering, not translated
   prose or `Spree::Money` formatting.
@@ -97,6 +147,7 @@ explanation and regression artifact here, not as a proposed replacement.
 
 The optional-value spike materially improved this pilot: `amount_max` now has
 the shape of the upstream preference, and its use is guarded explicitly before
-comparison. The remaining product question is whether localized messages
-belong inside or outside GWT—not whether the language needs broader control
-flow.
+comparison. The generated-client result shows that this shape also survives a
+Ruby/OpenAPI/HTTP boundary. The remaining product question is whether localized
+messages belong inside or outside GWT—not whether the language needs broader
+control flow.

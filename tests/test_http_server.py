@@ -169,6 +169,33 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(payload["result"]["release"], "minor")
         self.assertEqual(payload["result"]["selected_rule_id"], "feature")
 
+    def test_gwt_serve_preserves_absent_and_null_optional_decimal(self):
+        rules = "examples/external_pilots/spree_item_total/rules.gwt"
+        base_facts = {
+            "item_total": "1000.00",
+            "amount_min": "50.00",
+            "minimum_mode": "gt",
+            "maximum_mode": "lt",
+        }
+        with running_serve_process(rules) as base_url:
+            route = "/requests/assess-item-total-eligibility"
+            absent_status, absent = request_json(
+                f"{base_url}{route}",
+                {"facts": base_facts},
+                method="POST",
+            )
+            null_status, explicit_null = request_json(
+                f"{base_url}{route}",
+                {"facts": {**base_facts, "amount_max": None}},
+                method="POST",
+            )
+
+        self.assertEqual(absent_status, 200)
+        self.assertEqual(null_status, 200)
+        self.assertEqual(absent, explicit_null)
+        self.assertEqual(absent["decision"]["eligible"], True)
+        self.assertEqual(absent["decision"]["first_error"], "none")
+
     def test_json_schema_client_demo_validates_request_and_response(self):
         if importlib.util.find_spec("jsonschema") is None:
             self.skipTest("jsonschema package is not installed")
