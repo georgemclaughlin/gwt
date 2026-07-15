@@ -462,6 +462,39 @@ def build_parser() -> argparse.ArgumentParser:
             f"(default: {DEFAULT_MAX_REQUEST_BODY_BYTES})."
         ),
     )
+    serve_parser.add_argument(
+        "--capture-dir",
+        type=Path,
+        help=(
+            "Record served request executions as local Execution Case files. "
+            "Values and provenance details are omitted by default."
+        ),
+    )
+    serve_parser.add_argument(
+        "--capture-request",
+        action="append",
+        default=[],
+        help=(
+            "Capture only this exact named REQUEST. Can be repeated; without it, "
+            "all named requests are captured."
+        ),
+    )
+    serve_parser.add_argument(
+        "--capture-values",
+        action="store_true",
+        help=(
+            "Include request, result, evidence, and provenance values in served "
+            "Execution Cases. Review privacy before enabling."
+        ),
+    )
+    serve_parser.add_argument(
+        "--fact-provenance",
+        type=Path,
+        help=(
+            "Static server-side fact provenance JSON for captured requests. "
+            "Requires --capture-dir."
+        ),
+    )
 
     version_parser = subparsers.add_parser(
         "version",
@@ -1104,6 +1137,15 @@ def schema_command(args: argparse.Namespace) -> int:
 def serve_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     try:
+        if args.capture_dir is None and (
+            args.capture_request
+            or args.capture_values
+            or args.fact_provenance is not None
+        ):
+            raise ValueError(
+                "--capture-request, --capture-values, and --fact-provenance "
+                "require --capture-dir"
+            )
         return run_http_server(
             args.file,
             host=args.host,
@@ -1114,12 +1156,25 @@ def serve_command(args: argparse.Namespace) -> int:
             trace_values=args.trace_values,
             otlp_metrics_endpoint=args.otlp_metrics_endpoint,
             max_request_body_bytes=args.max_body_bytes,
+            capture_directory=args.capture_dir,
+            capture_request_names=(
+                args.capture_request if args.capture_request else None
+            ),
+            capture_values=args.capture_values,
+            fact_provenance=(
+                _fact_provenance_from_args(args)
+                if args.capture_dir is not None
+                else None
+            ),
         )
     except GwtError as exc:
         print(format_error(exc, source, str(args.file)), file=sys.stderr)
         return 1
     except OSError as exc:
         print(f"gwt: failed to start HTTP server: {exc}", file=sys.stderr)
+        return 1
+    except ValueError as exc:
+        print(f"gwt: failed to configure HTTP server: {exc}", file=sys.stderr)
         return 1
 
 

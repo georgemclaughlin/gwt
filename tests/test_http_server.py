@@ -19,9 +19,12 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang.__main__ import main
+from gwtlang.comparison import compare_execution_cases
+from gwtlang.execution_case import ExecutionCase
 from gwtlang.http_server import (
     DEFAULT_MAX_REQUEST_BODY_BYTES,
     GwtHttpService,
+    HttpExecutionCaseConfig,
     HttpMetricsConfig,
     HttpServiceError,
     HttpTraceConfig,
@@ -37,6 +40,7 @@ class HttpServerTests(unittest.TestCase):
             DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
             GwtHttpService as ExportedGwtHttpService,
             HttpMetricsConfig as ExportedHttpMetricsConfig,
+            HttpExecutionCaseConfig as ExportedHttpExecutionCaseConfig,
             HttpRouteResult as ExportedHttpRouteResult,
             HttpServiceError as ExportedHttpServiceError,
             HttpTraceConfig as ExportedHttpTraceConfig,
@@ -45,12 +49,14 @@ class HttpServerTests(unittest.TestCase):
 
         self.assertEqual(exported_body_limit, DEFAULT_MAX_REQUEST_BODY_BYTES)
         self.assertIs(ExportedGwtHttpService, GwtHttpService)
+        self.assertIs(ExportedHttpExecutionCaseConfig, HttpExecutionCaseConfig)
         self.assertIs(ExportedHttpMetricsConfig, HttpMetricsConfig)
         self.assertIs(ExportedHttpRouteResult, HttpRouteResult)
         self.assertIs(ExportedHttpServiceError, HttpServiceError)
         self.assertIs(ExportedHttpTraceConfig, HttpTraceConfig)
         self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
         self.assertIn("HttpMetricsConfig", gwtlang.__all__)
+        self.assertIn("HttpExecutionCaseConfig", gwtlang.__all__)
         self.assertIn("HttpRouteResult", gwtlang.__all__)
         self.assertIn("HttpServiceError", gwtlang.__all__)
 
@@ -148,19 +154,34 @@ class HttpServerTests(unittest.TestCase):
 
     def test_gwt_serve_runs_host_evaluated_commit_selection_request(self):
         rules = "examples/external_pilots/semantic_release_commit_analyzer/rules.gwt"
-        with running_serve_process(rules) as base_url:
-            openapi_status, openapi = request_json(f"{base_url}/openapi.json")
-            route = route_for_request(openapi, "select release from evaluated rules")
-            status, payload = request_json(
-                f"{base_url}{route}",
-                {
-                    "evaluations": [
-                        {"id": "patch", "matched": True, "release": "patch"},
-                        {"id": "feature", "matched": True, "release": "minor"},
-                        {"id": "ignored", "matched": False, "release": "major"},
-                    ]
-                },
-                method="POST",
+        request_input = {
+            "evaluations": [
+                {"id": "patch", "matched": True, "release": "patch"},
+                {"id": "feature", "matched": True, "release": "minor"},
+                {"id": "ignored", "matched": False, "release": "major"},
+            ]
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir) / "cases"
+            with running_serve_process(
+                rules,
+                capture_dir=capture_dir,
+                capture_values=True,
+                capture_request="select release from evaluated rules",
+                fact_provenance=Path(
+                    "examples/external_pilots/semantic_release_commit_analyzer/"
+                    "evaluated-fact-provenance.json"
+                ),
+            ) as base_url:
+                openapi_status, openapi = request_json(f"{base_url}/openapi.json")
+                route = route_for_request(openapi, "select release from evaluated rules")
+                status, payload, headers = request_json_with_headers(
+                    f"{base_url}{route}",
+                    request_input,
+                    method="POST",
+                )
+            execution_case = ExecutionCase.load(
+                next(capture_dir.glob("*.execution-case.json"))
             )
 
         self.assertEqual(openapi_status, 200)
@@ -168,6 +189,180 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(payload["result"]["release"], "minor")
         self.assertEqual(payload["result"]["selected_rule_id"], "feature")
+        self.assertEqual(execution_case.input, request_input)
+        self.assertEqual(execution_case.result, payload)
+        self.assertEqual(
+            execution_case.as_payload()["integrity"]["digest"],
+            headers["x-gwt-case-id"],
+        )
+
+    def test_serve_capture_defaults_to_shape_only_and_returns_case_id(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir) / "cases"
+            with running_serve_process(
+                "examples/deployable_api/rules.gwt",
+                capture_dir=capture_dir,
+            ) as base_url:
+                status, payload, headers = request_json_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    triage_ticket_request(),
+                    method="POST",
+                )
+
+            case_id = headers["x-gwt-case-id"]
+            case_path = capture_dir / (
+                f"{case_id.removeprefix('sha256:')}.execution-case.json"
+            )
+            execution_case = ExecutionCase.load(case_path)
+            case_payload = execution_case.as_payload()
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertRegex(case_id, r"^sha256:[0-9a-f]{64}$")
+        self.assertEqual(case_payload["integrity"]["digest"], case_id)
+        self.assertEqual(
+            case_payload["execution"]["capturePolicy"],
+            {"onError": "record", "values": "omit"},
+        )
+        self.assertEqual(case_payload["request"]["input"], {})
+        self.assertEqual(case_payload["result"], {})
+        self.assertEqual(
+            case_payload["redaction"]["availability"]["requestInput"],
+            "redacted",
+        )
+        self.assertIn("traceparent", headers)
+        self.assertIn("x-gwt-trace-id", headers)
+
+    def test_serve_full_capture_records_provenance_and_replays(self):
+        program = Path("examples/deployable_api/rules.gwt")
+        request_input = triage_ticket_request()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir) / "cases"
+            provenance_path = Path(temp_dir) / "provenance.json"
+            provenance_path.write_text(
+                json.dumps(
+                    {
+                        "ticket.customer_id": {
+                            "source": "support-api.ticket.customer_id",
+                            "description": "Supplied by the local pilot adapter.",
+                        }
+                    }
+                )
+            )
+            with running_serve_process(
+                program,
+                capture_dir=capture_dir,
+                capture_values=True,
+                capture_request="triage ticket",
+                fact_provenance=provenance_path,
+            ) as base_url:
+                status, payload, headers = request_json_with_headers(
+                    f"{base_url}/requests/triage-ticket",
+                    request_input,
+                    method="POST",
+                )
+
+            case_id = headers["x-gwt-case-id"]
+            execution_case = ExecutionCase.load(
+                capture_dir
+                / f"{case_id.removeprefix('sha256:')}.execution-case.json"
+            )
+            comparison = compare_execution_cases(
+                program,
+                program,
+                [execution_case],
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(execution_case.input, request_input)
+        self.assertEqual(execution_case.result, payload)
+        self.assertEqual(
+            execution_case.fact_provenance[0]["source"],
+            "support-api.ticket.customer_id",
+        )
+        self.assertEqual(comparison.cases[0].classification, "unchanged")
+
+    def test_serve_capture_records_runtime_failure_but_not_transport_rejection(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir) / "cases"
+            with running_serve_process(
+                "examples/deployable_api/rules.gwt",
+                capture_dir=capture_dir,
+            ) as base_url:
+                failure_status, failure_payload, failure_headers = (
+                    request_json_with_headers(
+                        f"{base_url}/requests/triage-ticket",
+                        {},
+                        method="POST",
+                    )
+                )
+                invalid_status, _invalid_payload, invalid_headers = (
+                    request_raw_with_headers(
+                        f"{base_url}/requests/triage-ticket",
+                        b"{",
+                        method="POST",
+                    )
+                )
+
+            case_paths = list(capture_dir.glob("*.execution-case.json"))
+            execution_case = ExecutionCase.load(case_paths[0])
+
+        self.assertEqual(failure_status, 400)
+        self.assertEqual(failure_payload["error"]["code"], "GWT_REQUEST_FAILED")
+        self.assertIn("x-gwt-case-id", failure_headers)
+        self.assertEqual(invalid_status, 400)
+        self.assertNotIn("x-gwt-case-id", invalid_headers)
+        self.assertEqual(len(case_paths), 1)
+        self.assertEqual(execution_case.outcome, "failed")
+        self.assertEqual(
+            execution_case.as_payload()["execution"]["error"]["message"],
+            "GWT execution failed; error detail omitted by capture policy",
+        )
+
+    def test_serve_capture_validates_selected_request_and_trace_privacy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir)
+            with self.assertRaisesRegex(ValueError, "unknown capture request"):
+                GwtHttpService.from_file(
+                    "examples/deployable_api/rules.gwt",
+                    capture_config=HttpExecutionCaseConfig(
+                        capture_dir,
+                        request_names=frozenset({"missing request"}),
+                    ),
+                )
+            with self.assertRaisesRegex(ValueError, "redacted OTLP trace"):
+                GwtHttpService.from_file(
+                    "examples/deployable_api/rules.gwt",
+                    trace_config=HttpTraceConfig("http://127.0.0.1:4318/v1/traces"),
+                    capture_config=HttpExecutionCaseConfig(
+                        capture_dir,
+                        include_values=True,
+                    ),
+                )
+
+    def test_serve_capture_write_failure_preserves_decision_response(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            service = GwtHttpService.from_file(
+                "examples/deployable_api/rules.gwt",
+                capture_config=HttpExecutionCaseConfig(Path(temp_dir)),
+            )
+            stderr = io.StringIO()
+            with (
+                patch(
+                    "gwtlang.execution_case.ExecutionCase.write",
+                    side_effect=OSError("disk unavailable"),
+                ),
+                redirect_stderr(stderr),
+            ):
+                result = service.run_route(
+                    "/requests/triage-ticket",
+                    triage_ticket_request(),
+                )
+
+        self.assertEqual(result.body["decision"]["queue"], "incident")
+        self.assertIsNone(result.case_id)
+        self.assertIn("execution case capture failed", stderr.getvalue())
+        self.assertIn("disk unavailable", stderr.getvalue())
 
     def test_gwt_serve_preserves_absent_and_null_optional_decimal(self):
         rules = "examples/external_pilots/spree_item_total/rules.gwt"
@@ -177,24 +372,36 @@ class HttpServerTests(unittest.TestCase):
             "minimum_mode": "gt",
             "maximum_mode": "lt",
         }
-        with running_serve_process(rules) as base_url:
-            route = "/requests/assess-item-total-eligibility"
-            absent_status, absent = request_json(
-                f"{base_url}{route}",
-                {"facts": base_facts},
-                method="POST",
-            )
-            null_status, explicit_null = request_json(
-                f"{base_url}{route}",
-                {"facts": {**base_facts, "amount_max": None}},
-                method="POST",
-            )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            capture_dir = Path(temp_dir) / "cases"
+            with running_serve_process(
+                rules,
+                capture_dir=capture_dir,
+                capture_request="assess item total eligibility",
+            ) as base_url:
+                route = "/requests/assess-item-total-eligibility"
+                absent_status, absent, absent_headers = request_json_with_headers(
+                    f"{base_url}{route}",
+                    {"facts": base_facts},
+                    method="POST",
+                )
+                null_status, explicit_null, null_headers = request_json_with_headers(
+                    f"{base_url}{route}",
+                    {"facts": {**base_facts, "amount_max": None}},
+                    method="POST",
+                )
+            case_paths = list(capture_dir.glob("*.execution-case.json"))
 
         self.assertEqual(absent_status, 200)
         self.assertEqual(null_status, 200)
         self.assertEqual(absent, explicit_null)
         self.assertEqual(absent["decision"]["eligible"], True)
         self.assertEqual(absent["decision"]["first_error"], "none")
+        self.assertNotEqual(
+            absent_headers["x-gwt-case-id"],
+            null_headers["x-gwt-case-id"],
+        )
+        self.assertEqual(len(case_paths), 2)
 
     def test_json_schema_client_demo_validates_request_and_response(self):
         if importlib.util.find_spec("jsonschema") is None:
@@ -1110,6 +1317,20 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(error.exception.code, 2)
         self.assertIn("expected a non-negative integer", stderr.getvalue())
 
+    def test_serve_command_requires_capture_directory_for_capture_options(self):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            status = main(
+                [
+                    "serve",
+                    "examples/deployable_api/rules.gwt",
+                    "--capture-values",
+                ]
+            )
+
+        self.assertEqual(status, 1)
+        self.assertIn("require --capture-dir", stderr.getvalue())
+
     def assert_trace_headers(self, headers: dict[str, str], trace_id: str) -> None:
         self.assertTrue(headers["traceparent"].startswith(f"00-{trace_id}-"))
         self.assertEqual(headers["x-gwt-trace-id"], trace_id)
@@ -1121,6 +1342,7 @@ def running_service(
     *,
     trace_config: HttpTraceConfig | None = None,
     metrics_config: HttpMetricsConfig | None = None,
+    capture_config: HttpExecutionCaseConfig | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
     background_exports: bool = False,
 ):
@@ -1128,6 +1350,7 @@ def running_service(
         path,
         trace_config=trace_config,
         metrics_config=metrics_config,
+        capture_config=capture_config,
         max_request_body_bytes=max_request_body_bytes,
         background_exports=background_exports,
     )
@@ -1149,6 +1372,10 @@ def running_serve_process(
     *,
     otlp_endpoint: str | None = None,
     max_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+    capture_dir: Path | None = None,
+    capture_values: bool = False,
+    capture_request: str | None = None,
+    fact_provenance: Path | None = None,
 ):
     command = [
         sys.executable,
@@ -1165,6 +1392,14 @@ def running_serve_process(
     ]
     if otlp_endpoint is not None:
         command.extend(["--otlp-endpoint", otlp_endpoint])
+    if capture_dir is not None:
+        command.extend(["--capture-dir", str(capture_dir)])
+    if capture_values:
+        command.append("--capture-values")
+    if capture_request is not None:
+        command.extend(["--capture-request", capture_request])
+    if fact_provenance is not None:
+        command.extend(["--fact-provenance", str(fact_provenance)])
 
     process = subprocess.Popen(
         command,

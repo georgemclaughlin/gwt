@@ -60,6 +60,51 @@ The Python API expresses the same choices with
 `ExecutionCaseCapturePolicy(on_error="raise" | "record", values="full" |
 "omit")` passed as `policy=`, plus `execution_budget=` and `max_call_depth=`.
 
+### Served Capture
+
+The experimental HTTP service can record the execution that produced a live
+response without executing the request a second time:
+
+```sh
+python -m gwtlang serve examples/deployable_api/rules.gwt \
+  --port 8080 \
+  --capture-dir /tmp/gwt-cases
+```
+
+This profile differs intentionally from the standalone `gwt capture` default.
+Served capture records failures and omits values by default because HTTP input
+may be less controlled. Each completed GWT execution or GWT runtime/contract
+failure is written atomically as
+`<digest>.execution-case.json`. The response includes
+`x-gwt-case-id: sha256:<digest>` only after the artifact has been written.
+Capture write failure is reported on server stderr and does not replace the
+decision response. Malformed JSON, unsupported media types, oversized bodies,
+unknown routes, and undeclared transport fields are rejected before GWT
+execution and do not create cases.
+
+Select one or more exact named requests with repeated `--capture-request`
+flags. Without them, every named request is captured. Supplying a static
+`--fact-provenance` sidecar validates it at startup against every selected
+request. Provenance is server configuration, not HTTP decision input.
+
+Shape-only artifacts retain program identity, source-linked execution shape,
+and redaction markers, but they cannot replay an input or establish an exact
+result. Explicitly opt into sensitive, replayable evidence with:
+
+```sh
+python -m gwtlang serve rules.gwt \
+  --capture-dir /tmp/gwt-cases \
+  --capture-request "review request" \
+  --capture-values \
+  --fact-provenance provenance.json
+```
+
+Review retention before enabling this. If OTLP trace export is enabled at the
+same time, full case capture requires `--trace-values`; otherwise startup fails
+instead of silently sending full recorder values through a nominally redacted
+trace. The embedded API exposes the same boundary as
+`HttpExecutionCaseConfig` on `GwtHttpService.from_file(...)`.
+
 ### Host Fact Provenance
 
 A host adapter can optionally attach descriptive provenance to normalized

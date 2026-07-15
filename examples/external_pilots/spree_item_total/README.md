@@ -60,7 +60,11 @@ python -m gwtlang capture examples/external_pilots/spree_item_total/rules.gwt \
 python -m gwtlang openapi examples/external_pilots/spree_item_total/rules.gwt \
   --output /tmp/spree-item-total.openapi.json
 python -m gwtlang serve examples/external_pilots/spree_item_total/rules.gwt \
-  --port 8080
+  --port 8080 \
+  --capture-dir /tmp/spree-item-total-cases \
+  --capture-request "assess item total eligibility" \
+  --capture-values \
+  --fact-provenance examples/external_pilots/spree_item_total/fact-provenance.json
 python examples/external_pilots/spree_item_total/run_pilot.py /path/to/pinned/spree
 python examples/external_pilots/spree_item_total/openapi_client_demo.py \
   /path/to/pinned/spree
@@ -102,7 +106,10 @@ and should remain visible anywhere exact decimals drive client generation.
 
 As in the commit-analyzer pilot, OpenAPI transports execution input and output;
 the optional fact-provenance sidecar remains separate Execution Case review
-metadata rather than becoming policy input.
+metadata rather than becoming policy input. The served-capture command writes a
+replayable case for each HTTP decision and returns its digest as
+`x-gwt-case-id`; omit `--capture-values` when only redacted execution shape may
+be retained.
 
 ## What fit well
 
