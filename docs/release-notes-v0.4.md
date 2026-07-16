@@ -36,8 +36,9 @@ change is authorized by this document.
   baseline mismatches. Field changes include last-change source evidence and
   comparisons carry old/new evaluated predicates.
 - Case Corpus v1 maps domain-facing references to integrity-checked Execution
-  Cases without changing their digests; `gwt compare` and `gwt workbench`
-  accept it through `--corpus`.
+  Cases without changing their digests; `gwt corpus create` and `gwt corpus
+  check` provide CLI-native authoring and validation, while `gwt compare` and
+  `gwt workbench` accept it through `--corpus`.
 - `gwt workbench` composes those same artifacts into a self-contained local
   HTML behavior-review dossier without a second evaluator or network service.
 

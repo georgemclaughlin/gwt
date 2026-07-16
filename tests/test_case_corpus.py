@@ -480,6 +480,107 @@ class CaseCorpusTests(unittest.TestCase):
         self.assertEqual(first.entries[0].case_id, second.entries[0].case_id)
         self.assertNotEqual(first.references, second.references)
 
+    def test_cli_creates_and_checks_a_portable_corpus(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "evidence"
+            entries = self._copy_cases(root)
+            corpus_path = root / "review.case-corpus.json"
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                create_status = main(
+                    [
+                        "corpus",
+                        "create",
+                        "--name",
+                        "Library CLI review",
+                        "--case",
+                        f"ready={root / entries[0].artifact}",
+                        "--case",
+                        f"waiting={root / entries[1].artifact}",
+                        "--output",
+                        str(corpus_path),
+                    ]
+                )
+            create_output = stdout.getvalue()
+            corpus = load_case_corpus(corpus_path)
+            before_check = corpus_path.read_bytes()
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                check_status = main(["corpus", "check", str(corpus_path)])
+            check_output = stdout.getvalue()
+            after_check = corpus_path.read_bytes()
+
+            moved = Path(temp_dir) / "moved"
+            root.rename(moved)
+            moved_corpus = load_case_corpus(moved / corpus_path.name)
+
+        self.assertEqual(create_status, 0)
+        self.assertEqual(check_status, 0)
+        self.assertIn("Wrote", create_output)
+        self.assertIn("2 cases", create_output)
+        self.assertIn("sha256:", create_output)
+        self.assertIn("OK", check_output)
+        self.assertEqual(after_check, before_check)
+        self.assertEqual(corpus.references, ("ready", "waiting"))
+        self.assertEqual(
+            [entry.case_id for entry in corpus.entries],
+            [entry.case_id for entry in entries],
+        )
+        self.assertEqual(
+            [entry.artifact for entry in corpus.entries],
+            [
+                "cases/library-completed.execution-case.json",
+                "cases/library-available.execution-case.json",
+            ],
+        )
+        self.assertEqual(moved_corpus.references, corpus.references)
+
+    def test_corpus_cli_rejects_outside_members_and_tampered_corpora(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            root = temp / "evidence"
+            root.mkdir()
+            outside = temp / "outside.execution-case.json"
+            shutil.copy2(FIXTURES / "library-completed.execution-case.json", outside)
+            corpus_path = root / "review.case-corpus.json"
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                outside_status = main(
+                    [
+                        "corpus",
+                        "create",
+                        "--name",
+                        "Outside member",
+                        "--case",
+                        f"outside={outside}",
+                        "--output",
+                        str(corpus_path),
+                    ]
+                )
+            outside_error = stderr.getvalue()
+            outside_created = corpus_path.exists()
+
+            entries = self._copy_cases(root)[:1]
+            corpus = write_case_corpus(
+                corpus_path,
+                name="Tamper check",
+                entries=entries,
+            )
+            tampered = corpus.as_payload()
+            tampered["name"] = "Changed"
+            corpus_path.write_text(json.dumps(tampered), encoding="utf-8")
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                tampered_status = main(["corpus", "check", str(corpus_path)])
+            tampered_error = stderr.getvalue()
+
+        self.assertEqual(outside_status, 1)
+        self.assertIn("beneath the corpus directory", outside_error)
+        self.assertFalse(outside_created)
+        self.assertEqual(tampered_status, 1)
+        self.assertIn("integrity digest mismatch", tampered_error)
+
     def test_cli_requires_exactly_one_case_selection_mode(self):
         stderr = io.StringIO()
         with redirect_stderr(stderr):

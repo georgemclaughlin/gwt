@@ -174,6 +174,8 @@ class ExternalPilotRegressionTests(unittest.TestCase):
 
         self.assertIn("served Execution Cases captured: 20/20", completed.stdout)
         self.assertIn("candidate comparisons changed: 3/20", completed.stdout)
+        self.assertIn(f"Wrote {output_dir / 'corpus.json'}", completed.stdout)
+        self.assertIn(f"OK {output_dir / 'corpus.json'}", completed.stdout)
         self.assertEqual(corpus.as_payload()["kind"], "gwt.case-corpus")
         self.assertEqual(len(corpus.entries), 20)
         self.assertEqual(len(loaded_cases), 20)

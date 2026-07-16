@@ -320,9 +320,27 @@ Corpus readers preserve declared order, require unique references and case IDs
 within one corpus, reject missing artifacts and digest mismatches, and accept
 only normalized relative POSIX paths that resolve beneath the corpus
 directory without symbolic links. A corpus cannot overwrite one of its own
-member artifacts. References are untrusted, potentially sensitive display text. They
-are escaped by the workbench, do not affect replay or classification, and are
-never accepted by `gwt serve` as decision input or capture metadata.
+member artifacts. References are untrusted, potentially sensitive display
+text. They are escaped by the workbench, do not affect replay or
+classification, and are never accepted by `gwt serve` as decision input or
+capture metadata.
+
+Create and validate the selection through the CLI:
+
+```sh
+gwt corpus create \
+  --name "release decision cases" \
+  --case patch-then-minor=cases/patch-then-minor.execution-case.json \
+  --case prerelease-ladder=cases/prerelease-ladder.execution-case.json \
+  --output corpus.json
+gwt corpus check corpus.json
+```
+
+Case paths are resolved from the current working directory and must be beneath
+the output corpus directory. `create` derives each `caseId`, stores a normalized
+relative POSIX path, and preserves the order of the repeated `--case` options.
+`check` performs the same strict manifest, path, member, and digest validation
+as the comparison and workbench consumers without modifying the corpus.
 
 Use a corpus directly with the review tools:
 

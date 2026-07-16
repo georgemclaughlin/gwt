@@ -15,11 +15,10 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang import (
-    CaseCorpusEntrySpec,
     ExecutionCase,
     compare_execution_cases,
+    load_case_corpus,
     render_workbench_html,
-    write_case_corpus,
 )
 
 
@@ -62,7 +61,7 @@ def main() -> int:
     fixture_cases = cast(list[dict[str, Any]], fixture["cases"])
     server = _start_server(case_dir)
     captured: list[ExecutionCase] = []
-    corpus_entries: list[CaseCorpusEntrySpec] = []
+    corpus_cases: list[tuple[str, Path]] = []
     try:
         for fixture_case in fixture_cases:
             pilot_case_id = cast(str, fixture_case["id"])
@@ -90,24 +89,18 @@ def main() -> int:
                 raise RuntimeError(f"{pilot_case_id}: static fact provenance was not captured")
 
             captured.append(execution_case)
-            corpus_entries.append(
-                CaseCorpusEntrySpec(
-                    reference=pilot_case_id,
-                    case_id=case_id,
-                    artifact=case_path.relative_to(output_dir).as_posix(),
-                )
-            )
+            corpus_cases.append((pilot_case_id, case_path))
     finally:
         _stop_server(server)
 
     candidate = output_dir / "candidate-rules.gwt"
     candidate.write_text(_mutated_candidate_source())
     corpus_path = output_dir / "corpus.json"
-    corpus = write_case_corpus(
+    _create_and_check_corpus(
         corpus_path,
-        name="semantic-release commit-analyzer host-evaluated cases",
-        entries=corpus_entries,
+        corpus_cases,
     )
+    corpus = load_case_corpus(corpus_path)
     comparison = compare_execution_cases(
         RULES,
         candidate,
@@ -156,6 +149,37 @@ def main() -> int:
     return 0
 
 
+def _create_and_check_corpus(
+    corpus_path: Path,
+    cases: list[tuple[str, Path]],
+) -> None:
+    create_command = [
+        sys.executable,
+        "-m",
+        "gwtlang",
+        "corpus",
+        "create",
+        "--name",
+        "semantic-release commit-analyzer host-evaluated cases",
+        "--output",
+        str(corpus_path),
+    ]
+    for reference, case_path in cases:
+        create_command.extend(("--case", f"{reference}={case_path}"))
+    subprocess.run(
+        create_command,
+        cwd=REPO_ROOT,
+        env=_repo_environment(),
+        check=True,
+    )
+    subprocess.run(
+        [sys.executable, "-m", "gwtlang", "corpus", "check", str(corpus_path)],
+        cwd=REPO_ROOT,
+        env=_repo_environment(),
+        check=True,
+    )
+
+
 def _snapshot_evaluations(case: dict[str, Any]) -> list[dict[str, object]]:
     rules = cast(list[dict[str, Any]], case["rules"])
     matches = cast(list[bool], case["host_matches"])
@@ -188,12 +212,6 @@ class _ServerProcess:
 
 
 def _start_server(case_dir: Path) -> _ServerProcess:
-    env = dict(os.environ)
-    env["PYTHONPATH"] = os.pathsep.join(
-        part
-        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
-        if part
-    )
     process = subprocess.Popen(
         [
             sys.executable,
@@ -217,7 +235,7 @@ def _start_server(case_dir: Path) -> _ServerProcess:
             str(FACT_PROVENANCE),
         ],
         cwd=REPO_ROOT,
-        env=env,
+        env=_repo_environment(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -239,6 +257,16 @@ def _start_server(case_dir: Path) -> _ServerProcess:
         detail = process.stderr.read() if process.stderr is not None else ""
         raise RuntimeError(f"gwt serve failed to start: {line.strip()} {detail}".strip())
     return _ServerProcess(process, match.group(1))
+
+
+def _repo_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
+        if part
+    )
+    return env
 
 
 def _stop_server(server: _ServerProcess) -> None:

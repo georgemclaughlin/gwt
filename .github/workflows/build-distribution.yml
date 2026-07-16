@@ -192,23 +192,11 @@ jobs:
             --request "review amount" \
             --output case.execution-case.json
           "$VENV/bin/python" -m json.tool case.execution-case.json >/dev/null
-          "$VENV/bin/python" - <<'PY'
-          from gwtlang import CaseCorpusEntrySpec, ExecutionCase, write_case_corpus
-
-          case = ExecutionCase.load("case.execution-case.json")
-          case_id = case.as_payload()["integrity"]["digest"]
-          write_case_corpus(
-              "smoke.case-corpus.json",
-              name="Distribution candidate smoke",
-              entries=[
-                  CaseCorpusEntrySpec(
-                      "review-amount",
-                      case_id,
-                      "case.execution-case.json",
-                  )
-              ],
-          )
-          PY
+          "$VENV/bin/gwt" corpus create \
+            --name "Distribution candidate smoke" \
+            --case review-amount=case.execution-case.json \
+            --output smoke.case-corpus.json
+          "$VENV/bin/gwt" corpus check smoke.case-corpus.json
 
           "$VENV/bin/gwt" workbench --corpus smoke.case-corpus.json \
             --program rules.gwt \
@@ -239,9 +227,11 @@ jobs:
           "$VENV/bin/gwt" version --json >sdist-version.json
           "$VENV/bin/gwt" --help >sdist-help.txt
           grep -q "workbench" sdist-help.txt
+          grep -q "corpus" sdist-help.txt
           "$VENV/bin/gwt" run "$GITHUB_WORKSPACE/examples/hello.gwt" \
             --json >sdist-hello.json
           "$VENV/bin/python" -m json.tool sdist-hello.json >/dev/null
+          "$VENV/bin/gwt" corpus check smoke.case-corpus.json
           "$VENV/bin/gwt" workbench --corpus smoke.case-corpus.json \
             --program rules.gwt \
             --name "source distribution smoke" \

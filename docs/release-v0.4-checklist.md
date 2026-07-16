@@ -144,9 +144,9 @@ The manual
 workflow is deliberately build-only. It installs pinned build tooling, builds
 the current sdist and wheel, inspects both archives for runtime modules and
 schemas, installs each in a separate clean virtual environment, runs
-command/hello/workbench smokes, creates `SHA256SUMS`, uploads the files as a
-workflow artifact, and requests GitHub build-provenance attestations. It has
-no package-registry or release-publishing step.
+command/hello/corpus/workbench smokes, creates `SHA256SUMS`, uploads the files
+as a workflow artifact, and requests GitHub build-provenance attestations. It
+has no package-registry or release-publishing step.
 
 - [ ] Review the workflow run's exact commit SHA and dependency/action
   versions.
@@ -162,6 +162,10 @@ no package-registry or release-publishing step.
   gwt version --json
   gwt --help
   gwt run hello.gwt --json
+  gwt corpus create --name smoke \
+    --case review=case.execution-case.json \
+    --output smoke.case-corpus.json
+  gwt corpus check smoke.case-corpus.json
   gwt workbench case.execution-case.json --output review.html
   ```
 

@@ -478,6 +478,8 @@ gwt run examples/bank.gwt
 gwt run examples/order_fulfillment/rules.gwt --json-input examples/order_fulfillment/request.json --request "fulfill order" --json
 gwt capture examples/vendor_onboarding/rules.gwt --json-input examples/vendor_onboarding/request.json --request "review vendor" --output vendor-review.execution-case.json
 gwt scenario-from-run vendor-review.execution-case.json --program examples/vendor_onboarding/rules.gwt --output vendor-review-scenario.gwt
+gwt corpus create --name "release review" --case baseline=case-1.json --case boundary=case-2.json --output review-corpus.json
+gwt corpus check review-corpus.json
 gwt compare --old rules-v1.gwt --new rules-v2.gwt case-1.json case-2.json --json
 gwt compare --corpus review-corpus.json --old rules-v1.gwt --new rules-v2.gwt --json
 gwt workbench case-1.json case-2.json --old rules-v1.gwt --new rules-v2.gwt --output review.html
@@ -566,11 +568,14 @@ for declared-output differences, so mixed-corpus totals reconcile without
 false change attribution.
 
 A Case Corpus v1 gives those immutable artifacts domain-facing references
-without changing Execution Case v1. `gwt compare --corpus corpus.json ...` and
-`gwt workbench --corpus corpus.json ...` validate the corpus digest, require
-unique references and case IDs, constrain relative artifact paths beneath the
-corpus directory without symbolic links, and verify that each declared case ID
-matches its artifact.
+without changing Execution Case v1. `gwt corpus create` derives member IDs from
+validated Execution Cases, preserves repeated `--case REFERENCE=CASE` order,
+and writes a portable manifest atomically; `gwt corpus check` validates the
+manifest and every member without rewriting it. `gwt compare --corpus
+corpus.json ...` and `gwt workbench --corpus corpus.json ...` validate the
+corpus digest, require unique references and case IDs, constrain relative
+artifact paths beneath the corpus directory without symbolic links, and verify
+that each declared case ID matches its artifact.
 Corpus-backed comparisons retain deterministic machine IDs and add the human
 reference plus authoritative Execution Case ID; the workbench displays both.
 References remain unauthenticated, potentially sensitive display text and
