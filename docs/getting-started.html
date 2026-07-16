@@ -9,7 +9,7 @@
       content="A step-by-step introduction to executable GWT behavior, records, scenarios, JSON requests, host contracts, and review evidence."
     >
     <meta name="color-scheme" content="dark light">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="stylesheet" href="assets/site.css">
   </head>
   <body>
@@ -127,12 +127,14 @@ AND account.status == "open"</code></pre>
 
           <section id="record-state" class="walk-step">
             <p class="step-kicker">Step 3</p>
-            <h2>Group Related State Into A Record</h2>
+            <h2>Group Related State Into A Nested Value</h2>
             <p>
-              When values belong together, use record-shaped setup and
-              assertions instead of setting every path separately.
+              When values belong together, use an indented key/value block
+              instead of setting every path separately. This creates unnamed
+              structured state; it does not declare a <code>RECORD</code>
+              contract yet.
             </p>
-            <pre><code>PROGRAM records
+            <pre><code>PROGRAM nested state
 
 WHEN withdraw &lt;amount&gt; from &lt;account&gt;
   REQUIRE account.status == "open"
@@ -153,7 +155,9 @@ THEN account is
   owner:
     name: "Ada"</code></pre>
             <p>
-              Record-shaped assertions keep examples readable as the state grows.
+              Nested assertions keep examples readable as the state grows. In
+              the next step, <code>RECORD</code> gives this shape a name and a
+              checked contract.
             </p>
           </section>
 
