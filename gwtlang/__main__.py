@@ -526,6 +526,7 @@ def build_parser() -> argparse.ArgumentParser:
             f"(default: {DEFAULT_MAX_REQUEST_BODY_BYTES})."
         ),
     )
+    add_runtime_limit_arguments(serve_parser)
     serve_parser.add_argument(
         "--capture-dir",
         type=Path,
@@ -645,6 +646,10 @@ def add_execution_case_capture_arguments(parser: argparse.ArgumentParser) -> Non
             "error-detail values from the artifact."
         ),
     )
+    add_runtime_limit_arguments(parser)
+
+
+def add_runtime_limit_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--execution-budget",
         type=_positive_limit_or_none,
@@ -1298,6 +1303,8 @@ def serve_command(args: argparse.Namespace) -> int:
             trace_values=args.trace_values,
             otlp_metrics_endpoint=args.otlp_metrics_endpoint,
             max_request_body_bytes=args.max_body_bytes,
+            execution_budget=args.execution_budget,
+            max_call_depth=args.max_call_depth,
             capture_directory=args.capture_dir,
             capture_request_names=(
                 args.capture_request if args.capture_request else None

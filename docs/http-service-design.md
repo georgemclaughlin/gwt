@@ -1,8 +1,8 @@
 # HTTP Service And OpenAPI
 
-Status: OpenAPI generation and an experimental standard-library HTTP service
-are implemented. Deployment policy and deeper service customization remain
-deferred.
+Status: active serve-first integration hardening. OpenAPI generation and the
+standard-library HTTP service are implemented; the service remains
+experimental while the operator and deployment contract is hardened.
 
 GWT named `REQUEST` blocks already define a public request/response boundary.
 The implemented HTTP surface projects that boundary into standard API
@@ -10,11 +10,34 @@ contracts and a narrow local service without adding deployment policy to the
 language:
 
 ```text
-.gwt REQUEST contracts -> OpenAPI document -> generated host clients
+.gwt REQUEST contracts -> gwt serve -> ordinary HTTP/OpenAPI clients
 ```
 
 This keeps the language surface stable while making GWT easier to consume from
 ordinary application hosts.
+
+## Serve-First Integration Decision
+
+`gwt serve` is the preferred cross-language application boundary. GWT should
+execute its own semantics once behind named `REQUEST` contracts; host
+applications should use their normal HTTP libraries and, when useful, standard
+OpenAPI generators. Bespoke .NET, Java, Go, Ruby, or TypeScript runtimes are not
+the current expansion path.
+
+This does not make HTTP part of the language. `REQUEST`, `GIVEN`, `WHEN`,
+`OUTPUT`, and `THEN` remain the normative behavior boundary. The server is a
+standard projection, just as JSON Schema and OpenAPI are projections.
+
+The hardening order is:
+
+1. stable request, response, and error contracts;
+2. explicit body, execution-work, and behavior-call limits;
+3. predictable lifecycle, health, shutdown, and concurrency behavior;
+4. operational tracing, metrics, and opt-in review evidence;
+5. repeatable deployment behind host-owned TLS, auth, and rate limits.
+
+The current pass covers the first two items. It does not claim that the
+standard-library server is an internet-facing security boundary.
 
 ## Implemented First Slice: OpenAPI
 
@@ -114,6 +137,10 @@ Request execution:
 - request bodies are limited to 1 MiB by default and larger bodies are
   rejected with `413`; pass `--max-body-bytes` to change the local service
   limit
+- execution work and nested behavior calls are bounded by default; use
+  `--execution-budget N|none` and `--max-call-depth N|none` to set the served
+  runtime policy explicitly (disabling limits is not recommended for a service)
+- `GET /health` reports the active body, execution, and call-depth limits
 - request slugs are derived from the generated OpenAPI paths, including
   collision suffixes such as `/requests/review-vendor-2`
 - the service invokes the exact named `REQUEST` stored in `x-gwt-request-name`
@@ -265,6 +292,9 @@ Error posture:
 - returned error bodies use the `GwtErrorResponse` OpenAPI schema and include
   the GWT diagnostic message when available, but do not expose unrelated host
   stack traces by default
+- unexpected host/runtime exceptions are logged server-side and become a
+  sanitized `500` response with code `GWT_HTTP_UNEXPECTED_ERROR`
+- JSON responses use `no-store` caching and `nosniff` content-type headers
 
 Deferred service options:
 

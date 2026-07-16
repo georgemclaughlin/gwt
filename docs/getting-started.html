@@ -347,7 +347,15 @@ python -m gwtlang schema pricing.gwt \
   --output pricing.schema.json
 
 python -m gwtlang openapi pricing.gwt \
-  --output openapi.json</code></pre>
+  --output openapi.json
+
+python -m gwtlang serve pricing.gwt \
+  --port 8080</code></pre>
+            <p>
+              The served <code>REQUEST</code> boundary is the recommended path
+              for non-Python hosts; they can use ordinary HTTP and OpenAPI
+              tooling while GWT remains the only evaluator.
+            </p>
             <p>
               Capture one JSON request as an integrity-checked Execution Case,
               then build a self-contained local review page that verifies the

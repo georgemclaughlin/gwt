@@ -42,8 +42,15 @@ python -m json.tool /tmp/gwt-openapi.json >/dev/null
 Serve the same request boundary over HTTP:
 
 ```sh
-python -m gwtlang serve examples/deployable_api/rules.gwt --port 8080
+python -m gwtlang serve examples/deployable_api/rules.gwt \
+  --port 8080 \
+  --execution-budget 100000 \
+  --max-call-depth 100
 ```
+
+Those are the bounded defaults, shown explicitly here as operator policy.
+`GET /health` reports the active request-body, execution-work, and call-depth
+limits.
 
 Then call it with ordinary JSON:
 
