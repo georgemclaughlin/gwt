@@ -25,6 +25,12 @@ SpecFlow/Reqnroll, and BDD examples. New features should stay
 behavior-oriented and should not drift toward broad query syntax or invisible
 policy evaluation.
 
+The current language syntax is specified as v0.2. Tooling and interchange
+artifacts evolve on their own versioned surfaces: today the same checked source
+can generate host types, JSON Schema, and OpenAPI; serve named requests; capture
+integrity-checked executions; and compare stable case corpora in a local review
+workbench. `gwt version --json` is the authoritative installed-version report.
+
 ## Flagship Demo
 
 Start with [`examples/vendor_onboarding`](examples/vendor_onboarding). It is the
@@ -130,7 +136,8 @@ gwt serve examples/deployable_api/rules.gwt --port 8080
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
 client-library model and boundary rules, and
 [`docs/http-service-design.md`](docs/http-service-design.md) for the OpenAPI
-and HTTP service direction. Separate JSON Schemas for CLI/API payloads live in
+and HTTP service behavior and trust boundaries. Separate JSON Schemas for
+CLI/API payloads live in
 [`docs/schemas`](docs/schemas). The first CLI-backed Node/TypeScript client
 lives in [`clients/typescript`](clients/typescript), with a typed host example
 in [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examples/vendor-onboarding.ts).
@@ -197,6 +204,19 @@ python -m gwtlang workbench vendor-review.execution-case.json \
   --output vendor-review.html
 ```
 
+Give captured cases stable domain references in a portable corpus. The command
+derives each immutable case ID from the artifact; `check` validates both the
+manifest and every member without rewriting them:
+
+```sh
+python -m gwtlang corpus create \
+  --name "vendor review cases" \
+  --case captured-vendor=vendor-review.execution-case.json \
+  --output vendor-review.case-corpus.json
+
+python -m gwtlang corpus check vendor-review.case-corpus.json
+```
+
 Add paired `--old` and `--new` programs to make old/new behavior comparison the
 primary workbench view. Cases and HTML include full values, so review them
 before sharing or committing them. See
@@ -219,28 +239,24 @@ directory.
 
 ## What To Review First
 
-For a quick public review, start with:
+For a quick public review, start with the current user-facing paths:
 
 | Artifact | Why |
 | --- | --- |
+| [`docs/getting-started.html`](docs/getting-started.html) | Walkthrough from the first program through JSON requests, generated contracts, and captured review evidence |
 | [`examples/vendor_onboarding`](examples/vendor_onboarding) | Practical workflow demo with typed state, review decisions, risk scoring, JSON input, and embedded scenarios |
+| [`examples/deployable_api`](examples/deployable_api) | Named requests projected to JSON Schema, OpenAPI 3.1, generated clients, and the experimental HTTP service |
 | [`examples/behavior_review`](examples/behavior_review) | Focused local capture, explanation, scenario, comparison, and workbench review loop |
-| [`examples/incident_triage`](examples/incident_triage) | v0.3 pilot artifact for deterministic incident escalation, JSON execution, generated Python host types, and a typed host call |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
-| [`docs/roadmap-v0.4.md`](docs/roadmap-v0.4.md) | Active roadmap for trustworthy execution evidence, factual explanations, generated scenarios, impact comparison, and a local behavior-review workbench |
-| [`docs/external-pilot-v0.4.md`](docs/external-pilot-v0.4.md) | Full capture-to-workbench runbook, privacy gate, and evidence template for two unrelated external workflows |
-| [`docs/release-v0.4-checklist.md`](docs/release-v0.4-checklist.md) | Publication gate with name, license, external-pilot, artifact-trust, packaging, and manual-release controls |
-| [`docs/release-notes-v0.4.md`](docs/release-notes-v0.4.md) | Draft candidate notes covering behavior-review tooling, compatibility, trust boundaries, and unresolved blockers |
-| [`docs/project-identity-v0.4.md`](docs/project-identity-v0.4.md) | Rename decision memo, CauSpec working candidate, collision evidence, and compatibility-first migration matrix |
-| [`docs/roadmap-v0.3.md`](docs/roadmap-v0.3.md) | Preceding stabilization roadmap for the v0.3 language/tooling milestone |
-| [`docs/release-v0.3-checklist.md`](docs/release-v0.3-checklist.md) | Concrete v0.3 release-candidate gate, pilot evidence, deferred design pressure, and versioning checklist |
-| [`docs/release-notes-v0.3.md`](docs/release-notes-v0.3.md) | Prepared v0.3 package release notes covering stabilization scope, pilots, and version surfaces |
-| [`docs/pilot-evaluation.md`](docs/pilot-evaluation.md) | Template for testing GWT against real workflows before adding syntax |
+| [`docs/execution-cases.md`](docs/execution-cases.md) | Execution Case, Case Corpus, comparison, and workbench contracts and trust boundaries |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
-| [`docs/program-interface-boundary.md`](docs/program-interface-boundary.md) | Clarifying note on public entries, helper behaviors, scenarios, request files, and CLI JSON execution |
-| [`examples/minilang2_vm`](examples/minilang2_vm) | Larger pressure test covering tokens, AST records, bytecode, closures, modules, stack traces, debugger state, and REPL-like execution |
+| [`docs/language.md`](docs/language.md) | Full current guide to contracts, collections, modules, optional values, and exact numerics |
 | [`docs/design-principles.md`](docs/design-principles.md) | Guardrails for keeping GWT behavior-oriented instead of becoming OPA, SQL, or a general-purpose language |
+
+Active roadmaps, pilot runbooks, release notes, release checklists, and design
+pressure memos remain under [`docs`](docs) for contributors who need project
+history and current planning context.
 
 ## Hello World
 

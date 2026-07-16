@@ -13,7 +13,10 @@ behind making behavior specs executable instead of agent-interpreted handoff
 documents. See [host-language-clients.md](host-language-clients.md) for the
 client-library model for Python, .NET, Java, TypeScript, and other host
 languages, and [http-service-design.md](http-service-design.md) for OpenAPI and
-future HTTP service direction.
+served-request behavior and trust boundaries. Review
+[execution-cases.md](execution-cases.md) for captured runs, named case corpora,
+old/new comparison, and the local workbench; those are tooling artifacts rather
+than additional language syntax.
 
 ## Program Shape
 

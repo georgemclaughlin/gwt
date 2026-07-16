@@ -6,7 +6,7 @@
     <title>GWT - Specs You Can Run</title>
     <meta
       name="description"
-      content="GWT is an experimental language for GIVEN / WHEN / THEN specs you can run."
+      content="GWT is an experimental language for executable GIVEN / WHEN / THEN behavior, typed host boundaries, and reviewable execution evidence."
     >
     <meta name="color-scheme" content="dark light">
     <link rel="icon" href="data:,">
@@ -20,12 +20,14 @@
           <h1>GWT</h1>
           <p class="lede">
             In GWT, the spec is the program. Define the input contract, run
-            named behavior, and return typed results from the same file.
+            named behavior, and return typed results from the same executable
+            file.
           </p>
           <p class="value-line">
             The same file can also carry <strong>GIVEN</strong> /
             <strong>WHEN</strong> / <strong>THEN</strong> scenarios for tests.
-            No separate step files. No semantic handoff.
+            Capture real runs and compare behavior changes without creating a
+            second implementation of the rules.
           </p>
           <div class="actions" aria-label="Primary links">
             <a class="button primary" href="getting-started.html">Getting Started</a>
@@ -57,7 +59,7 @@
 }</code></pre>
             <pre data-title="rules.gwt"><code><span class="tok-kw">RECORD</span> <span class="tok-type">Account</span>
   <span class="tok-key">balance</span>: <span class="tok-type">number</span>
-    <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
 <span class="tok-kw">REQUEST</span> withdraw from account
   <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
   <span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-type">number</span>
@@ -127,6 +129,13 @@
               in CI.
             </p>
           </article>
+          <article class="feature">
+            <h3>Evidence Stays Reviewable</h3>
+            <p>
+              Captured Execution Cases preserve what ran; corpora name the
+              cases that matter for repeatable old/new review.
+            </p>
+          </article>
         </div>
       </section>
 
@@ -160,6 +169,27 @@
             <span>needs_review, 10 risk points, critical tier</span>
           </div>
         </div>
+      </section>
+
+      <section id="review" class="section split reverse">
+        <div class="section-heading">
+          <p class="eyebrow">Behavior review</p>
+          <h2>See What A Rule Change Actually Changes</h2>
+          <p>
+            Capture integrity-checked executions, give important cases stable
+            domain names, replay them against two real program versions, and
+            open a self-contained review dossier.
+          </p>
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/execution-cases.md">
+            Read the evidence workflow
+          </a>
+        </div>
+        <ol class="pipeline" aria-label="Behavior review pipeline">
+          <li>capture an Execution Case</li>
+          <li>group named cases in a corpus</li>
+          <li>compare baseline and candidate behavior</li>
+          <li>review evidence in the local workbench</li>
+        </ol>
       </section>
 
       <section id="stress" class="section split reverse">
@@ -228,6 +258,35 @@
             </div>
             <pre><code>python examples/vendor_onboarding/host_app.py</code></pre>
           </article>
+          <article class="command-item">
+            <div class="command-copy">
+              <h3>Project An HTTP Contract</h3>
+              <p>Generate OpenAPI 3.1 from named requests or serve the same contracts locally.</p>
+            </div>
+            <pre><code>python -m gwtlang openapi \
+  examples/deployable_api/rules.gwt \
+  --output openapi.json
+
+python -m gwtlang serve \
+  examples/deployable_api/rules.gwt \
+  --port 8080</code></pre>
+          </article>
+          <article class="command-item">
+            <div class="command-copy">
+              <h3>Capture Review Evidence</h3>
+              <p>Record a real request as an Execution Case, then render a replay-verified local dossier.</p>
+            </div>
+            <pre><code>python -m gwtlang capture \
+  examples/vendor_onboarding/rules.gwt \
+  --json-input examples/vendor_onboarding/request.json \
+  --request "review vendor" \
+  --output vendor-review.execution-case.json
+
+python -m gwtlang workbench \
+  vendor-review.execution-case.json \
+  --program examples/vendor_onboarding/rules.gwt \
+  --output vendor-review.html</code></pre>
+          </article>
         </div>
       </section>
 
@@ -246,7 +305,7 @@
     </main>
 
     <footer class="footer">
-      <span>GWT v0.2</span>
+      <span>Language spec v0.2</span>
       <a href="getting-started.html">Getting Started</a>
       <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
       <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>

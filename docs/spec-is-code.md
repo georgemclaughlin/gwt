@@ -39,6 +39,11 @@ that normative behavior becomes the `.gwt` program:
 - The checker, formatter, runtime, CLI, LSP, and debugger all operate on the
   same source.
 
+Generated types, JSON Schema, OpenAPI, Execution Cases, comparisons, and review
+workbenches project or record that source; they do not become alternate rule
+implementations. Execution evidence can show what happened and what changed,
+while the `.gwt` program remains the normative behavior.
+
 ## What Becomes Unambiguous
 
 GWT does not make every product question unambiguous. Humans still need to
