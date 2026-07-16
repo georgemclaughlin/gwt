@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import chdir, redirect_stderr, redirect_stdout
 from copy import deepcopy
 from dataclasses import replace
 import importlib.util
@@ -484,9 +484,16 @@ class CaseCorpusTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "evidence"
             entries = self._copy_cases(root)
+            equals_path = root / "cases" / "library=completed.execution-case.json"
+            (root / entries[0].artifact).rename(equals_path)
+            entries[0] = CaseCorpusEntrySpec(
+                entries[0].reference,
+                entries[0].case_id,
+                "cases/library=completed.execution-case.json",
+            )
             corpus_path = root / "review.case-corpus.json"
             stdout = io.StringIO()
-            with redirect_stdout(stdout):
+            with chdir(root), redirect_stdout(stdout):
                 create_status = main(
                     [
                         "corpus",
@@ -494,11 +501,11 @@ class CaseCorpusTests(unittest.TestCase):
                         "--name",
                         "Library CLI review",
                         "--case",
-                        f"ready={root / entries[0].artifact}",
+                        f"ready={entries[0].artifact}",
                         "--case",
-                        f"waiting={root / entries[1].artifact}",
+                        f"waiting={entries[1].artifact}",
                         "--output",
-                        str(corpus_path),
+                        corpus_path.name,
                     ]
                 )
             create_output = stdout.getvalue()
@@ -530,11 +537,79 @@ class CaseCorpusTests(unittest.TestCase):
         self.assertEqual(
             [entry.artifact for entry in corpus.entries],
             [
-                "cases/library-completed.execution-case.json",
+                "cases/library=completed.execution-case.json",
                 "cases/library-available.execution-case.json",
             ],
         )
         self.assertEqual(moved_corpus.references, corpus.references)
+
+    def test_corpus_cli_parser_errors_use_status_two(self):
+        stderr = io.StringIO()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "corpus.json"
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(
+                    [
+                        "corpus",
+                        "create",
+                        "--name",
+                        "Malformed case",
+                        "--case",
+                        "missing-separator",
+                        "--output",
+                        str(output),
+                    ]
+                )
+            output_created = output.exists()
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("expected REFERENCE=CASE", stderr.getvalue())
+        self.assertFalse(output_created)
+
+    def test_corpus_cli_duplicate_failures_preserve_existing_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            entries = self._copy_cases(root)
+            corpus_path = root / "corpus.json"
+            write_case_corpus(
+                corpus_path,
+                name="Existing corpus",
+                entries=entries,
+            )
+            original = corpus_path.read_bytes()
+            invalid_case_arguments = (
+                (
+                    f"same={root / entries[0].artifact}",
+                    f"same={root / entries[1].artifact}",
+                    "duplicate case corpus reference",
+                ),
+                (
+                    f"first={root / entries[0].artifact}",
+                    f"second={root / entries[0].artifact}",
+                    "duplicate case corpus caseId",
+                ),
+            )
+            for first, second, expected_error in invalid_case_arguments:
+                with self.subTest(expected_error=expected_error):
+                    stderr = io.StringIO()
+                    with redirect_stderr(stderr):
+                        status = main(
+                            [
+                                "corpus",
+                                "create",
+                                "--name",
+                                "Invalid replacement",
+                                "--case",
+                                first,
+                                "--case",
+                                second,
+                                "--output",
+                                str(corpus_path),
+                            ]
+                        )
+                    self.assertEqual(status, 1)
+                    self.assertIn(expected_error, stderr.getvalue())
+                    self.assertEqual(corpus_path.read_bytes(), original)
 
     def test_corpus_cli_rejects_outside_members_and_tampered_corpora(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -561,6 +636,24 @@ class CaseCorpusTests(unittest.TestCase):
             outside_error = stderr.getvalue()
             outside_created = corpus_path.exists()
 
+            invalid_case = root / "invalid.execution-case.json"
+            invalid_case.write_text("{}", encoding="utf-8")
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                invalid_status = main(
+                    [
+                        "corpus",
+                        "create",
+                        "--name",
+                        "Invalid member",
+                        "--case",
+                        f"broken-member={invalid_case}",
+                        "--output",
+                        str(corpus_path),
+                    ]
+                )
+            invalid_error = stderr.getvalue()
+
             entries = self._copy_cases(root)[:1]
             corpus = write_case_corpus(
                 corpus_path,
@@ -578,6 +671,9 @@ class CaseCorpusTests(unittest.TestCase):
         self.assertEqual(outside_status, 1)
         self.assertIn("beneath the corpus directory", outside_error)
         self.assertFalse(outside_created)
+        self.assertEqual(invalid_status, 1)
+        self.assertIn("broken-member", invalid_error)
+        self.assertIn(str(invalid_case), invalid_error)
         self.assertEqual(tampered_status, 1)
         self.assertIn("integrity digest mismatch", tampered_error)
 
