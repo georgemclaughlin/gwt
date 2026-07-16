@@ -391,7 +391,7 @@ pre code {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 28px;
 }
@@ -719,6 +719,10 @@ pre code {
   .doc-nav {
     position: static;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
 }

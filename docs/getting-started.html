@@ -6,7 +6,7 @@
     <title>Getting Started With GWT</title>
     <meta
       name="description"
-      content="A step-by-step introduction to GWT programs, records, scenarios, requests, and JSON input."
+      content="A step-by-step introduction to executable GWT behavior, records, scenarios, JSON requests, host contracts, and review evidence."
     >
     <meta name="color-scheme" content="dark light">
     <link rel="icon" href="data:,">
@@ -29,7 +29,8 @@
         <h1>Build A GWT Program In Small Steps</h1>
         <p class="lede">
           Start with one executable example, then add behavior, structured
-          state, record contracts, scenarios, and a host-facing request.
+          state, record contracts, scenarios, and a host-facing request. Finish
+          by validating, projecting, and capturing the same program.
         </p>
         <div class="actions" aria-label="Getting started actions">
           <a class="button primary" href="#first-program">Start The Walkthrough</a>
@@ -41,6 +42,7 @@
 
       <div class="doc-layout">
         <aside class="doc-nav" aria-label="Walkthrough steps">
+          <a href="#setup">Before You Begin</a>
           <a href="#first-program">1. First Program</a>
           <a href="#behavior">2. Behavior</a>
           <a href="#record-state">3. Record State</a>
@@ -48,10 +50,29 @@
           <a href="#scenarios">5. Scenarios</a>
           <a href="#request">6. Request Boundary</a>
           <a href="#json">7. JSON Input</a>
+          <a href="#toolchain">8. Tooling And Evidence</a>
           <a href="#next">Next Steps</a>
         </aside>
 
         <article class="doc-article">
+          <section id="setup" class="walk-step">
+            <p class="step-kicker">Before you begin</p>
+            <h2>Run The Walkthrough From A Checkout</h2>
+            <p>
+              GWT currently requires Python 3.11 or newer. Clone the repository
+              and run the examples from its root. Module invocation works
+              without installation; an editable install also provides the
+              shorter <code>gwt</code> command.
+            </p>
+            <pre><code>git clone https://github.com/georgemclaughlin/gwt.git
+cd gwt
+
+python -m gwtlang version --json
+
+# Optional: install the shorter `gwt` command.
+python -m pip install -e .</code></pre>
+          </section>
+
           <section id="first-program" class="walk-step">
             <p class="step-kicker">Step 1</p>
             <h2>Start With State, Action, And Assertion</h2>
@@ -255,9 +276,11 @@ REQUEST price cart
 THEN cart.total == 92</code></pre>
             <pre><code>python -m gwtlang run pricing.gwt --input request.gwt --json</code></pre>
             <p>
-              Request files do not redeclare the program. The program file owns
-              the records and behavior; the request file supplies state and calls
-              the named request.
+              Save the program as <code>pricing.gwt</code> and the request block
+              as <code>request.gwt</code> before running that command. Request
+              files do not redeclare the program: the program owns records and
+              behavior, while the request file supplies state and calls the
+              named request.
             </p>
           </section>
 
@@ -283,7 +306,9 @@ THEN cart.total == 92</code></pre>
             <p>
               The stable JSON envelope puts declared outputs under
               <code>result</code> and keeps the complete final state under
-              <code>state</code>.
+              <code>state</code>. The excerpt below focuses on those two fields;
+              the complete payload also reports the source file, request file,
+              printed output, and scenario metadata.
             </p>
             <pre><code>{
   "ok": true,
@@ -304,6 +329,42 @@ THEN cart.total == 92</code></pre>
 }</code></pre>
           </section>
 
+          <section id="toolchain" class="walk-step">
+            <p class="step-kicker">Step 8</p>
+            <h2>Validate, Project, And Capture The Program</h2>
+            <p>
+              The same checked source drives local validation, generated host
+              contracts, and review evidence. No second step-definition or
+              handwritten API model becomes the real implementation.
+            </p>
+            <pre><code>python -m gwtlang validate pricing.gwt
+
+python -m gwtlang schema pricing.gwt \
+  --output pricing.schema.json
+
+python -m gwtlang openapi pricing.gwt \
+  --output openapi.json</code></pre>
+            <p>
+              Capture one JSON request as an integrity-checked Execution Case,
+              then build a self-contained local review page that verifies the
+              case still replays against the program.
+            </p>
+            <pre><code>python -m gwtlang capture pricing.gwt \
+  --json-input request.json \
+  --request "price cart" \
+  --output price-cart.execution-case.json
+
+python -m gwtlang workbench \
+  price-cart.execution-case.json \
+  --program pricing.gwt \
+  --output price-cart-review.html</code></pre>
+            <p>
+              For repeated old/new review, group named Execution Cases with
+              <code>gwt corpus create</code>, then pass the corpus to
+              <code>gwt compare</code> or <code>gwt workbench</code>.
+            </p>
+          </section>
+
           <section id="next" class="walk-step next-steps">
             <p class="step-kicker">Next</p>
             <h2>Where To Go After This</h2>
@@ -319,6 +380,12 @@ THEN cart.total == 92</code></pre>
               <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">
                 Continue to the language guide
               </a>
+              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/adoption-modes.md">
+                Choose an adoption mode
+              </a>
+              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/execution-cases.md">
+                Review Execution Cases and corpora
+              </a>
               <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">
                 Open the v0.2 spec
               </a>
@@ -329,7 +396,7 @@ THEN cart.total == 92</code></pre>
     </main>
 
     <footer class="footer">
-      <span>GWT v0.2</span>
+      <span>Language spec v0.2</span>
       <a href="getting-started.html">Getting Started</a>
       <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
       <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>

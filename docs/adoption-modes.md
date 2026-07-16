@@ -34,6 +34,47 @@ If the spec catches real regressions, pin `gwtlang` and add the same command to
 CI. In this mode, GWT is a host-side test dependency, not an application or
 firmware runtime dependency.
 
+## Behavior Review Mode
+
+Use this mode when GWT already describes a deterministic decision and you need
+to understand the effect of a proposed rule change before promotion.
+
+Capture representative JSON requests as versioned Execution Cases, then assign
+stable domain references in a portable corpus:
+
+```sh
+gwt capture rules-v1.gwt \
+  --json-input requests/boundary.json \
+  --request "review request" \
+  --output cases/boundary.execution-case.json
+
+gwt corpus create \
+  --name "review request boundaries" \
+  --case boundary=cases/boundary.execution-case.json \
+  --output cases/review.case-corpus.json
+
+gwt corpus check cases/review.case-corpus.json
+```
+
+Replay the same corpus against the baseline and candidate, then render a local
+review dossier:
+
+```sh
+gwt compare --corpus cases/review.case-corpus.json \
+  --old rules-v1.gwt \
+  --new rules-v2.gwt \
+  --json
+
+gwt workbench --corpus cases/review.case-corpus.json \
+  --old rules-v1.gwt \
+  --new rules-v2.gwt \
+  --output review.html
+```
+
+The corpus says which cases matter; it does not declare whether a change is
+acceptable. Candidate classifications belong to the comparison, and rollout or
+approval policy remains outside GWT.
+
 ## Embedded Decision Mode
 
 Use this mode when an application wants GWT to own a deterministic

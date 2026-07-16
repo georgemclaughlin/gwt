@@ -5,8 +5,9 @@ are implemented. Deployment policy and deeper service customization remain
 deferred.
 
 GWT named `REQUEST` blocks already define a public request/response boundary.
-The HTTP service direction is to project that boundary into standard API
-contracts before adding deployment behavior:
+The implemented HTTP surface projects that boundary into standard API
+contracts and a narrow local service without adding deployment policy to the
+language:
 
 ```text
 .gwt REQUEST contracts -> OpenAPI document -> generated host clients
