@@ -1082,7 +1082,12 @@ def _corpus_entry_specs(
             raise ValueError(
                 f"case artifact must be beneath the corpus directory: {case_path}"
             ) from exc
-        execution_case = ExecutionCase.load(resolved)
+        try:
+            execution_case = ExecutionCase.load(resolved)
+        except (OSError, ValueError) as exc:
+            raise ValueError(
+                f"case {reference!r} cannot be loaded from {case_path}: {exc}"
+            ) from exc
         case_id = execution_case.as_payload()["integrity"]["digest"]
         entries.append(CaseCorpusEntrySpec(reference, case_id, artifact))
     return entries

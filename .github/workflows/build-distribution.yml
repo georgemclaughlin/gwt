@@ -231,8 +231,12 @@ jobs:
           "$VENV/bin/gwt" run "$GITHUB_WORKSPACE/examples/hello.gwt" \
             --json >sdist-hello.json
           "$VENV/bin/python" -m json.tool sdist-hello.json >/dev/null
-          "$VENV/bin/gwt" corpus check smoke.case-corpus.json
-          "$VENV/bin/gwt" workbench --corpus smoke.case-corpus.json \
+          "$VENV/bin/gwt" corpus create \
+            --name "Source distribution smoke" \
+            --case review-amount=case.execution-case.json \
+            --output sdist-smoke.case-corpus.json
+          "$VENV/bin/gwt" corpus check sdist-smoke.case-corpus.json
+          "$VENV/bin/gwt" workbench --corpus sdist-smoke.case-corpus.json \
             --program rules.gwt \
             --name "source distribution smoke" \
             --import-root "$SMOKE_ROOT" \
