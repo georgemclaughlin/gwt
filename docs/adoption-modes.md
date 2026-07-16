@@ -75,6 +75,31 @@ The corpus says which cases matter; it does not declare whether a change is
 acceptable. Candidate classifications belong to the comparison, and rollout or
 approval policy remains outside GWT.
 
+## Served Decision Mode
+
+Use this mode when an application—especially a non-Python application—wants
+GWT to own a deterministic request-to-decision rule. This is the recommended
+cross-language integration path.
+
+Validate and project the contract in CI, then run the same checked source behind
+the standard HTTP boundary:
+
+```sh
+gwt validate rules/main.gwt --import-root rules --no-absolute-imports
+gwt openapi rules/main.gwt --output openapi.json
+gwt serve rules/main.gwt \
+  --import-root rules \
+  --no-absolute-imports \
+  --execution-budget 100000 \
+  --max-call-depth 100
+```
+
+Host applications call the generated `POST /requests/<request-slug>` routes
+with ordinary JSON and consume only declared `OUTPUT` fields. Keep TLS,
+authentication, authorization, rate limiting, and rollout policy in the host's
+gateway or deployment layer. The standard-library service is still
+experimental and should not be treated as an internet-facing security boundary.
+
 ## Embedded Decision Mode
 
 Use this mode when an application wants GWT to own a deterministic

@@ -83,20 +83,18 @@ GWT removes the semantic handoff for deterministic domain behavior:
 GWT does not remove all product ambiguity. It forces behavior ambiguity to be
 resolved before the spec becomes executable.
 
-## Host Language Clients
+## Host Integration
 
-GWT is intended to plug into ordinary application stacks through explicit JSON
-boundaries. A host application can own UI, persistence, network calls, and
-deployment while GWT owns deterministic domain behavior.
-
-The current Python package is the reference client API. Other host-language
-clients can wrap the same runtime contract:
+The recommended cross-language integration is a named `REQUEST` served over
+ordinary HTTP. A host application owns UI, persistence, network calls, auth,
+and deployment policy while GWT owns deterministic domain behavior:
 
 ```text
-host app -> JSON request object -> GWT named request -> typed result envelope
+host app -> JSON HTTP request -> gwt serve -> GWT REQUEST -> declared OUTPUT
 ```
 
-Programs expose stable request names for host code:
+Programs expose stable request names without adding HTTP syntax to the
+language:
 
 ```gwt
 REQUEST review vendor
@@ -105,18 +103,26 @@ REQUEST review vendor
   OUTPUT decision is VendorDecision
 ```
 
-The CLI also supports a portable runner protocol for early clients in .NET,
-Java, TypeScript, Go, Ruby, or any language that can spawn a process:
+Project and serve that boundary from the same checked source:
 
 ```sh
-printf '%s' "$REQUEST_JSON" | gwt run rules.gwt \
-  --json-input - \
-  --request "review vendor" \
-  --json
+gwt openapi examples/deployable_api/rules.gwt --json
+gwt serve examples/deployable_api/rules.gwt --port 8080
 ```
 
-GWT can also generate TypeScript declaration files and standalone JSON Schema
-documents from `TYPE`, `RECORD`, `REQUEST`, and `OUTPUT` contracts:
+`gwt serve` is the active integration-hardening focus. It keeps evaluation in
+the GWT runtime and lets each host use its normal HTTP/OpenAPI ecosystem rather
+than requiring a bespoke GWT runtime wrapper. The Python compile-once API and
+CLI runner remain useful for same-process Python applications, tests, scripts,
+and constrained local tools; generated host types and clients are optional
+projections rather than the primary architecture.
+
+The service is still experimental and should sit behind ordinary deployment
+controls for TLS, authentication, authorization, and rate limiting. Runtime
+work and call depth are bounded by default and configurable with
+`--execution-budget` and `--max-call-depth`.
+
+GWT can also generate TypeScript declarations and standalone JSON Schema:
 
 ```sh
 gwt types examples/vendor_onboarding/rules.gwt --language typescript \
@@ -124,17 +130,8 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript \
 gwt schema examples/deployable_api/rules.gwt --json
 ```
 
-For hosts that consume standard HTTP contracts, GWT can project the same named
-request boundary into OpenAPI and serve those requests experimentally over
-HTTP:
-
-```sh
-gwt openapi examples/deployable_api/rules.gwt --json
-gwt serve examples/deployable_api/rules.gwt --port 8080
-```
-
 See [`docs/host-language-clients.md`](docs/host-language-clients.md) for the
-client-library model and boundary rules, and
+serve-first integration model and embedded/process alternatives, and
 [`docs/http-service-design.md`](docs/http-service-design.md) for the OpenAPI
 and HTTP service behavior and trust boundaries. Separate JSON Schemas for
 CLI/API payloads live in
@@ -144,8 +141,9 @@ in [`clients/typescript/examples/vendor-onboarding.ts`](clients/typescript/examp
 
 ## Quick Start
 
-For the realistic integration path, start with the
-[vendor onboarding flagship demo](examples/vendor_onboarding). For a
+For the realistic HTTP integration path, start with
+[`examples/deployable_api`](examples/deployable_api). For the flagship domain
+workflow, use [vendor onboarding](examples/vendor_onboarding). For a
 concept-by-concept introduction, use the
 [Getting Started walkthrough](docs/getting-started.html), which builds from a
 single `GIVEN / WHEN / THEN` program up through records, scenarios, named
@@ -646,7 +644,12 @@ contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests
 lists callable requests, and `POST /requests/<request-slug>` runs the request
 and returns only the declared `OUTPUT` object. Request posts require
 `Content-Type: application/json` and are limited to 1 MiB by default; use
-`--max-body-bytes` to change the local service limit. Use `--otlp-endpoint` or
+`--max-body-bytes` to change the local service limit. Execution work and nested
+behavior calls are also bounded by default; use `--execution-budget` and
+`--max-call-depth` to make that operator policy explicit. `GET /health` reports
+the active limits. Unexpected internal exceptions return a sanitized JSON
+`GWT_HTTP_UNEXPECTED_ERROR` response while details stay in server logs. Use
+`--otlp-endpoint` or
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
 execution traces out-of-band. Use `--otlp-metrics-endpoint`,
 `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`, or the same base

@@ -20,6 +20,20 @@ and command-line operations that any future UI can faithfully compose.
 The current source-language baseline remains the
 [`v0.2` specification](spec/v0.2.md). v0.4 is not a broad syntax release.
 
+## Current Engineering Focus: Serve-First Integration
+
+With the core behavior-review candidate implemented, the next runtime focus is
+hardening `gwt serve` as the recommended cross-language host boundary. Named
+`REQUEST` contracts remain the language abstraction; HTTP and OpenAPI are
+standard projections rather than new source syntax.
+
+Prioritize stable errors, explicit resource limits, lifecycle and concurrency,
+health/readiness, observability, and repeatable deployment behind host-owned
+TLS, auth, and rate limiting. Deprioritize additional bespoke host-language
+runtimes unless a real integration cannot use the served boundary or the
+embedded Python API. This focus does not broaden v0.4 into a hosted platform or
+an untrusted-code execution service.
+
 ## Product Decision
 
 The product thesis for this milestone is:

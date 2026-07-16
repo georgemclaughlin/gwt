@@ -110,6 +110,8 @@ class GwtHttpService:
     metrics_config: HttpMetricsConfig | None = None
     capture_config: HttpExecutionCaseConfig | None = None
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES
+    execution_budget: int | None = DEFAULT_EXECUTION_BUDGET
+    max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH
     background_exporter: _BackgroundOtlpExporter | None = None
 
     @classmethod
@@ -123,6 +125,8 @@ class GwtHttpService:
         metrics_config: HttpMetricsConfig | None = None,
         capture_config: HttpExecutionCaseConfig | None = None,
         max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+        execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
+        max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
         background_exports: bool = False,
     ) -> GwtHttpService:
         """Compile a GWT file and build its OpenAPI-backed HTTP route table."""
@@ -144,6 +148,12 @@ class GwtHttpService:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         ).as_payload()
+        _validate_non_negative_limit(
+            "max_request_body_bytes",
+            max_request_body_bytes,
+        )
+        _validate_runtime_limit("execution_budget", execution_budget)
+        _validate_runtime_limit("max_call_depth", max_call_depth)
         _prepare_capture_config(
             capture_config,
             compiled=compiled,
@@ -158,6 +168,8 @@ class GwtHttpService:
             metrics_config=metrics_config,
             capture_config=capture_config,
             max_request_body_bytes=max_request_body_bytes,
+            execution_budget=execution_budget,
+            max_call_depth=max_call_depth,
             background_exporter=(
                 _BackgroundOtlpExporter()
                 if background_exports and (trace_config is not None or metrics_config is not None)
@@ -175,6 +187,11 @@ class GwtHttpService:
             "file": self.compiled.file,
             "program": self.program_name,
             "requests": len(self.routes),
+            "limits": {
+                "maxRequestBodyBytes": self.max_request_body_bytes,
+                "executionBudget": self.execution_budget,
+                "maxCallDepth": self.max_call_depth,
+            },
         }
 
     def requests_payload(self) -> dict[str, Any]:
@@ -224,12 +241,23 @@ class GwtHttpService:
                 self._finish_trace(recorder, error=exc.message)
                 raise _with_traceparent(exc, recorder) from exc
             raise
-        except Exception:
+        except Exception as exc:
             status = 500
             error_code = "GWT_HTTP_UNEXPECTED_ERROR"
             error_message = "unexpected GWT HTTP service error"
             self._finish_trace(recorder, error=error_message)
-            raise
+            print(
+                f"gwt: unexpected HTTP service error for {path}: {exc!r}",
+                file=sys.stderr,
+            )
+            raise HttpServiceError(
+                status,
+                error_message,
+                error_code,
+                traceparent=(
+                    recorder.traceparent if recorder is not None else None
+                ),
+            ) from exc
         finally:
             self._export_route_metrics(
                 route,
@@ -278,12 +306,23 @@ class GwtHttpService:
                 self._finish_trace(recorder, error=exc.message)
                 raise _with_traceparent(exc, recorder) from exc
             raise
-        except Exception:
+        except Exception as exc:
             status = 500
             error_code = "GWT_HTTP_UNEXPECTED_ERROR"
             error_message = "unexpected GWT HTTP service error"
             self._finish_trace(recorder, error=error_message)
-            raise
+            print(
+                f"gwt: unexpected HTTP service error for {path}: {exc!r}",
+                file=sys.stderr,
+            )
+            raise HttpServiceError(
+                status,
+                error_message,
+                error_code,
+                traceparent=(
+                    recorder.traceparent if recorder is not None else None
+                ),
+            ) from exc
         finally:
             self._export_route_metrics(
                 route,
@@ -301,7 +340,12 @@ class GwtHttpService:
         recorder: GwtTraceRecorder | None,
     ) -> HttpRouteResult:
         try:
-            runtime = Runtime(self.compiled.program, tracer=recorder)
+            runtime = Runtime(
+                self.compiled.program,
+                tracer=recorder,
+                execution_budget=self.execution_budget,
+                max_call_depth=self.max_call_depth,
+            )
             run_result = runtime.run_json(json_state, request=route.request_name)
         except GwtError as exc:
             error_status = _status_for_gwt_error(str(exc))
@@ -388,8 +432,8 @@ class GwtHttpService:
                 policy=config.policy,
                 declared_result=declared_result,
                 failure=failure,
-                execution_budget=DEFAULT_EXECUTION_BUDGET,
-                max_call_depth=DEFAULT_MAX_CALL_DEPTH,
+                execution_budget=self.execution_budget,
+                max_call_depth=self.max_call_depth,
             )
             payload = execution_case.as_payload()
             case_id = payload["integrity"]["digest"]
@@ -706,6 +750,8 @@ def run_http_server(
     trace_values: bool = False,
     otlp_metrics_endpoint: str | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+    execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
+    max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
     capture_directory: str | Path | None = None,
     capture_request_names: Iterable[str] | None = None,
     capture_values: bool = False,
@@ -751,6 +797,8 @@ def run_http_server(
             else None
         ),
         max_request_body_bytes=max_request_body_bytes,
+        execution_budget=execution_budget,
+        max_call_depth=max_call_depth,
         background_exports=True,
     )
     server = create_http_server(service, host=host, port=port)
@@ -794,6 +842,19 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
         except HttpServiceError as exc:
             self._write_error(exc)
             return
+        except Exception as exc:
+            print(
+                f"gwt: unexpected HTTP service error for {path}: {exc!r}",
+                file=sys.stderr,
+            )
+            self._write_error(
+                HttpServiceError(
+                    500,
+                    "unexpected GWT HTTP service error",
+                    "GWT_HTTP_UNEXPECTED_ERROR",
+                )
+            )
+            return
         self._write_json(
             200,
             result.body,
@@ -815,8 +876,10 @@ class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
     ) -> None:
         rendered = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(rendered)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
         for key, value in (headers or {}).items():
             self.send_header(key, value)
         self.end_headers()
@@ -894,6 +957,18 @@ def _prepare_capture_config(
             request_name,
         )
     config.directory.mkdir(parents=True, exist_ok=True)
+
+
+def _validate_runtime_limit(name: str, value: object) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer or None")
+
+
+def _validate_non_negative_limit(name: str, value: object) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
 
 
 def _contract_path_tree(bindings: Iterable[ContractBinding]) -> _ContractPathNode:

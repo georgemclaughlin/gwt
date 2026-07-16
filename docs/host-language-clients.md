@@ -1,23 +1,43 @@
-# Host Language Clients
+# Host Integration
 
 GWT should be easy to call from ordinary application code. A host application
 should not need to be written in GWT; it should be able to treat GWT as the
 portable executable module for deterministic domain behavior.
 
-For guidance on choosing between host-side executable specs and embedded
-application decisions, see [Adoption Modes](adoption-modes.md).
+For guidance on choosing between served decisions, host-side executable specs,
+and embedded Python decisions, see [Adoption Modes](adoption-modes.md).
 
-The intended boundary is:
+The recommended cross-language boundary is:
 
 ```text
-host application -> JSON request object -> GWT named request -> typed GWT result
+host application -> JSON HTTP request -> gwt serve -> GWT named request -> declared output
 ```
 
 The host language owns I/O, persistence, networking, UI, scheduling, and other
 non-deterministic work. GWT owns the deterministic rules, workflows, contracts,
 state transitions, and executable examples.
 
-## Client Libraries
+## Recommended Boundary: `gwt serve`
+
+Use `gwt serve` when a non-Python application needs to execute GWT behavior:
+
+```sh
+gwt validate rules.gwt --import-root rules --no-absolute-imports
+gwt openapi rules.gwt --output openapi.json
+gwt serve rules.gwt \
+  --host 127.0.0.1 \
+  --port 8080 \
+  --execution-budget 100000 \
+  --max-call-depth 100
+```
+
+This keeps one evaluator and lets hosts use ordinary HTTP clients, generated
+OpenAPI clients, gateways, and deployment controls. It is preferable to
+building and maintaining a GWT-specific runtime wrapper for each ecosystem.
+The service remains experimental; TLS, auth, authorization, and rate limiting
+belong in host-owned infrastructure around it.
+
+## Embedded And Process Alternatives
 
 A GWT client library is a host-language package that makes a `.gwt` program feel
 natural to call from that ecosystem.
@@ -238,12 +258,12 @@ python -m gwtlang openapi rules.gwt --json
 
 The generated document turns caller-provided `GIVEN` bindings into request
 body schemas and declared `OUTPUT` bindings into response body schemas. This is
-the first step toward a deployable HTTP service, and it improves
+the contract served by `gwt serve`, and it improves
 interoperability with generated clients, API gateways, Swagger UI, Postman,
 and contract-test tooling without adding new GWT syntax.
 
-See [HTTP Service And OpenAPI](http-service-design.md) for the service design
-direction and deferred auth boundary.
+See [HTTP Service And OpenAPI](http-service-design.md) for the active hardening
+focus and deferred auth boundary.
 
 ## Runtime Shapes
 
@@ -252,21 +272,22 @@ language:
 
 | Shape | Use when | Tradeoff |
 | --- | --- | --- |
-| In-process SDK | The runtime exists in the host language | Best ergonomics, but requires a native runtime or binding |
-| CLI-backed client | A host app can spawn `gwt` | Portable now, process overhead per call |
-| Long-running runner | A host app wants lower overhead without embedding | Requires a local protocol and lifecycle management |
-| HTTP/gRPC service | Multiple apps or languages share one deployed rules service | Operationally heavier, but language-neutral |
+| HTTP service | A non-Python app or multiple apps execute GWT decisions | Recommended cross-language boundary; operationally heavier than embedding |
+| In-process Python SDK | A Python host wants compile-once local execution | Lowest overhead, but couples the host to the Python runtime |
+| CLI-backed client | A script, test, or local tool can spawn `gwt` | Portable, with process overhead per call |
+| Long-running custom runner | A host cannot use HTTP but needs lower process overhead | Additional lifecycle and protocol surface to own |
 
-The current reference client is Python, because it is already the
-implementation language. The first non-Python client is the CLI-backed
-TypeScript package in [`clients/typescript`](../clients/typescript). The next
-valuable client targets are likely .NET and Java because they represent common
-application hosts.
+The Python API remains the reference embedded client. The CLI-backed TypeScript
+package in [`clients/typescript`](../clients/typescript) remains a useful
+compatibility and testing surface, but new language-specific clients are not
+the current focus. Standard HTTP/OpenAPI tooling should be tried first.
 
-## Client Contract Chunks
+## Existing Client Compatibility Surfaces
 
-Client work should continue to land in small compatibility-preserving chunks.
-The goal is a stable integration contract, not a large fleet of clients.
+Existing client work should receive small compatibility-preserving changes.
+The goal is a stable integration contract, not a large fleet of clients. The
+sections below document supported alternatives, not a plan to expand bespoke
+clients ahead of the served boundary.
 
 ### 1. Reference Contract And Python Client
 
@@ -281,8 +302,9 @@ contract:
   to expose directly
 - add examples that show a host app checking a program before executing it
 
-This chunk is the foundation for every other client. The process bridge can be
-used by any host language while native integrations mature.
+These APIs remain the compatibility foundation for embedded Python and local
+tooling. The process bridge remains available where running an HTTP service is
+not appropriate.
 
 ### 2. TypeScript Client
 
@@ -392,8 +414,8 @@ and Python generation currently follow these rules:
 - named request outputs become the result type
 
 Python `TypedDict` generation follows the same request boundary and also emits a
-program-specific client wrapper. Future .NET and Java clients can start as
-CLI-backed wrappers before they need generated classes.
+program-specific client wrapper. Other ecosystems should prefer classes and
+clients generated by standard OpenAPI tooling before GWT adds bespoke support.
 
 The command shape is:
 
@@ -401,9 +423,9 @@ The command shape is:
 gwt types rules.gwt --language typescript > rules.d.ts
 ```
 
-`gwt serve` should wait until these chunks prove the client contract. A server
-adds lifecycle, concurrency, deployment, and security decisions that are not
-needed to validate the basic host-language client model.
+`gwt serve` is now the primary hardening focus because these chunks proved the
+request and output contract. Lifecycle, concurrency, deployment, and security
+remain explicit service-boundary concerns rather than new GWT syntax.
 
 ## Generated Host Types
 

@@ -11,9 +11,9 @@ guidance inspired by OpenSpec, GitHub Spec Kit, Cucumber, SpecFlow/Reqnroll,
 and BDD examples. See [spec-is-code.md](spec-is-code.md) for the product thesis
 behind making behavior specs executable instead of agent-interpreted handoff
 documents. See [host-language-clients.md](host-language-clients.md) for the
-client-library model for Python, .NET, Java, TypeScript, and other host
-languages, and [http-service-design.md](http-service-design.md) for OpenAPI and
-served-request behavior and trust boundaries. Review
+serve-first cross-language integration model plus embedded Python and process
+alternatives, and [http-service-design.md](http-service-design.md) for OpenAPI,
+served-request behavior, and trust boundaries. Review
 [execution-cases.md](execution-cases.md) for captured runs, named case corpora,
 old/new comparison, and the local workbench; those are tooling artifacts rather
 than additional language syntax.

@@ -31,6 +31,7 @@ from gwtlang.http_server import (
     HttpRouteResult,
     create_http_server,
 )
+from gwtlang.runtime import DEFAULT_EXECUTION_BUDGET, DEFAULT_MAX_CALL_DEPTH
 from gwtlang.tracing import OtlpHttpExporter, OtlpMetricsExporter
 
 
@@ -255,6 +256,8 @@ class HttpServerTests(unittest.TestCase):
                 capture_values=True,
                 capture_request="triage ticket",
                 fact_provenance=provenance_path,
+                execution_budget=200_000,
+                max_call_depth=50,
             ) as base_url:
                 status, payload, headers = request_json_with_headers(
                     f"{base_url}/requests/triage-ticket",
@@ -279,6 +282,14 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(
             execution_case.fact_provenance[0]["source"],
             "support-api.ticket.customer_id",
+        )
+        self.assertEqual(
+            execution_case.as_payload()["execution"]["executionBudget"],
+            200_000,
+        )
+        self.assertEqual(
+            execution_case.as_payload()["execution"]["maxCallDepth"],
+            50,
         )
         self.assertEqual(comparison.cases[0].classification, "unchanged")
 
@@ -436,6 +447,14 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(health["ok"], True)
         self.assertEqual(health["program"], "support ticket api")
         self.assertEqual(health["requests"], 1)
+        self.assertEqual(
+            health["limits"],
+            {
+                "maxRequestBodyBytes": DEFAULT_MAX_REQUEST_BODY_BYTES,
+                "executionBudget": DEFAULT_EXECUTION_BUDGET,
+                "maxCallDepth": DEFAULT_MAX_CALL_DEPTH,
+            },
+        )
 
         self.assertEqual(requests_status, 200)
         self.assertEqual(requests["requests"][0]["name"], "triage ticket")
@@ -452,7 +471,7 @@ class HttpServerTests(unittest.TestCase):
 
     def test_post_request_returns_declared_output_body(self):
         with running_service("examples/deployable_api/rules.gwt") as base_url:
-            status, payload = request_json(
+            status, payload, headers = request_json_with_headers(
                 f"{base_url}/requests/triage-ticket",
                 {
                     "ticket": {
@@ -472,6 +491,54 @@ class HttpServerTests(unittest.TestCase):
         self.assertNotIn("ok", payload)
         self.assertNotIn("state", payload)
         self.assertNotIn("ticket", payload)
+        self.assertEqual(headers["Content-Type"], "application/json; charset=utf-8")
+        self.assertEqual(headers["Cache-Control"], "no-store")
+        self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+
+    def test_served_runtime_limits_are_reported_and_enforced(self):
+        with running_service(
+            "examples/deployable_api/rules.gwt",
+            execution_budget=1,
+            max_call_depth=7,
+        ) as base_url:
+            health_status, health = request_json(f"{base_url}/health")
+            status, payload = request_json(
+                f"{base_url}/requests/triage-ticket",
+                triage_ticket_request(),
+                method="POST",
+            )
+
+        self.assertEqual(health_status, 200)
+        self.assertEqual(health["limits"]["executionBudget"], 1)
+        self.assertEqual(health["limits"]["maxCallDepth"], 7)
+        self.assertEqual(status, 500)
+        self.assertEqual(payload["error"]["code"], "GWT_REQUEST_FAILED")
+        self.assertIn("execution budget exceeded", payload["error"]["message"])
+
+    def test_unexpected_execution_error_returns_sanitized_json(self):
+        stderr = io.StringIO()
+        with (
+            redirect_stderr(stderr),
+            patch.object(
+                GwtHttpService,
+                "_execute_route",
+                side_effect=RuntimeError("private host detail"),
+            ),
+            running_service("examples/deployable_api/rules.gwt") as base_url,
+        ):
+            status, payload = request_json(
+                f"{base_url}/requests/triage-ticket",
+                triage_ticket_request(),
+                method="POST",
+            )
+
+        self.assertEqual(status, 500)
+        self.assertEqual(payload["error"], {
+            "code": "GWT_HTTP_UNEXPECTED_ERROR",
+            "message": "unexpected GWT HTTP service error",
+        })
+        self.assertNotIn("private host detail", json.dumps(payload))
+        self.assertIn("private host detail", stderr.getvalue())
 
     def test_post_request_exports_otlp_trace_and_returns_trace_headers(self):
         incoming_trace_id = "0af7651916cd43dd8448eb211c80319c"
@@ -1317,6 +1384,25 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(error.exception.code, 2)
         self.assertIn("expected a non-negative integer", stderr.getvalue())
 
+    def test_serve_command_rejects_invalid_runtime_limits(self):
+        for flag in ("--execution-budget", "--max-call-depth"):
+            with self.subTest(flag=flag):
+                stderr = io.StringIO()
+                with redirect_stderr(stderr), self.assertRaises(SystemExit) as error:
+                    main(["serve", "examples/deployable_api/rules.gwt", flag, "0"])
+
+                self.assertEqual(error.exception.code, 2)
+                self.assertIn("expected a positive integer or 'none'", stderr.getvalue())
+
+    def test_embedded_service_rejects_invalid_limits_at_startup(self):
+        program = "examples/deployable_api/rules.gwt"
+        with self.assertRaisesRegex(ValueError, "max_request_body_bytes"):
+            GwtHttpService.from_file(program, max_request_body_bytes=-1)
+        with self.assertRaisesRegex(ValueError, "execution_budget"):
+            GwtHttpService.from_file(program, execution_budget=0)
+        with self.assertRaisesRegex(ValueError, "max_call_depth"):
+            GwtHttpService.from_file(program, max_call_depth=True)
+
     def test_serve_command_requires_capture_directory_for_capture_options(self):
         stderr = io.StringIO()
         with redirect_stderr(stderr):
@@ -1344,6 +1430,8 @@ def running_service(
     metrics_config: HttpMetricsConfig | None = None,
     capture_config: HttpExecutionCaseConfig | None = None,
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
+    execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
+    max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
     background_exports: bool = False,
 ):
     service = GwtHttpService.from_file(
@@ -1352,6 +1440,8 @@ def running_service(
         metrics_config=metrics_config,
         capture_config=capture_config,
         max_request_body_bytes=max_request_body_bytes,
+        execution_budget=execution_budget,
+        max_call_depth=max_call_depth,
         background_exports=background_exports,
     )
     server = create_http_server(service, port=0)
@@ -1376,6 +1466,8 @@ def running_serve_process(
     capture_values: bool = False,
     capture_request: str | None = None,
     fact_provenance: Path | None = None,
+    execution_budget: int | None = None,
+    max_call_depth: int | None = None,
 ):
     command = [
         sys.executable,
@@ -1400,6 +1492,10 @@ def running_serve_process(
         command.extend(["--capture-request", capture_request])
     if fact_provenance is not None:
         command.extend(["--fact-provenance", str(fact_provenance)])
+    if execution_budget is not None:
+        command.extend(["--execution-budget", str(execution_budget)])
+    if max_call_depth is not None:
+        command.extend(["--max-call-depth", str(max_call_depth)])
 
     process = subprocess.Popen(
         command,
