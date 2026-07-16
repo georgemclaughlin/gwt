@@ -111,10 +111,11 @@ Omit `--capture-values` for shape-only evidence when inputs must not be retained
 
 The local lifecycle demo runs the complete pinned host-evaluated corpus through
 the actual HTTP service, verifies every `x-gwt-case-id` against the written
-full-value artifact, and attaches the static matcher provenance. It then makes
-a temporary candidate that intentionally reverses the named-release priority
-comparison, compares all captured cases, and renders a self-contained review
-workbench:
+full-value artifact, and attaches the static matcher provenance. It uses `gwt
+corpus create` to derive and write the ordered manifest, verifies it again with
+`gwt corpus check`, then makes a temporary candidate that intentionally
+reverses the named-release priority comparison, compares all captured cases,
+and renders a self-contained review workbench:
 
 ```sh
 python examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py \

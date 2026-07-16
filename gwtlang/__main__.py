@@ -19,7 +19,12 @@ from .api import (
     run_result_payload,
 )
 from .checker import Diagnostic
-from .case_corpus import load_case_corpus
+from .case_corpus import (
+    CaseCorpusEntrySpec,
+    load_case_corpus,
+    validate_case_reference,
+    write_case_corpus,
+)
 from .comparison import compare_execution_cases
 from .debugger import debug_lines_for_file, parse_breakpoint, run_debug_file
 from .execution_case import (
@@ -69,6 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         return capture_command(args)
     if args.command == "scenario-from-run":
         return scenario_from_run_command(args)
+    if args.command == "corpus":
+        return corpus_command(args)
     if args.command == "compare":
         return compare_command(args)
     if args.command == "workbench":
@@ -101,8 +108,8 @@ def main(argv: list[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run, test, check, capture, compare, format, and generate artifacts "
-            "for GWT programs."
+            "Run, test, check, capture, group, compare, format, and generate "
+            "artifacts for GWT programs."
         )
     )
     subparsers = parser.add_subparsers(dest="command")
@@ -239,6 +246,51 @@ def build_parser() -> argparse.ArgumentParser:
         help="Atomically write the canonical scenario to this path instead of stdout.",
     )
     add_import_policy_arguments(scenario_parser)
+
+    corpus_parser = subparsers.add_parser(
+        "corpus",
+        help="Create or validate a versioned Execution Case Corpus.",
+    )
+    corpus_subparsers = corpus_parser.add_subparsers(
+        dest="corpus_command",
+        required=True,
+    )
+    corpus_create_parser = corpus_subparsers.add_parser(
+        "create",
+        help="Create a corpus from labeled Execution Case artifacts.",
+    )
+    corpus_create_parser.add_argument(
+        "--name",
+        required=True,
+        help="Human-readable name for this case selection.",
+    )
+    corpus_create_parser.add_argument(
+        "--case",
+        dest="corpus_cases",
+        action="append",
+        required=True,
+        type=_corpus_case_argument,
+        metavar="REFERENCE=CASE",
+        help=(
+            "Reference and Execution Case path; repeat to preserve the desired "
+            "corpus order."
+        ),
+    )
+    corpus_create_parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="Atomically write the Case Corpus JSON to this path.",
+    )
+    corpus_check_parser = corpus_subparsers.add_parser(
+        "check",
+        help="Validate a corpus, its members, and all integrity digests.",
+    )
+    corpus_check_parser.add_argument(
+        "corpus",
+        type=Path,
+        help="Path to a Case Corpus JSON file.",
+    )
 
     compare_parser = subparsers.add_parser(
         "compare",
@@ -988,6 +1040,54 @@ def scenario_from_run_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def corpus_command(args: argparse.Namespace) -> int:
+    try:
+        if args.corpus_command == "create":
+            entries = _corpus_entry_specs(args.output, args.corpus_cases)
+            corpus = write_case_corpus(
+                args.output,
+                name=args.name,
+                entries=entries,
+            )
+            payload = corpus.as_payload()
+            print(
+                f"Wrote {args.output} "
+                f"({len(corpus.entries)} cases, {payload['integrity']['digest']})"
+            )
+            return 0
+
+        corpus = load_case_corpus(args.corpus)
+        payload = corpus.as_payload()
+        print(
+            f"OK {args.corpus} "
+            f"({len(corpus.entries)} cases, {payload['integrity']['digest']})"
+        )
+        return 0
+    except (OSError, ValueError) as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+
+def _corpus_entry_specs(
+    output_path: Path,
+    cases: list[tuple[str, Path]],
+) -> list[CaseCorpusEntrySpec]:
+    root = output_path.parent.resolve()
+    entries: list[CaseCorpusEntrySpec] = []
+    for reference, case_path in cases:
+        resolved = case_path.resolve()
+        try:
+            artifact = resolved.relative_to(root).as_posix()
+        except ValueError as exc:
+            raise ValueError(
+                f"case artifact must be beneath the corpus directory: {case_path}"
+            ) from exc
+        execution_case = ExecutionCase.load(resolved)
+        case_id = execution_case.as_payload()["integrity"]["digest"]
+        entries.append(CaseCorpusEntrySpec(reference, case_id, artifact))
+    return entries
+
+
 def compare_command(args: argparse.Namespace) -> int:
     if bool(args.cases) == (args.corpus is not None):
         print("gwt: supply CASE files or --corpus, but not both", file=sys.stderr)
@@ -1274,6 +1374,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "explain",
         "capture",
         "scenario-from-run",
+        "corpus",
         "compare",
         "workbench",
         "validate",
@@ -1290,6 +1391,17 @@ def _normalize_argv(argv: list[str]) -> list[str]:
     if argv[0] in {*known_commands, "-h", "--help"}:
         return argv
     return ["run", *argv]
+
+
+def _corpus_case_argument(value: str) -> tuple[str, Path]:
+    reference, separator, case_path = value.partition("=")
+    if not separator or not case_path:
+        raise argparse.ArgumentTypeError("expected REFERENCE=CASE")
+    try:
+        reference = validate_case_reference(reference)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+    return reference, Path(case_path)
 
 
 def _non_negative_int(value: str) -> int:
