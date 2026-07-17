@@ -138,6 +138,22 @@ upstream checkout, network access, generated client, or contact with the
 external maintainer. The cases and HTML contain full request and output values;
 keep them local and apply the same retention rules as the underlying corpus.
 
+Use the corpus produced by that local lifecycle run to qualify the complete
+ASGI served-decision boundary:
+
+```sh
+gwt qualify-serve \
+  examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --corpus /tmp/commit-analyzer-evidence/corpus.json \
+  --engine asgi \
+  --json > /tmp/commit-analyzer-evidence/serve-qualification.json
+```
+
+The expected report passes all 20 corpus cases plus readiness, program
+identity, OpenAPI discovery, bounded overload, and active-request shutdown.
+The controlled lifecycle checks use the real pilot request but do not contact
+the upstream repository or maintainer.
+
 ## Differential conformance
 
 [`conformance_cases.json`](conformance_cases.json) pins 20 upstream-shaped

@@ -13,6 +13,7 @@ identity, replay, integrity, and sensitivity contract.
   `gwt capture` and, for compatibility, `gwt explain --json`.
 - `comparison.schema.json` for `gwt compare --json`.
 - `case-corpus.schema.json` for a versioned, labeled selection of Execution Cases.
+- `serve-qualification.schema.json` for `gwt qualify-serve --json` operator evidence.
 - `check.schema.json` for `gwt check --json`.
 - `inspect.schema.json` for `gwt inspect --json`.
 - `validation.schema.json` for `gwt validate --json`.
@@ -36,6 +37,7 @@ is omitted when the `omit-values` profile is used.
 
 Schemas are additive contracts. New optional fields may be added as tooling
 evolves; incompatible shape changes should bump the payload `schemaVersion`.
-Distribution candidates also install the Execution Case, Case Corpus, and Comparison v1
-schemas under `share/gwtlang/schemas` in the Python environment so offline
-consumers do not require a repository checkout.
+Distribution candidates also install the Execution Case, Case Corpus,
+Comparison, and Serve Qualification v1 schemas under `share/gwtlang/schemas`
+in the Python environment so offline consumers do not require a repository
+checkout.

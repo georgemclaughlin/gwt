@@ -35,6 +35,31 @@ external-server test only when that optional server is not installed.
 These checks establish conformance for the supported messages and versions;
 they are not a claim that GWT implements every protocol ASGI can carry.
 
+## Operator Qualification
+
+For a specific program and a full-value completed Case Corpus, run:
+
+```sh
+gwt qualify-serve rules.gwt --corpus corpus.json --engine asgi --json
+```
+
+The command starts `gwt serve --engine asgi` and treats served OpenAPI as the
+route-discovery contract. It verifies readiness, dependency-closure identity
+in payloads and headers, OpenAPI/request-list agreement, and exact declared
+results for the complete corpus. It then starts the same ASGI application with
+a controlled hold around the first real evaluator call. That hold proves the
+one-slot overload response and active-request SIGTERM path deterministically;
+it is harness instrumentation, not a public server option and not language
+syntax.
+
+The command exits nonzero when any check or corpus case fails. `--json` emits
+the versioned `gwt.serve-qualification` report described by
+[`schemas/serve-qualification.schema.json`](schemas/serve-qualification.schema.json).
+No elapsed-time threshold is a pass condition, so this artifact qualifies the
+supported boundary but does not benchmark capacity or latency. TLS, auth,
+proxy behavior, and multi-process supervision still require deployment-level
+checks.
+
 ## Runtime Shape
 
 The adapter consumes the complete HTTP request body from one or more
