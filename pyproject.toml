@@ -26,4 +26,5 @@ gwtlang = ["py.typed"]
   "docs/schemas/execution-case.schema.json",
   "docs/schemas/comparison.schema.json",
   "docs/schemas/case-corpus.schema.json",
+  "docs/schemas/serve-qualification.schema.json",
 ]

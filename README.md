@@ -133,6 +133,22 @@ work and call depth are bounded by default and configurable with
 bounded; `/live` and `/ready` distinguish process liveness from request
 admission during graceful shutdown.
 
+Before treating a program and corpus as a deployable served decision, run the
+ASGI qualification workflow:
+
+```sh
+gwt qualify-serve rules.gwt --corpus corpus.json --engine asgi --json \
+  >serve-qualification.json
+```
+
+It starts the real CLI service, waits for readiness, checks the complete
+program digest across operator responses and OpenAPI, discovers corpus routes
+from OpenAPI, replays every full-value completed Execution Case, and then uses
+a controlled held evaluation to verify deterministic `503` overload and
+active-request SIGTERM completion. It does not use latency thresholds and is
+not a load test. The versioned report follows
+[`docs/schemas/serve-qualification.schema.json`](docs/schemas/serve-qualification.schema.json).
+
 GWT can also generate TypeScript declarations and standalone JSON Schema:
 
 ```sh
@@ -687,6 +703,16 @@ capacity remain deployment concerns outside GWT.
 The adapter's supported ASGI versions, exclusions, and message/Uvicorn/
 Hypercorn verification matrix are documented in
 [`docs/asgi-contract.md`](docs/asgi-contract.md).
+
+`gwt qualify-serve file.gwt --corpus corpus.json --engine asgi` is the
+repeatable local/CI acceptance check for this boundary. The corpus must contain
+completed Execution Cases captured with full values. Qualification starts the
+actual CLI process for readiness, identity, OpenAPI, and replay checks. A
+separate controlled ASGI process holds one genuine corpus evaluation so the
+concurrency-limit and active-SIGTERM checks are deterministic rather than
+dependent on request duration or host speed. Use `--json` for the versioned
+report; this is deployment-boundary evidence, not a throughput benchmark or a
+claim about TLS, auth, proxy, or multi-process behavior.
 
 Pass `--capture-dir cases` to record served GWT executions as versioned local
 Execution Cases. Served capture is deliberately opt-in and shape-only by

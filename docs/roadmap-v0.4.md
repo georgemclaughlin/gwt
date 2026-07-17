@@ -34,6 +34,13 @@ runtimes unless a real integration cannot use the served boundary or the
 embedded Python API. This focus does not broaden v0.4 into a hosted platform or
 an untrusted-code execution service.
 
+The local boundary now has a repeatable `gwt qualify-serve` acceptance harness
+covering identity, OpenAPI route discovery, complete Case Corpus replay,
+bounded overload, and active-request SIGTERM without timing thresholds. The
+next serve-first pressure should therefore move outward: run the same artifact
+inside one real container/supervisor setup, then add deployment-owned TLS/auth
+and multi-process checks only where that pilot actually needs them.
+
 ## Product Decision
 
 The product thesis for this milestone is:

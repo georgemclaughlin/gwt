@@ -66,6 +66,8 @@ jobs:
               "gwtlang/program_identity.py",
               "gwtlang/runtime.py",
               "gwtlang/scenario_generation.py",
+              "gwtlang/serve_qualification.py",
+              "gwtlang/serve_qualification_probe.py",
               "gwtlang/tracing.py",
               "gwtlang/workbench.py",
               "gwtlang/py.typed",
@@ -74,11 +76,13 @@ jobs:
               "share/gwtlang/schemas/execution-case.schema.json",
               "share/gwtlang/schemas/comparison.schema.json",
               "share/gwtlang/schemas/case-corpus.schema.json",
+              "share/gwtlang/schemas/serve-qualification.schema.json",
           }
           sdist_schema_files = {
               "docs/schemas/execution-case.schema.json",
               "docs/schemas/comparison.schema.json",
               "docs/schemas/case-corpus.schema.json",
+              "docs/schemas/serve-qualification.schema.json",
           }
           sdist_fixture_files = {
               "tests/fixtures/v0.4/README.md",
@@ -210,6 +214,7 @@ jobs:
           test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
           test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
           test -s "$VENV/share/gwtlang/schemas/case-corpus.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/serve-qualification.schema.json"
 
       - name: Smoke-test clean source-distribution installation
         shell: bash
@@ -246,6 +251,7 @@ jobs:
           test -s "$VENV/share/gwtlang/schemas/execution-case.schema.json"
           test -s "$VENV/share/gwtlang/schemas/comparison.schema.json"
           test -s "$VENV/share/gwtlang/schemas/case-corpus.schema.json"
+          test -s "$VENV/share/gwtlang/schemas/serve-qualification.schema.json"
 
       - name: Generate and verify SHA-256 checksums
         shell: bash

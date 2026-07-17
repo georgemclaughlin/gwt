@@ -56,6 +56,7 @@ from .runtime import (
     run_source,
 )
 from .scenario_generation import generate_scenario
+from .serve_qualification import qualify_served_program
 from .service import analyze_file
 from .validation import validate_file
 from .version import version_payload
@@ -99,6 +100,8 @@ def main(argv: list[str] | None = None) -> int:
         return openapi_command(args)
     if args.command == "serve":
         return serve_command(args)
+    if args.command == "qualify-serve":
+        return qualify_serve_command(args)
     if args.command == "version":
         return version_command(args)
     if args.command == "lsp":
@@ -605,6 +608,37 @@ def build_parser() -> argparse.ArgumentParser:
             "Static server-side fact provenance JSON for captured requests. "
             "Requires --capture-dir."
         ),
+    )
+
+    qualify_serve_parser = subparsers.add_parser(
+        "qualify-serve",
+        help="Qualify an ASGI served-decision boundary against a Case Corpus.",
+    )
+    add_file_arguments(qualify_serve_parser)
+    add_import_policy_arguments(qualify_serve_parser)
+    qualify_serve_parser.add_argument(
+        "--corpus",
+        type=Path,
+        required=True,
+        help="Full-value Case Corpus to replay through the served boundary.",
+    )
+    qualify_serve_parser.add_argument(
+        "--engine",
+        choices=("asgi",),
+        default="asgi",
+        help="Qualified transport (currently ASGI only).",
+    )
+    qualify_serve_parser.add_argument(
+        "--timeout",
+        type=_positive_float,
+        default=10.0,
+        metavar="SECONDS",
+        help="Per-step startup, request, and shutdown timeout (default: 10s).",
+    )
+    qualify_serve_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the versioned qualification report as JSON.",
     )
 
     version_parser = subparsers.add_parser(
@@ -1377,6 +1411,34 @@ def serve_command(args: argparse.Namespace) -> int:
         return 1
 
 
+def qualify_serve_command(args: argparse.Namespace) -> int:
+    try:
+        result = qualify_served_program(
+            args.file,
+            args.corpus,
+            engine=args.engine,
+            import_roots=tuple(args.import_root),
+            allow_absolute_imports=not args.no_absolute_imports,
+            timeout_seconds=args.timeout,
+        )
+    except (GwtError, OSError, ValueError) as exc:
+        print(f"gwt: serve qualification could not start: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(result.as_payload(), indent=2, sort_keys=True))
+    else:
+        for check in result.checks:
+            label = "PASS" if check.ok else "FAIL"
+            print(f"{label} {check.name}: {check.detail}")
+        for case in result.cases:
+            if not case.ok:
+                print(f"FAIL case {case.reference}: {case.detail}")
+        label = "PASS" if result.ok else "FAIL"
+        print(f"{label} serve qualification: {len(result.cases)} corpus case(s)")
+    return 0 if result.ok else 1
+
+
 def version_command(args: argparse.Namespace) -> int:
     payload = version_payload()
     if args.json:
@@ -1445,6 +1507,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "schema",
         "openapi",
         "serve",
+        "qualify-serve",
         "version",
         "lsp",
         "debug",

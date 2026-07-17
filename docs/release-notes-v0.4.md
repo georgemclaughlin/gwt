@@ -23,6 +23,9 @@ change is authorized by this document.
   built-in HTTP/1.1 adapter and an optional ASGI/Uvicorn engine, with bounded
   evaluator admission, liveness/readiness probes, graceful draining, stable
   program-identity headers, and bounded background telemetry export.
+- `gwt qualify-serve` exercises a specific ASGI program and full-value Case
+  Corpus through the real CLI boundary, OpenAPI discovery, deterministic
+  overload, and active-request SIGTERM, with a versioned JSON report.
 - `gwt capture` writes a versioned Execution Case for a completed named JSON
   request; `--record-failures` records normalized failures and `--omit-values`
   records a shape-only, explicitly redacted value profile.

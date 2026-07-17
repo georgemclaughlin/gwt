@@ -128,6 +128,13 @@ from .runtime import (
     run_source,
 )
 from .scenario_generation import ScenarioGenerationResult, generate_scenario
+from .serve_qualification import (
+    SERVE_QUALIFICATION_SCHEMA_VERSION,
+    QualificationCaseResult,
+    QualificationCheck,
+    ServeQualificationResult,
+    qualify_served_program,
+)
 from .service import analyze_file, analyze_source
 from .symbols import build_symbol_table
 from .tracing import (
@@ -235,6 +242,10 @@ __all__ = [
     "SUPPORTED_ASGI_LIFESPAN_SPEC_VERSION",
     "SUPPORTED_ASGI_VERSION",
     "ScenarioGenerationResult",
+    "SERVE_QUALIFICATION_SCHEMA_VERSION",
+    "QualificationCaseResult",
+    "QualificationCheck",
+    "ServeQualificationResult",
     "TypeScriptTypesResult",
     "VersionPayload",
     "AnalysisPayload",
@@ -288,6 +299,7 @@ __all__ = [
     "run_request",
     "run_source",
     "render_workbench_html",
+    "qualify_served_program",
     "run_text",
     "validate_file",
     "write_case_corpus",
