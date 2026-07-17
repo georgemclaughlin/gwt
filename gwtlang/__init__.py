@@ -32,7 +32,14 @@ from .api import (
     run_text,
     validate_file,
 )
-from .asgi import GwtAsgiApplication, create_asgi_application
+from .asgi import (
+    SUPPORTED_ASGI_HTTP_SPEC_MAJOR,
+    SUPPORTED_ASGI_LIFESPAN_SPEC_VERSION,
+    SUPPORTED_ASGI_VERSION,
+    GwtAsgiApplication,
+    GwtAsgiProtocolError,
+    create_asgi_application,
+)
 from .checker import check_program
 from .case_corpus import (
     CASE_CORPUS_SCHEMA_VERSION,
@@ -186,6 +193,7 @@ __all__ = [
     "GwtClient",
     "GwtError",
     "GwtAsgiApplication",
+    "GwtAsgiProtocolError",
     "GwtHostAdapter",
     "GwtHttpService",
     "GwtHttpServer",
@@ -223,6 +231,9 @@ __all__ = [
     "ProgramIdentityManifest",
     "ProgramModuleIdentity",
     "SPAN_KIND_CLIENT",
+    "SUPPORTED_ASGI_HTTP_SPEC_MAJOR",
+    "SUPPORTED_ASGI_LIFESPAN_SPEC_VERSION",
+    "SUPPORTED_ASGI_VERSION",
     "ScenarioGenerationResult",
     "TypeScriptTypesResult",
     "VersionPayload",

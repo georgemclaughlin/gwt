@@ -9,11 +9,14 @@ import os
 from pathlib import Path
 from queue import Empty, Queue
 import re
+import signal
+import socket
 import subprocess
 import sys
 import tempfile
 from threading import Event, Thread
 import time
+from types import FrameType
 from typing import Any
 import unittest
 from unittest.mock import patch
@@ -21,6 +24,12 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from gwtlang.__main__ import main
+from gwtlang.asgi import (
+    GwtAsgiApplication,
+    GwtAsgiProtocolError,
+    _install_uvicorn_exit_hook,
+    create_asgi_application,
+)
 from gwtlang.comparison import compare_execution_cases
 from gwtlang.execution_case import ExecutionCase
 from gwtlang.http_server import (
@@ -49,6 +58,7 @@ class HttpServerTests(unittest.TestCase):
             DEFAULT_MAX_CONCURRENT_REQUESTS as exported_concurrency_limit,
             DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
             GwtAsgiApplication as ExportedGwtAsgiApplication,
+            GwtAsgiProtocolError as ExportedGwtAsgiProtocolError,
             GwtHttpApplication as ExportedGwtHttpApplication,
             GwtHttpService as ExportedGwtHttpService,
             HttpApplicationRequest as ExportedHttpApplicationRequest,
@@ -65,6 +75,7 @@ class HttpServerTests(unittest.TestCase):
         self.assertIs(ExportedGwtHttpApplication, GwtHttpApplication)
         self.assertIs(ExportedGwtHttpService, GwtHttpService)
         self.assertEqual(ExportedGwtAsgiApplication.__name__, "GwtAsgiApplication")
+        self.assertIs(ExportedGwtAsgiProtocolError, GwtAsgiProtocolError)
         self.assertIs(ExportedHttpApplicationRequest, HttpApplicationRequest)
         self.assertIs(ExportedHttpExecutionCaseConfig, HttpExecutionCaseConfig)
         self.assertIs(ExportedHttpMetricsConfig, HttpMetricsConfig)
@@ -74,6 +85,7 @@ class HttpServerTests(unittest.TestCase):
         self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
         self.assertIn("DEFAULT_MAX_CONCURRENT_REQUESTS", gwtlang.__all__)
         self.assertIn("GwtAsgiApplication", gwtlang.__all__)
+        self.assertIn("GwtAsgiProtocolError", gwtlang.__all__)
         self.assertIn("GwtHttpApplication", gwtlang.__all__)
         self.assertIn("HttpMetricsConfig", gwtlang.__all__)
         self.assertIn("HttpExecutionCaseConfig", gwtlang.__all__)
@@ -188,8 +200,6 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(payload["error"]["code"], "GWT_HTTP_METHOD_NOT_ALLOWED")
 
     def test_asgi_adapter_serves_http_and_drains_on_lifespan_shutdown(self):
-        from gwtlang.asgi import create_asgi_application
-
         service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
         application = create_asgi_application(service)
 
@@ -204,7 +214,7 @@ class HttpServerTests(unittest.TestCase):
                 http_sent.append(message)
 
             await application(
-                {"type": "http", "method": "GET", "path": "/ready", "headers": []},
+                asgi_http_scope("/ready"),
                 receive_http,
                 send_http,
             )
@@ -220,7 +230,11 @@ class HttpServerTests(unittest.TestCase):
             async def send_lifespan(message: dict[str, Any]) -> None:
                 lifespan_sent.append(message)
 
-            await application({"type": "lifespan"}, receive_lifespan, send_lifespan)
+            await application(
+                asgi_lifespan_scope(),
+                receive_lifespan,
+                send_lifespan,
+            )
             return http_sent, lifespan_sent
 
         http_sent, lifespan_sent = asyncio.run(exercise())
@@ -233,12 +247,260 @@ class HttpServerTests(unittest.TestCase):
         )
         self.assertFalse(application.application.accepting)
 
+    def test_asgi_http_contract_handles_chunked_request_and_ordered_response(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = create_asgi_application(service)
+        rendered = json.dumps(triage_ticket_request()).encode()
+        split = len(rendered) // 2
+        scope = asgi_http_scope(
+            "/requests/triage-ticket",
+            method="POST",
+            query_string=b"source=contract-test",
+        )
+        scope["headers"] = iter([(b"content-type", b"application/json")])
+        try:
+            sent = run_asgi_exchange(
+                application,
+                scope,
+                [
+                    {
+                        "type": "http.request",
+                        "body": rendered[:split],
+                        "more_body": True,
+                        "extension.example": {"ignored": True},
+                    },
+                    {
+                        "type": "http.request",
+                        "body": rendered[split:],
+                    },
+                ],
+            )
+        finally:
+            application.application.close()
+
+        self.assertEqual(
+            [message["type"] for message in sent],
+            ["http.response.start", "http.response.body"],
+        )
+        self.assertEqual(sent[0]["status"], 200)
+        response_headers = sent[0]["headers"]
+        self.assertTrue(
+            all(name == name.lower() for name, _ in response_headers)
+        )
+        self.assertTrue(
+            all(
+                isinstance(name, bytes) and isinstance(value, bytes)
+                for name, value in response_headers
+            )
+        )
+        self.assertEqual(json.loads(sent[1]["body"])["decision"]["queue"], "incident")
+
+    def test_asgi_http_contract_handles_disconnect_and_oversized_chunks(self):
+        disconnected_service = GwtHttpService.from_file(
+            "examples/deployable_api/rules.gwt"
+        )
+        disconnected = create_asgi_application(disconnected_service)
+        try:
+            sent = run_asgi_exchange(
+                disconnected,
+                asgi_http_scope("/ready"),
+                [{"type": "http.disconnect"}],
+            )
+        finally:
+            disconnected.application.close()
+        self.assertEqual(sent, [])
+
+        limited_service = GwtHttpService.from_file(
+            "examples/deployable_api/rules.gwt",
+            max_request_body_bytes=5,
+        )
+        limited = create_asgi_application(limited_service)
+        try:
+            oversized = run_asgi_exchange(
+                limited,
+                asgi_http_scope(
+                    "/requests/triage-ticket",
+                    method="POST",
+                    headers=[(b"content-type", b"application/json")],
+                ),
+                [
+                    {"type": "http.request", "body": b"123", "more_body": True},
+                    {"type": "http.request", "body": b"456", "more_body": True},
+                    {"type": "http.request", "body": b"789"},
+                ],
+            )
+        finally:
+            limited.application.close()
+
+        self.assertEqual(oversized[0]["status"], 413)
+        self.assertEqual(
+            json.loads(oversized[1]["body"])["error"]["code"],
+            "GWT_HTTP_BODY_TOO_LARGE",
+        )
+
+    def test_asgi_contract_rejects_invalid_scopes_and_events(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = create_asgi_application(service)
+        try:
+            invalid_exchanges = (
+                (
+                    {**asgi_http_scope("/ready"), "asgi": {"version": "2.0"}},
+                    [{"type": "http.request"}],
+                ),
+                (
+                    asgi_http_scope("/ready"),
+                    [{"type": "gwt.unknown"}, {"type": "http.request"}],
+                ),
+                (
+                    asgi_http_scope("/ready"),
+                    [{"type": "http.request", "body": "not-bytes"}],
+                ),
+                (
+                    asgi_http_scope("/ready"),
+                    [{"type": "http.request", "more_body": "yes"}],
+                ),
+                (
+                    {**asgi_http_scope("/ready"), "query_string": "not-bytes"},
+                    [{"type": "http.request"}],
+                ),
+                (
+                    {**asgi_http_scope("/ready"), "method": "get"},
+                    [{"type": "http.request"}],
+                ),
+                (
+                    {
+                        "type": "websocket",
+                        "asgi": {"version": "3.0", "spec_version": "2.5"},
+                    },
+                    [],
+                ),
+            )
+            for scope, messages in invalid_exchanges:
+                with self.subTest(scope=scope, messages=messages):
+                    with self.assertRaises(GwtAsgiProtocolError):
+                        run_asgi_exchange(application, scope, messages)
+        finally:
+            application.application.close()
+
+    def test_asgi_lifespan_contract_rejects_invalid_order_and_reports_cleanup_failure(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = create_asgi_application(service)
+        try:
+            with self.assertRaises(GwtAsgiProtocolError):
+                run_asgi_exchange(
+                    application,
+                    asgi_lifespan_scope(),
+                    [{"type": "lifespan.shutdown"}],
+                )
+            with self.assertRaises(GwtAsgiProtocolError):
+                run_asgi_exchange(
+                    application,
+                    asgi_lifespan_scope(),
+                    [{"type": "lifespan.unknown"}],
+                )
+            with self.assertRaises(GwtAsgiProtocolError):
+                run_asgi_exchange(
+                    application,
+                    asgi_lifespan_scope(spec_version="1.0"),
+                    [{"type": "lifespan.startup"}],
+                )
+
+            with patch.object(
+                application.application,
+                "close",
+                side_effect=RuntimeError("cleanup detail"),
+            ):
+                sent = run_asgi_exchange(
+                    application,
+                    asgi_lifespan_scope(),
+                    [
+                        {"type": "lifespan.startup"},
+                        {"type": "lifespan.shutdown"},
+                    ],
+                )
+        finally:
+            application.application.close()
+
+        self.assertEqual(sent[-1]["type"], "lifespan.shutdown.failed")
+        self.assertNotIn("cleanup detail", sent[-1]["message"])
+
+    def test_uvicorn_exit_hook_marks_application_draining_before_server_exit(self):
+        class FakeUvicornServer:
+            def __init__(self) -> None:
+                self.exits: list[tuple[int, FrameType | None]] = []
+
+            def handle_exit(self, sig: int, frame: FrameType | None) -> None:
+                self.exits.append((sig, frame))
+
+            def run(self, sockets: list[socket.socket] | None = None) -> None:
+                del sockets
+
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = GwtHttpApplication(service)
+        server = FakeUvicornServer()
+        try:
+            _install_uvicorn_exit_hook(server, application)
+            server.handle_exit(signal.SIGTERM, None)
+        finally:
+            application.close()
+
+        self.assertFalse(application.accepting)
+        self.assertEqual(server.exits, [(signal.SIGTERM, None)])
+
+    @unittest.skipUnless(importlib.util.find_spec("uvicorn"), "uvicorn is optional")
+    def test_asgi_sigterm_allows_admitted_request_to_finish(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            marker = Path(temp_dir) / "request-started"
+            with running_delayed_asgi_process(marker) as (base_url, process):
+                responses: list[tuple[int, object]] = []
+                request_thread = Thread(
+                    target=lambda: responses.append(
+                        request_json(
+                            f"{base_url}/requests/triage-ticket",
+                            triage_ticket_request(),
+                            method="POST",
+                        )
+                    )
+                )
+                request_thread.start()
+                deadline = time.monotonic() + 5
+                while not marker.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                self.assertTrue(marker.exists())
+                process.send_signal(signal.SIGTERM)
+                request_thread.join(timeout=10)
+                process.wait(timeout=10)
+
+        self.assertFalse(request_thread.is_alive())
+        self.assertIn(process.returncode, {0, -signal.SIGTERM})
+        self.assertEqual(responses[0][0], 200)
+        response_payload = responses[0][1]
+        self.assertIsInstance(response_payload, dict)
+        if not isinstance(response_payload, dict):
+            raise AssertionError("expected response object")
+        self.assertEqual(response_payload["decision"]["queue"], "incident")
+
     @unittest.skipUnless(importlib.util.find_spec("uvicorn"), "uvicorn is optional")
     def test_asgi_engine_serves_the_same_request_contract(self):
         with running_serve_process(
             "examples/deployable_api/rules.gwt",
             engine="asgi",
         ) as base_url:
+            ready_status, ready = request_json(f"{base_url}/ready")
+            status, payload = request_json(
+                f"{base_url}/requests/triage-ticket",
+                triage_ticket_request(),
+                method="POST",
+            )
+
+        self.assertEqual(ready_status, 200)
+        self.assertEqual(ready["ready"], True)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
+
+    @unittest.skipUnless(importlib.util.find_spec("hypercorn"), "hypercorn is optional")
+    def test_asgi_application_interoperates_with_hypercorn(self):
+        with running_hypercorn_process() as base_url:
             ready_status, ready = request_json(f"{base_url}/ready")
             status, payload = request_json(
                 f"{base_url}/requests/triage-ticket",
@@ -1686,6 +1948,59 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(headers["x-gwt-trace-id"], trace_id)
 
 
+def asgi_http_scope(
+    path: str,
+    *,
+    method: str = "GET",
+    headers: list[tuple[bytes, bytes]] | None = None,
+    query_string: bytes = b"",
+    spec_version: str = "2.5",
+) -> dict[str, Any]:
+    return {
+        "type": "http",
+        "asgi": {"version": "3.0", "spec_version": spec_version},
+        "http_version": "1.1",
+        "method": method,
+        "scheme": "http",
+        "path": path,
+        "raw_path": path.encode("ascii"),
+        "query_string": query_string,
+        "root_path": "",
+        "headers": headers or [],
+        "client": ("127.0.0.1", 50000),
+        "server": ("127.0.0.1", 8080),
+    }
+
+
+def asgi_lifespan_scope(*, spec_version: str = "2.0") -> dict[str, Any]:
+    return {
+        "type": "lifespan",
+        "asgi": {"version": "3.0", "spec_version": spec_version},
+        "state": {},
+    }
+
+
+def run_asgi_exchange(
+    application: GwtAsgiApplication,
+    scope: dict[str, Any],
+    messages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    async def exchange() -> list[dict[str, Any]]:
+        received = iter(messages)
+        sent: list[dict[str, Any]] = []
+
+        async def receive() -> dict[str, Any]:
+            return next(received)
+
+        async def send(message: dict[str, Any]) -> None:
+            sent.append(message)
+
+        await application(scope, receive, send)
+        return sent
+
+    return asyncio.run(exchange())
+
+
 @contextmanager
 def running_service(
     path: str | Path,
@@ -1794,6 +2109,121 @@ def running_serve_process(
     finally:
         _stop_process(process)
         _close_process_pipes(process)
+
+
+@contextmanager
+def running_hypercorn_process():
+    port = _available_tcp_port()
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "hypercorn",
+            "tests.asgi_fixture:application",
+            "--bind",
+            f"127.0.0.1:{port}",
+            "--graceful-timeout",
+            "5",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    base_url = f"http://127.0.0.1:{port}"
+    try:
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            if process.poll() is not None:
+                stderr = process.stderr.read() if process.stderr is not None else ""
+                raise AssertionError(
+                    f"Hypercorn exited before becoming ready: {stderr}"
+                )
+            try:
+                status, _ = request_json(f"{base_url}/ready")
+            except OSError:
+                time.sleep(0.05)
+                continue
+            if status == 200:
+                break
+        else:
+            raise AssertionError("Hypercorn did not become ready")
+        yield base_url
+    finally:
+        _stop_process(process)
+        _close_process_pipes(process)
+
+
+@contextmanager
+def running_delayed_asgi_process(marker: Path):
+    script = """
+import pathlib
+import sys
+import time
+
+from gwtlang.__main__ import main
+from gwtlang.http_server import GwtHttpService
+
+original_execute = GwtHttpService._execute_route
+marker = pathlib.Path(sys.argv[1])
+
+def delayed_execute(service, route, state, recorder):
+    marker.write_text("started")
+    time.sleep(0.5)
+    return original_execute(service, route, state, recorder)
+
+GwtHttpService._execute_route = delayed_execute
+raise SystemExit(main([
+    "serve",
+    "examples/deployable_api/rules.gwt",
+    "--engine",
+    "asgi",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "0",
+    "--shutdown-grace-seconds",
+    "5",
+]))
+"""
+    process = subprocess.Popen(
+        [sys.executable, "-c", script, str(marker)],
+        cwd=Path(__file__).resolve().parents[1],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    output = Queue()
+    if process.stdout is None:
+        raise AssertionError("expected delayed ASGI server stdout pipe")
+    Thread(
+        target=_read_server_startup_line,
+        args=(process.stdout, output),
+        daemon=True,
+    ).start()
+    try:
+        try:
+            line = output.get(timeout=10)
+        except Empty as exc:
+            stderr = process.stderr.read() if process.stderr is not None else ""
+            raise AssertionError(
+                f"delayed ASGI server did not report startup URL: {stderr}"
+            ) from exc
+        match = re.search(r" at (http://\S+)$", line.strip())
+        if match is None:
+            raise AssertionError(
+                f"unexpected delayed ASGI startup output: {line!r}"
+            )
+        yield match.group(1), process
+    finally:
+        _stop_process(process)
+        _close_process_pipes(process)
+
+
+def _available_tcp_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.bind(("127.0.0.1", 0))
+        return int(listener.getsockname()[1])
 
 
 def _read_server_startup_line(stream: Any, output: Queue) -> None:
