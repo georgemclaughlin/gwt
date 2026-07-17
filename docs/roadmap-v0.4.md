@@ -36,10 +36,13 @@ an untrusted-code execution service.
 
 The local boundary now has a repeatable `gwt qualify-serve` acceptance harness
 covering identity, OpenAPI route discovery, complete Case Corpus replay,
-bounded overload, and active-request SIGTERM without timing thresholds. The
-next serve-first pressure should therefore move outward: run the same artifact
-inside one real container/supervisor setup, then add deployment-owned TLS/auth
-and multi-process checks only where that pilot actually needs them.
+bounded overload, and active-request SIGTERM without timing thresholds. A
+single-container runner repeats that evidence through a built image, Docker
+healthcheck, ephemeral published port, PID 1 signal delivery, and clean
+ordinary/active shutdown. Further deployment pressure should now be demanded
+by a concrete pilot: add a reverse proxy, TLS/auth, or multi-process supervisor
+only when its ownership boundary and failure modes are specific enough to
+qualify honestly.
 
 ## Product Decision
 

@@ -149,6 +149,19 @@ active-request SIGTERM completion. It does not use latency thresholds and is
 not a load test. The versioned report follows
 [`docs/schemas/serve-qualification.schema.json`](docs/schemas/serve-qualification.schema.json).
 
+To qualify the same boundary through an actual Docker image, published port,
+image healthcheck, and Docker-delivered SIGTERM, use the focused runner in
+[`examples/deployable_api`](examples/deployable_api):
+
+```sh
+python examples/deployable_api/qualify_container.py rules.gwt \
+  --program-root . --corpus corpus.json --json
+```
+
+It emits the same report kind and adds container image, health, overload, and
+shutdown checks. It remains a single-container acceptance test; proxy, TLS,
+authentication, and multi-worker behavior are outside its claim.
+
 GWT can also generate TypeScript declarations and standalone JSON Schema:
 
 ```sh

@@ -26,6 +26,9 @@ change is authorized by this document.
 - `gwt qualify-serve` exercises a specific ASGI program and full-value Case
   Corpus through the real CLI boundary, OpenAPI discovery, deterministic
   overload, and active-request SIGTERM, with a versioned JSON report.
+- The deployable API example builds and qualifies the same report through a
+  non-root Docker image, `/ready` healthcheck, ephemeral published port, PID 1
+  `exec` handoff, clean `docker stop`, overload, and active-request SIGTERM.
 - `gwt capture` writes a versioned Execution Case for a completed named JSON
   request; `--record-failures` records normalized failures and `--omit-values`
   records a shape-only, explicitly redacted value profile.

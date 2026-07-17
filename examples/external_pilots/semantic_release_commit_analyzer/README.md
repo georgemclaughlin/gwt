@@ -154,6 +154,21 @@ identity, OpenAPI discovery, bounded overload, and active-request shutdown.
 The controlled lifecycle checks use the real pilot request but do not contact
 the upstream repository or maintainer.
 
+The same corpus can pressure the actual deployable Docker image and its PID 1,
+healthcheck, ephemeral port publication, and signal delivery:
+
+```sh
+python examples/deployable_api/qualify_container.py \
+  examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+  --program-root examples/external_pilots/semantic_release_commit_analyzer \
+  --corpus /tmp/commit-analyzer-evidence/corpus.json \
+  --json > /tmp/commit-analyzer-evidence/container-qualification.json
+```
+
+The expected result remains 20/20 with clean ordinary and active-request
+container shutdown. The temporary image and containers are removed unless
+`--keep-image` is supplied.
+
 ## Differential conformance
 
 [`conformance_cases.json`](conformance_cases.json) pins 20 upstream-shaped

@@ -5,7 +5,8 @@ services:
       dockerfile: examples/deployable_api/Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      GWT_SERVE_ARGS: "${GWT_SERVE_ARGS:---engine asgi}"
+      GWT_ENGINE: "${GWT_ENGINE:-asgi}"
+      GWT_SERVE_ARGS: "${GWT_SERVE_ARGS:-}"
     ports:
       - "${GWT_HTTP_BIND:-127.0.0.1}:${GWT_HTTP_PORT:-8080}:8080"
     depends_on:

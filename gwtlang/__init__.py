@@ -132,7 +132,9 @@ from .serve_qualification import (
     SERVE_QUALIFICATION_SCHEMA_VERSION,
     QualificationCaseResult,
     QualificationCheck,
+    ServedEndpointQualificationResult,
     ServeQualificationResult,
+    qualify_served_endpoint,
     qualify_served_program,
 )
 from .service import analyze_file, analyze_source
@@ -245,6 +247,7 @@ __all__ = [
     "SERVE_QUALIFICATION_SCHEMA_VERSION",
     "QualificationCaseResult",
     "QualificationCheck",
+    "ServedEndpointQualificationResult",
     "ServeQualificationResult",
     "TypeScriptTypesResult",
     "VersionPayload",
@@ -299,6 +302,7 @@ __all__ = [
     "run_request",
     "run_source",
     "render_workbench_html",
+    "qualify_served_endpoint",
     "qualify_served_program",
     "run_text",
     "validate_file",

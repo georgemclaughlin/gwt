@@ -60,6 +60,21 @@ supported boundary but does not benchmark capacity or latency. TLS, auth,
 proxy behavior, and multi-process supervision still require deployment-level
 checks.
 
+The repository's next deployment layer is executable as well:
+
+```sh
+python examples/deployable_api/qualify_container.py rules.gwt \
+  --program-root . --corpus corpus.json --json
+```
+
+That runner builds the checked Dockerfile and repeats the endpoint checks
+through an ephemeral published port. It additionally requires Docker health to
+reach `healthy`, an ordinary `docker stop` to exit cleanly, overload to remain
+stable through port publication, and Docker-delivered SIGTERM to preserve an
+already admitted response. The image starts Python/Uvicorn as PID 1 through an
+`exec` handoff. This establishes the single-container process contract, not
+reverse-proxy, TLS, authentication, orchestration, or multi-worker conformance.
+
 ## Runtime Shape
 
 The adapter consumes the complete HTTP request body from one or more
