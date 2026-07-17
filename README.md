@@ -684,6 +684,10 @@ the same routes, admission responses, identity headers, and OpenAPI contract.
 TLS, authentication, authorization, external rate limiting, and multi-process
 capacity remain deployment concerns outside GWT.
 
+The adapter's supported ASGI versions, exclusions, and message/Uvicorn/
+Hypercorn verification matrix are documented in
+[`docs/asgi-contract.md`](docs/asgi-contract.md).
+
 Pass `--capture-dir cases` to record served GWT executions as versioned local
 Execution Cases. Served capture is deliberately opt-in and shape-only by
 default: inputs, outputs, operands, error details, and optional fact provenance

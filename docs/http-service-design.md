@@ -135,6 +135,10 @@ lifespan startup and shutdown. The built-in adapter uses HTTP/1.1 and a
 configurable socket timeout, but remains deliberately dependency-free rather
 than being presented as an internet-facing production server.
 
+The supported protocol surface and its message/server test matrix are recorded
+in [ASGI Application Contract](asgi-contract.md). GWT claims ASGI 3.0 HTTP
+major version 2 and lifespan 2.0; it does not claim WebSocket support.
+
 Startup behavior:
 
 - parse, import, and check the `.gwt` program once
