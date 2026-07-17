@@ -72,8 +72,11 @@ through an ephemeral published port. It additionally requires Docker health to
 reach `healthy`, an ordinary `docker stop` to exit cleanly, overload to remain
 stable through port publication, and Docker-delivered SIGTERM to preserve an
 already admitted response. The image starts Python/Uvicorn as PID 1 through an
-`exec` handoff. This establishes the single-container process contract, not
-reverse-proxy, TLS, authentication, orchestration, or multi-worker conformance.
+`exec` handoff, verified from the PID 1 executable and argument vector. Once
+the local inputs validate, `--json` remains a schema-valid report even when a
+Docker boundary check fails. This establishes the single-container process
+contract, not reverse-proxy, TLS, authentication, orchestration, or
+multi-worker conformance.
 
 ## Runtime Shape
 
