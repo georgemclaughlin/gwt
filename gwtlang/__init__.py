@@ -32,6 +32,7 @@ from .api import (
     run_text,
     validate_file,
 )
+from .asgi import GwtAsgiApplication, create_asgi_application
 from .checker import check_program
 from .case_corpus import (
     CASE_CORPUS_SCHEMA_VERSION,
@@ -61,9 +62,16 @@ from .explain import ExplainResult, explain_json_file
 from .formatter import FormatResult, format_file, format_text, is_formatted
 from .host import GwtHostAdapter, HostContext, HostObservation
 from .http_server import (
+    DEFAULT_MAX_CONCURRENT_REQUESTS,
     DEFAULT_MAX_REQUEST_BODY_BYTES,
+    DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    DEFAULT_SHUTDOWN_GRACE_SECONDS,
+    DEFAULT_TELEMETRY_QUEUE_SIZE,
+    GwtHttpApplication,
     GwtHttpService,
     GwtHttpServer,
+    HttpApplicationRequest,
+    HttpApplicationResponse,
     HttpExecutionCaseConfig,
     HttpRequestRoute,
     HttpRouteResult,
@@ -155,6 +163,10 @@ __all__ = [
     "ComparisonTotals",
     "CompletionItemPayload",
     "DEFAULT_MAX_REQUEST_BODY_BYTES",
+    "DEFAULT_MAX_CONCURRENT_REQUESTS",
+    "DEFAULT_REQUEST_TIMEOUT_SECONDS",
+    "DEFAULT_SHUTDOWN_GRACE_SECONDS",
+    "DEFAULT_TELEMETRY_QUEUE_SIZE",
     "DebugLinePayload",
     "DiagnosticPayload",
     "EXECUTION_CASE_SCHEMA_VERSION",
@@ -173,9 +185,13 @@ __all__ = [
     "FactProvenanceInput",
     "GwtClient",
     "GwtError",
+    "GwtAsgiApplication",
     "GwtHostAdapter",
     "GwtHttpService",
     "GwtHttpServer",
+    "GwtHttpApplication",
+    "HttpApplicationRequest",
+    "HttpApplicationResponse",
     "HttpExecutionCaseConfig",
     "HostContext",
     "HostObservation",
@@ -226,6 +242,7 @@ __all__ = [
     "compile_text",
     "compare_execution_cases",
     "create_http_server",
+    "create_asgi_application",
     "current_package_version",
     "format_file",
     "format_text",

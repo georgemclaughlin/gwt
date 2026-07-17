@@ -191,6 +191,30 @@ class _OpenApiBuilder:
                                 }
                             },
                         },
+                        "503": {
+                            "description": (
+                                "Service is draining or has reached its concurrent "
+                                "GWT request limit."
+                            ),
+                            "headers": {
+                                **_trace_response_headers(),
+                                "Retry-After": {
+                                    "description": (
+                                        "Suggested delay before retrying, in seconds."
+                                    ),
+                                    "schema": {"type": "integer", "minimum": 0},
+                                },
+                            },
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": (
+                                            f"#/components/schemas/{self.error_schema_name}"
+                                        )
+                                    }
+                                }
+                            },
+                        },
                         "500": {
                             "description": "GWT request assertion, output contract, or runtime failure.",
                             "headers": _trace_response_headers(),
@@ -647,6 +671,17 @@ def _unique_operation_id(preferred: str, used: set[str]) -> str:
 
 def _trace_response_headers() -> dict[str, Any]:
     return {
+        "x-gwt-program-digest": {
+            "description": (
+                "Deterministic SHA-256 identity of the served entry program and "
+                "its complete imported module closure."
+            ),
+            "required": True,
+            "schema": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$",
+            },
+        },
         "traceparent": {
             "description": (
                 "W3C trace context for the served GWT request. Present when "

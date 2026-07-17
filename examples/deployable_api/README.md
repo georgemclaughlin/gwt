@@ -43,14 +43,18 @@ Serve the same request boundary over HTTP:
 
 ```sh
 python -m gwtlang serve examples/deployable_api/rules.gwt \
+  --engine asgi \
   --port 8080 \
   --execution-budget 100000 \
   --max-call-depth 100
 ```
 
-Those are the bounded defaults, shown explicitly here as operator policy.
-`GET /health` reports the active request-body, execution-work, and call-depth
-limits.
+Install the optional transport first with
+`python -m pip install -e '.[serve]'`. The dependency-free built-in engine is
+fine for local work; this deployable example uses the ASGI engine. The shown
+runtime values are bounded defaults. `GET /ready` also reports the active body,
+execution-work, call-depth, and concurrency limits, current admission/in-flight
+state, and complete program-closure digest.
 
 Then call it with ordinary JSON:
 
@@ -95,7 +99,8 @@ The service listens on <http://127.0.0.1:8080>. Check the operational and
 contract surfaces:
 
 ```sh
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8080/live
+curl http://127.0.0.1:8080/ready
 curl http://127.0.0.1:8080/openapi.json
 python -m gwtlang schema examples/deployable_api/rules.gwt --json \
   >/tmp/gwt-deployable-api.schema.json
@@ -122,7 +127,8 @@ so `gwt serve` exports request traces and request metrics over OTLP/HTTP. The
 OpenTelemetry Collector sends traces to Jaeger and exposes metrics to
 Prometheus. Published demo ports are bound to `127.0.0.1` by default, and
 served traces redact values by default. `gwt serve` queues those OTLP exports
-in a background worker and uses a bounded flush on graceful shutdown.
+in a bounded background queue, reports queue/drop state through readiness, and
+uses a bounded flush on graceful shutdown.
 
 Open Jaeger at <http://127.0.0.1:16686> and select `gwt-serve` to inspect the
 trace. Open Prometheus at <http://127.0.0.1:9090> and query metrics such as:

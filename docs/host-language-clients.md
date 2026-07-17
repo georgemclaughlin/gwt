@@ -25,6 +25,7 @@ Use `gwt serve` when a non-Python application needs to execute GWT behavior:
 gwt validate rules.gwt --import-root rules --no-absolute-imports
 gwt openapi rules.gwt --output openapi.json
 gwt serve rules.gwt \
+  --engine asgi \
   --host 127.0.0.1 \
   --port 8080 \
   --execution-budget 100000 \
@@ -35,7 +36,10 @@ This keeps one evaluator and lets hosts use ordinary HTTP clients, generated
 OpenAPI clients, gateways, and deployment controls. It is preferable to
 building and maintaining a GWT-specific runtime wrapper for each ecosystem.
 The service remains experimental; TLS, auth, authorization, and rate limiting
-belong in host-owned infrastructure around it.
+belong in host-owned infrastructure around it. Install `gwtlang[serve]` for
+the ASGI engine shown here. The default built-in engine exposes the same
+application contract without optional dependencies and is intended for local
+development/reference use.
 
 ## Embedded And Process Alternatives
 

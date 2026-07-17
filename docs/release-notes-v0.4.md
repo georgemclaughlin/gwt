@@ -19,6 +19,10 @@ change is authorized by this document.
   depth limits, source-located expected failures, and iteration accounting.
 - Program identity covers the entry module and its transitively loaded `USE`
   dependency closure with a portable, canonical SHA-256 manifest.
+- `gwt serve` shares one transport-neutral request application across the
+  built-in HTTP/1.1 adapter and an optional ASGI/Uvicorn engine, with bounded
+  evaluator admission, liveness/readiness probes, graceful draining, stable
+  program-identity headers, and bounded background telemetry export.
 - `gwt capture` writes a versioned Execution Case for a completed named JSON
   request; `--record-failures` records normalized failures and `--omit-values`
   records a shape-only, explicitly redacted value profile.
