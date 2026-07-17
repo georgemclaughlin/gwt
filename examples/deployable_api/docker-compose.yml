@@ -5,7 +5,7 @@ services:
       dockerfile: examples/deployable_api/Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      GWT_SERVE_ARGS: ${GWT_SERVE_ARGS:-}
+      GWT_SERVE_ARGS: "${GWT_SERVE_ARGS:---engine asgi}"
     ports:
       - "${GWT_HTTP_BIND:-127.0.0.1}:${GWT_HTTP_PORT:-8080}:8080"
     depends_on:
@@ -15,7 +15,7 @@ services:
         - CMD
         - python
         - -c
-        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/ready', timeout=2).read()"
       interval: 5s
       timeout: 3s
       retries: 12

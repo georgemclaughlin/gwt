@@ -110,6 +110,15 @@ gwt openapi examples/deployable_api/rules.gwt --json
 gwt serve examples/deployable_api/rules.gwt --port 8080
 ```
 
+The dependency-free built-in transport is intended for local development and
+reference use. Install the optional serving extra and select the ASGI engine
+for a production-oriented connection and process boundary:
+
+```sh
+python -m pip install 'gwtlang[serve]'
+gwt serve examples/deployable_api/rules.gwt --engine asgi --port 8080
+```
+
 `gwt serve` is the active integration-hardening focus. It keeps evaluation in
 the GWT runtime and lets each host use its normal HTTP/OpenAPI ecosystem rather
 than requiring a bespoke GWT runtime wrapper. The Python compile-once API and
@@ -120,7 +129,9 @@ projections rather than the primary architecture.
 The service is still experimental and should sit behind ordinary deployment
 controls for TLS, authentication, authorization, and rate limiting. Runtime
 work and call depth are bounded by default and configurable with
-`--execution-budget` and `--max-call-depth`.
+`--execution-budget` and `--max-call-depth`. Concurrent evaluations are also
+bounded; `/live` and `/ready` distinguish process liveness from request
+admission during graceful shutdown.
 
 GWT can also generate TypeScript declarations and standalone JSON Schema:
 
@@ -641,22 +652,37 @@ declared `OUTPUT` bindings become response body schemas.
 
 `gwt serve file.gwt` starts an experimental HTTP service for named `REQUEST`
 contracts. `GET /openapi.json` returns the same OpenAPI document, `GET /requests`
-lists callable requests, and `POST /requests/<request-slug>` runs the request
-and returns only the declared `OUTPUT` object. Request posts require
+lists callable requests, `GET /live` and `GET /ready` expose lifecycle probes,
+and `POST /requests/<request-slug>` runs the request and returns only the
+declared `OUTPUT` object. `GET /health` remains a readiness-compatible alias.
+Request posts require
 `Content-Type: application/json` and are limited to 1 MiB by default; use
 `--max-body-bytes` to change the local service limit. Execution work and nested
 behavior calls are also bounded by default; use `--execution-budget` and
-`--max-call-depth` to make that operator policy explicit. `GET /health` reports
-the active limits. Unexpected internal exceptions return a sanitized JSON
+`--max-call-depth` to make that operator policy explicit. Use
+`--max-concurrent-requests` to bound admitted evaluations. Readiness reports
+the active limits, admission state, in-flight count, package/spec versions, and
+the deterministic digest of the complete imported program closure. Every JSON
+response carries the same digest in `x-gwt-program-digest`. Unexpected internal
+exceptions return a sanitized JSON
 `GWT_HTTP_UNEXPECTED_ERROR` response while details stay in server logs. Use
 `--otlp-endpoint` or
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export experimental OpenTelemetry request
 execution traces out-of-band. Use `--otlp-metrics-endpoint`,
 `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`, or the same base
 `OTEL_EXPORTER_OTLP_ENDPOINT` to export request metrics. `gwt serve` queues
-OTLP trace and metric exports in a background worker and uses a bounded flush
-on graceful shutdown. Served traces redact state, output, and print values by
+OTLP trace and metric exports in a bounded background queue and uses a bounded
+flush on graceful shutdown. Readiness reports queue capacity, queued work, and
+dropped exports when background export is active. Served traces redact state,
+output, and print values by
 default; pass `--trace-values` for local diagnostic runs that need full values.
+
+The default `--engine builtin` uses Python's standard-library HTTP server and is
+useful for local work. Install `gwtlang[serve]` and pass `--engine asgi` to use
+the shared transport-neutral application through Uvicorn. Both engines expose
+the same routes, admission responses, identity headers, and OpenAPI contract.
+TLS, authentication, authorization, external rate limiting, and multi-process
+capacity remain deployment concerns outside GWT.
 
 Pass `--capture-dir cases` to record served GWT executions as versioned local
 Execution Cases. Served capture is deliberately opt-in and shape-only by

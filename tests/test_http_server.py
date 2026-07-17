@@ -1,4 +1,6 @@
 from contextlib import contextmanager, redirect_stderr
+import asyncio
+from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import importlib.util
 import io
@@ -10,7 +12,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from threading import Thread
+from threading import Event, Thread
 import time
 from typing import Any
 import unittest
@@ -22,24 +24,34 @@ from gwtlang.__main__ import main
 from gwtlang.comparison import compare_execution_cases
 from gwtlang.execution_case import ExecutionCase
 from gwtlang.http_server import (
+    DEFAULT_MAX_CONCURRENT_REQUESTS,
     DEFAULT_MAX_REQUEST_BODY_BYTES,
+    DEFAULT_TELEMETRY_QUEUE_SIZE,
+    GwtHttpApplication,
     GwtHttpService,
+    HttpApplicationRequest,
     HttpExecutionCaseConfig,
     HttpMetricsConfig,
+    HttpRequestRoute,
     HttpServiceError,
     HttpTraceConfig,
     HttpRouteResult,
+    _BackgroundOtlpExporter,
     create_http_server,
 )
 from gwtlang.runtime import DEFAULT_EXECUTION_BUDGET, DEFAULT_MAX_CALL_DEPTH
-from gwtlang.tracing import OtlpHttpExporter, OtlpMetricsExporter
+from gwtlang.tracing import GwtTraceRecorder, OtlpHttpExporter, OtlpMetricsExporter
 
 
 class HttpServerTests(unittest.TestCase):
     def test_public_http_api_exports_embedded_service_symbols(self):
         from gwtlang import (
+            DEFAULT_MAX_CONCURRENT_REQUESTS as exported_concurrency_limit,
             DEFAULT_MAX_REQUEST_BODY_BYTES as exported_body_limit,
+            GwtAsgiApplication as ExportedGwtAsgiApplication,
+            GwtHttpApplication as ExportedGwtHttpApplication,
             GwtHttpService as ExportedGwtHttpService,
+            HttpApplicationRequest as ExportedHttpApplicationRequest,
             HttpMetricsConfig as ExportedHttpMetricsConfig,
             HttpExecutionCaseConfig as ExportedHttpExecutionCaseConfig,
             HttpRouteResult as ExportedHttpRouteResult,
@@ -49,17 +61,195 @@ class HttpServerTests(unittest.TestCase):
         import gwtlang
 
         self.assertEqual(exported_body_limit, DEFAULT_MAX_REQUEST_BODY_BYTES)
+        self.assertEqual(exported_concurrency_limit, DEFAULT_MAX_CONCURRENT_REQUESTS)
+        self.assertIs(ExportedGwtHttpApplication, GwtHttpApplication)
         self.assertIs(ExportedGwtHttpService, GwtHttpService)
+        self.assertEqual(ExportedGwtAsgiApplication.__name__, "GwtAsgiApplication")
+        self.assertIs(ExportedHttpApplicationRequest, HttpApplicationRequest)
         self.assertIs(ExportedHttpExecutionCaseConfig, HttpExecutionCaseConfig)
         self.assertIs(ExportedHttpMetricsConfig, HttpMetricsConfig)
         self.assertIs(ExportedHttpRouteResult, HttpRouteResult)
         self.assertIs(ExportedHttpServiceError, HttpServiceError)
         self.assertIs(ExportedHttpTraceConfig, HttpTraceConfig)
         self.assertIn("DEFAULT_MAX_REQUEST_BODY_BYTES", gwtlang.__all__)
+        self.assertIn("DEFAULT_MAX_CONCURRENT_REQUESTS", gwtlang.__all__)
+        self.assertIn("GwtAsgiApplication", gwtlang.__all__)
+        self.assertIn("GwtHttpApplication", gwtlang.__all__)
         self.assertIn("HttpMetricsConfig", gwtlang.__all__)
         self.assertIn("HttpExecutionCaseConfig", gwtlang.__all__)
         self.assertIn("HttpRouteResult", gwtlang.__all__)
         self.assertIn("HttpServiceError", gwtlang.__all__)
+
+    def test_transport_neutral_application_reports_identity_and_supports_head(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = GwtHttpApplication(service)
+        try:
+            response = application.handle(HttpApplicationRequest("GET", "/ready"))
+            payload = json.loads(response.body)
+            head = application.handle(HttpApplicationRequest("HEAD", "/ready"))
+        finally:
+            application.close()
+
+        digest = service.program_snapshot.identity.digest
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["ready"], True)
+        self.assertEqual(payload["accepting"], True)
+        self.assertEqual(payload["inFlight"], 0)
+        self.assertEqual(payload["maxConcurrentRequests"], DEFAULT_MAX_CONCURRENT_REQUESTS)
+        self.assertEqual(payload["programDigest"], digest)
+        self.assertEqual(response.headers["x-gwt-program-digest"], digest)
+        self.assertEqual(head.status, 200)
+        self.assertEqual(head.body, b"")
+        self.assertEqual(head.headers["Content-Length"], response.headers["Content-Length"])
+
+    def test_application_draining_separates_liveness_and_readiness(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = GwtHttpApplication(service, max_concurrent_requests=1)
+        application.begin_draining()
+        try:
+            live = application.handle(HttpApplicationRequest("GET", "/live"))
+            ready = application.handle(HttpApplicationRequest("GET", "/ready"))
+            request = application.handle(
+                HttpApplicationRequest(
+                    "POST",
+                    "/requests/triage-ticket",
+                    {"Content-Type": "application/json"},
+                    json.dumps(triage_ticket_request()).encode(),
+                )
+            )
+        finally:
+            application.close()
+
+        self.assertEqual(live.status, 200)
+        self.assertEqual(json.loads(live.body)["live"], True)
+        self.assertEqual(ready.status, 503)
+        self.assertEqual(json.loads(ready.body)["ready"], False)
+        self.assertEqual(request.status, 503)
+        self.assertEqual(request.headers["Retry-After"], "1")
+        self.assertEqual(json.loads(request.body)["error"]["code"], "GWT_HTTP_UNAVAILABLE")
+
+    def test_application_rejects_work_above_concurrent_request_limit(self):
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = GwtHttpApplication(service, max_concurrent_requests=1)
+        started = Event()
+        release = Event()
+        responses: list[object] = []
+
+        original_execute = GwtHttpService._execute_route
+
+        def blocking_execute(
+            current_service: GwtHttpService,
+            route: HttpRequestRoute,
+            state: dict[str, Any],
+            recorder: GwtTraceRecorder | None,
+        ) -> HttpRouteResult:
+            started.set()
+            self.assertTrue(release.wait(5))
+            return original_execute(current_service, route, state, recorder)
+
+        request = HttpApplicationRequest(
+            "POST",
+            "/requests/triage-ticket",
+            {"Content-Type": "application/json"},
+            json.dumps(triage_ticket_request()).encode(),
+        )
+        with patch.object(GwtHttpService, "_execute_route", new=blocking_execute):
+            thread = Thread(target=lambda: responses.append(application.handle(request)))
+            thread.start()
+            self.assertTrue(started.wait(5))
+            overloaded = application.handle(request)
+            health = application.handle(HttpApplicationRequest("GET", "/health"))
+            release.set()
+            thread.join(timeout=5)
+        application.close()
+
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(len(responses), 1)
+        self.assertEqual(overloaded.status, 503)
+        self.assertEqual(overloaded.headers["Retry-After"], "1")
+        self.assertEqual(json.loads(health.body)["inFlight"], 1)
+        self.assertTrue(application.wait_for_idle(0))
+
+    def test_builtin_transport_returns_http_1_1_json_method_errors(self):
+        with running_service("examples/deployable_api/rules.gwt") as base_url:
+            host_port = base_url.removeprefix("http://")
+            host, raw_port = host_port.rsplit(":", 1)
+            connection = HTTPConnection(host, int(raw_port), timeout=5)
+            connection.request("OPTIONS", "/requests/triage-ticket")
+            response = connection.getresponse()
+            payload = json.loads(response.read())
+            version = response.version
+            allow = response.getheader("Allow")
+            connection.close()
+
+        self.assertEqual(version, 11)
+        self.assertEqual(response.status, 405)
+        self.assertEqual(allow, "POST")
+        self.assertEqual(payload["error"]["code"], "GWT_HTTP_METHOD_NOT_ALLOWED")
+
+    def test_asgi_adapter_serves_http_and_drains_on_lifespan_shutdown(self):
+        from gwtlang.asgi import create_asgi_application
+
+        service = GwtHttpService.from_file("examples/deployable_api/rules.gwt")
+        application = create_asgi_application(service)
+
+        async def exercise() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+            http_sent: list[dict[str, Any]] = []
+            http_messages = iter([{"type": "http.request", "body": b"", "more_body": False}])
+
+            async def receive_http() -> dict[str, Any]:
+                return next(http_messages)
+
+            async def send_http(message: dict[str, Any]) -> None:
+                http_sent.append(message)
+
+            await application(
+                {"type": "http", "method": "GET", "path": "/ready", "headers": []},
+                receive_http,
+                send_http,
+            )
+
+            lifespan_sent: list[dict[str, Any]] = []
+            lifespan_messages = iter(
+                [{"type": "lifespan.startup"}, {"type": "lifespan.shutdown"}]
+            )
+
+            async def receive_lifespan() -> dict[str, Any]:
+                return next(lifespan_messages)
+
+            async def send_lifespan(message: dict[str, Any]) -> None:
+                lifespan_sent.append(message)
+
+            await application({"type": "lifespan"}, receive_lifespan, send_lifespan)
+            return http_sent, lifespan_sent
+
+        http_sent, lifespan_sent = asyncio.run(exercise())
+
+        self.assertEqual(http_sent[0]["status"], 200)
+        self.assertEqual(json.loads(http_sent[1]["body"])["ready"], True)
+        self.assertEqual(
+            [message["type"] for message in lifespan_sent],
+            ["lifespan.startup.complete", "lifespan.shutdown.complete"],
+        )
+        self.assertFalse(application.application.accepting)
+
+    @unittest.skipUnless(importlib.util.find_spec("uvicorn"), "uvicorn is optional")
+    def test_asgi_engine_serves_the_same_request_contract(self):
+        with running_serve_process(
+            "examples/deployable_api/rules.gwt",
+            engine="asgi",
+        ) as base_url:
+            ready_status, ready = request_json(f"{base_url}/ready")
+            status, payload = request_json(
+                f"{base_url}/requests/triage-ticket",
+                triage_ticket_request(),
+                method="POST",
+            )
+
+        self.assertEqual(ready_status, 200)
+        self.assertEqual(ready["ready"], True)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["decision"]["queue"], "incident")
 
     def test_gwt_serve_openapi_contract_smoke(self):
         success_trace_id = "77777777777777777777777777777777"
@@ -116,8 +306,13 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(operation["requestBody"]["content"]["application/json"]["schema"], {
             "$ref": "#/components/schemas/TriageTicketRequest"
         })
-        for status in ("200", "400", "413", "415", "500"):
+        for status in ("200", "400", "413", "415", "500", "503"):
             self.assertIn(status, operation["responses"])
+        self.assertIn(
+            "x-gwt-program-digest",
+            operation["responses"]["200"]["headers"],
+        )
+        self.assertIn("Retry-After", operation["responses"]["503"]["headers"])
 
         self.assertEqual(success_status, 200)
         self.assertEqual(success_payload["decision"]["queue"], "incident")
@@ -758,9 +953,17 @@ class HttpServerTests(unittest.TestCase):
                 method="POST",
             )
             elapsed = time.monotonic() - start
+            health_status, health = request_json(f"{base_url}/health")
 
         self.assertEqual(status, 200)
+        self.assertEqual(health_status, 200)
         self.assertEqual(payload["decision"]["queue"], "incident")
+        self.assertEqual(health["telemetry"]["backgroundExports"], True)
+        self.assertEqual(
+            health["telemetry"]["queueCapacity"],
+            DEFAULT_TELEMETRY_QUEUE_SIZE,
+        )
+        self.assertEqual(health["telemetry"]["droppedExports"], 0)
         self.assertLess(elapsed, 0.25)
         self.assertEqual(metric_calls.get(timeout=1), "metrics")
         self.assertEqual(trace_calls.get(timeout=1), "trace")
@@ -798,6 +1001,33 @@ class HttpServerTests(unittest.TestCase):
         self.assertEqual(trace_calls.get(timeout=1), "trace")
         self.assertEqual(trace_calls.get(timeout=1), "trace")
         self.assertIn("OTLP trace export failed: boom", stderr.getvalue())
+
+    def test_background_otlp_queue_is_bounded_and_reports_drops(self):
+        started = Event()
+        release = Event()
+
+        def blocking_export(exporter: OtlpHttpExporter, spans: list[Any]) -> None:
+            del exporter, spans
+            started.set()
+            self.assertTrue(release.wait(5))
+
+        stderr = io.StringIO()
+        with (
+            redirect_stderr(stderr),
+            patch.object(OtlpHttpExporter, "export", blocking_export),
+        ):
+            exporter = _BackgroundOtlpExporter(max_queue_size=1)
+            exporter.export_trace("http://collector/v1/traces", [])
+            self.assertTrue(started.wait(5))
+            exporter.export_trace("http://collector/v1/traces", [])
+            exporter.export_trace("http://collector/v1/traces", [])
+            status = exporter.status_payload()
+            release.set()
+            exporter.close()
+
+        self.assertEqual(status["queueCapacity"], 1)
+        self.assertEqual(status["droppedExports"], 1)
+        self.assertIn("queue is full; dropping exports", stderr.getvalue())
 
     def test_failed_request_exports_otlp_failure_metrics(self):
         with running_otlp_sink() as otlp:
@@ -1394,6 +1624,29 @@ class HttpServerTests(unittest.TestCase):
                 self.assertEqual(error.exception.code, 2)
                 self.assertIn("expected a positive integer or 'none'", stderr.getvalue())
 
+    def test_serve_command_rejects_invalid_operator_limits(self):
+        cases = (
+            ("--max-concurrent-requests", "0", "expected a positive integer"),
+            ("--request-timeout", "0", "expected a positive number"),
+            ("--request-timeout", "nan", "expected a positive number"),
+            ("--shutdown-grace-seconds", "-1", "expected a positive number"),
+        )
+        for flag, value, message in cases:
+            with self.subTest(flag=flag, value=value):
+                stderr = io.StringIO()
+                with redirect_stderr(stderr), self.assertRaises(SystemExit) as error:
+                    main(
+                        [
+                            "serve",
+                            "examples/deployable_api/rules.gwt",
+                            flag,
+                            value,
+                        ]
+                    )
+
+                self.assertEqual(error.exception.code, 2)
+                self.assertIn(message, stderr.getvalue())
+
     def test_embedded_service_rejects_invalid_limits_at_startup(self):
         program = "examples/deployable_api/rules.gwt"
         with self.assertRaisesRegex(ValueError, "max_request_body_bytes"):
@@ -1402,6 +1655,17 @@ class HttpServerTests(unittest.TestCase):
             GwtHttpService.from_file(program, execution_budget=0)
         with self.assertRaisesRegex(ValueError, "max_call_depth"):
             GwtHttpService.from_file(program, max_call_depth=True)
+
+        service = GwtHttpService.from_file(program)
+        with self.assertRaisesRegex(ValueError, "max_concurrent_requests"):
+            create_http_server(service, port=0, max_concurrent_requests=0)
+        with self.assertRaisesRegex(ValueError, "request_timeout_seconds"):
+            create_http_server(
+                service,
+                port=0,
+                request_timeout_seconds=float("inf"),
+            )
+        service.close()
 
     def test_serve_command_requires_capture_directory_for_capture_options(self):
         stderr = io.StringIO()
@@ -1468,6 +1732,7 @@ def running_serve_process(
     fact_provenance: Path | None = None,
     execution_budget: int | None = None,
     max_call_depth: int | None = None,
+    engine: str = "builtin",
 ):
     command = [
         sys.executable,
@@ -1481,6 +1746,8 @@ def running_serve_process(
         "0",
         "--max-body-bytes",
         str(max_body_bytes),
+        "--engine",
+        engine,
     ]
     if otlp_endpoint is not None:
         command.extend(["--otlp-endpoint", otlp_endpoint])

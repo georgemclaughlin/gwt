@@ -88,6 +88,7 @@ the standard HTTP boundary:
 gwt validate rules/main.gwt --import-root rules --no-absolute-imports
 gwt openapi rules/main.gwt --output openapi.json
 gwt serve rules/main.gwt \
+  --engine asgi \
   --import-root rules \
   --no-absolute-imports \
   --execution-budget 100000 \
@@ -97,8 +98,10 @@ gwt serve rules/main.gwt \
 Host applications call the generated `POST /requests/<request-slug>` routes
 with ordinary JSON and consume only declared `OUTPUT` fields. Keep TLS,
 authentication, authorization, rate limiting, and rollout policy in the host's
-gateway or deployment layer. The standard-library service is still
-experimental and should not be treated as an internet-facing security boundary.
+gateway or deployment layer. Install `gwtlang[serve]` for the optional ASGI
+engine shown above. The default built-in transport remains a dependency-free
+development/reference server; neither engine should be treated as a complete
+internet-facing security boundary.
 
 ## Embedded Decision Mode
 

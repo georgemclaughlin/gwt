@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -36,7 +37,13 @@ from .execution_case import (
 )
 from .explain import explain_json_file
 from .formatter import format_text
-from .http_server import DEFAULT_MAX_REQUEST_BODY_BYTES, run_http_server
+from .http_server import (
+    DEFAULT_MAX_CONCURRENT_REQUESTS,
+    DEFAULT_MAX_REQUEST_BODY_BYTES,
+    DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    DEFAULT_SHUTDOWN_GRACE_SECONDS,
+    run_http_server,
+)
 from .inspection import inspect_file
 from .lsp import run_stdio_server
 from .payloads import JsonObject, ValidationPayload
@@ -494,6 +501,45 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8080,
         help="TCP port to bind.",
+    )
+    serve_parser.add_argument(
+        "--engine",
+        choices=("builtin", "asgi"),
+        default="builtin",
+        help=(
+            "HTTP transport: dependency-free builtin development server "
+            "or optional production-oriented ASGI/Uvicorn transport."
+        ),
+    )
+    serve_parser.add_argument(
+        "--max-concurrent-requests",
+        type=_positive_limit,
+        default=DEFAULT_MAX_CONCURRENT_REQUESTS,
+        metavar="N",
+        help=(
+            "Maximum concurrently executing GWT requests "
+            f"(default: {DEFAULT_MAX_CONCURRENT_REQUESTS})."
+        ),
+    )
+    serve_parser.add_argument(
+        "--request-timeout",
+        type=_positive_float_or_none,
+        default=DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        metavar="SECONDS|none",
+        help=(
+            "Builtin transport socket timeout "
+            f"(default: {DEFAULT_REQUEST_TIMEOUT_SECONDS:g}s); use 'none' to disable."
+        ),
+    )
+    serve_parser.add_argument(
+        "--shutdown-grace-seconds",
+        type=_positive_float,
+        default=DEFAULT_SHUTDOWN_GRACE_SECONDS,
+        metavar="SECONDS",
+        help=(
+            "Time allowed for admitted evaluations to finish while draining "
+            f"(default: {DEFAULT_SHUTDOWN_GRACE_SECONDS:g}s)."
+        ),
     )
     serve_parser.add_argument(
         "--otlp-endpoint",
@@ -1305,6 +1351,10 @@ def serve_command(args: argparse.Namespace) -> int:
             max_request_body_bytes=args.max_body_bytes,
             execution_budget=args.execution_budget,
             max_call_depth=args.max_call_depth,
+            max_concurrent_requests=args.max_concurrent_requests,
+            request_timeout_seconds=args.request_timeout,
+            shutdown_grace_seconds=args.shutdown_grace_seconds,
+            engine=args.engine,
             capture_directory=args.capture_dir,
             capture_request_names=(
                 args.capture_request if args.capture_request else None
@@ -1438,6 +1488,32 @@ def _positive_limit_or_none(value: str) -> int | None:
     if parsed < 1:
         raise argparse.ArgumentTypeError("expected a positive integer or 'none'")
     return parsed
+
+
+def _positive_limit(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected a positive integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("expected a positive integer")
+    return parsed
+
+
+def _positive_float(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected a positive number") from exc
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("expected a positive number")
+    return parsed
+
+
+def _positive_float_or_none(value: str) -> float | None:
+    if value.lower() == "none":
+        return None
+    return _positive_float(value)
 
 
 def format_error(error: GwtError, source: str, filename: str) -> str:

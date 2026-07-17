@@ -3,14 +3,18 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 import json
+import math
 from pathlib import Path
-from queue import Queue
+from queue import Full, Queue
 import signal
+import socket
 import sys
-from threading import Lock, Thread, current_thread, main_thread
+from threading import Condition, Lock, Thread, current_thread, main_thread
+import time
 from types import FrameType
-from typing import Any, BinaryIO, cast
+from typing import Any, BinaryIO, Mapping, cast
 from urllib.parse import urlparse
 
 from .api import CompiledProgram, compile_text, generate_openapi_text, run_result_payload
@@ -42,9 +46,14 @@ from .tracing import (
     parse_traceparent,
     otlp_trace_endpoint,
 )
+from .version import LANGUAGE_SPEC_VERSION, current_package_version
 
 
 DEFAULT_MAX_REQUEST_BODY_BYTES = 1024 * 1024
+DEFAULT_MAX_CONCURRENT_REQUESTS = 32
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 30.0
+DEFAULT_SHUTDOWN_GRACE_SECONDS = 30.0
+DEFAULT_TELEMETRY_QUEUE_SIZE = 1024
 
 
 @dataclass(frozen=True)
@@ -148,6 +157,13 @@ class GwtHttpService:
             import_roots=import_roots,
             allow_absolute_imports=allow_absolute_imports,
         ).as_payload()
+        identity = snapshot.identity
+        openapi_document.setdefault("x-gwt", {}).update(
+            {
+                "programDigest": identity.digest,
+                "programIdentityAlgorithm": identity.algorithm,
+            }
+        )
         _validate_non_negative_limit(
             "max_request_body_bytes",
             max_request_body_bytes,
@@ -182,10 +198,14 @@ class GwtHttpService:
         return self.compiled.program.name
 
     def health_payload(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "ok": True,
             "file": self.compiled.file,
             "program": self.program_name,
+            "programDigest": self.program_snapshot.identity.digest,
+            "programIdentityAlgorithm": self.program_snapshot.identity.algorithm,
+            "packageVersion": current_package_version(),
+            "languageSpecVersion": LANGUAGE_SPEC_VERSION,
             "requests": len(self.routes),
             "limits": {
                 "maxRequestBodyBytes": self.max_request_body_bytes,
@@ -193,11 +213,18 @@ class GwtHttpService:
                 "maxCallDepth": self.max_call_depth,
             },
         }
+        if self.background_exporter is not None:
+            payload["telemetry"] = self.background_exporter.status_payload()
+        else:
+            payload["telemetry"] = {"backgroundExports": False}
+        return payload
 
     def requests_payload(self) -> dict[str, Any]:
         return {
             "file": self.compiled.file,
             "program": self.program_name,
+            "programDigest": self.program_snapshot.identity.digest,
+            "programIdentityAlgorithm": self.program_snapshot.identity.algorithm,
             "requests": [
                 route.as_payload(self.compiled)
                 for route in self.routes.values()
@@ -611,10 +638,17 @@ _OtlpExportTask = _TraceExportTask | _MetricsExportTask
 
 
 class _BackgroundOtlpExporter:
-    def __init__(self) -> None:
-        self._queue: Queue[_OtlpExportTask | None] = Queue()
+    def __init__(
+        self,
+        *,
+        max_queue_size: int = DEFAULT_TELEMETRY_QUEUE_SIZE,
+    ) -> None:
+        _validate_positive_int("max_queue_size", max_queue_size)
+        self._queue: Queue[_OtlpExportTask | None] = Queue(maxsize=max_queue_size)
+        self._max_queue_size = max_queue_size
         self._lock = Lock()
         self._closed = False
+        self._dropped_exports = 0
         self._thread = Thread(target=self._run, name="gwt-otlp-exporter", daemon=True)
         self._thread.start()
 
@@ -631,12 +665,20 @@ class _BackgroundOtlpExporter:
         self._put(_MetricsExportTask(endpoint, list(metrics), service_name))
 
     def close(self, *, timeout: float = 10.0) -> None:
+        deadline = time.monotonic() + timeout
         with self._lock:
             if self._closed:
                 return
             self._closed = True
-            self._queue.put(None)
-        self._thread.join(timeout=timeout)
+            try:
+                self._queue.put(None, timeout=max(timeout, 0.0))
+            except Full:
+                print(
+                    "gwt: OTLP background exporter queue did not drain before shutdown timeout",
+                    file=sys.stderr,
+                )
+                return
+        self._thread.join(timeout=max(deadline - time.monotonic(), 0.0))
         if self._thread.is_alive():
             print(
                 "gwt: OTLP background exporter did not finish before shutdown timeout",
@@ -647,7 +689,27 @@ class _BackgroundOtlpExporter:
         with self._lock:
             if self._closed:
                 return
-            self._queue.put(task)
+            try:
+                self._queue.put_nowait(task)
+            except Full:
+                self._dropped_exports += 1
+                if self._dropped_exports == 1:
+                    print(
+                        "gwt: OTLP background exporter queue is full; dropping exports",
+                        file=sys.stderr,
+                    )
+
+    def status_payload(self) -> dict[str, int | bool]:
+        with self._lock:
+            dropped = self._dropped_exports
+            closed = self._closed
+        return {
+            "backgroundExports": True,
+            "queueCapacity": self._max_queue_size,
+            "queuedExports": self._queue.qsize(),
+            "droppedExports": dropped,
+            "closed": closed,
+        }
 
     def _run(self) -> None:
         while True:
@@ -711,6 +773,275 @@ class HttpServiceError(Exception):
         self.case_id = case_id
 
 
+@dataclass(frozen=True)
+class HttpApplicationRequest:
+    """Transport-neutral request accepted by :class:`GwtHttpApplication`."""
+
+    method: str
+    path: str
+    headers: Mapping[str, str] = field(default_factory=lambda: dict[str, str]())
+    body: bytes = b""
+
+    def header(self, name: str) -> str | None:
+        lowered = name.lower()
+        for key, value in self.headers.items():
+            if key.lower() == lowered:
+                return value
+        return None
+
+
+@dataclass(frozen=True)
+class HttpApplicationResponse:
+    """Complete HTTP response independent of a socket server implementation."""
+
+    status: int
+    headers: dict[str, str]
+    body: bytes
+
+
+class GwtHttpApplication:
+    """HTTP semantics, lifecycle, and admission control around a GWT service.
+
+    The application has no dependency on ``http.server`` or ASGI. Transports
+    adapt requests to :class:`HttpApplicationRequest` and write the returned
+    response.
+    """
+
+    def __init__(
+        self,
+        service: GwtHttpService,
+        *,
+        max_concurrent_requests: int = DEFAULT_MAX_CONCURRENT_REQUESTS,
+    ) -> None:
+        _validate_positive_int("max_concurrent_requests", max_concurrent_requests)
+        self.service = service
+        self.max_concurrent_requests = max_concurrent_requests
+        self._condition = Condition()
+        self._accepting = True
+        self._in_flight = 0
+
+    @property
+    def accepting(self) -> bool:
+        with self._condition:
+            return self._accepting
+
+    @property
+    def in_flight(self) -> int:
+        with self._condition:
+            return self._in_flight
+
+    def begin_draining(self) -> None:
+        """Stop admitting evaluations while keeping liveness available."""
+
+        with self._condition:
+            self._accepting = False
+            self._condition.notify_all()
+
+    def wait_for_idle(self, timeout: float | None = None) -> bool:
+        """Wait for admitted evaluations to finish, returning false on timeout."""
+
+        deadline = None if timeout is None else time.monotonic() + timeout
+        with self._condition:
+            while self._in_flight:
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0:
+                    return False
+                self._condition.wait(remaining)
+            return True
+
+    def close(self) -> None:
+        self.service.close()
+
+    def handle(self, request: HttpApplicationRequest) -> HttpApplicationResponse:
+        method = request.method.upper()
+        path = _request_path(request.path)
+
+        if path in {"/health", "/live", "/ready", "/openapi.json", "/requests"}:
+            if method not in {"GET", "HEAD"}:
+                return self._error_response(
+                    HttpServiceError(
+                        405,
+                        f"method {method} is not allowed for {path}",
+                        "GWT_HTTP_METHOD_NOT_ALLOWED",
+                    ),
+                    method=method,
+                    headers={"Allow": "GET, HEAD"},
+                )
+            if path == "/live":
+                payload = self._operator_payload()
+                payload["ok"] = True
+                return self._json_response(200, payload, method=method)
+            if path in {"/health", "/ready"}:
+                payload = self._operator_payload()
+                status = 200 if payload["ready"] else 503
+                return self._json_response(status, payload, method=method)
+            payload: object = (
+                self.service.openapi_document
+                if path == "/openapi.json"
+                else self.service.requests_payload()
+            )
+            return self._json_response(200, payload, method=method)
+
+        if path in self.service.routes:
+            if method != "POST":
+                return self._error_response(
+                    HttpServiceError(
+                        405,
+                        f"method {method} is not allowed for {path}",
+                        "GWT_HTTP_METHOD_NOT_ALLOWED",
+                    ),
+                    method=method,
+                    headers={"Allow": "POST"},
+                )
+            if not self._admit():
+                return self._error_response(
+                    HttpServiceError(
+                        503,
+                        "GWT HTTP service is draining or at its concurrent request limit",
+                        "GWT_HTTP_UNAVAILABLE",
+                    ),
+                    method=method,
+                    headers={"Retry-After": "1"},
+                )
+            try:
+                result = self.service.run_http_route(
+                    path,
+                    str(len(request.body)),
+                    BytesIO(request.body),
+                    content_type=request.header("Content-Type"),
+                    traceparent=request.header("traceparent"),
+                )
+            except HttpServiceError as exc:
+                return self._error_response(exc, method=method)
+            except Exception as exc:
+                print(
+                    f"gwt: unexpected HTTP application error for {path}: {exc!r}",
+                    file=sys.stderr,
+                )
+                return self._error_response(
+                    HttpServiceError(
+                        500,
+                        "unexpected GWT HTTP service error",
+                        "GWT_HTTP_UNEXPECTED_ERROR",
+                    ),
+                    method=method,
+                )
+            finally:
+                self._release()
+            return self._json_response(
+                200,
+                result.body,
+                method=method,
+                headers=_response_headers(result.traceparent, result.case_id),
+            )
+
+        return self._error_response(
+            HttpServiceError(404, f"unknown route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND"),
+            method=method,
+        )
+
+    def body_too_large_response(
+        self,
+        request: HttpApplicationRequest,
+    ) -> HttpApplicationResponse:
+        """Reject an oversized body while retaining route trace/metric behavior."""
+
+        method = request.method.upper()
+        path = _request_path(request.path)
+        if method != "POST" or path not in self.service.routes:
+            return self.handle(HttpApplicationRequest(method, path, request.headers))
+        try:
+            self.service.run_http_route(
+                path,
+                str(self.service.max_request_body_bytes + 1),
+                BytesIO(),
+                content_type=request.header("Content-Type"),
+                traceparent=request.header("traceparent"),
+            )
+        except HttpServiceError as exc:
+            return self._error_response(exc, method=method)
+        raise AssertionError("oversized request was unexpectedly accepted")
+
+    def bad_request_response(
+        self,
+        message: str,
+        *,
+        method: str,
+    ) -> HttpApplicationResponse:
+        return self._error_response(
+            HttpServiceError(400, message, "GWT_HTTP_BAD_REQUEST"),
+            method=method,
+        )
+
+    def _admit(self) -> bool:
+        with self._condition:
+            if not self._accepting or self._in_flight >= self.max_concurrent_requests:
+                return False
+            self._in_flight += 1
+            return True
+
+    def _release(self) -> None:
+        with self._condition:
+            self._in_flight -= 1
+            self._condition.notify_all()
+
+    def _operator_payload(self) -> dict[str, Any]:
+        payload = self.service.health_payload()
+        with self._condition:
+            accepting = self._accepting
+            in_flight = self._in_flight
+        payload.update(
+            {
+                "ok": accepting,
+                "live": True,
+                "ready": accepting,
+                "accepting": accepting,
+                "inFlight": in_flight,
+                "maxConcurrentRequests": self.max_concurrent_requests,
+            }
+        )
+        return payload
+
+    def _error_response(
+        self,
+        error: HttpServiceError,
+        *,
+        method: str,
+        headers: dict[str, str] | None = None,
+    ) -> HttpApplicationResponse:
+        response_headers = _response_headers(error.traceparent, error.case_id)
+        response_headers.update(headers or {})
+        return self._json_response(
+            error.status,
+            {"ok": False, "error": {"code": error.code, "message": error.message}},
+            method=method,
+            headers=response_headers,
+        )
+
+    def _json_response(
+        self,
+        status: int,
+        payload: object,
+        *,
+        method: str,
+        headers: dict[str, str] | None = None,
+    ) -> HttpApplicationResponse:
+        rendered = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+        response_headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Content-Length": str(len(rendered)),
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "x-gwt-program-digest": self.service.program_snapshot.identity.digest,
+        }
+        response_headers.update(headers or {})
+        return HttpApplicationResponse(
+            status,
+            response_headers,
+            b"" if method == "HEAD" else rendered,
+        )
+
+
 class GwtHttpServer(ThreadingHTTPServer):
     daemon_threads = False
     block_on_close = True
@@ -719,13 +1050,28 @@ class GwtHttpServer(ThreadingHTTPServer):
         self,
         server_address: tuple[str, int],
         service: GwtHttpService,
+        *,
+        max_concurrent_requests: int = DEFAULT_MAX_CONCURRENT_REQUESTS,
+        request_timeout_seconds: float | None = DEFAULT_REQUEST_TIMEOUT_SECONDS,
     ) -> None:
+        _validate_positive_int("max_concurrent_requests", max_concurrent_requests)
+        _validate_timeout("request_timeout_seconds", request_timeout_seconds)
         super().__init__(server_address, _GwtHttpRequestHandler)
         self.service = service
+        self.application = GwtHttpApplication(
+            service,
+            max_concurrent_requests=max_concurrent_requests,
+        )
+        self.request_timeout_seconds = request_timeout_seconds
+
+    def get_request(self) -> tuple[socket.socket, Any]:
+        request, address = super().get_request()
+        request.settimeout(self.request_timeout_seconds)
+        return request, address
 
     def server_close(self) -> None:
         super().server_close()
-        self.service.close()
+        self.application.close()
 
 
 def create_http_server(
@@ -733,10 +1079,17 @@ def create_http_server(
     *,
     host: str = "127.0.0.1",
     port: int = 8080,
+    max_concurrent_requests: int = DEFAULT_MAX_CONCURRENT_REQUESTS,
+    request_timeout_seconds: float | None = DEFAULT_REQUEST_TIMEOUT_SECONDS,
 ) -> GwtHttpServer:
     """Create a ThreadingHTTPServer for a precompiled `GwtHttpService`."""
 
-    return GwtHttpServer((host, port), service)
+    return GwtHttpServer(
+        (host, port),
+        service,
+        max_concurrent_requests=max_concurrent_requests,
+        request_timeout_seconds=request_timeout_seconds,
+    )
 
 
 def run_http_server(
@@ -752,6 +1105,10 @@ def run_http_server(
     max_request_body_bytes: int = DEFAULT_MAX_REQUEST_BODY_BYTES,
     execution_budget: int | None = DEFAULT_EXECUTION_BUDGET,
     max_call_depth: int | None = DEFAULT_MAX_CALL_DEPTH,
+    max_concurrent_requests: int = DEFAULT_MAX_CONCURRENT_REQUESTS,
+    request_timeout_seconds: float | None = DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    shutdown_grace_seconds: float = DEFAULT_SHUTDOWN_GRACE_SECONDS,
+    engine: str = "builtin",
     capture_directory: str | Path | None = None,
     capture_request_names: Iterable[str] | None = None,
     capture_values: bool = False,
@@ -768,6 +1125,11 @@ def run_http_server(
         )
     resolved_otlp_endpoint = otlp_trace_endpoint(otlp_endpoint)
     resolved_otlp_metrics_endpoint = resolve_otlp_metrics_endpoint(otlp_metrics_endpoint)
+    _validate_positive_int("max_concurrent_requests", max_concurrent_requests)
+    _validate_timeout("request_timeout_seconds", request_timeout_seconds)
+    _validate_timeout("shutdown_grace_seconds", shutdown_grace_seconds, allow_none=False)
+    if engine not in {"builtin", "asgi"}:
+        raise ValueError("engine must be 'builtin' or 'asgi'")
     service = GwtHttpService.from_file(
         path,
         import_roots=import_roots,
@@ -801,7 +1163,28 @@ def run_http_server(
         max_call_depth=max_call_depth,
         background_exports=True,
     )
-    server = create_http_server(service, host=host, port=port)
+    if engine == "asgi":
+        from .asgi import run_asgi_server
+
+        return run_asgi_server(
+            service,
+            path=path,
+            host=host,
+            port=port,
+            max_concurrent_requests=max_concurrent_requests,
+            shutdown_grace_seconds=shutdown_grace_seconds,
+        )
+    try:
+        server = create_http_server(
+            service,
+            host=host,
+            port=port,
+            max_concurrent_requests=max_concurrent_requests,
+            request_timeout_seconds=request_timeout_seconds,
+        )
+    except Exception:
+        service.close()
+        raise
     actual_host, actual_port = server.server_address[:2]
     print(f"Serving {path} at http://{actual_host}:{actual_port}", flush=True)
     previous_sigterm = _install_sigterm_handler()
@@ -810,93 +1193,128 @@ def run_http_server(
     except KeyboardInterrupt:
         return 0
     finally:
+        server.application.begin_draining()
         _restore_sigterm_handler(previous_sigterm)
+        if not server.application.wait_for_idle(shutdown_grace_seconds):
+            print(
+                "gwt: active requests did not finish before shutdown grace period",
+                file=sys.stderr,
+            )
         server.server_close()
     return 0
 
 
 class _GwtHttpRequestHandler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def do_GET(self) -> None:
-        path = _request_path(self.path)
-        if path == "/health":
-            self._write_json(200, self._service().health_payload())
-            return
-        if path == "/openapi.json":
-            self._write_json(200, self._service().openapi_document)
-            return
-        if path == "/requests":
-            self._write_json(200, self._service().requests_payload())
-            return
-        self._write_error(HttpServiceError(404, f"unknown route: {path}", "GWT_HTTP_ROUTE_NOT_FOUND"))
+        self._dispatch()
+
+    def do_HEAD(self) -> None:
+        self._dispatch()
 
     def do_POST(self) -> None:
-        path = _request_path(self.path)
+        self._dispatch()
+
+    def do_PUT(self) -> None:
+        self._dispatch()
+
+    def do_PATCH(self) -> None:
+        self._dispatch()
+
+    def do_DELETE(self) -> None:
+        self._dispatch()
+
+    def do_OPTIONS(self) -> None:
+        self._dispatch()
+
+    def do_TRACE(self) -> None:
+        self._dispatch()
+
+    def do_CONNECT(self) -> None:
+        self._dispatch()
+
+    def _dispatch(self) -> None:
+        application = self._application()
         try:
-            result = self._service().run_http_route(
-                path,
-                self.headers.get("Content-Length", "0"),
-                cast(BinaryIO, self.rfile),
-                content_type=self.headers.get("Content-Type"),
-                traceparent=self.headers.get("traceparent"),
-            )
+            body = self._read_body(application.service.max_request_body_bytes)
         except HttpServiceError as exc:
-            self._write_error(exc)
-            return
-        except Exception as exc:
-            print(
-                f"gwt: unexpected HTTP service error for {path}: {exc!r}",
-                file=sys.stderr,
-            )
-            self._write_error(
+            self.close_connection = True
+            if exc.status == 413:
+                response = application.body_too_large_response(
+                    HttpApplicationRequest(
+                        self.command,
+                        self.path,
+                        {key: value for key, value in self.headers.items()},
+                    )
+                )
+            else:
+                response = application._error_response(exc, method=self.command)
+        except (TimeoutError, socket.timeout):
+            self.close_connection = True
+            response = application._error_response(
                 HttpServiceError(
-                    500,
-                    "unexpected GWT HTTP service error",
-                    "GWT_HTTP_UNEXPECTED_ERROR",
+                    408,
+                    "request body read timed out",
+                    "GWT_HTTP_REQUEST_TIMEOUT",
+                ),
+                method=self.command,
+            )
+        else:
+            response = application.handle(
+                HttpApplicationRequest(
+                    method=self.command,
+                    path=self.path,
+                    headers={key: value for key, value in self.headers.items()},
+                    body=body,
                 )
             )
-            return
-        self._write_json(
-            200,
-            result.body,
-            headers=_response_headers(result.traceparent, result.case_id),
-        )
+        self._write_response(response)
 
     def log_message(self, format: str, *args: object) -> None:
         return
 
-    def _service(self) -> GwtHttpService:
-        return cast(GwtHttpServer, self.server).service
+    def _application(self) -> GwtHttpApplication:
+        return cast(GwtHttpServer, self.server).application
 
-    def _write_json(
-        self,
-        status: int,
-        payload: object,
-        *,
-        headers: dict[str, str] | None = None,
-    ) -> None:
-        rendered = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(rendered)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        for key, value in (headers or {}).items():
+    def _read_body(self, max_body_bytes: int) -> bytes:
+        value = self.headers.get("Content-Length", "0")
+        try:
+            length = int(value)
+        except ValueError as exc:
+            raise HttpServiceError(
+                400,
+                "invalid Content-Length header",
+                "GWT_HTTP_BAD_REQUEST",
+            ) from exc
+        if length < 0:
+            raise HttpServiceError(
+                400,
+                "invalid Content-Length header",
+                "GWT_HTTP_BAD_REQUEST",
+            )
+        if length > max_body_bytes:
+            raise HttpServiceError(
+                413,
+                f"request body exceeds {max_body_bytes} byte limit",
+                "GWT_HTTP_BODY_TOO_LARGE",
+            )
+        raw = self.rfile.read(length) if length else b""
+        if len(raw) != length:
+            raise HttpServiceError(
+                400,
+                "request body ended before Content-Length bytes were received",
+                "GWT_HTTP_BAD_REQUEST",
+            )
+        return raw
+
+    def _write_response(self, response: HttpApplicationResponse) -> None:
+        self.send_response(response.status)
+        for key, value in response.headers.items():
             self.send_header(key, value)
         self.end_headers()
-        self.wfile.write(rendered)
-
-    def _write_error(self, error: HttpServiceError) -> None:
-        self._write_json(
-            error.status,
-            {
-                "ok": False,
-                "error": {
-                    "code": error.code,
-                    "message": error.message,
-                },
-            },
-            headers=_response_headers(error.traceparent, error.case_id),
-        )
+        if response.body:
+            self.wfile.write(response.body)
 
 
 def _routes_from_openapi(document: dict[str, Any]) -> dict[str, HttpRequestRoute]:
@@ -964,6 +1382,29 @@ def _validate_runtime_limit(name: str, value: object) -> None:
         return
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
         raise ValueError(f"{name} must be a positive integer or None")
+
+
+def _validate_positive_int(name: str, value: object) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer")
+
+
+def _validate_timeout(
+    name: str,
+    value: object,
+    *,
+    allow_none: bool = True,
+) -> None:
+    if value is None and allow_none:
+        return
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        suffix = " or None" if allow_none else ""
+        raise ValueError(f"{name} must be a positive number{suffix}")
 
 
 def _validate_non_negative_limit(name: str, value: object) -> None:

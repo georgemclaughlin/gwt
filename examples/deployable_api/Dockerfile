@@ -6,7 +6,7 @@ COPY pyproject.toml README.md ./
 COPY gwtlang ./gwtlang
 COPY examples/deployable_api/rules.gwt ./examples/deployable_api/rules.gwt
 
-RUN python -m pip install --no-cache-dir .
+RUN python -m pip install --no-cache-dir '.[serve]'
 
 RUN useradd --create-home --uid 10001 gwt
 USER gwt
@@ -14,6 +14,7 @@ USER gwt
 ENV GWT_RULES=/app/examples/deployable_api/rules.gwt
 ENV GWT_HOST=0.0.0.0
 ENV GWT_PORT=8080
+ENV GWT_SERVE_ARGS="--engine asgi"
 
 EXPOSE 8080
 

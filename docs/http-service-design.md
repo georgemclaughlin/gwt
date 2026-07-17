@@ -1,8 +1,9 @@
 # HTTP Service And OpenAPI
 
-Status: active serve-first integration hardening. OpenAPI generation and the
-standard-library HTTP service are implemented; the service remains
-experimental while the operator and deployment contract is hardened.
+Status: active serve-first integration hardening. OpenAPI generation, the
+transport-neutral HTTP application, the built-in adapter, and the optional
+ASGI adapter are implemented; the service remains experimental while the
+operator and deployment contract is hardened.
 
 GWT named `REQUEST` blocks already define a public request/response boundary.
 The implemented HTTP surface projects that boundary into standard API
@@ -36,8 +37,12 @@ The hardening order is:
 4. operational tracing, metrics, and opt-in review evidence;
 5. repeatable deployment behind host-owned TLS, auth, and rate limits.
 
-The current pass covers the first two items. It does not claim that the
-standard-library server is an internet-facing security boundary.
+The current implementation covers the first four items through one
+transport-neutral HTTP application. The dependency-free built-in adapter is a
+development/reference server; the optional ASGI adapter supplies a
+production-oriented transport without duplicating GWT request semantics.
+Neither transport claims to replace host-owned TLS, authentication,
+authorization, or edge rate limiting.
 
 ## Implemented First Slice: OpenAPI
 
@@ -112,6 +117,24 @@ python -m gwtlang serve examples/deployable_api/rules.gwt \
   --port 8080
 ```
 
+For the optional ASGI transport:
+
+```sh
+python -m pip install 'gwtlang[serve]'
+python -m gwtlang serve examples/deployable_api/rules.gwt \
+  --engine asgi \
+  --host 127.0.0.1 \
+  --port 8080
+```
+
+Both transports adapt into the same `GwtHttpApplication`. Route dispatch,
+JSON errors, body limits, admission, lifecycle state, response headers, and
+program identity therefore have one implementation. The ASGI adapter executes
+the synchronous evaluator outside the event-loop thread and implements ASGI
+lifespan startup and shutdown. The built-in adapter uses HTTP/1.1 and a
+configurable socket timeout, but remains deliberately dependency-free rather
+than being presented as an internet-facing production server.
+
 Startup behavior:
 
 - parse, import, and check the `.gwt` program once
@@ -124,6 +147,8 @@ Routes:
 
 ```text
 GET  /health
+GET  /live
+GET  /ready
 GET  /openapi.json
 GET  /requests
 POST /requests/<request-slug>
@@ -140,7 +165,16 @@ Request execution:
 - execution work and nested behavior calls are bounded by default; use
   `--execution-budget N|none` and `--max-call-depth N|none` to set the served
   runtime policy explicitly (disabling limits is not recommended for a service)
-- `GET /health` reports the active body, execution, and call-depth limits
+- `GET /live` remains `200` while the process can answer HTTP
+- `GET /ready` returns `200` while new evaluations are accepted and `503`
+  while draining; `GET /health` is a compatibility alias for readiness
+- readiness reports body, execution, call-depth, and concurrent-evaluation
+  limits plus admission state and the current in-flight count
+- `--max-concurrent-requests` bounds executing GWT requests; excess work gets
+  a JSON `503 GWT_HTTP_UNAVAILABLE` response with `Retry-After`
+- SIGTERM/interrupt stops admission, waits up to `--shutdown-grace-seconds`
+  for admitted requests, then closes service resources
+- the built-in adapter applies `--request-timeout` to accepted sockets
 - request slugs are derived from the generated OpenAPI paths, including
   collision suffixes such as `/requests/review-vendor-2`
 - the service invokes the exact named `REQUEST` stored in `x-gwt-request-name`
@@ -150,6 +184,38 @@ Request execution:
 - request-local `GIVEN` setup and `WHEN` calls run normally
 - `OUTPUT` contracts validate after execution
 - the HTTP `200` response body is the declared `OUTPUT` object
+
+## Operator Identity And Version Surface
+
+The service snapshot already computes a portable SHA-256 identity over the
+entry file and its complete `USE` closure. Serving exposes that existing
+identity rather than hashing only the entry file:
+
+- every JSON response includes `x-gwt-program-digest`
+- readiness, liveness, and request discovery include `programDigest` and
+  `programIdentityAlgorithm`
+- readiness also includes package and language-spec versions
+- served `/openapi.json` includes the digest and algorithm under `x-gwt`
+- generated operations document the digest response header and the overload
+  `503` response
+
+This lets a deployment probe, host client, trace, and captured Execution Case
+refer to the same concrete program closure. It is visibility, not hot reload:
+changing source on disk does not change a running process because compilation
+and snapshot loading happen once at startup.
+
+## Transport And Capacity Boundary
+
+`--engine builtin` is the default so `gwt serve` remains dependency-free and
+easy to use locally. `--engine asgi` uses the optional Uvicorn dependency for a
+mature HTTP connection and ASGI lifespan boundary. The GWT application-level
+concurrency limit is shared by both transports and bounds evaluator work, not
+all possible upstream connections or process memory.
+
+For CPU capacity beyond one Python process, run multiple service processes
+behind an ordinary supervisor or orchestrator and size them with workload
+benchmarks. Keep TLS, authentication, authorization, coarse connection limits,
+and external rate limiting in the gateway/deployment layer.
 
 The service response should not be the CLI execution envelope by default. The
 CLI envelope is useful for local runners, scenario state, print output, and
@@ -210,9 +276,12 @@ default; pass `--trace-values` for local diagnostic runs that need full values.
 Use `--otlp-metrics-endpoint` to send metrics to a separate collector endpoint;
 otherwise `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or the standard
 `OTEL_EXPORTER_OTLP_ENDPOINT` base endpoint is used when present.
-Served OTLP trace and metric exports are queued in a background worker and
-flushed with a bounded wait on graceful shutdown, so collector latency does not
-sit on the HTTP response path.
+Served OTLP trace and metric exports use a bounded 1,024-item background queue
+and are flushed with a bounded wait on graceful shutdown, so collector latency
+does not sit on the HTTP response path or permit unbounded queue growth. When
+the queue is full the service drops new export work, emits one warning, and
+reports queue capacity, current depth, and the cumulative drop count through
+the readiness payload.
 
 The exported trace is a diagnostic projection of GWT execution:
 
@@ -285,6 +354,7 @@ Error posture:
 - startup parse/check failures should fail the process with source-located
   diagnostics
 - malformed JSON should return `400`
+- unsupported methods on known routes should return JSON `405` with `Allow`
 - undeclared request body fields should return `400`
 - missing or invalid `REQUEST` input should return `400`
 - failed request `THEN` assertions or missing `OUTPUT` values should return
@@ -295,6 +365,7 @@ Error posture:
 - unexpected host/runtime exceptions are logged server-side and become a
   sanitized `500` response with code `GWT_HTTP_UNEXPECTED_ERROR`
 - JSON responses use `no-store` caching and `nosniff` content-type headers
+- overload or draining should return JSON `503` with `Retry-After`
 
 Deferred service options:
 
