@@ -170,6 +170,10 @@ python examples/deployable_api/qualify_container.py rules.gwt \
   --json >container-qualification.json
 ```
 
+Once the local program and corpus validate, `--json` also writes this report
+when Docker build, startup, health, or lifecycle checks fail. This keeps failed
+qualification evidence machine-readable instead of falling back to stderr.
+
 It then verifies two Docker-owned lifecycle paths. An ordinary `docker stop`
 must produce a clean exit without OOM or forced termination. A controlled real
 evaluation fills a one-request admission limit, proves the second request gets
@@ -180,6 +184,8 @@ instrumentation rather than a server flag or language feature.
 The Dockerfile copies the installed JSON schemas, includes a `/ready`
 healthcheck, runs as UID 10001, and uses `exec` when starting `gwt serve` so the
 Python/Uvicorn process becomes PID 1 and directly receives container signals.
+Qualification checks the PID 1 executable and argument vector rather than
+accepting a command-line substring match.
 This runner deliberately does not qualify TLS, authentication, a reverse
 proxy, or multiple worker processes.
 

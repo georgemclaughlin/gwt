@@ -4,6 +4,7 @@ import argparse
 from collections.abc import Mapping, Sequence
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -21,6 +22,7 @@ from gwtlang import (
     ServeQualificationResult,
     qualify_served_endpoint,
 )
+from gwtlang.serve_qualification import _load_qualification_inputs
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -28,6 +30,8 @@ REPO_ROOT = SCRIPT_DIR.parents[1]
 DEFAULT_DOCKERFILE = SCRIPT_DIR / "Dockerfile"
 CONTAINER_PROGRAM_ROOT = Path("/qualification/program")
 CONTAINER_CONTROL_ROOT = Path("/qualification/control")
+DOCKER_AUXILIARY_TIMEOUT_SECONDS = 5.0
+_PYTHON_EXECUTABLE = re.compile(r"python(?:\d+(?:\.\d+)*)?")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -79,6 +83,16 @@ def main(argv: list[str] | None = None) -> int:
     if not corpus.is_file():
         parser.error(f"corpus does not exist: {corpus}")
 
+    try:
+        _program_path, _roots, snapshot, loaded_corpus = _load_qualification_inputs(
+            program,
+            corpus,
+            import_roots=(program_root,),
+            allow_absolute_imports=False,
+        )
+    except Exception as exc:
+        parser.error(_safe_error(exc))
+
     suffix = uuid4().hex[:12]
     image_tag = f"gwt-serve-qualification:{suffix}"
     production_name = f"gwt-serve-production-{suffix}"
@@ -115,8 +129,11 @@ def main(argv: list[str] | None = None) -> int:
             args.timeout,
         )
         health = _wait_for_healthy(production_name, args.timeout)
-        pid1_command = _container_pid1_command(production_name)
-        pid1_is_gwt = "python" in pid1_command and "gwtlang serve" in pid1_command
+        pid1_executable, pid1_argv = _container_pid1_identity(
+            production_name,
+            _auxiliary_timeout(args.timeout),
+        )
+        pid1_is_gwt = _is_gwt_pid1(pid1_executable, pid1_argv)
         checks.append(
             QualificationCheck(
                 "container_health",
@@ -125,6 +142,8 @@ def main(argv: list[str] | None = None) -> int:
                 {
                     "status": health,
                     "pid1IsGwt": pid1_is_gwt,
+                    "pid1Executable": pid1_executable,
+                    "pid1Argv": list(pid1_argv),
                 },
             )
         )
@@ -158,25 +177,21 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
     finally:
-        _remove_container(production_name)
-        _remove_container(controlled_name)
+        cleanup_timeout = _auxiliary_timeout(args.timeout)
+        _remove_container(production_name, timeout=cleanup_timeout)
+        _remove_container(controlled_name, timeout=cleanup_timeout)
         if not args.keep_image:
-            _remove_image(image_tag)
-
-    if endpoint is None:
-        for check in checks:
-            print(f"{'PASS' if check.ok else 'FAIL'} {check.name}: {check.detail}", file=sys.stderr)
-        return 1
+            _remove_image(image_tag, timeout=cleanup_timeout)
 
     result = ServeQualificationResult(
         program_file=str(args.program),
-        program_digest=endpoint.program_digest,
-        program_identity_algorithm=endpoint.program_identity_algorithm,
+        program_digest=snapshot.identity.digest,
+        program_identity_algorithm=snapshot.identity.algorithm,
         corpus_file=str(args.corpus),
-        corpus=endpoint.corpus,
+        corpus=loaded_corpus,
         engine="asgi",
         checks=tuple(checks),
-        cases=endpoint.cases,
+        cases=endpoint.cases if endpoint is not None else (),
     )
     if args.json:
         print(json.dumps(result.as_payload(), indent=2, sort_keys=True))
@@ -423,7 +438,8 @@ def _wait_for_healthy(name: str, timeout: float) -> str:
         state = _container_state(name)
         if state.get("Running") is not True:
             raise RuntimeError(
-                f"container exited before healthcheck: {_container_log_tail(name)}"
+                "container exited before healthcheck: "
+                f"{_container_log_tail(name, _auxiliary_timeout(timeout))}"
             )
         health = _mapping(state.get("Health"))
         status = health.get("Status")
@@ -433,7 +449,8 @@ def _wait_for_healthy(name: str, timeout: float) -> str:
             return last_status
         if last_status == "unhealthy":
             raise RuntimeError(
-                f"container healthcheck failed: {_container_log_tail(name)}"
+                "container healthcheck failed: "
+                f"{_container_log_tail(name, _auxiliary_timeout(timeout))}"
             )
         time.sleep(0.05)
     raise RuntimeError(f"timed out waiting for Docker healthcheck ({last_status})")
@@ -456,7 +473,8 @@ def _wait_for_path(path: Path, name: str, timeout: float) -> None:
             return
         if _container_state(name).get("Running") is not True:
             raise RuntimeError(
-                f"controlled container exited before admission: {_container_log_tail(name)}"
+                "controlled container exited before admission: "
+                f"{_container_log_tail(name, _auxiliary_timeout(timeout))}"
             )
         time.sleep(0.01)
     raise RuntimeError("timed out waiting for controlled container admission")
@@ -537,19 +555,25 @@ def _docker_inspect(name: str, *, image: bool = False) -> dict[str, object]:
     return _mapping(cast(list[object], payload)[0])
 
 
-def _container_log_tail(name: str) -> str:
-    completed = subprocess.run(
-        ["docker", "logs", "--tail", "5", name],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+def _container_log_tail(name: str, timeout: float) -> str:
+    try:
+        completed = subprocess.run(
+            ["docker", "logs", "--tail", "5", name],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return "timed out collecting container logs"
+    except OSError as exc:
+        return f"could not collect container logs: {_safe_error(exc)}"
     lines = (completed.stderr or completed.stdout).strip().splitlines()
     return lines[-1] if lines else "no container diagnostic"
 
 
-def _container_pid1_command(name: str) -> str:
+def _container_pid1_identity(name: str, timeout: float) -> tuple[str, tuple[str, ...]]:
     completed = _run(
         [
             "docker",
@@ -558,34 +582,60 @@ def _container_pid1_command(name: str) -> str:
             "python",
             "-c",
             (
-                "from pathlib import Path; "
-                "print(Path('/proc/1/cmdline').read_bytes()"
-                ".replace(b'\\0', b' ').decode())"
+                "import json, os; from pathlib import Path; "
+                "raw = Path('/proc/1/cmdline').read_bytes(); "
+                "argv = [part.decode('utf-8', 'replace') "
+                "for part in raw.split(b'\\0') if part]; "
+                "print(json.dumps({'executable': os.readlink('/proc/1/exe'), "
+                "'argv': argv}))"
             ),
         ],
-        timeout=10,
+        timeout=timeout,
     )
-    return completed.stdout.strip()
+    payload = json.loads(completed.stdout)
+    identity = _mapping(payload)
+    executable = identity.get("executable")
+    argv = identity.get("argv")
+    if not isinstance(executable, str) or not isinstance(argv, list):
+        raise RuntimeError("container PID 1 inspection returned an invalid payload")
+    argv_values = cast(list[object], argv)
+    if not all(isinstance(value, str) for value in argv_values):
+        raise RuntimeError("container PID 1 argv contained a non-string value")
+    return executable, tuple(cast(list[str], argv_values))
 
 
-def _remove_container(name: str) -> None:
-    subprocess.run(
-        ["docker", "rm", "--force", name],
-        cwd=REPO_ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
+def _is_gwt_pid1(executable: str, argv: Sequence[str]) -> bool:
+    return (
+        len(argv) >= 4
+        and _PYTHON_EXECUTABLE.fullmatch(Path(executable).name) is not None
+        and _PYTHON_EXECUTABLE.fullmatch(Path(argv[0]).name) is not None
+        and tuple(argv[1:4]) == ("-m", "gwtlang", "serve")
     )
 
 
-def _remove_image(image_tag: str) -> None:
-    subprocess.run(
+def _remove_container(name: str, *, timeout: float) -> None:
+    _best_effort_docker(["docker", "rm", "--force", name], timeout=timeout)
+
+
+def _remove_image(image_tag: str, *, timeout: float) -> None:
+    _best_effort_docker(
         ["docker", "image", "rm", "--force", image_tag],
-        cwd=REPO_ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
+        timeout=timeout,
     )
+
+
+def _best_effort_docker(command: Sequence[str], *, timeout: float) -> None:
+    try:
+        subprocess.run(
+            command,
+            cwd=REPO_ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=timeout,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
 
 
 def _bind_mount(source: Path, target: Path, *, readonly: bool = False) -> str:
@@ -622,6 +672,10 @@ def _mapping(value: object) -> dict[str, object]:
 def _safe_error(error: object) -> str:
     text = str(error).strip()
     return text.splitlines()[0] if text else type(error).__name__
+
+
+def _auxiliary_timeout(timeout: float) -> float:
+    return min(timeout, DOCKER_AUXILIARY_TIMEOUT_SECONDS)
 
 
 def _positive_float(value: str) -> float:
