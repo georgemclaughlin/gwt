@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
+import importlib
 import math
 from pathlib import Path
 import socket
-from typing import Any
+from typing import Any, Protocol, cast
 
 from .http_server import (
     DEFAULT_MAX_CONCURRENT_REQUESTS,
@@ -22,6 +23,16 @@ from .http_server import (
 AsgiMessage = dict[str, Any]
 AsgiReceive = Callable[[], Awaitable[AsgiMessage]]
 AsgiSend = Callable[[AsgiMessage], Awaitable[None]]
+
+
+class _UvicornServer(Protocol):
+    def run(self, sockets: list[socket.socket] | None = None) -> None: ...
+
+
+class _UvicornModule(Protocol):
+    def Config(self, app: object, **kwargs: object) -> object: ...
+
+    def Server(self, config: object) -> _UvicornServer: ...
 
 
 class GwtAsgiApplication:
@@ -173,8 +184,10 @@ def run_asgi_server(
     """Run the optional Uvicorn transport used by ``gwt serve --engine asgi``."""
 
     try:
-        import uvicorn
-    except ImportError as exc:
+        uvicorn = cast(_UvicornModule, importlib.import_module("uvicorn"))
+    except ModuleNotFoundError as exc:
+        if exc.name != "uvicorn":
+            raise
         service.close()
         raise ValueError(
             "the ASGI engine requires the optional serve dependency; "
