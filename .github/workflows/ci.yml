@@ -31,7 +31,7 @@ jobs:
       - name: Run Python tests
         run: python -m unittest discover
 
-      - name: Qualify the external-pilot ASGI boundary
+      - name: Qualify the external-pilot serve boundaries
         run: |
           EVIDENCE_DIR="$RUNNER_TEMP/commit-analyzer-evidence"
           python examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py \
@@ -42,6 +42,13 @@ jobs:
             --engine asgi \
             --json >"$EVIDENCE_DIR/serve-qualification.json"
           python -m json.tool "$EVIDENCE_DIR/serve-qualification.json" >/dev/null
+          python examples/deployable_api/qualify_container.py \
+            examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
+            --program-root examples/external_pilots/semantic_release_commit_analyzer \
+            --corpus "$EVIDENCE_DIR/corpus.json" \
+            --timeout 30 \
+            --json >"$EVIDENCE_DIR/container-qualification.json"
+          python -m json.tool "$EVIDENCE_DIR/container-qualification.json" >/dev/null
 
       - name: Type-check Python package and host examples
         run: npx --yes pyright@1.1.410 --project pyrightconfig.json

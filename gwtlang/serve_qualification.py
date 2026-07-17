@@ -20,7 +20,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .case_corpus import CaseCorpus, load_case_corpus
-from .program_identity import load_program_snapshot
+from .program_identity import LoadedProgramSnapshot, load_program_snapshot
 from .runtime import ImportPolicy
 
 
@@ -104,6 +104,25 @@ class ServeQualificationResult:
         }
 
 
+@dataclass(frozen=True)
+class ServedEndpointQualificationResult:
+    """Readiness, identity, OpenAPI, and corpus results for an existing endpoint."""
+
+    program_file: str
+    program_digest: str
+    program_identity_algorithm: str
+    corpus_file: str
+    corpus: CaseCorpus
+    checks: tuple[QualificationCheck, ...]
+    cases: tuple[QualificationCaseResult, ...]
+
+    @property
+    def ok(self) -> bool:
+        return all(check.ok for check in self.checks) and all(
+            case.ok for case in self.cases
+        )
+
+
 @dataclass
 class _ServerProcess:
     process: subprocess.Popen[str]
@@ -134,19 +153,16 @@ def qualify_served_program(
     if timeout_seconds <= 0:
         raise ValueError("qualification timeout must be positive")
 
-    displayed_program = str(program)
-    displayed_corpus = str(corpus_path)
-    program_path = Path(program).resolve()
-    roots = tuple(Path(root).resolve() for root in import_roots)
-    policy = ImportPolicy(roots, allow_absolute_imports)
-    snapshot = load_program_snapshot(program_path, import_policy=policy)
-    corpus = load_case_corpus(Path(corpus_path).resolve())
-    _validate_corpus(corpus)
+    program_path, roots, snapshot, corpus = _load_qualification_inputs(
+        program,
+        corpus_path,
+        import_roots=import_roots,
+        allow_absolute_imports=allow_absolute_imports,
+    )
 
     checks: list[QualificationCheck] = []
     case_results: list[QualificationCaseResult] = []
     server: _ServerProcess | None = None
-    routes: dict[str, str] = {}
     try:
         server = _start_server(
             _serve_command(
@@ -165,37 +181,14 @@ def qualify_served_program(
                 {"engine": engine},
             )
         )
-        ready = _wait_for_ready(server, timeout_seconds)
-        checks.append(_readiness_check(ready))
-
-        openapi = _request_json(f"{server.base_url}/openapi.json", timeout_seconds)
-        requests = _request_json(f"{server.base_url}/requests", timeout_seconds)
-        checks.append(
-            _identity_check(
-                snapshot.identity.digest,
-                ready,
-                openapi,
-                requests,
-            )
-        )
-        routes, openapi_check = _openapi_routes(openapi, requests, corpus)
-        checks.append(openapi_check)
-        case_results = _run_corpus(
+        endpoint_checks, case_results = _qualify_loaded_endpoint(
             server.base_url,
-            corpus,
-            routes,
             snapshot.identity.digest,
-            timeout_seconds,
+            corpus,
+            timeout_seconds=timeout_seconds,
+            server=server,
         )
-        passed = sum(result.ok for result in case_results)
-        checks.append(
-            QualificationCheck(
-                "corpus",
-                passed == len(case_results),
-                f"served corpus replay passed {passed}/{len(case_results)} cases",
-                {"passed": passed, "failed": len(case_results) - passed},
-            )
-        )
+        checks.extend(endpoint_checks)
     except Exception as exc:
         checks.append(
             QualificationCheck(
@@ -232,15 +225,115 @@ def qualify_served_program(
     checks.extend((overload, active_shutdown))
 
     return ServeQualificationResult(
-        program_file=displayed_program,
+        program_file=str(program),
         program_digest=snapshot.identity.digest,
         program_identity_algorithm=snapshot.identity.algorithm,
-        corpus_file=displayed_corpus,
+        corpus_file=str(corpus_path),
         corpus=corpus,
         engine=engine,
         checks=tuple(checks),
         cases=tuple(case_results),
     )
+
+
+def qualify_served_endpoint(
+    program: str | Path,
+    corpus_path: str | Path,
+    base_url: str,
+    *,
+    import_roots: tuple[str | Path, ...] = (),
+    allow_absolute_imports: bool = True,
+    timeout_seconds: float = 10.0,
+) -> ServedEndpointQualificationResult:
+    """Qualify an already running endpoint without managing its lifecycle."""
+
+    if timeout_seconds <= 0:
+        raise ValueError("qualification timeout must be positive")
+    _program_path, _roots, snapshot, corpus = _load_qualification_inputs(
+        program,
+        corpus_path,
+        import_roots=import_roots,
+        allow_absolute_imports=allow_absolute_imports,
+    )
+    checks: tuple[QualificationCheck, ...]
+    cases: tuple[QualificationCaseResult, ...]
+    try:
+        checks, case_results = _qualify_loaded_endpoint(
+            base_url.rstrip("/"),
+            snapshot.identity.digest,
+            corpus,
+            timeout_seconds=timeout_seconds,
+        )
+        cases = tuple(case_results)
+    except Exception as exc:
+        checks = (
+            QualificationCheck(
+                "runtime_boundary",
+                False,
+                f"served qualification stopped: {_safe_error(exc)}",
+                {},
+            ),
+        )
+        cases = ()
+    return ServedEndpointQualificationResult(
+        program_file=str(program),
+        program_digest=snapshot.identity.digest,
+        program_identity_algorithm=snapshot.identity.algorithm,
+        corpus_file=str(corpus_path),
+        corpus=corpus,
+        checks=checks,
+        cases=cases,
+    )
+
+
+def _load_qualification_inputs(
+    program: str | Path,
+    corpus_path: str | Path,
+    *,
+    import_roots: tuple[str | Path, ...],
+    allow_absolute_imports: bool,
+) -> tuple[Path, tuple[Path, ...], LoadedProgramSnapshot, CaseCorpus]:
+    program_path = Path(program).resolve()
+    roots = tuple(Path(root).resolve() for root in import_roots)
+    policy = ImportPolicy(roots, allow_absolute_imports)
+    snapshot = load_program_snapshot(program_path, import_policy=policy)
+    corpus = load_case_corpus(Path(corpus_path).resolve())
+    _validate_corpus(corpus)
+    return program_path, roots, snapshot, corpus
+
+
+def _qualify_loaded_endpoint(
+    base_url: str,
+    expected_digest: str,
+    corpus: CaseCorpus,
+    *,
+    timeout_seconds: float,
+    server: _ServerProcess | None = None,
+) -> tuple[tuple[QualificationCheck, ...], list[QualificationCaseResult]]:
+    ready = _wait_for_ready(base_url, timeout_seconds, server=server)
+    checks = [_readiness_check(ready)]
+    openapi = _request_json(f"{base_url}/openapi.json", timeout_seconds)
+    requests = _request_json(f"{base_url}/requests", timeout_seconds)
+    checks.append(_identity_check(expected_digest, ready, openapi, requests))
+    routes, openapi_check = _openapi_routes(openapi, requests, corpus)
+    checks.append(openapi_check)
+    cases = _run_corpus(
+        base_url,
+        corpus,
+        routes,
+        expected_digest,
+        timeout_seconds,
+    )
+    passed = sum(result.ok for result in cases)
+    checks.append(
+        QualificationCheck(
+            "corpus",
+            passed == len(cases),
+            f"served corpus replay passed {passed}/{len(cases)} cases",
+            {"passed": passed, "failed": len(cases) - passed},
+        )
+    )
+    return tuple(checks), cases
 
 
 def _validate_corpus(corpus: CaseCorpus) -> None:
@@ -322,18 +415,23 @@ def _start_server(command: list[str], *, timeout_seconds: float) -> _ServerProce
     return _ServerProcess(process, match.group(1), diagnostic)
 
 
-def _wait_for_ready(server: _ServerProcess, timeout_seconds: float) -> _HttpResponse:
+def _wait_for_ready(
+    base_url: str,
+    timeout_seconds: float,
+    *,
+    server: _ServerProcess | None = None,
+) -> _HttpResponse:
     deadline = time.monotonic() + timeout_seconds
     last_error: Exception | None = None
     while time.monotonic() < deadline:
-        if server.process.poll() is not None:
+        if server is not None and server.process.poll() is not None:
             raise RuntimeError(
                 "serve process exited before readiness: "
                 f"{_process_error(server.process, server.diagnostic)}"
             )
         try:
             response = _request_json(
-                f"{server.base_url}/ready",
+                f"{base_url}/ready",
                 min(1.0, timeout_seconds),
             )
             if response.status == 200:
@@ -552,7 +650,11 @@ def _controlled_lifecycle_checks(
         first_thread: Thread | None = None
         try:
             server = _start_server(command, timeout_seconds=timeout_seconds)
-            ready = _wait_for_ready(server, timeout_seconds)
+            ready = _wait_for_ready(
+                server.base_url,
+                timeout_seconds,
+                server=server,
+            )
             openapi = _request_json(f"{server.base_url}/openapi.json", timeout_seconds)
             routes, route_check = _openapi_routes_for_names(openapi, {request_name})
             if not route_check.ok:

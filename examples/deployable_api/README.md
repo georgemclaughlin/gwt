@@ -155,6 +155,34 @@ GWT_HTTP_PORT=18080 PROMETHEUS_PORT=19090 JAEGER_UI_PORT=16687 \
   docker compose -f examples/deployable_api/docker-compose.yml up --build
 ```
 
+## Container Qualification
+
+The repository also includes a focused single-container acceptance runner. It
+builds this example's Dockerfile, mounts the selected program root read-only,
+publishes an ephemeral loopback port, waits for the image healthcheck, and runs
+the same readiness, identity, OpenAPI, and Case Corpus checks used by `gwt
+qualify-serve`:
+
+```sh
+python examples/deployable_api/qualify_container.py rules.gwt \
+  --program-root . \
+  --corpus corpus.json \
+  --json >container-qualification.json
+```
+
+It then verifies two Docker-owned lifecycle paths. An ordinary `docker stop`
+must produce a clean exit without OOM or forced termination. A controlled real
+evaluation fills a one-request admission limit, proves the second request gets
+the stable `503`, receives Docker-delivered SIGTERM, returns the admitted
+response, and exits with status zero. The controlled hold is qualification
+instrumentation rather than a server flag or language feature.
+
+The Dockerfile copies the installed JSON schemas, includes a `/ready`
+healthcheck, runs as UID 10001, and uses `exec` when starting `gwt serve` so the
+Python/Uvicorn process becomes PID 1 and directly receives container signals.
+This runner deliberately does not qualify TLS, authentication, a reverse
+proxy, or multiple worker processes.
+
 For local diagnostics that need full request, state, and output values in
 Jaeger, opt in explicitly:
 
