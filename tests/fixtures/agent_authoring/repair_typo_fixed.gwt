@@ -1,0 +1,7 @@
+WHEN approve <decision>
+  set decision to "approved"
+
+SCENARIO approval uses the domain behavior
+GIVEN decision is "new"
+WHEN approve decision
+THEN decision == "approved"

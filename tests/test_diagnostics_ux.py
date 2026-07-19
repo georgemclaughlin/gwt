@@ -171,6 +171,48 @@ class DiagnosticUxTests(unittest.TestCase):
         self.assertIn("GWT001 no behavior matches: revieu vendor", stderr)
         self.assertIn("did you mean review <vendor>?", stderr)
 
+    def test_json_diagnostic_exposes_structured_repair_metadata(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                "WHEN review <vendor>\n"
+                "  PASS\n"
+                "\n"
+                'GIVEN vendor is "Acme"\n'
+                "WHEN revieu vendor\n"
+            )
+
+            status, stdout, _stderr = run_cli(["check", str(program), "--json"])
+
+        payload = json.loads(stdout)
+        diagnostic = payload["diagnostics"][0]
+        self.assertEqual(status, 1)
+        self.assertEqual(diagnostic["subcode"], "call.no-match")
+        self.assertEqual(diagnostic["expected"], "review <vendor>")
+        self.assertIn("declare a matching behavior", diagnostic["help"])
+
+    def test_json_type_mismatch_separates_expected_and_actual_types(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                "WHEN review <count>\n"
+                "  GIVEN count is integer\n"
+                "  PASS\n"
+                "\n"
+                'GIVEN count is "many"\n'
+                "WHEN review count\n"
+            )
+
+            status, stdout, _stderr = run_cli(["check", str(program), "--json"])
+
+        diagnostic = json.loads(stdout)["diagnostics"][0]
+        self.assertEqual(status, 1)
+        self.assertEqual(diagnostic["code"], "GWT016")
+        self.assertEqual(diagnostic["subcode"], "type.mismatch")
+        self.assertEqual(diagnostic["expected"], "integer")
+        self.assertEqual(diagnostic["actual"], "text")
+        self.assertIn("types agree", diagnostic["help"])
+
     def test_invalid_indentation_reports_spacing_guidance(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             program = Path(temp_dir) / "rules.gwt"

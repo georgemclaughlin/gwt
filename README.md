@@ -286,6 +286,8 @@ For a quick public review, start with the current user-facing paths:
 | [`examples/deployable_api`](examples/deployable_api) | Named requests projected to JSON Schema, OpenAPI 3.1, generated clients, and the experimental HTTP service |
 | [`examples/behavior_review`](examples/behavior_review) | Focused local capture, explanation, scenario, comparison, and workbench review loop |
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
+| [`docs/dsl-and-llms.md`](docs/dsl-and-llms.md) | How GWT programs define constrained domain DSLs and serve as durable LLM context |
+| [`docs/agent-authoring.md`](docs/agent-authoring.md) | Canonical inspect, generate, repair, format, and validate workflow for agents |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/execution-cases.md`](docs/execution-cases.md) | Execution Case, Case Corpus, comparison, and workbench contracts and trust boundaries |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |
@@ -562,9 +564,11 @@ parameters. JSON output includes diagnostic codes, source ranges, and symbols
 for editor tooling.
 
 `gwt inspect file.gwt --json` emits a versioned machine-readable manifest for
-tools, agents, and CI. It includes the program hash, direct imports, records,
-named requests, behaviors, scenarios, and diagnostics. This is intentionally an
-inspection surface, not a separate graph or alternate source format.
+tools, agents, and CI. It includes the compatible entry-source program hash, a
+portable identity for the complete `USE` dependency closure, direct imports,
+records, named requests, behaviors, scenarios, and diagnostics. Source-only API
+inspection reports a null closure identity. This is intentionally an inspection
+surface, not a separate graph or alternate source format.
 
 `gwt explain file.gwt --json-input request.json --request "<request name>"`
 runs a named JSON request with trace values enabled. Its default output is a

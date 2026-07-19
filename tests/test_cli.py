@@ -587,6 +587,7 @@ class CliDiagnosticsTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["diagnostics"][0]["message"], "no behavior matches: missing count")
         self.assertEqual(payload["diagnostics"][0]["code"], "GWT001")
+        self.assertEqual(payload["diagnostics"][0]["subcode"], "call.no-match")
         self.assertEqual(payload["diagnostics"][0]["category"], "check")
         self.assertEqual(payload["diagnostics"][0]["source"], "gwt")
         self.assertEqual(payload["diagnostics"][0]["path"], str(program_path))
@@ -647,6 +648,12 @@ class CliDiagnosticsTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["program"], "checkout")
         self.assertTrue(payload["programHash"].startswith("sha256:"))
+        self.assertEqual(payload["programHashScope"], "entry-source")
+        self.assertEqual(
+            payload["programIdentity"]["algorithm"],
+            "gwt-program-closure-sha256-v1",
+        )
+        self.assertEqual(len(payload["programIdentity"]["modules"]), 2)
         self.assertEqual(payload["imports"][0]["path"], "./types.gwt")
         self.assertEqual(payload["counts"]["records"], 1)
         self.assertEqual(payload["counts"]["typeAliases"], 0)

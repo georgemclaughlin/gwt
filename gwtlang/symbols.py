@@ -11,6 +11,7 @@ from .runtime import (
     FindBlock,
     ForBlock,
     IfBlock,
+    LeafStatement,
     Line,
     MatchBlock,
     Program,
@@ -224,6 +225,14 @@ def _action_token_range(action: Action, token: str) -> SourceRange:
 
 def _collect_body_symbols(symbols: list[Symbol], body: list[Any], container: str) -> None:
     for statement in body:
+        if isinstance(statement, LeafStatement):
+            line = statement.line
+            try:
+                tokens = _tokens(line.text, line.filename or "<source>", line.number)
+            except GwtError:
+                continue
+            if statement.kind == "let" and len(tokens) >= 2:
+                symbols.append(Symbol(tokens[1], "local", _token_range(line, tokens[1]), container=container))
         if isinstance(statement, Line):
             try:
                 tokens = _tokens(statement.text, statement.filename or "<source>", statement.number)

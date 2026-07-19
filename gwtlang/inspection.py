@@ -29,7 +29,8 @@ from .runtime import (
     VariantDefinition,
     _signature_parameters,
 )
-from .service import Analysis, analyze_file, analyze_source
+from .program_identity import ProgramIdentityManifest, load_program_snapshot
+from .service import Analysis, analyze_source
 from .version import PAYLOAD_SCHEMA_VERSION
 
 SCHEMA_VERSION = PAYLOAD_SCHEMA_VERSION
@@ -38,6 +39,7 @@ SCHEMA_VERSION = PAYLOAD_SCHEMA_VERSION
 @dataclass(frozen=True)
 class InspectionResult:
     analysis: Analysis
+    program_identity: ProgramIdentityManifest | None = None
 
     @property
     def ok(self) -> bool:
@@ -54,6 +56,12 @@ class InspectionResult:
             "file": analysis.filename,
             "program": program.name if program is not None else None,
             "programHash": _program_hash(analysis.source),
+            "programHashScope": "entry-source",
+            "programIdentity": (
+                self.program_identity.as_payload()
+                if self.program_identity is not None
+                else None
+            ),
             "imports": _direct_imports(analysis.source, analysis.filename),
             "diagnostics": [
                 diagnostic.as_payload(analysis.filename)
@@ -125,7 +133,17 @@ def inspect_file(
     *,
     import_policy: ImportPolicy | None = None,
 ) -> InspectionResult:
-    return InspectionResult(analyze_file(path, import_policy=import_policy))
+    snapshot = load_program_snapshot(path, import_policy=import_policy)
+    display_path = str(Path(path))
+    return InspectionResult(
+        analyze_source(
+            snapshot.entry_source,
+            display_path,
+            import_policy=import_policy,
+            source_loader=snapshot.source_for,
+        ),
+        snapshot.identity,
+    )
 
 
 def inspect_source(

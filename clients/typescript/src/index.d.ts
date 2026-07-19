@@ -64,9 +64,25 @@ export interface GwtDiagnosticPayload extends GwtPayload {
   severity?: "error" | "warning" | string;
   source?: string;
   code?: string;
+  subcode?: string;
   category?: string | null;
   message?: string;
+  expected?: string;
+  actual?: string;
   help?: string | null;
+}
+
+export interface GwtProgramIdentityModulePayload {
+  specifier: string;
+  digest: string;
+  imports: string[];
+}
+
+export interface GwtProgramIdentityPayload {
+  algorithm: "gwt-program-closure-sha256-v1";
+  entry: string;
+  digest: string;
+  modules: GwtProgramIdentityModulePayload[];
 }
 
 export interface GwtScenarioPayload<
@@ -122,6 +138,8 @@ export interface GwtInspectPayload extends GwtPayload {
   file: string;
   program: string | null;
   programHash: string;
+  programHashScope?: "entry-source";
+  programIdentity?: GwtProgramIdentityPayload | null;
   imports: unknown[];
   diagnostics: GwtDiagnosticPayload[];
   records: unknown[];

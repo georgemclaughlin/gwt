@@ -4,13 +4,14 @@ from dataclasses import dataclass
 import re
 from pathlib import Path
 
-from .checker import Diagnostic, check_program
+from .checker import Diagnostic, _diagnostic_metadata, check_program
 from .errors import GwtError
 from .payloads import AnalysisPayload, CompletionItemPayload
 from .runtime import (
     Action,
     ImportPolicy,
     Program,
+    SourceLoader,
     parse_program,
     _is_builtin_statement,
     _signature_matches as _runtime_signature_matches,
@@ -57,9 +58,15 @@ def analyze_source(
     *,
     import_policy: ImportPolicy | None = None,
     lint: bool = False,
+    source_loader: SourceLoader | None = None,
 ) -> Analysis:
     try:
-        program = parse_program(source, filename=filename, import_policy=import_policy)
+        program = parse_program(
+            source,
+            filename=filename,
+            import_policy=import_policy,
+            source_loader=source_loader,
+        )
     except GwtError as exc:
         return Analysis(
             source,
@@ -187,7 +194,31 @@ def diagnostic_from_error(
         column = len(source_line) - len(source_line.lstrip(" ")) + 1
         length = max(1, len(source_line.strip()))
 
-    return Diagnostic(filename, line, detail, code, "error", column, length, category)
+    subcode, expected, actual, help = _diagnostic_metadata(code, detail)
+    if code == "GWT900":
+        if "invalid indentation" in detail:
+            subcode = "parse.indentation"
+            help = "use exactly two spaces for each indentation level"
+        elif "requires an ELSE block" in detail:
+            subcode = "parse.missing-else"
+            help = "add an ELSE block at the same indentation as the opening statement"
+        elif "unknown top-level form" in detail:
+            subcode = "parse.unknown-top-level-form"
+            help = "use a supported top-level GIVEN, WHEN, THEN, REQUEST, type, import, or scenario form"
+    return Diagnostic(
+        filename=filename,
+        line=line,
+        message=detail,
+        code=code,
+        severity="error",
+        column=column,
+        length=length,
+        category=category,
+        subcode=subcode,
+        expected=expected,
+        actual=actual,
+        help=help,
+    )
 
 
 def _range_contains(source_range: SourceRange, line: int, character: int) -> bool:

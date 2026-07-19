@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Literal, NotRequired, Required, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypeAlias, TypedDict
+
+if TYPE_CHECKING:
+    from .program_identity import ProgramIdentityPayload
 
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -33,6 +36,7 @@ class DiagnosticPayload(SourceRangePayload, total=False):
     path: str
     category: str
     message: str
+    subcode: str
     expected: str
     actual: str
     help: str
@@ -215,6 +219,8 @@ class InspectionPayload(TypedDict):
     file: str
     program: str | None
     programHash: str
+    programHashScope: Literal["entry-source"]
+    programIdentity: ProgramIdentityPayload | None
     imports: list[ImportPayload]
     diagnostics: list[DiagnosticPayload]
     records: list[RecordPayload]

@@ -1,0 +1,53 @@
+PROGRAM return review
+
+TYPE ReturnStatus is "new" | "approved" | "needs_review"
+
+RECORD ReturnRequest
+  days_since_purchase: integer
+
+RECORD ReturnDecision
+  status: ReturnStatus
+  reason: "new" | "within_window" | "outside_window"
+
+REQUEST review return
+  GIVEN item is ReturnRequest
+
+  GIVEN decision is ReturnDecision
+    status: "new"
+    reason: "new"
+
+  WHEN review item into decision
+
+  OUTPUT decision is ReturnDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
+WHEN review <item> into <decision>
+  GIVEN item is ReturnRequest
+  AND decision is ReturnDecision
+  DECIDE
+    WHEN item.days_since_purchase <= 30
+      set decision.status to "approved"
+      set decision.reason to "within_window"
+    ELSE
+      set decision.status to "needs_review"
+      set decision.reason to "outside_window"
+
+SCENARIO the last day in the return window is approved
+GIVEN item is ReturnRequest
+  days_since_purchase: 30
+
+REQUEST review return
+
+THEN decision.status == "approved"
+AND decision.reason == "within_window"
+
+SCENARIO the first day outside the return window needs review
+GIVEN item is ReturnRequest
+  days_since_purchase: 31
+
+REQUEST review return
+
+THEN decision.status == "needs_review"
+AND decision.reason == "outside_window"

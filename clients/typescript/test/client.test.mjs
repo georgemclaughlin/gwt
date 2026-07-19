@@ -113,6 +113,8 @@ test("GwtClient inspects and validates lifecycle payloads", async () => {
   assert.equal(validated.phases.check.ok, true);
   assert.equal(validated.phases.test.scenario_count, 1);
   assert.equal(helperInspected.ok, true);
+  assert.equal(helperInspected.programHashScope, "entry-source");
+  assert.equal(helperInspected.programIdentity.algorithm, "gwt-program-closure-sha256-v1");
   assert.equal(helperValidated.phases.format.skipped, "disabled");
   assert.equal(helperValidated.phases.test.skipped, "disabled");
 });

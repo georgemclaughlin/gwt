@@ -10,6 +10,13 @@
     "file": { "type": "string" },
     "program": { "type": ["string", "null"] },
     "programHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "programHashScope": { "const": "entry-source" },
+    "programIdentity": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/programIdentity" }
+      ]
+    },
     "imports": {
       "type": "array",
       "items": { "$ref": "#/$defs/import" }
@@ -58,6 +65,29 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "programIdentity": {
+      "type": "object",
+      "required": ["algorithm", "entry", "digest", "modules"],
+      "properties": {
+        "algorithm": { "const": "gwt-program-closure-sha256-v1" },
+        "entry": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["specifier", "digest", "imports"],
+            "properties": {
+              "specifier": { "type": "string" },
+              "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+              "imports": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "import": {
       "type": "object",
       "required": ["path", "resolved", "file", "line", "column"],

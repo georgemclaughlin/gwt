@@ -14,6 +14,7 @@ from .runtime import (
     FindBlock,
     ForBlock,
     IfBlock,
+    LeafStatement,
     Line,
     MatchBlock,
     PathRef,
@@ -179,6 +180,8 @@ def executable_lines(program: Program) -> list[DebugLine]:
             add(statement.line)
         elif isinstance(statement, Line):
             add(statement)
+        elif isinstance(statement, LeafStatement):
+            add(statement.line)
         elif isinstance(statement, RequestCall):
             add(statement.line)
         elif isinstance(statement, IfBlock):
@@ -216,7 +219,7 @@ def executable_lines(program: Program) -> list[DebugLine]:
         for statement in request.givens:
             collect_statement(statement)
         for line in request.whens:
-            add(line)
+            add(line.line)
         for line in request.thens:
             add(line)
 

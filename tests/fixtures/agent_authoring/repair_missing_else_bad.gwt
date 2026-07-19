@@ -1,0 +1,9 @@
+WHEN mark known item from <items> into <result>
+  FIND item in items WHERE item == "known"
+    set result to item
+
+SCENARIO known item is selected
+GIVEN items is ["known"]
+GIVEN result is "missing"
+WHEN mark known item from items into result
+THEN result == "known"
