@@ -16,6 +16,7 @@ identity, replay, integrity, and sensitivity contract.
 - `serve-qualification.schema.json` for `gwt qualify-serve --json` operator evidence.
 - `check.schema.json` for `gwt check --json`.
 - `inspect.schema.json` for `gwt inspect --json`.
+- `agent-context.schema.json` for `gwt agent-context --json`.
 - `validation.schema.json` for `gwt validate --json`.
 - `version.schema.json` for `gwt version --json`.
 
@@ -42,7 +43,7 @@ Diagnostics may include a repair-specific `subcode`, `expected`, `actual`, and
 portable `programIdentity` for the complete import closure; `programHash`
 continues to identify only the entry source and is labeled with
 `programHashScope`.
-Distribution candidates also install the Execution Case, Case Corpus,
-Comparison, and Serve Qualification v1 schemas under `share/gwtlang/schemas`
-in the Python environment so offline consumers do not require a repository
-checkout.
+Distribution candidates also install the Agent Context, Execution Case, Case
+Corpus, Comparison, and Serve Qualification v1 schemas under
+`share/gwtlang/schemas` in the Python environment so offline consumers do not
+require a repository checkout.

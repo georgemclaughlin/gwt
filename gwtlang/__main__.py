@@ -19,6 +19,7 @@ from .api import (
     run_json_file,
     run_result_payload,
 )
+from .agent_context import build_agent_context_file
 from .checker import Diagnostic
 from .case_corpus import (
     CaseCorpusEntrySpec,
@@ -76,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_command(args)
     if args.command == "inspect":
         return inspect_command(args)
+    if args.command == "agent-context":
+        return agent_context_command(args)
     if args.command == "explain":
         return explain_command(args)
     if args.command == "capture":
@@ -181,6 +184,33 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help="Print inspect result as JSON. This is currently the only output mode.",
+    )
+
+    agent_context_parser = subparsers.add_parser(
+        "agent-context",
+        help="Build a compact domain-language context pack for an authoring agent.",
+    )
+    add_file_arguments(agent_context_parser)
+    add_import_policy_arguments(agent_context_parser)
+    agent_context_parser.add_argument(
+        "--request",
+        help="Select scenario examples that invoke this named REQUEST.",
+    )
+    agent_context_parser.add_argument(
+        "--scenario-limit",
+        type=_non_negative_int,
+        default=2,
+        help="Maximum embedded domain scenarios to include (default: 2).",
+    )
+    agent_context_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the versioned JSON payload instead of prompt-ready Markdown.",
+    )
+    agent_context_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Atomically write the context pack to this path instead of stdout.",
     )
 
     explain_parser = subparsers.add_parser(
@@ -924,6 +954,34 @@ def inspect_command(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def agent_context_command(args: argparse.Namespace) -> int:
+    try:
+        result = build_agent_context_file(
+            args.file,
+            request=args.request,
+            scenario_limit=args.scenario_limit,
+            import_policy=import_policy_from_args(args),
+        )
+    except (GwtError, OSError, ValueError) as exc:
+        print(f"gwt: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        rendered = json.dumps(result.as_payload(), indent=2, sort_keys=True) + "\n"
+    else:
+        rendered = result.render_markdown()
+    if args.output is not None:
+        try:
+            _write_text_atomically(args.output, rendered)
+        except OSError as exc:
+            print(f"gwt: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {args.output}")
+    else:
+        print(rendered, end="")
+    return 0 if result.ok else 1
+
+
 def validate_command(args: argparse.Namespace) -> int:
     source = args.file.read_text()
     result = validate_file(
@@ -1495,6 +1553,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "test",
         "check",
         "inspect",
+        "agent-context",
         "explain",
         "capture",
         "scenario-from-run",

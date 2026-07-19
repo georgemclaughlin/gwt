@@ -6,20 +6,33 @@ truth.
 
 ## Gather The Domain Context
 
-Start with the target source and its concise machine-readable vocabulary:
+Start with a compact domain-language context pack:
+
+```sh
+python -m gwtlang agent-context path/to/rules.gwt \
+  --request "<relevant public request>"
+```
+
+The default Markdown combines the program vocabulary, relevant executable
+scenarios, two small syntax examples, and the deterministic repair loop. Use
+`--json` when an agent runtime or skill needs a versioned provider-neutral
+artifact. See [agent-context.md](agent-context.md) for its contract and trust
+boundary.
+
+Use raw inspection when a tool needs the complete location-rich manifest:
 
 ```sh
 python -m gwtlang inspect path/to/rules.gwt --json
 ```
 
-The manifest identifies records, type aliases, one-of records, named requests,
+The inspection manifest identifies records, type aliases, one-of records, named requests,
 behavior signatures and contracts, scenarios, direct imports, diagnostics, and
 the complete file-backed program identity. Read the relevant scenarios as
 worked examples; they express semantic expectations that a manifest cannot.
 
-For a new program, use the smallest relevant examples rather than the entire
-repository. Usually that means `examples/hello.gwt`,
-`examples/language_tour/rules.gwt`, and one example close to the target domain.
+For a new program with no vocabulary to inspect, use the two worked examples in
+an agent context pack from the nearest domain, then add a small domain-shaped
+record/request/scenario skeleton before asking an agent for implementation.
 
 ## Separate Discovery From Generation
 
