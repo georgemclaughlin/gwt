@@ -296,7 +296,6 @@ For a quick public review, start with the current user-facing paths:
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/dsl-and-llms.md`](docs/dsl-and-llms.md) | How GWT programs define constrained domain DSLs and serve as durable LLM context |
 | [`docs/agent-authoring.md`](docs/agent-authoring.md) | Canonical inspect, generate, repair, format, and validate workflow for agents |
-| [`docs/agent-context.md`](docs/agent-context.md) | Provider-neutral domain-language context packs generated from checked programs |
 | [`docs/agent-evaluation.md`](docs/agent-evaluation.md) | Provider-neutral JSONL protocol and behavioral metrics for evaluating agent authoring and repair |
 | [`evaluations/agent-authoring/2026-07-18`](evaluations/agent-authoring/2026-07-18/README.md) | First captured Luna/Sol context-and-repair matrix, raw candidates, and deterministic reports |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
@@ -560,7 +559,6 @@ gwt serve examples/deployable_api/rules.gwt --port 8080
 gwt test examples/checkout/scenarios.gwt
 gwt check examples/checkout/rules.gwt
 gwt inspect examples/vendor_onboarding/rules.gwt --json
-gwt agent-context examples/vendor_onboarding/rules.gwt --request "review vendor"
 gwt validate examples/vendor_onboarding/rules.gwt --import-root examples/vendor_onboarding --no-absolute-imports
 gwt version --json
 gwt format examples/bank.gwt --check
@@ -581,14 +579,6 @@ portable identity for the complete `USE` dependency closure, direct imports,
 records, named requests, behaviors, scenarios, and diagnostics. Source-only API
 inspection reports a null closure identity. This is intentionally an inspection
 surface, not a separate graph or alternate source format.
-
-`gwt agent-context file.gwt` emits a compact Markdown context pack containing
-the program's types, public requests, behavior signatures, selected executable
-scenarios, two small syntax examples, and the deterministic validation loop.
-Pass `--request NAME` to select scenarios for one public boundary, or `--json`
-for the provider-neutral version-1 payload. Skills and agent runtimes can use
-that payload as a thin adapter while the checked `.gwt` program remains the
-source of truth. See [`docs/agent-context.md`](docs/agent-context.md).
 
 `gwt explain file.gwt --json-input request.json --request "<request name>"`
 runs a named JSON request with trace values enabled. Its default output is a
