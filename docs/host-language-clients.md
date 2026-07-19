@@ -406,6 +406,12 @@ const status = execution.result.decision.status;
 as `gwt inspect --json` and `gwt validate --json`, including non-OK diagnostic
 payloads.
 
+`GwtClient.agent_context()` builds the same provider-neutral domain-language
+pack as `gwt agent-context`. Use its structured payload when a host application
+or provider-specific skill needs program types, public requests, behavior
+signatures, selected scenarios, and the validation workflow without copying
+domain knowledge into agent configuration.
+
 ### 3. Generated Host Types
 
 Keep generated host types aligned with the stable client contract. TypeScript

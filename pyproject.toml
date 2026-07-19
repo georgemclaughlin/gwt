@@ -23,6 +23,7 @@ gwtlang = ["py.typed"]
 
 [tool.setuptools.data-files]
 "share/gwtlang/schemas" = [
+  "docs/schemas/agent-context.schema.json",
   "docs/schemas/execution-case.schema.json",
   "docs/schemas/comparison.schema.json",
   "docs/schemas/case-corpus.schema.json",

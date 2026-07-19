@@ -89,6 +89,7 @@ project rename.
 | --- | --- |
 | Source language | Remains specification `v0.2`; no broad syntax release |
 | Existing run/check/inspect/validate JSON | Existing payload schema remains version `3` |
+| Agent Context | New independent `gwt.agent-context` schema version `1` |
 | Execution Case | New independent `gwt.execution-case` schema version `1` |
 | Case Corpus | New independent `gwt.case-corpus` schema version `1` |
 | Comparison | New independent `gwt.comparison` schema version `1` |
@@ -101,6 +102,13 @@ plus structured `expected`, `actual`, and `help` values. File-backed inspection
 can report a portable `programIdentity` for the complete dependency closure;
 the existing `programHash` remains the entry-source hash and is labeled by
 `programHashScope`. Source-only inspection reports a null closure identity.
+
+The new `gwt agent-context` command derives a bounded, provider-neutral
+authoring pack from that inspection model. It combines canonical domain type
+declarations, public requests, behavior signatures, selected executable
+scenarios, two small syntax examples, and the deterministic repair workflow.
+Its JSON contract is independently versioned at `1`; its Markdown rendering is
+a convenience surface rather than a normative specification.
 
 The experimental `explain` command changes from vendor-specific narrative
 heuristics to domain-neutral factual output. Consumers that parsed the old
@@ -123,6 +131,9 @@ availability markers, but it retains source text, field paths, conditions,
 request names, and branch structure. Neither profile is anonymization.
 Comparison JSON, generated scenarios, and workbench HTML can repeat available
 values and must receive the same storage, sharing, and retention controls.
+Agent Context payloads and Markdown can repeat domain type shapes, physical
+source paths, and selected scenario values, so they require the source
+program's sharing and retention controls as well.
 
 Do not treat a self-contained workbench page as sanitized. Do not use a plain
 hash of a low-entropy secret or identifier as anonymization. Use reviewed

@@ -7,6 +7,11 @@ import hashlib
 from pathlib import Path
 from typing import Any, cast
 
+from .agent_context import (
+    AgentContextResult,
+    build_agent_context_file as _build_agent_context_file,
+    build_agent_context_source as _build_agent_context_source,
+)
 from .checker import Diagnostic, check_program
 from .runtime import (
     GwtError,
@@ -284,6 +289,22 @@ class GwtClient:
             allow_absolute_imports=allow_absolute_imports,
         )
 
+    def agent_context(
+        self,
+        *,
+        request: str | None = None,
+        scenario_limit: int = 2,
+        import_roots: Iterable[str | Path] | None = None,
+        allow_absolute_imports: bool = True,
+    ) -> AgentContextResult:
+        return build_agent_context_file(
+            self.path,
+            request=request,
+            scenario_limit=scenario_limit,
+            import_roots=import_roots,
+            allow_absolute_imports=allow_absolute_imports,
+        )
+
     def validate(
         self,
         *,
@@ -390,6 +411,40 @@ def inspect_source(
     return _inspect_source(
         source,
         filename,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def build_agent_context_file(
+    path: str | Path,
+    *,
+    request: str | None = None,
+    scenario_limit: int = 2,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> AgentContextResult:
+    return _build_agent_context_file(
+        path,
+        request=request,
+        scenario_limit=scenario_limit,
+        import_policy=_import_policy(import_roots, allow_absolute_imports),
+    )
+
+
+def build_agent_context_source(
+    source: str,
+    filename: str = "<source>",
+    *,
+    request: str | None = None,
+    scenario_limit: int = 2,
+    import_roots: Iterable[str | Path] | None = None,
+    allow_absolute_imports: bool = True,
+) -> AgentContextResult:
+    return _build_agent_context_source(
+        source,
+        filename,
+        request=request,
+        scenario_limit=scenario_limit,
         import_policy=_import_policy(import_roots, allow_absolute_imports),
     )
 

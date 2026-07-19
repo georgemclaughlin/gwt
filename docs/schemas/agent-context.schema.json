@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/agent-context.schema.json",
+  "title": "GWT Agent Context Payload",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "ok", "file", "program", "programIdentity", "selectedRequest", "diagnostics", "guidance", "vocabulary", "scenarioIndex", "scenarioExamples", "languageExamples", "workflow"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "gwt.agent-context" },
+    "ok": { "type": "boolean" },
+    "file": { "type": "string" },
+    "program": { "type": ["string", "null"] },
+    "programIdentity": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/programIdentity" }
+      ]
+    },
+    "selectedRequest": { "type": ["string", "null"] },
+    "diagnostics": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "guidance": {
+      "type": "object",
+      "required": ["sourceOfTruth", "changeShape"],
+      "properties": {
+        "sourceOfTruth": { "$ref": "#/$defs/stringList" },
+        "changeShape": { "$ref": "#/$defs/stringList" }
+      },
+      "additionalProperties": false
+    },
+    "vocabulary": {
+      "type": "object",
+      "required": ["types", "requests", "behaviors"],
+      "properties": {
+        "types": { "type": "array", "items": { "$ref": "#/$defs/type" } },
+        "requests": { "type": "array", "items": { "$ref": "#/$defs/request" } },
+        "behaviors": { "type": "array", "items": { "$ref": "#/$defs/behavior" } }
+      },
+      "additionalProperties": false
+    },
+    "scenarioIndex": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenarioIndex" }
+    },
+    "scenarioExamples": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenarioExample" }
+    },
+    "languageExamples": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/namedSource" }
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["commands", "completionCriteria"],
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        },
+        "completionCriteria": { "$ref": "#/$defs/stringList" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "stringList": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "programIdentity": {
+      "type": "object",
+      "required": ["algorithm", "entry", "digest", "modules"],
+      "properties": {
+        "algorithm": { "const": "gwt-program-closure-sha256-v1" },
+        "entry": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["specifier", "digest", "imports"],
+            "properties": {
+              "specifier": { "type": "string" },
+              "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+              "imports": { "$ref": "#/$defs/stringList" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "required": ["file", "line"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "type": {
+      "allOf": [
+        { "$ref": "#/$defs/location" },
+        {
+          "type": "object",
+          "required": ["name", "kind", "declaration"],
+          "properties": {
+            "name": { "type": "string" },
+            "kind": { "enum": ["typeAlias", "record", "oneOfRecord"] },
+            "declaration": { "type": "string" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "required": ["path", "type"],
+      "properties": {
+        "path": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "allOf": [
+        { "$ref": "#/$defs/location" },
+        {
+          "type": "object",
+          "required": ["name", "inputs", "outputs"],
+          "properties": {
+            "name": { "type": "string" },
+            "inputs": { "type": "array", "items": { "$ref": "#/$defs/binding" } },
+            "outputs": { "type": "array", "items": { "$ref": "#/$defs/binding" } }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "behaviorContracts": {
+      "type": "object",
+      "required": ["inputs", "returns"],
+      "properties": {
+        "inputs": { "type": "object", "additionalProperties": { "type": "string" } },
+        "returns": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "behavior": {
+      "allOf": [
+        { "$ref": "#/$defs/location" },
+        {
+          "type": "object",
+          "required": ["name", "signature", "contracts"],
+          "properties": {
+            "name": { "type": "string" },
+            "signature": { "type": "string" },
+            "contracts": { "$ref": "#/$defs/behaviorContracts" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "scenarioIndex": {
+      "allOf": [
+        { "$ref": "#/$defs/location" },
+        {
+          "type": "object",
+          "required": ["name", "requests"],
+          "properties": {
+            "name": { "type": "string" },
+            "requests": { "$ref": "#/$defs/stringList" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "namedSource": {
+      "type": "object",
+      "required": ["name", "source"],
+      "properties": {
+        "name": { "type": "string" },
+        "source": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "scenarioExample": {
+      "type": "object",
+      "required": ["name", "requests", "source"],
+      "properties": {
+        "name": { "type": "string" },
+        "requests": { "$ref": "#/$defs/stringList" },
+        "source": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
