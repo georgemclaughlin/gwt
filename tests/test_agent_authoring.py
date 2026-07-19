@@ -230,6 +230,42 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                 ],
             )
 
+    def test_semantically_equivalent_clarification_phrases_score(self):
+        attempts = [
+            {
+                "caseId": "clarify-undefined-risk-policy",
+                "attempt": 1,
+                "action": "clarify",
+                "clarifications": [
+                    "What criteria determine whether a vendor is high risk?",
+                    "What conditions make approval appropriate?",
+                    "If approval and a blocker overlap, which has priority?",
+                ],
+            },
+            {
+                "caseId": "clarify-overlapping-decision-precedence",
+                "attempt": 1,
+                "action": "clarify",
+                "clarifications": [
+                    "Which rejection reason should apply when both the previously funded and unfunded cohort conditions are true?"
+                ],
+            },
+            {
+                "caseId": "clarify-decimal-rounding-policy",
+                "attempt": 1,
+                "action": "clarify",
+                "clarifications": [
+                    "What decimal precision and rounding mode apply, and is the discount applied before tax?"
+                ],
+            },
+        ]
+
+        result = score_evaluation(MANIFEST, attempts)
+        details = {case["caseId"]: case for case in result["cases"]}
+
+        for attempt in attempts:
+            self.assertTrue(details[attempt["caseId"]]["finalSemanticOk"])
+
     def test_prepare_and_score_cli_round_trip_jsonl(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -273,7 +309,7 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
 
     def test_checked_in_live_baseline_reports_are_reproducible(self):
         for model in ("luna", "sol"):
-            for variant in ("source-only", "inspect", "guide"):
+            for variant in ("source-only", "inspect", "guide", "agent-context"):
                 with self.subTest(model=model, variant=variant):
                     responses = read_jsonl(
                         BASELINE_ROOT / f"{model}.{variant}.responses.jsonl"

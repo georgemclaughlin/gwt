@@ -44,6 +44,16 @@ variant so the exact generated Markdown can be compared with `source-only`,
 raw `inspect`, and the longer `guide` condition. See
 [agent-evaluation.md](agent-evaluation.md).
 
+The first exact-pack run found a meaningful middle ground. After two bounded
+public repair rounds, Luna/low passed 2/5 authoring, 6/6 repair, and 4/4
+clarification cases; Sol/high passed 3/5, 6/6, and 4/4 respectively. The longer
+guide still passed all five authoring cases for both models. The compact pack's
+remaining failures repeatedly invented unsupported conditional `ELSE` forms
+or malformed behavior contracts. This means the fixed two-example pack is
+strong for repair and clarification but not yet sufficient for broad new
+authoring. A future pack should select small canonical examples by relevant
+language capability rather than simply growing into a second full guide.
+
 ## Request Scoping
 
 Pass `--request NAME` to embed only scenarios that directly invoke that public

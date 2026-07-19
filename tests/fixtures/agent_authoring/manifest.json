@@ -190,8 +190,8 @@
         "What precedence applies when approval and rejection conditions overlap?"
       ],
       "requiredConcepts": [
-        ["define high risk", "high-risk threshold", "high risk threshold", "risk factors", "risk score", "criteria classify", "makes a vendor"],
-        ["approvable", "can be approved", "approval exceptions", "approval criteria", "approval is appropriate", "approving a high-risk"],
+        ["define high risk", "high-risk threshold", "high risk threshold", "risk factors", "risk score", "criteria classify", "makes a vendor", "criteria determine", "determine whether a vendor"],
+        ["approvable", "can be approved", "approval exceptions", "approval criteria", "approval is appropriate", "approving a high-risk", "conditions make approval appropriate"],
         ["precedence", "overlap", "priority"]
       ]
     },
@@ -221,7 +221,7 @@
         "Is the precedence contractual for every request or only this scenario?"
       ],
       "requiredConcepts": [
-        ["precedence", "priority", "wins"],
+        ["precedence", "priority", "wins", "which rejection reason", "what rejection reason"],
         ["previously funded"],
         ["unfunded cohort"]
       ]
@@ -237,7 +237,7 @@
       ],
       "requiredConcepts": [
         ["round", "rounded"],
-        ["scale", "decimal places"],
+        ["scale", "decimal places", "decimal precision"],
         ["rounding mode", "rounding rule", "half up", "half even"],
         ["before tax", "tax order", "discounts applied", "discount and tax", "tax be calculated", "tax calculated", "tax to the discounted"]
       ]

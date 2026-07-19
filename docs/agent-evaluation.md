@@ -167,3 +167,5 @@ responses and run metadata have actually been captured.
 
 The first captured live baseline is documented under
 [`evaluations/agent-authoring/2026-07-18`](../evaluations/agent-authoring/2026-07-18/README.md).
+It now includes the later exact `agent-context` cells alongside the original
+three context conditions.
