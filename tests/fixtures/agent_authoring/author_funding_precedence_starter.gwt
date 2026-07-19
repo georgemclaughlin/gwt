@@ -1,0 +1,10 @@
+PROGRAM funding eligibility slice
+
+RECORD FundingFacts
+  cohort_funded: boolean
+  previously_funded: boolean
+  institution_eligible: boolean
+
+RECORD FundingDecision
+  outcome: "new" | "funded" | "not_funded"
+  reason: "new" | "unfunded_cohort" | "previously_funded" | "eligible" | "ineligible_institution"

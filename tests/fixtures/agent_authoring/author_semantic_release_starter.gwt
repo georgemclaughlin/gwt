@@ -1,0 +1,9 @@
+PROGRAM semantic release slice
+
+RECORD CommitFacts
+  breaking_change: boolean
+  feature: boolean
+  fix: boolean
+
+RECORD ReleaseDecision
+  level: "new" | "major" | "minor" | "patch" | "none"

@@ -70,6 +70,7 @@ export interface GwtDiagnosticPayload extends GwtPayload {
   expected?: string;
   actual?: string;
   help?: string | null;
+  candidates?: string[];
 }
 
 export interface GwtProgramIdentityModulePayload {

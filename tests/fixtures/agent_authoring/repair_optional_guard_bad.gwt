@@ -1,0 +1,17 @@
+RECORD Applicant
+  name: text
+  referral: optional<text>
+
+WHEN classify <applicant> into <status>
+  GIVEN applicant is Applicant
+  IF applicant.referral == "trusted"
+    set status to "approved"
+  ELSE
+    set status to "review"
+
+SCENARIO missing referral requires review
+GIVEN applicant is Applicant
+  name: "Ada"
+GIVEN status is "new"
+WHEN classify applicant into status
+THEN status == "review"

@@ -288,6 +288,7 @@ For a quick public review, start with the current user-facing paths:
 | [`docs/spec-is-code.md`](docs/spec-is-code.md) | Short thesis note on executable specs versus agent-interpreted planning artifacts |
 | [`docs/dsl-and-llms.md`](docs/dsl-and-llms.md) | How GWT programs define constrained domain DSLs and serve as durable LLM context |
 | [`docs/agent-authoring.md`](docs/agent-authoring.md) | Canonical inspect, generate, repair, format, and validate workflow for agents |
+| [`docs/agent-evaluation.md`](docs/agent-evaluation.md) | Provider-neutral JSONL protocol and behavioral metrics for evaluating agent authoring and repair |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/execution-cases.md`](docs/execution-cases.md) | Execution Case, Case Corpus, comparison, and workbench contracts and trust boundaries |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |

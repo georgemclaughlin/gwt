@@ -23,9 +23,13 @@ class RuntimeTests(unittest.TestCase):
         self.assertIsInstance(request_statement, LeafStatement)
         self.assertEqual(request_statement.kind, "behavior_call")
         self.assertEqual(request_statement.command, "review")
+        self.assertEqual(request_statement.tokens, ("review", "decision"))
         self.assertEqual(require_statement.kind, "require")
+        self.assertEqual(require_statement.expression, 'decision == "new"')
         self.assertEqual(set_statement.kind, "builtin")
         self.assertEqual(set_statement.command, "set")
+        self.assertEqual(set_statement.target, "decision")
+        self.assertEqual(set_statement.expression, '"approved"')
 
     def test_division_by_zero_is_a_source_located_gwt_error(self):
         with self.assertRaises(GwtError) as raised:

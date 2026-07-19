@@ -27,7 +27,13 @@
     "subcode": { "type": "string" },
     "expected": { "type": "string" },
     "actual": { "type": "string" },
-    "help": { "type": "string" }
+    "help": { "type": "string" },
+    "candidates": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "maxItems": 5
+    }
   },
   "additionalProperties": false,
   "$defs": {

@@ -5,8 +5,126 @@
       "id": "author-explicit-return-window",
       "kind": "author",
       "task": "Define a return-review request. Items returned within 30 days are approved; later returns require review. Preserve an explicit initial state and add boundary scenarios for days 30 and 31.",
+      "starterSource": "author_return_window_starter.gwt",
       "source": "author_return_window.gwt",
-      "minimumScenarioCount": 2
+      "minimumScenarioCount": 2,
+      "probes": [
+        {
+          "request": "review return",
+          "input": {"item": {"days_since_purchase": 30}},
+          "expectedResult": {"decision": {"status": "approved", "reason": "within_window"}}
+        },
+        {
+          "request": "review return",
+          "input": {"item": {"days_since_purchase": 31}},
+          "expectedResult": {"decision": {"status": "needs_review", "reason": "outside_window"}}
+        }
+      ]
+    },
+    {
+      "id": "author-incident-triage-priority",
+      "kind": "author",
+      "task": "Implement incident triage. A customer outage or critical severity is urgent, degraded service without an outage needs review, and normal service is routine. Outage precedence must be executable and scenario-covered.",
+      "starterSource": "author_incident_triage_starter.gwt",
+      "source": "author_incident_triage.gwt",
+      "minimumScenarioCount": 3,
+      "probes": [
+        {
+          "request": "triage incident",
+          "input": {"incident": {"severity": "degraded", "customer_outage": true}},
+          "expectedResult": {"decision": {"priority": "urgent", "reason": "customer_outage"}}
+        },
+        {
+          "request": "triage incident",
+          "input": {"incident": {"severity": "degraded", "customer_outage": false}},
+          "expectedResult": {"decision": {"priority": "review", "reason": "degraded_service"}}
+        },
+        {
+          "request": "triage incident",
+          "input": {"incident": {"severity": "normal", "customer_outage": false}},
+          "expectedResult": {"decision": {"priority": "routine", "reason": "normal_operations"}}
+        }
+      ]
+    },
+    {
+      "id": "author-order-fulfillment-boundaries",
+      "kind": "author",
+      "task": "Implement the fulfillment request. Reserve every requested unit when stock is sufficient, produce explicit partial counts when some stock exists, and backorder every unit when none exists. Add scenarios for all three states.",
+      "starterSource": "author_order_fulfillment_starter.gwt",
+      "source": "author_order_fulfillment.gwt",
+      "minimumScenarioCount": 3,
+      "probes": [
+        {
+          "request": "fulfill order",
+          "input": {"order": {"requested_units": 3, "available_units": 5}},
+          "expectedResult": {"fulfillment": {"status": "fulfilled", "reserved_units": 3, "backordered_units": 0}}
+        },
+        {
+          "request": "fulfill order",
+          "input": {"order": {"requested_units": 5, "available_units": 2}},
+          "expectedResult": {"fulfillment": {"status": "partial", "reserved_units": 2, "backordered_units": 3}}
+        },
+        {
+          "request": "fulfill order",
+          "input": {"order": {"requested_units": 4, "available_units": 0}},
+          "expectedResult": {"fulfillment": {"status": "backordered", "reserved_units": 0, "backordered_units": 4}}
+        }
+      ]
+    },
+    {
+      "id": "author-funding-eligibility-precedence",
+      "kind": "author",
+      "task": "Implement the funding decision with explicit precedence: an unfunded cohort wins first, previous funding wins next, then institution eligibility decides funding. Add scenarios that prove overlapping facts select the earlier reason.",
+      "starterSource": "author_funding_precedence_starter.gwt",
+      "source": "author_funding_precedence.gwt",
+      "minimumScenarioCount": 3,
+      "probes": [
+        {
+          "request": "assess funding",
+          "input": {"facts": {"cohort_funded": false, "previously_funded": true, "institution_eligible": true}},
+          "expectedResult": {"decision": {"outcome": "not_funded", "reason": "unfunded_cohort"}}
+        },
+        {
+          "request": "assess funding",
+          "input": {"facts": {"cohort_funded": true, "previously_funded": true, "institution_eligible": true}},
+          "expectedResult": {"decision": {"outcome": "not_funded", "reason": "previously_funded"}}
+        },
+        {
+          "request": "assess funding",
+          "input": {"facts": {"cohort_funded": true, "previously_funded": false, "institution_eligible": true}},
+          "expectedResult": {"decision": {"outcome": "funded", "reason": "eligible"}}
+        }
+      ]
+    },
+    {
+      "id": "author-semantic-release-precedence",
+      "kind": "author",
+      "task": "Implement semantic release classification. Breaking changes are major even when also features, features are minor even when also fixes, fixes are patch, and irrelevant commits produce no release. Prove precedence with scenarios.",
+      "starterSource": "author_semantic_release_starter.gwt",
+      "source": "author_semantic_release.gwt",
+      "minimumScenarioCount": 4,
+      "probes": [
+        {
+          "request": "analyze commit",
+          "input": {"commit": {"breaking_change": true, "feature": true, "fix": false}},
+          "expectedResult": {"release": {"level": "major"}}
+        },
+        {
+          "request": "analyze commit",
+          "input": {"commit": {"breaking_change": false, "feature": true, "fix": true}},
+          "expectedResult": {"release": {"level": "minor"}}
+        },
+        {
+          "request": "analyze commit",
+          "input": {"commit": {"breaking_change": false, "feature": false, "fix": true}},
+          "expectedResult": {"release": {"level": "patch"}}
+        },
+        {
+          "request": "analyze commit",
+          "input": {"commit": {"breaking_change": false, "feature": false, "fix": false}},
+          "expectedResult": {"release": {"level": "none"}}
+        }
+      ]
     },
     {
       "id": "repair-domain-behavior-typo",
@@ -14,7 +132,8 @@
       "task": "Repair the misspelled domain behavior call without changing the intended approval result.",
       "brokenSource": "repair_typo_bad.gwt",
       "repairedSource": "repair_typo_fixed.gwt",
-      "requiredDiagnosticSubcodes": ["call.no-match"]
+      "requiredDiagnosticSubcodes": ["call.no-match"],
+      "minimumScenarioCount": 1
     },
     {
       "id": "repair-explicit-missing-case",
@@ -22,7 +141,44 @@
       "task": "Make the item lookup's missing case explicit and preserve the successful match behavior.",
       "brokenSource": "repair_missing_else_bad.gwt",
       "repairedSource": "repair_missing_else_fixed.gwt",
-      "requiredDiagnosticSubcodes": ["parse.missing-else"]
+      "requiredDiagnosticSubcodes": ["parse.missing-else"],
+      "minimumScenarioCount": 2
+    },
+    {
+      "id": "repair-behavior-argument-type",
+      "kind": "repair",
+      "task": "Repair the behavior argument type mismatch while preserving the scenario's intended total of five waiting days.",
+      "brokenSource": "repair_type_mismatch_bad.gwt",
+      "repairedSource": "repair_type_mismatch_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["type.mismatch"],
+      "minimumScenarioCount": 1
+    },
+    {
+      "id": "repair-optional-presence-guard",
+      "kind": "repair",
+      "task": "Guard the optional referral before comparing it. Missing referrals must remain an explicit review result.",
+      "brokenSource": "repair_optional_guard_bad.gwt",
+      "repairedSource": "repair_optional_guard_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["type.mismatch"],
+      "minimumScenarioCount": 1
+    },
+    {
+      "id": "repair-unknown-domain-type",
+      "kind": "repair",
+      "task": "Declare a narrow domain type for the review status instead of weakening the field to any.",
+      "brokenSource": "repair_unknown_type_bad.gwt",
+      "repairedSource": "repair_unknown_type_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["type-or-shape.unknown"],
+      "minimumScenarioCount": 1
+    },
+    {
+      "id": "repair-builtin-statement-shape",
+      "kind": "repair",
+      "task": "Repair the malformed state mutation using canonical GWT syntax and preserve the approval scenario.",
+      "brokenSource": "repair_builtin_shape_bad.gwt",
+      "repairedSource": "repair_builtin_shape_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["statement.invalid-shape"],
+      "minimumScenarioCount": 1
     },
     {
       "id": "clarify-undefined-risk-policy",
@@ -32,6 +188,58 @@
         "What facts define high risk?",
         "Which high-risk cases, if any, are approvable?",
         "What precedence applies when approval and rejection conditions overlap?"
+      ],
+      "requiredConcepts": [
+        ["define high risk", "high-risk threshold", "high risk threshold"],
+        ["approvable", "can be approved", "approval exceptions"],
+        ["precedence", "overlap", "priority"]
+      ]
+    },
+    {
+      "id": "clarify-missing-null-domain-meaning",
+      "kind": "clarify",
+      "task": "Treat omitted, null, unknown, and not-applicable customer identifiers correctly.",
+      "requiredClarifications": [
+        "Should omitted and explicit null have the same domain meaning?",
+        "Are unknown and not-applicable distinct business states?",
+        "Which normalized state should each boundary value produce?"
+      ],
+      "requiredConcepts": [
+        ["omitted", "missing"],
+        ["null"],
+        ["unknown"],
+        ["not-applicable", "not applicable"],
+        ["normalized", "state"]
+      ]
+    },
+    {
+      "id": "clarify-overlapping-decision-precedence",
+      "kind": "clarify",
+      "task": "When an application is both previously funded and from an unfunded cohort, return the correct rejection reason.",
+      "requiredClarifications": [
+        "Which rejection reason has precedence when an application is both previously funded and from an unfunded cohort?",
+        "Is the precedence contractual for every request or only this scenario?"
+      ],
+      "requiredConcepts": [
+        ["precedence", "priority", "wins"],
+        ["previously funded"],
+        ["unfunded cohort"]
+      ]
+    },
+    {
+      "id": "clarify-decimal-rounding-policy",
+      "kind": "clarify",
+      "task": "Calculate the final exact price including a percentage discount and tax.",
+      "requiredClarifications": [
+        "At which steps should decimal values be rounded?",
+        "What scale and rounding mode apply?",
+        "Are discounts applied before tax?"
+      ],
+      "requiredConcepts": [
+        ["round", "rounded"],
+        ["scale", "decimal places"],
+        ["rounding mode", "half up", "half even"],
+        ["before tax", "tax order", "discounts applied"]
       ]
     }
   ]

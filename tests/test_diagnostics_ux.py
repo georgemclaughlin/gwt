@@ -189,7 +189,31 @@ class DiagnosticUxTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertEqual(diagnostic["subcode"], "call.no-match")
         self.assertEqual(diagnostic["expected"], "review <vendor>")
+        self.assertEqual(diagnostic["candidates"], ["review <vendor>"])
         self.assertIn("declare a matching behavior", diagnostic["help"])
+
+    def test_json_behavior_shape_mismatch_lists_bounded_signature_candidates(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            program = Path(temp_dir) / "rules.gwt"
+            program.write_text(
+                "WHEN review <vendor>\n"
+                "  PASS\n"
+                "\n"
+                "WHEN review <vendor> into <decision>\n"
+                "  PASS\n"
+                "\n"
+                'GIVEN vendor is "Acme"\n'
+                "WHEN review vendor now\n"
+            )
+
+            status, stdout, _stderr = run_cli(["check", str(program), "--json"])
+
+        diagnostic = json.loads(stdout)["diagnostics"][0]
+        self.assertEqual(status, 1)
+        self.assertEqual(
+            diagnostic["candidates"],
+            ["review <vendor>", "review <vendor> into <decision>"],
+        )
 
     def test_json_type_mismatch_separates_expected_and_actual_types(self):
         with tempfile.TemporaryDirectory() as temp_dir:

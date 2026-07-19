@@ -1,0 +1,9 @@
+TYPE ReviewState is "new" | "approved"
+
+RECORD Review
+  status: ReviewState
+
+SCENARIO review begins new
+GIVEN review is Review
+  status: "new"
+THEN review.status == "new"

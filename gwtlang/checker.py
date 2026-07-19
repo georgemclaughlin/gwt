@@ -28,6 +28,7 @@ from .runtime import (
     TableAssignment,
     VariantAssignment,
     VariantDefinition,
+    _action_candidate_signatures,
     _condition_to_expression,
     _is_local_name,
     _is_type_syntax,
@@ -75,6 +76,7 @@ class Diagnostic:
     expected: str | None = None
     actual: str | None = None
     help: str | None = None
+    candidates: tuple[str, ...] = ()
 
     def as_error_message(self, fallback_filename: str) -> str:
         filename = self.filename or fallback_filename
@@ -100,6 +102,8 @@ class Diagnostic:
             payload["actual"] = self.actual
         if self.help is not None:
             payload["help"] = self.help
+        if self.candidates:
+            payload["candidates"] = list(self.candidates)
         return payload
 
 
@@ -939,11 +943,7 @@ class Checker:
             else _parse_leaf_statement(statement, statement.filename or "<source>")
         )
         line = leaf.line
-        try:
-            tokens = _tokens(line.text, line.filename or "<source>", line.number)
-        except GwtError as exc:
-            self._add_line(line, _strip_location(str(exc)), "GWT010")
-            return
+        tokens = leaf.tokens
         if not tokens:
             return
 
@@ -951,7 +951,7 @@ class Checker:
             if not allow_let:
                 self._add_line(line, "RETURN is only allowed inside behavior", "GWT007")
                 return
-            expression = line.text.removeprefix("RETURN").strip()
+            expression = leaf.expression or ""
             if not expression:
                 self._add_line(line, "RETURN requires a value", "GWT009")
                 return
@@ -972,11 +972,11 @@ class Checker:
             if not allow_let:
                 self._add_line(line, "LET is only allowed inside behavior", "GWT007")
                 return
-            self._check_let(line, scope)
+            self._check_let(leaf, scope)
             return
 
         if leaf.kind == "require":
-            condition = line.text.removeprefix("REQUIRE").strip()
+            condition = leaf.expression or ""
             if not condition:
                 self._add_line(line, "REQUIRE requires a condition", "GWT010")
                 return
@@ -987,18 +987,22 @@ class Checker:
             return
 
         if leaf.kind == "builtin":
-            self._check_builtin(tokens, line, scope)
+            self._check_builtin(leaf, scope)
             return
 
-        self._check_behavior_call(tokens, line, scope, require_return_value=False)
+        self._check_behavior_call(list(tokens), line, scope, require_return_value=False)
 
-    def _check_let(self, line: Line, scope: Scope) -> None:
-        binding = line.text.removeprefix("LET").strip()
-        try:
-            name, expression = _split_required(binding, " be ", line.number)
-        except GwtError as exc:
-            self._add_line(line, str(exc), "GWT010")
-            return
+    def _check_let(self, statement: LeafStatement, scope: Scope) -> None:
+        line = statement.line
+        if statement.binding is None or statement.expression is None:
+            binding = line.text.removeprefix("LET").strip()
+            try:
+                name, expression = _split_required(binding, " be ", line.number)
+            except GwtError as exc:
+                self._add_line(line, str(exc), "GWT010")
+                return
+        else:
+            name, expression = statement.binding, statement.expression
 
         name = name.strip()
         if not _is_local_name(name):
@@ -1013,8 +1017,10 @@ class Checker:
         if value_type is not None:
             scope.types[name] = value_type
 
-    def _check_builtin(self, tokens: list[str], line: Line, scope: Scope) -> None:
-        command = tokens[0]
+    def _check_builtin(self, statement: LeafStatement, scope: Scope) -> None:
+        tokens = statement.tokens
+        line = statement.line
+        command = statement.command
         if command == "set":
             if len(tokens) < 4 or tokens[2] != "to":
                 self._add_line(line, "expected 'set path to value'", "GWT006")
@@ -1357,6 +1363,7 @@ class Checker:
                 line,
                 _action_mismatch_message("no behavior matches", tokens, self.actions_by_name),
                 "GWT001",
+                candidates=_action_candidate_signatures(tokens, self.actions_by_name)[:5],
             )
             return None
         type_errors = [self._behavior_call_type_errors(action, tokens, line, scope) for action in matches]
@@ -1533,6 +1540,7 @@ class Checker:
         expected: str | None = None,
         actual: str | None = None,
         help: str | None = None,
+        candidates: list[str] | None = None,
     ) -> None:
         inferred_subcode, inferred_expected, inferred_actual, inferred_help = _diagnostic_metadata(
             code,
@@ -1551,11 +1559,27 @@ class Checker:
                 expected=expected or inferred_expected,
                 actual=actual or inferred_actual,
                 help=help or inferred_help,
+                candidates=tuple(candidates or ()),
             )
         )
 
-    def _add_line(self, line: Line, message: str, code: str = "GWT000") -> None:
-        self._add(line.filename, line.number, message, code, line.column, line.length)
+    def _add_line(
+        self,
+        line: Line,
+        message: str,
+        code: str = "GWT000",
+        *,
+        candidates: list[str] | None = None,
+    ) -> None:
+        self._add(
+            line.filename,
+            line.number,
+            message,
+            code,
+            line.column,
+            line.length,
+            candidates=candidates,
+        )
 
     def _add_line_warning(self, line: Line, message: str, code: str) -> None:
         self._add(line.filename, line.number, message, code, line.column, line.length, severity="warning")

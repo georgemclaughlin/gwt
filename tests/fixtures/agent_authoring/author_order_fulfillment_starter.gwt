@@ -1,0 +1,10 @@
+PROGRAM order fulfillment slice
+
+RECORD FulfillmentRequest
+  requested_units: integer
+  available_units: integer
+
+RECORD FulfillmentDecision
+  status: "new" | "fulfilled" | "partial" | "backordered"
+  reserved_units: integer
+  backordered_units: integer

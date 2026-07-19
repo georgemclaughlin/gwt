@@ -1,0 +1,10 @@
+PROGRAM return review
+
+TYPE ReturnStatus is "new" | "approved" | "needs_review"
+
+RECORD ReturnRequest
+  days_since_purchase: integer
+
+RECORD ReturnDecision
+  status: ReturnStatus
+  reason: "new" | "within_window" | "outside_window"
