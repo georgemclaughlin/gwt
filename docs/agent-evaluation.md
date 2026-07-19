@@ -15,7 +15,9 @@ Choose one context variant:
 
 - `source-only` supplies the task plus its starter or broken GWT source;
 - `inspect` also supplies the structured inspection payload for that source;
-- `guide` adds the canonical agent-authoring guide to the inspected context.
+- `guide` adds the canonical agent-authoring guide plus the unrelated hello and
+  typed language-tour programs as worked examples. It does not include corpus
+  gold sources or hidden probes.
 
 ```sh
 python -m gwtlang.agent_evaluation prepare \
@@ -85,11 +87,47 @@ and clarification outcomes. Its aggregate metrics are:
   probes, over all author/repair cases;
 - `correctClarificationRate`: final clarification covers every required domain
   concept, over clarification cases;
+- `repairAttemptedCaseCount`: code cases with more than one recorded attempt;
+- `repairRecoveryRate`: attempted repairs whose final code validates and passes
+  semantic probes;
 - `medianRepairIterations`: median final successful attempt number minus one.
 
 An omitted case counts as unsuccessful in the relevant rate. Parse and checker
 rates deliberately exclude clarification cases; clarification rate deliberately
 excludes code cases.
+
+## Optional Isolated Codex Runner
+
+`gwtlang.agent_matrix` is a provider-specific capture harness layered outside
+the provider-neutral evaluator. It runs each prepared task in a fresh read-only
+temporary directory, requests structured output, checkpoints partial results,
+and preserves raw stdout/stderr logs in its output directory.
+
+```sh
+python -m gwtlang.agent_matrix /tmp/gwt-guide.jsonl \
+  --model MODEL_ID --reasoning-effort high \
+  --output-dir /tmp/gwt-model-guide --jobs 4
+
+python -m gwtlang.agent_evaluation score \
+  tests/fixtures/agent_authoring/manifest.json \
+  /tmp/gwt-model-guide/responses.jsonl
+```
+
+To run a bounded public repair pass, point a new output directory at the prior
+responses:
+
+```sh
+python -m gwtlang.agent_matrix /tmp/gwt-guide.jsonl \
+  --model MODEL_ID --reasoning-effort high \
+  --repair-responses /tmp/gwt-model-guide/responses.jsonl \
+  --output-dir /tmp/gwt-model-guide-repair --jobs 4
+```
+
+Only public parser, checker, formatter, and scenario-runtime feedback is used.
+Format-only failures are normalized deterministically without another model
+call. Hidden probes and clarification concepts are never added to repair
+prompts. The repair output's `responses.jsonl` contains the prior attempts plus
+the new attempts and can be scored directly.
 
 ## Interpreting Results
 
@@ -116,3 +154,6 @@ This proves the corpus, blind preparation, response protocol, gates, hidden
 probes, and repair accounting are internally consistent. It is not a claim
 about any live model. Live-model results should only be reported when the raw
 responses and run metadata have actually been captured.
+
+The first captured live baseline is documented under
+[`evaluations/agent-authoring/2026-07-18`](../evaluations/agent-authoring/2026-07-18/README.md).

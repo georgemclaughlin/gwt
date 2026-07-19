@@ -13,6 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 from statistics import median
 from typing import Any, Literal, Mapping, Sequence, cast
 
@@ -79,12 +80,19 @@ def prepare_evaluation(
     root = manifest_file.parent
     guide = ""
     if variant == "guide":
-        selected_guide = (
-            Path(guide_path)
-            if guide_path is not None
-            else Path(__file__).resolve().parent.parent / "docs" / "agent-authoring.md"
-        )
-        guide = selected_guide.read_text()
+        if guide_path is not None:
+            guide = Path(guide_path).read_text()
+        else:
+            repository_root = Path(__file__).resolve().parent.parent
+            guide = "\n\n".join(
+                (
+                    (repository_root / "docs" / "agent-authoring.md").read_text(),
+                    "# Worked Example: Smallest Program\n\n"
+                    + (repository_root / "examples" / "hello.gwt").read_text(),
+                    "# Worked Example: Typed Domain Program\n\n"
+                    + (repository_root / "examples" / "language_tour" / "rules.gwt").read_text(),
+                )
+            )
 
     prepared: list[dict[str, Any]] = []
     for case in _manifest_cases(manifest):
@@ -139,6 +147,7 @@ def score_evaluation(
     semantic_results: list[bool] = []
     clarification_results: list[bool] = []
     repair_iterations: list[int] = []
+    repair_results: list[bool] = []
 
     for case_id, case in cases.items():
         ordered = sorted(
@@ -168,6 +177,8 @@ def score_evaluation(
             case_semantic = bool(final and final.semantic_ok)
             final_validation.append(case_validation)
             semantic_results.append(case_semantic)
+            if len(assessments) > 1:
+                repair_results.append(case_validation and case_semantic)
             if final is not None and case_validation and case_semantic:
                 repair_iterations.append(max(0, final.attempt - 1))
 
@@ -192,6 +203,8 @@ def score_evaluation(
             "finalValidationRate": _rate(final_validation),
             "scenarioSemanticSuccessRate": _rate(semantic_results),
             "correctClarificationRate": _rate(clarification_results),
+            "repairAttemptedCaseCount": len(repair_results),
+            "repairRecoveryRate": _rate(repair_results),
             "medianRepairIterations": (
                 float(median(repair_iterations)) if repair_iterations else None
             ),
@@ -355,12 +368,16 @@ def _clarification_matches(case: Mapping[str, Any], questions: Sequence[str]) ->
     concepts = case.get("requiredConcepts", [])
     if not isinstance(concepts, list):
         return False
-    combined = " ".join(questions).lower()
+    combined = _normalized_concept_text(" ".join(questions))
     for raw_options in cast(list[Any], concepts):
         options = cast(list[Any], raw_options) if isinstance(raw_options, list) else [raw_options]
-        if not any(str(option).lower() in combined for option in options):
+        if not any(_normalized_concept_text(str(option)) in combined for option in options):
             return False
     return True
+
+
+def _normalized_concept_text(value: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", value.lower()).split())
 
 
 def _context_source(case: Mapping[str, Any], root: Path) -> str:

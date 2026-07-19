@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gwtlang.dev/schemas/agent-evaluation-response.schema.json",
+  "title": "GWT Agent Evaluation Response",
+  "type": "object",
+  "required": ["action", "source", "clarifications"],
+  "properties": {
+    "action": {
+      "enum": ["code", "clarify"]
+    },
+    "source": {
+      "type": "string"
+    },
+    "clarifications": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": false
+}

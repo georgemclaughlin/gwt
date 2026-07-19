@@ -10,3 +10,17 @@ RECORD IncidentRequest
 RECORD IncidentDecision
   priority: IncidentPriority
   reason: "new" | "normal_operations" | "degraded_service" | "customer_outage"
+
+REQUEST triage incident
+  GIVEN incident is IncidentRequest
+
+  GIVEN decision is IncidentDecision
+    priority: "new"
+    reason: "new"
+
+  WHEN triage incident into decision
+
+  OUTPUT decision is IncidentDecision
+
+  THEN decision.priority != "new"
+  AND decision.reason != "new"

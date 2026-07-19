@@ -1,0 +1,30 @@
+{
+  "caseCount": 2,
+  "cliVersion": "codex-cli 0.144.6",
+  "completedCaseCount": 2,
+  "contextVariants": [
+    "guide"
+  ],
+  "durationSeconds": 14.582,
+  "failedCaseCount": 0,
+  "failures": [],
+  "finishedAt": "2026-07-19T03:06:58.309269+00:00",
+  "jobs": 3,
+  "mode": "repair",
+  "provider": "openai-codex-cli",
+  "reasoningEffort": "low",
+  "repairResponses": "/tmp/gwt-agent-matrix-20260718-v2/luna-guide-repair-final/responses.jsonl",
+  "requestedModel": "gpt-5.6-luna",
+  "schemaVersion": 1,
+  "startedAt": "2026-07-19T03:06:43.727166+00:00",
+  "status": "complete",
+  "successfulCaseCount": 2,
+  "taskCaseIds": [
+    "author-incident-triage-priority",
+    "author-order-fulfillment-boundaries"
+  ],
+  "taskDigest": "sha256:880ccb7f4184dcaf7384f30a213ca3b78e92eb8933d55bdd878e22c2c512fcde",
+  "taskFile": "/tmp/gwt-agent-matrix-20260718-v2/tasks/guide.jsonl",
+  "timeoutSeconds": 300,
+  "totalResponseCount": 22
+}
