@@ -8,7 +8,8 @@ corpus. It is an exploratory baseline, not a general model ranking.
 - Codex CLI: `0.144.6`
 - models: `gpt-5.6-luna` with low reasoning and `gpt-5.6-sol` with high
   reasoning
-- contexts: `source-only`, `inspect`, and `guide`
+- contexts: `source-only`, `inspect`, `guide`, and the later productized
+  `agent-context` pack
 - samples: one independent call per case and context cell
 - concurrency: four calls, except the three-case Sol/guide repair run
 - isolation: fresh read-only temporary directory, ephemeral session, ignored
@@ -22,23 +23,27 @@ cases. Percentages below use those separate denominators.
 
 | Model | Context | First parse | First check | Final validation | Final semantic | Clarification | Repair recovery |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Luna/low | source-only | 45.5% | 45.5% | 45.5% | 45.5% | 50% | 33.3% (3/9) |
-| Luna/low | inspect | 45.5% | 45.5% | 45.5% | 45.5% | 50% | 0% (0/6) |
-| Luna/low | guide | 63.6% | 54.5% | 90.9% | 90.9% | 75% | 100% (5/5) |
+| Luna/low | source-only | 45.5% | 45.5% | 45.5% | 45.5% | 75% | 33.3% (3/9) |
+| Luna/low | inspect | 45.5% | 45.5% | 45.5% | 45.5% | 75% | 0% (0/6) |
+| Luna/low | guide | 63.6% | 54.5% | 90.9% | 90.9% | 100% | 100% (5/5) |
+| Luna/low | agent-context | 54.5% | 54.5% | 72.7% | 72.7% | 100% | 50% (3/6) |
 | Sol/high | source-only | 36.4% | 27.3% | 45.5% | 45.5% | 75% | 25% (2/8) |
 | Sol/high | inspect | 45.5% | 36.4% | 45.5% | 45.5% | 75% | 14.3% (1/7) |
 | Sol/high | guide | 81.8% | 72.7% | 100% | 100% | 100% | 100% (3/3) |
+| Sol/high | agent-context | 54.5% | 45.5% | 81.8% | 81.8% | 100% | 66.7% (4/6) |
 
 The final semantic counts make the context effect especially clear:
 
 | Model | Context | Authoring | Repair | Clarification |
 |---|---|---:|---:|---:|
-| Luna/low | source-only | 0/5 | 5/6 | 2/4 |
-| Luna/low | inspect | 0/5 | 5/6 | 2/4 |
-| Luna/low | guide | 5/5 | 5/6 | 3/4 |
+| Luna/low | source-only | 0/5 | 5/6 | 3/4 |
+| Luna/low | inspect | 0/5 | 5/6 | 3/4 |
+| Luna/low | guide | 5/5 | 5/6 | 4/4 |
+| Luna/low | agent-context | 2/5 | 6/6 | 4/4 |
 | Sol/high | source-only | 0/5 | 5/6 | 3/4 |
 | Sol/high | inspect | 0/5 | 5/6 | 3/4 |
 | Sol/high | guide | 5/5 | 6/6 | 4/4 |
+| Sol/high | agent-context | 3/5 | 6/6 | 4/4 |
 
 ## What This Run Taught Us
 
@@ -58,7 +63,17 @@ The final semantic counts make the context effect especially clear:
 5. Lexical clarification scoring was initially too narrow. Semantically valid
    phrases such as “rounding rule,” “half-up,” and “tax calculated on the
    discounted price” are now normalized without exposing the hidden concepts
-   during generation.
+   during generation. The later context-pack run added equivalent phrases such
+   as “decimal precision,” “criteria determine,” and “which rejection reason.”
+6. The productized context pack is a useful middle condition, not a replacement
+   for the full guide yet. Both models repaired all six broken programs and
+   correctly clarified all four ambiguous tasks, but authored only two of five
+   (Luna) and three of five (Sol) new programs after repair.
+7. Two fixed tiny syntax examples are too narrow for broad authoring. Remaining
+   candidates repeatedly invented conditional `ELSE` forms or malformed
+   behavior contracts. The next context-pack iteration should select compact
+   syntax examples by relevant language capability while remaining independent
+   of corpus gold and hidden probes.
 
 One known baseline caveat remains. The captured
 `repair-explicit-missing-case` task asked for an explicit missing branch but did

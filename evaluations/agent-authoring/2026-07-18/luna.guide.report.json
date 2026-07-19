@@ -420,7 +420,7 @@
           "action": "clarify",
           "attempt": 1,
           "checkOk": false,
-          "clarificationOk": false,
+          "clarificationOk": true,
           "diagnosticCodes": [],
           "diagnosticSubcodes": [],
           "formatOk": false,
@@ -431,13 +431,13 @@
         }
       ],
       "caseId": "clarify-decimal-rounding-policy",
-      "finalSemanticOk": false,
-      "finalValidationOk": false,
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
       "kind": "clarify"
     }
   ],
   "metrics": {
-    "correctClarificationRate": 0.75,
+    "correctClarificationRate": 1.0,
     "finalValidationRate": 0.9090909090909091,
     "firstPassCheckRate": 0.5454545454545454,
     "firstPassParseRate": 0.6363636363636364,

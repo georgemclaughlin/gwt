@@ -1,0 +1,43 @@
+{
+  "caseCount": 15,
+  "cliVersion": "codex-cli 0.144.6",
+  "completedCaseCount": 15,
+  "contextVariants": [
+    "agent-context"
+  ],
+  "durationSeconds": 81.263,
+  "failedCaseCount": 0,
+  "failures": [],
+  "finishedAt": "2026-07-19T03:48:38.068790+00:00",
+  "jobs": 4,
+  "mode": "first-pass",
+  "provider": "openai-codex-cli",
+  "reasoningEffort": "high",
+  "repairResponses": null,
+  "requestedModel": "gpt-5.6-sol",
+  "schemaVersion": 1,
+  "startedAt": "2026-07-19T03:47:16.805697+00:00",
+  "status": "complete",
+  "successfulCaseCount": 15,
+  "taskCaseIds": [
+    "author-explicit-return-window",
+    "author-incident-triage-priority",
+    "author-order-fulfillment-boundaries",
+    "author-funding-eligibility-precedence",
+    "author-semantic-release-precedence",
+    "repair-domain-behavior-typo",
+    "repair-explicit-missing-case",
+    "repair-behavior-argument-type",
+    "repair-optional-presence-guard",
+    "repair-unknown-domain-type",
+    "repair-builtin-statement-shape",
+    "clarify-undefined-risk-policy",
+    "clarify-missing-null-domain-meaning",
+    "clarify-overlapping-decision-precedence",
+    "clarify-decimal-rounding-policy"
+  ],
+  "taskDigest": "sha256:9375f41e3b8765d8410908abbc6e7be47bae0579158ae823fde78756ba2b05a2",
+  "taskFile": "/tmp/gwt-agent-context.tasks.jsonl",
+  "timeoutSeconds": 300,
+  "totalResponseCount": 15
+}
