@@ -39,6 +39,11 @@ examples changed both models from `0/5` to `5/5` authoring success after repair.
 The context pack turns that result into a repeatable product surface rather
 than relying on a carefully assembled prompt.
 
+The provider-neutral evaluation harness exposes an `agent-context` context
+variant so the exact generated Markdown can be compared with `source-only`,
+raw `inspect`, and the longer `guide` condition. See
+[agent-evaluation.md](agent-evaluation.md).
+
 ## Request Scoping
 
 Pass `--request NAME` to embed only scenarios that directly invoke that public
