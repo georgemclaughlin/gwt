@@ -50,7 +50,11 @@ class AgentContextResult:
     def as_payload(self) -> AgentContextPayload:
         inspected = self.inspection.as_payload()
         program = self.inspection.analysis.program
-        scenarios = program.scenarios if program is not None else []
+        scenarios = (
+            [scenario for scenario in program.scenarios if scenario.line > 0]
+            if program is not None
+            else []
+        )
         selected = _select_scenarios(
             scenarios,
             request=self.selected_request,

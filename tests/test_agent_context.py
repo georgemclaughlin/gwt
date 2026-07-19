@@ -150,6 +150,14 @@ class AgentContextTests(unittest.TestCase):
         self.assertEqual(payload["scenarioExamples"], [])
         self.assertEqual(len(payload["scenarioIndex"]), 2)
 
+    def test_implicit_empty_main_is_not_presented_as_executable_evidence(self):
+        payload = build_agent_context_source(
+            "PROGRAM empty\n\nRECORD Decision\n  status: text\n"
+        ).as_payload()
+
+        self.assertEqual(payload["scenarioExamples"], [])
+        self.assertEqual(payload["scenarioIndex"], [])
+
     def test_unknown_selected_request_is_rejected_with_available_names(self):
         with self.assertRaisesRegex(
             GwtError,

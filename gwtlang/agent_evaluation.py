@@ -17,6 +17,7 @@ import re
 from statistics import median
 from typing import Any, Literal, Mapping, Sequence, cast
 
+from .agent_context import build_agent_context_source
 from .checker import Diagnostic
 from .formatter import format_text
 from .inspection import inspect_source
@@ -25,7 +26,7 @@ from .service import Analysis, analyze_source
 
 
 EVALUATION_SCHEMA_VERSION = 1
-CONTEXT_VARIANTS = ("source-only", "inspect", "guide")
+CONTEXT_VARIANTS = ("source-only", "inspect", "guide", "agent-context")
 AttemptAction = Literal["code", "clarify"]
 
 
@@ -105,6 +106,11 @@ def prepare_evaluation(
             ).as_payload()
         if variant == "guide":
             context["guide"] = guide
+        if variant == "agent-context":
+            context["agentContext"] = build_agent_context_source(
+                source,
+                filename=f"<agent-eval:{case['id']}>",
+            ).render_markdown()
         prepared.append(
             {
                 "schemaVersion": EVALUATION_SCHEMA_VERSION,
