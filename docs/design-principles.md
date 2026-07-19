@@ -59,6 +59,33 @@ The language is for deterministic workflows, rules, examples, and
 request/response programs whose behavior should be inspectable by people who
 care about the domain outcome.
 
+## GWT Programs Define Domain DSLs
+
+GWT is a small executable behavior language, but its core keywords are not the
+whole DSL seen by an author or an agent. Each checked program defines a narrower
+domain language through its `TYPE` and `RECORD` vocabulary, named `REQUEST`
+boundaries, behavior signatures, and executable scenarios.
+
+For example, `WHEN reserve <order_item> from <inventory> into <fulfillment>` is
+more than a reusable function. It is a sentence in the order-fulfillment DSL.
+Once that vocabulary exists, authors and agents should prefer it over spelling
+the same intent repeatedly with low-level mutation.
+
+This distinction matters for agent-assisted work:
+
+- during domain discovery, an agent can help compare names, boundaries, record
+  shapes, and scenario pressure tests, but humans must own those design choices;
+- after the vocabulary stabilizes, an agent can act as a natural-language
+  interface that proposes changes entirely within the checked domain language;
+- the generated `.gwt` program, not the prompt or transcript, remains the
+  normative and maintainable artifact;
+- reliability comes from the program-specific vocabulary plus deterministic
+  checking, formatting, and scenarios, not from `GIVEN / WHEN / THEN` spelling
+  alone.
+
+See [dsl-and-llms.md](dsl-and-llms.md) for the full model and
+[agent-authoring.md](agent-authoring.md) for the authoring and repair loop.
+
 ## Spec Is The Code
 
 Spec-driven development is increasingly useful in agent-assisted software work,
@@ -238,6 +265,9 @@ Before adding syntax, answer these questions:
 - Can it be checked, formatted, documented, and covered by examples?
 - Would a Cucumber or SpecFlow user recognize the shape as behavior-oriented?
 - Is there a smaller behavior-shaped primitive than a general query feature?
+- Could a reusable domain behavior, a better example, richer inspection
+  context, or a more precise diagnostic solve the authoring problem without new
+  syntax?
 
 If the answer trends toward query language design, stop and look for a narrower
 BDD-shaped operation.

@@ -4,10 +4,29 @@ import tempfile
 import unittest
 
 from gwtlang import GwtError, run_json_request, run_request, run_source
-from gwtlang.runtime import Runtime, parse_program
+from gwtlang.runtime import LeafStatement, Runtime, parse_program
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_parser_classifies_leaf_statements_once_for_semantic_consumers(self):
+        program = parse_program(
+            "REQUEST review\n"
+            "  WHEN review decision\n"
+            "\n"
+            "WHEN review <decision>\n"
+            "  REQUIRE decision == \"new\"\n"
+            "  set decision to \"approved\"\n"
+        )
+
+        request_statement = program.requests["review"].whens[0]
+        require_statement, set_statement = program.actions[0].body
+        self.assertIsInstance(request_statement, LeafStatement)
+        self.assertEqual(request_statement.kind, "behavior_call")
+        self.assertEqual(request_statement.command, "review")
+        self.assertEqual(require_statement.kind, "require")
+        self.assertEqual(set_statement.kind, "builtin")
+        self.assertEqual(set_statement.command, "set")
+
     def test_division_by_zero_is_a_source_located_gwt_error(self):
         with self.assertRaises(GwtError) as raised:
             run_source("GIVEN result is 1 / 0", filename="arithmetic.gwt")

@@ -15,6 +15,8 @@ GWT is an experimental programming language built around executable
 - The longer language guide is `docs/language.md`.
 - Design principles and language-shape guardrails are in
   `docs/design-principles.md`.
+- DSL/LLM concepts and the canonical agent authoring loop are in
+  `docs/dsl-and-llms.md` and `docs/agent-authoring.md`.
 
 ## Core Commands
 
@@ -26,6 +28,7 @@ python -m gwtlang run examples/hello.gwt --json
 python -m gwtlang test examples/language_tour/rules.gwt
 python -m gwtlang check examples/language_tour/rules.gwt
 python -m gwtlang format examples/language_tour/rules.gwt --check
+python -m unittest tests.test_agent_authoring
 ```
 
 After `python -m pip install -e .`, the equivalent `gwt` command is available.

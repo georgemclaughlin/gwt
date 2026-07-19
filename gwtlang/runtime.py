@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import shlex
 import textwrap
-from typing import Any, Iterable, TypeGuard, cast
+from typing import Any, Iterable, Literal as TypingLiteral, TypeGuard, cast
 
 from .errors import GwtError
 from .expressions import Literal, evaluate_expression, parse_expression
@@ -93,6 +93,31 @@ class Line:
     filename: str | None = None
     column: int = 1
     length: int = 1
+
+
+LeafStatementKind = TypingLiteral[
+    "return",
+    "pass",
+    "let",
+    "require",
+    "builtin",
+    "behavior_call",
+]
+
+
+@dataclass(frozen=True)
+class LeafStatement:
+    """A parsed semantic classification for one non-block behavior statement.
+
+    The original source line is retained for diagnostics, formatting, tracing,
+    and debugging. ``command`` identifies the concrete builtin or behavior
+    name, so downstream consumers no longer need to rediscover whether a line
+    is a builtin, control statement, or domain behavior call.
+    """
+
+    kind: LeafStatementKind
+    command: str
+    line: Line
 
 
 @dataclass(frozen=True)
@@ -276,7 +301,7 @@ class Scenario:
     column: int = 1
     length: int = 1
     givens: list[Any] = field(default_factory=lambda: [])
-    whens: list[Any] = field(default_factory=lambda: [])
+    whens: list[LeafStatement | RequestCall] = field(default_factory=lambda: [])
     thens: list[Line] = field(default_factory=lambda: [])
     examples: list[dict[str, str]] = field(default_factory=lambda: [])
 
@@ -288,7 +313,7 @@ class NamedRequest:
     inputs: dict[str, ContractBinding] = field(default_factory=lambda: {})
     outputs: dict[str, ContractBinding] = field(default_factory=lambda: {})
     givens: list[Any] = field(default_factory=lambda: [])
-    whens: list[Line] = field(default_factory=lambda: [])
+    whens: list[LeafStatement] = field(default_factory=lambda: [])
     thens: list[Line] = field(default_factory=lambda: [])
 
 
@@ -434,10 +459,11 @@ def _validate_request_file_steps(steps: list[Any], filename: str) -> bool:
         if isinstance(step, RequestCall):
             has_request = True
             continue
-        if isinstance(step, Line):
+        if isinstance(step, LeafStatement):
+            line = step.line
             raise GwtError(
-                f"{step.filename or filename}:{step.number}: "
-                f"request files must invoke named REQUESTs; direct WHEN is not allowed: {step.text}"
+                f"{line.filename or filename}:{line.number}: "
+                f"request files must invoke named REQUESTs; direct WHEN is not allowed: {line.text}"
             )
     return has_request
 
@@ -692,7 +718,12 @@ def parse_program(
             elif index < len(lines) and lines[index].text.startswith("  "):
                 raise GwtError(f"{filename}:{line.number}: BACKGROUND cannot define WHEN behavior")
             else:
-                current.whens.append(_derived_line(line, signature_text, len("WHEN ")))
+                current.whens.append(
+                    _parse_leaf_statement(
+                        _derived_line(line, signature_text, len("WHEN ")),
+                        filename,
+                    )
+                )
             last_top_keyword = "WHEN"
         elif text.startswith("THEN "):
             statement = text.removeprefix("THEN ").strip()
@@ -1211,45 +1242,57 @@ class Runtime:
         except GwtError as exc:
             raise _with_line_context(assignment.line, exc) from exc
 
-    def _run_command_or_action(self, line: Line, env: dict[str, Any], *, allow_let: bool = False) -> BehaviorReturn | None:
-        self._before_line(line, env, trace_statement=not self._line_has_semantic_trace(line))
+    def _run_command_or_action(
+        self,
+        statement: LeafStatement | Line,
+        env: dict[str, Any],
+        *,
+        allow_let: bool = False,
+    ) -> BehaviorReturn | None:
+        leaf = (
+            statement
+            if isinstance(statement, LeafStatement)
+            else _parse_leaf_statement(statement, statement.filename or "<source>")
+        )
+        line = leaf.line
+        self._before_line(line, env, trace_statement=not self._line_has_semantic_trace(leaf))
         try:
-            return self._run_command_or_action_inner(line, env, allow_let=allow_let)
+            return self._run_command_or_action_inner(leaf, env, allow_let=allow_let)
         except GwtError as exc:
             raise _with_line_context(line, exc) from exc
 
     def _run_command_or_action_inner(
-        self, line: Line, env: dict[str, Any], *, allow_let: bool = False
+        self, statement: LeafStatement, env: dict[str, Any], *, allow_let: bool = False
     ) -> BehaviorReturn | None:
+        line = statement.line
         tokens = _tokens(line.text, "<source>", line.number)
         if not tokens:
             return
 
-        command = tokens[0]
-        if command == "RETURN":
+        if statement.kind == "return":
             if not allow_let:
                 raise GwtError(f"line {line.number}: RETURN is only allowed inside behavior")
             expression = line.text[len("RETURN") :].strip()
             if not expression:
                 raise GwtError(f"line {line.number}: RETURN requires a value")
             return BehaviorReturn(self._eval_expression_or_returning_action(expression, line, env))
-        if command == "PASS":
+        if statement.kind == "pass":
             if not allow_let:
                 raise GwtError(f"line {line.number}: PASS is only allowed inside behavior")
             if len(tokens) != 1:
                 raise GwtError(f"line {line.number}: PASS does not take arguments")
             return
-        if command == "LET":
+        if statement.kind == "let":
             if not allow_let:
                 raise GwtError(f"line {line.number}: LET is only allowed inside behavior")
             self._run_let(line, env)
             return
-        if command == "REQUIRE":
+        if statement.kind == "require":
             condition = line.text.removeprefix("REQUIRE ").strip()
             if not self._evaluate_condition(condition, env, line):
                 raise GwtError(f"line {line.number}: requirement failed: {condition}")
             return
-        if _is_builtin_statement(tokens, line.text):
+        if statement.kind == "builtin":
             self._run_builtin(tokens, line, env)
             return
 
@@ -1477,11 +1520,8 @@ class Runtime:
         if self.tracer is not None and trace_statement:
             self.tracer.before_line(line, self.state, env, stack)
 
-    def _line_has_semantic_trace(self, line: Line) -> bool:
-        tokens = _tokens(line.text, "<source>", line.number)
-        if not tokens:
-            return False
-        if tokens[0] in {
+    def _line_has_semantic_trace(self, statement: LeafStatement) -> bool:
+        if statement.kind == "builtin" and statement.command in {
             "set",
             "add",
             "subtract",
@@ -1494,7 +1534,7 @@ class Runtime:
             "REQUIRE",
         }:
             return True
-        return tokens[0] in self.actions
+        return statement.kind == "behavior_call" and statement.command in self.actions
 
     def _stack_frames(self, line: Line, env: dict[str, Any]) -> list[StackFrame]:
         if not self.call_stack:
@@ -1935,6 +1975,8 @@ def _body_line_range(body: list[Any]) -> tuple[int | None, int | None]:
 
 
 def _statement_line_numbers(statement: Any) -> list[int]:
+    if isinstance(statement, LeafStatement):
+        return [statement.line.number]
     if isinstance(statement, Line):
         return [statement.number]
     if isinstance(statement, RecordValidation):
@@ -2174,7 +2216,12 @@ def _parse_named_request_body(
                 raise GwtError(
                     f"{filename}:{line.number}: REQUEST WHEN cannot define behavior; define block-form WHEN at top level"
                 )
-            request.whens.append(_derived_line(line, call_text, len("WHEN ")))
+            request.whens.append(
+                _parse_leaf_statement(
+                    _derived_line(line, call_text, len("WHEN ")),
+                    filename,
+                )
+            )
             index += 1
             last_keyword = "WHEN"
             continue
@@ -2421,7 +2468,7 @@ def _parse_behavior_block(lines: list[Line], index: int, filename: str, indent: 
         tokens = _tokens(text, filename, line.number)
         if tokens:
             last_body_keyword = tokens[0]
-        body.append(_derived_line(line, text, 0))
+        body.append(_parse_leaf_statement(_derived_line(line, text, 0), filename))
         index += 1
 
     return body, index
@@ -2956,6 +3003,24 @@ def _substitute_lines(lines: list[Any], values: dict[str, str] | None) -> list[A
     for line in lines:
         if isinstance(line, RecordValidation):
             substituted.append(line)
+        elif isinstance(line, LeafStatement):
+            substituted_line = Line(
+                line.line.number,
+                _substitute_placeholders(
+                    line.line.text,
+                    values,
+                    line.line.number,
+                ),
+                line.line.filename,
+                line.line.column,
+                line.line.length,
+            )
+            substituted.append(
+                _parse_leaf_statement(
+                    substituted_line,
+                    substituted_line.filename or "<source>",
+                )
+            )
         elif isinstance(line, RequestCall):
             substituted.append(
                 RequestCall(
@@ -3291,6 +3356,28 @@ def _is_builtin_statement(tokens: list[str], text: str) -> bool:
     if command == "exists":
         return _parse_exists_statement(text) is not None
     return False
+
+
+def _parse_leaf_statement(line: Line, filename: str) -> LeafStatement:
+    """Classify a leaf statement once for the checker and runtime."""
+
+    tokens = _tokens(line.text, filename, line.number)
+    if not tokens:
+        return LeafStatement("behavior_call", "", line)
+    command = tokens[0]
+    if command == "RETURN":
+        kind: LeafStatementKind = "return"
+    elif command == "PASS":
+        kind = "pass"
+    elif command == "LET":
+        kind = "let"
+    elif command == "REQUIRE":
+        kind = "require"
+    elif _is_builtin_statement(tokens, line.text):
+        kind = "builtin"
+    else:
+        kind = "behavior_call"
+    return LeafStatement(kind, command, line)
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:

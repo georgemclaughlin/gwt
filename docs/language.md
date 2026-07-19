@@ -16,7 +16,9 @@ alternatives, and [http-service-design.md](http-service-design.md) for OpenAPI,
 served-request behavior, and trust boundaries. Review
 [execution-cases.md](execution-cases.md) for captured runs, named case corpora,
 old/new comparison, and the local workbench; those are tooling artifacts rather
-than additional language syntax.
+than additional language syntax. For the relationship between the core
+language, program-specific domain DSLs, semantic models, and LLM authoring, see
+[dsl-and-llms.md](dsl-and-llms.md) and [agent-authoring.md](agent-authoring.md).
 
 ## Program Shape
 

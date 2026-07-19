@@ -17,6 +17,7 @@ from .runtime import (
     FindBlock,
     ForBlock,
     IfBlock,
+    LeafStatement,
     Line,
     MatchBlock,
     NamedRequest,
@@ -38,6 +39,7 @@ from .runtime import (
     _optional_item_type,
     _parse_exists_statement,
     _parse_find_statement,
+    _parse_leaf_statement,
     _parse_sum_projection,
     _resolve_type_alias,
     _action_mismatch_message,
@@ -69,6 +71,7 @@ class Diagnostic:
     column: int = 1
     length: int = 1
     category: str | None = None
+    subcode: str | None = None
     expected: str | None = None
     actual: str | None = None
     help: str | None = None
@@ -89,6 +92,8 @@ class Diagnostic:
             "category": self.category or _diagnostic_category(self.code, self.message),
             "message": self.message,
         }
+        if self.subcode is not None:
+            payload["subcode"] = self.subcode
         if self.expected is not None:
             payload["expected"] = self.expected
         if self.actual is not None:
@@ -318,7 +323,7 @@ class Checker:
             elif isinstance(line, Line):
                 self._check_placeholders(line, set())
         for line in request.whens:
-            self._check_placeholders(line, set())
+            self._check_placeholders(line.line, set())
         for line in request.thens:
             self._check_placeholders(line, set())
 
@@ -517,6 +522,8 @@ class Checker:
                 self._check_variant_placeholders(line, set())
             elif isinstance(line, RequestCall):
                 self._check_placeholders(line.line, set())
+            elif isinstance(line, LeafStatement):
+                self._check_placeholders(line.line, set())
             elif isinstance(line, Line):
                 self._check_placeholders(line, set())
 
@@ -545,7 +552,7 @@ class Checker:
             if isinstance(line, RequestCall):
                 self._check_placeholders(line.line, example_headers)
             else:
-                self._check_placeholders(line, example_headers)
+                self._check_placeholders(line.line, example_headers)
         for line in scenario.thens:
             self._check_placeholders(line, example_headers)
 
@@ -920,12 +927,18 @@ class Checker:
 
     def _check_command_or_action(
         self,
-        line: Line,
+        statement: LeafStatement | Line,
         scope: Scope,
         *,
         allow_let: bool,
         expected_return: str | None = None,
     ) -> None:
+        leaf = (
+            statement
+            if isinstance(statement, LeafStatement)
+            else _parse_leaf_statement(statement, statement.filename or "<source>")
+        )
+        line = leaf.line
         try:
             tokens = _tokens(line.text, line.filename or "<source>", line.number)
         except GwtError as exc:
@@ -934,8 +947,7 @@ class Checker:
         if not tokens:
             return
 
-        command = tokens[0]
-        if command == "RETURN":
+        if leaf.kind == "return":
             if not allow_let:
                 self._add_line(line, "RETURN is only allowed inside behavior", "GWT007")
                 return
@@ -948,7 +960,7 @@ class Checker:
                 self._add_line(line, f"RETURN expected {expected_return}, got {actual_type}", "GWT016")
             return
 
-        if command == "PASS":
+        if leaf.kind == "pass":
             if not allow_let:
                 self._add_line(line, "PASS is only allowed inside behavior", "GWT007")
                 return
@@ -956,14 +968,14 @@ class Checker:
                 self._add_line(line, "PASS does not take arguments", "GWT006")
             return
 
-        if command == "LET":
+        if leaf.kind == "let":
             if not allow_let:
                 self._add_line(line, "LET is only allowed inside behavior", "GWT007")
                 return
             self._check_let(line, scope)
             return
 
-        if command == "REQUIRE":
+        if leaf.kind == "require":
             condition = line.text.removeprefix("REQUIRE").strip()
             if not condition:
                 self._add_line(line, "REQUIRE requires a condition", "GWT010")
@@ -974,7 +986,7 @@ class Checker:
             )
             return
 
-        if _is_builtin_statement(tokens, line.text):
+        if leaf.kind == "builtin":
             self._check_builtin(tokens, line, scope)
             return
 
@@ -1517,14 +1529,89 @@ class Checker:
         column: int = 1,
         length: int = 1,
         severity: str = "error",
+        subcode: str | None = None,
+        expected: str | None = None,
+        actual: str | None = None,
+        help: str | None = None,
     ) -> None:
-        self.diagnostics.append(Diagnostic(filename, line, message, code, severity, column, max(1, length)))
+        inferred_subcode, inferred_expected, inferred_actual, inferred_help = _diagnostic_metadata(
+            code,
+            message,
+        )
+        self.diagnostics.append(
+            Diagnostic(
+                filename=filename,
+                line=line,
+                message=message,
+                code=code,
+                severity=severity,
+                column=column,
+                length=max(1, length),
+                subcode=subcode or inferred_subcode,
+                expected=expected or inferred_expected,
+                actual=actual or inferred_actual,
+                help=help or inferred_help,
+            )
+        )
 
     def _add_line(self, line: Line, message: str, code: str = "GWT000") -> None:
         self._add(line.filename, line.number, message, code, line.column, line.length)
 
     def _add_line_warning(self, line: Line, message: str, code: str) -> None:
         self._add(line.filename, line.number, message, code, line.column, line.length, severity="warning")
+
+
+def _diagnostic_metadata(
+    code: str,
+    message: str,
+) -> tuple[str | None, str | None, str | None, str | None]:
+    """Return stable, agent-oriented repair metadata without changing base codes."""
+
+    subcode: str | None = None
+    expected: str | None = None
+    actual: str | None = None
+    help: str | None = None
+
+    mismatch = re.search(r"\bexpected (.+?), got (.+)$", message)
+    if mismatch is not None:
+        expected = mismatch.group(1)
+        actual = mismatch.group(2)
+        subcode = "type.mismatch"
+        help = "change the expression or contract so the expected and actual types agree"
+
+    if code == "GWT001":
+        subcode = "call.no-match"
+        suggestion = re.search(r"did you mean (.+?)\?$", message)
+        if suggestion is not None:
+            expected = suggestion.group(1)
+            help = f"use `{suggestion.group(1)}` or declare a matching behavior"
+    elif code == "GWT002":
+        subcode = "behavior.duplicate-signature"
+    elif code == "GWT006":
+        subcode = "statement.invalid-shape"
+        shape = re.match(r"expected '(.+)'$", message)
+        if shape is not None:
+            expected = shape.group(1)
+            help = f"write the statement as `{shape.group(1)}`"
+    elif code == "GWT014":
+        if message.startswith("unknown ") or " unknown " in message:
+            subcode = "type-or-shape.unknown"
+            help = "declare the referenced domain type or use a supported type"
+        elif "duplicate" in message or "already defined" in message:
+            subcode = "definition.duplicate"
+        elif "missing field" in message:
+            subcode = "record.missing-field"
+        elif "overlaps" in message:
+            subcode = "contract.overlapping-path"
+        elif "requires ELSE" in message:
+            subcode = "match.non-exhaustive"
+    elif code == "GWT016" and subcode is None:
+        subcode = "type.mismatch"
+    elif code == "GWT018":
+        subcode = "behavior.implicit-parameter"
+        help = "wrap every behavior parameter in angle brackets, for example `<value>`"
+
+    return subcode, expected, actual, help
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:
@@ -1566,6 +1653,10 @@ def _contract_path_overlap(left: str, right: str) -> tuple[str, str] | None:
 
 def _body_has_return(body: list[Any]) -> bool:
     for statement in body:
+        if isinstance(statement, LeafStatement):
+            if statement.kind == "return":
+                return True
+            continue
         if isinstance(statement, Line):
             try:
                 tokens = _tokens(statement.text, statement.filename or "<source>", statement.number)

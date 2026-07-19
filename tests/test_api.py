@@ -525,6 +525,12 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(payload["requests"][0]["name"], "checkout cart")
         self.assertEqual(payload["counts"]["requests"], 1)
         self.assertEqual(payload["counts"]["typeAliases"], 0)
+        self.assertEqual(payload["programHashScope"], "entry-source")
+        self.assertEqual(
+            payload["programIdentity"]["algorithm"],
+            "gwt-program-closure-sha256-v1",
+        )
+        self.assertEqual(len(payload["programIdentity"]["modules"]), 1)
 
     def test_inspect_file_reports_request_contracts(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -564,6 +570,26 @@ class PublicApiTests(unittest.TestCase):
         self.assertEqual(payload["typeAliases"][0]["name"], "DecisionStatus")
         self.assertEqual(payload["typeAliases"][0]["type"], '"new" | "approved"')
         self.assertEqual(payload["counts"]["typeAliases"], 1)
+        self.assertIsNone(payload["programIdentity"])
+
+    def test_inspect_file_identity_covers_imported_domain_vocabulary(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            module = root / "types.gwt"
+            program = root / "rules.gwt"
+            module.write_text("RECORD Decision\n  status: text\n")
+            program.write_text('USE "./types.gwt"\n')
+
+            before = inspect_file(program).as_payload()
+            module.write_text("RECORD Decision\n  status: text\n  reason: text\n")
+            after = inspect_file(program).as_payload()
+
+        self.assertEqual(before["programHash"], after["programHash"])
+        self.assertNotEqual(
+            before["programIdentity"]["digest"],
+            after["programIdentity"]["digest"],
+        )
+        self.assertEqual(len(after["programIdentity"]["modules"]), 2)
 
     def test_inspect_file_accepts_public_import_policy_options(self):
         with tempfile.TemporaryDirectory() as temp_dir:

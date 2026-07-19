@@ -37,6 +37,11 @@ is omitted when the `omit-values` profile is used.
 
 Schemas are additive contracts. New optional fields may be added as tooling
 evolves; incompatible shape changes should bump the payload `schemaVersion`.
+Diagnostics may include a repair-specific `subcode`, `expected`, `actual`, and
+`help` alongside the stable base `code`. File-backed inspection may include a
+portable `programIdentity` for the complete import closure; `programHash`
+continues to identify only the entry source and is labeled with
+`programHashScope`.
 Distribution candidates also install the Execution Case, Case Corpus,
 Comparison, and Serve Qualification v1 schemas under `share/gwtlang/schemas`
 in the Python environment so offline consumers do not require a repository

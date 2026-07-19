@@ -95,6 +95,13 @@ project rename.
 | Debugger and OTLP traces | Remain developer/operational surfaces, not canonical review evidence |
 | Stored cases after branding | Preserve v1 identifiers; do not rewrite evidence for presentation branding |
 
+The version-3 diagnostic and inspection schemas receive additive optional
+fields in this candidate. Diagnostics can report a repair-specific `subcode`
+plus structured `expected`, `actual`, and `help` values. File-backed inspection
+can report a portable `programIdentity` for the complete dependency closure;
+the existing `programHash` remains the entry-source hash and is labeled by
+`programHashScope`. Source-only inspection reports a null closure identity.
+
 The experimental `explain` command changes from vendor-specific narrative
 heuristics to domain-neutral factual output. Consumers that parsed the old
 plain text must migrate to the versioned JSON artifact and should never depend

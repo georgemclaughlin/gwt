@@ -24,6 +24,7 @@
     "path": { "type": "string" },
     "category": { "type": "string" },
     "message": { "type": "string" },
+    "subcode": { "type": "string" },
     "expected": { "type": "string" },
     "actual": { "type": "string" },
     "help": { "type": "string" }

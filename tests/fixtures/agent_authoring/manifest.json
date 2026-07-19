@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "author-explicit-return-window",
+      "kind": "author",
+      "task": "Define a return-review request. Items returned within 30 days are approved; later returns require review. Preserve an explicit initial state and add boundary scenarios for days 30 and 31.",
+      "source": "author_return_window.gwt",
+      "minimumScenarioCount": 2
+    },
+    {
+      "id": "repair-domain-behavior-typo",
+      "kind": "repair",
+      "task": "Repair the misspelled domain behavior call without changing the intended approval result.",
+      "brokenSource": "repair_typo_bad.gwt",
+      "repairedSource": "repair_typo_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["call.no-match"]
+    },
+    {
+      "id": "repair-explicit-missing-case",
+      "kind": "repair",
+      "task": "Make the item lookup's missing case explicit and preserve the successful match behavior.",
+      "brokenSource": "repair_missing_else_bad.gwt",
+      "repairedSource": "repair_missing_else_fixed.gwt",
+      "requiredDiagnosticSubcodes": ["parse.missing-else"]
+    },
+    {
+      "id": "clarify-undefined-risk-policy",
+      "kind": "clarify",
+      "task": "Approve high-risk vendors when appropriate.",
+      "requiredClarifications": [
+        "What facts define high risk?",
+        "Which high-risk cases, if any, are approvable?",
+        "What precedence applies when approval and rejection conditions overlap?"
+      ]
+    }
+  ]
+}
