@@ -61,10 +61,25 @@ care about the domain outcome.
 
 ## GWT Programs Define Domain DSLs
 
-GWT is a small executable behavior language, but its core keywords are not the
-whole DSL seen by an author or an agent. Each checked program defines a narrower
-domain language through its `TYPE` and `RECORD` vocabulary, named `REQUEST`
-boundaries, behavior signatures, and executable scenarios.
+GWT is an executable domain-language workbench. Its fixed grammar is a
+construction substrate rather than the final domain language seen by an author
+or an agent. Each checked program defines a narrower domain DSL through its
+`TYPE` and `RECORD` vocabulary, named `REQUEST` boundaries, behavior
+signatures, and executable scenarios.
+
+In Domain-Driven Design terms, those elements capture the executable slice of
+a team's ubiquitous language:
+
+- types and records name domain nouns and explicit states;
+- behavior signatures name domain verbs in the team's normal vocabulary;
+- request and output contracts identify supported system boundaries;
+- scenarios establish the meaning, boundaries, and precedence of those words.
+
+This is not a grammar-builder claim. Programs do not invent new parsing rules,
+and GWT should not grow syntax merely to make every domain phrase legal. It is
+also not a claim that all domain knowledge is executable: motivations,
+heuristics, context, and unresolved product decisions can remain outside the
+runtime program.
 
 For example, `WHEN reserve <order_item> from <inventory> into <fulfillment>` is
 more than a reusable function. It is a sentence in the order-fulfillment DSL.

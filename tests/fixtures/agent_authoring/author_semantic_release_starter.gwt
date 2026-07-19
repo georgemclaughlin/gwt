@@ -7,3 +7,15 @@ RECORD CommitFacts
 
 RECORD ReleaseDecision
   level: "new" | "major" | "minor" | "patch" | "none"
+
+REQUEST analyze commit
+  GIVEN commit is CommitFacts
+
+  GIVEN release is ReleaseDecision
+    level: "new"
+
+  WHEN analyze commit into release
+
+  OUTPUT release is ReleaseDecision
+
+  THEN release.level != "new"

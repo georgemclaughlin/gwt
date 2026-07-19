@@ -1,0 +1,31 @@
+{
+  "caseCount": 3,
+  "cliVersion": "codex-cli 0.144.6",
+  "completedCaseCount": 3,
+  "contextVariants": [
+    "guide"
+  ],
+  "durationSeconds": 19.414,
+  "failedCaseCount": 0,
+  "failures": [],
+  "finishedAt": "2026-07-19T03:04:00.221909+00:00",
+  "jobs": 3,
+  "mode": "repair",
+  "provider": "openai-codex-cli",
+  "reasoningEffort": "high",
+  "repairResponses": "/tmp/gwt-agent-matrix-20260718-v2/sol-guide/responses.jsonl",
+  "requestedModel": "gpt-5.6-sol",
+  "schemaVersion": 1,
+  "startedAt": "2026-07-19T03:03:40.807488+00:00",
+  "status": "complete",
+  "successfulCaseCount": 3,
+  "taskCaseIds": [
+    "author-order-fulfillment-boundaries",
+    "repair-optional-presence-guard",
+    "repair-unknown-domain-type"
+  ],
+  "taskDigest": "sha256:880ccb7f4184dcaf7384f30a213ca3b78e92eb8933d55bdd878e22c2c512fcde",
+  "taskFile": "/tmp/gwt-agent-matrix-20260718-v2/tasks/guide.jsonl",
+  "timeoutSeconds": 600,
+  "totalResponseCount": 18
+}

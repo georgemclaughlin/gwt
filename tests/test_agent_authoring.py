@@ -12,12 +12,14 @@ from gwtlang.agent_evaluation import (
     score_evaluation,
 )
 from gwtlang.formatter import format_text
+from gwtlang.inspection import inspect_source
 from gwtlang.runtime import run_source
 from gwtlang.service import analyze_source
 
 
 FIXTURE_ROOT = Path("tests/fixtures/agent_authoring")
 MANIFEST = FIXTURE_ROOT / "manifest.json"
+BASELINE_ROOT = Path("evaluations/agent-authoring/2026-07-18")
 
 
 class AgentAuthoringCorpusTests(unittest.TestCase):
@@ -54,6 +56,26 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                     len(result.scenarios),
                     case["minimumScenarioCount"],
                 )
+
+    def test_author_starters_define_the_public_probe_vocabulary(self):
+        for case in self._cases("author"):
+            with self.subTest(case=case["id"]):
+                starter_path = FIXTURE_ROOT / case["starterSource"]
+                payload = inspect_source(
+                    starter_path.read_text(),
+                    filename=str(starter_path),
+                ).as_payload()
+                requests = {
+                    request["name"]: request
+                    for request in payload["requests"]
+                }
+                for probe in case["probes"]:
+                    self.assertIn(probe["request"], requests)
+                    request = requests[probe["request"]]
+                    input_paths = {binding["path"] for binding in request["inputs"]}
+                    output_paths = {binding["path"] for binding in request["outputs"]}
+                    self.assertTrue(set(probe["input"]).issubset(input_paths))
+                    self.assertTrue(set(probe["expectedResult"]).issubset(output_paths))
 
     def test_repair_cases_expose_expected_subcodes_and_validate_after_repair(self):
         for case in self._cases("repair"):
@@ -102,13 +124,16 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                     for record in prepared
                     if record["caseId"] == "author-explicit-return-window"
                 )
-                self.assertNotIn("REQUEST review return", author["context"]["source"])
+                self.assertNotIn("SCENARIO", author["context"]["source"])
                 if variant == "source-only":
                     self.assertNotIn("inspection", author["context"])
                 else:
                     self.assertIn("inspection", author["context"])
                 if variant == "guide":
                     self.assertIn("Generate And Repair", author["context"]["guide"])
+                    self.assertIn("PROGRAM hello", author["context"]["guide"])
+                    self.assertIn("PROGRAM language tour", author["context"]["guide"])
+                    self.assertNotIn("REQUEST review return", author["context"]["guide"])
 
     def test_gold_responses_score_full_semantic_and_clarification_success(self):
         attempts = []
@@ -149,6 +174,8 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
         self.assertEqual(result["metrics"]["finalValidationRate"], 1.0)
         self.assertEqual(result["metrics"]["scenarioSemanticSuccessRate"], 1.0)
         self.assertEqual(result["metrics"]["correctClarificationRate"], 1.0)
+        self.assertEqual(result["metrics"]["repairAttemptedCaseCount"], 0)
+        self.assertIsNone(result["metrics"]["repairRecoveryRate"])
         self.assertEqual(result["metrics"]["medianRepairIterations"], 0.0)
 
     def test_scoring_records_a_failed_first_attempt_and_successful_repair(self):
@@ -179,6 +206,8 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
         self.assertIn("call.no-match", detail["attempts"][0]["diagnosticSubcodes"])
         self.assertTrue(detail["attempts"][1]["validationOk"])
         self.assertTrue(detail["finalSemanticOk"])
+        self.assertEqual(result["metrics"]["repairAttemptedCaseCount"], 1)
+        self.assertEqual(result["metrics"]["repairRecoveryRate"], 1.0)
 
     def test_scoring_rejects_non_contiguous_attempt_numbers(self):
         with self.assertRaisesRegex(ValueError, "contiguous from 1"):
@@ -234,6 +263,19 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                 0,
             )
             self.assertEqual(json.loads(report.read_text())["attemptedCaseCount"], 1)
+
+    def test_checked_in_live_baseline_reports_are_reproducible(self):
+        for model in ("luna", "sol"):
+            for variant in ("source-only", "inspect", "guide"):
+                with self.subTest(model=model, variant=variant):
+                    responses = read_jsonl(
+                        BASELINE_ROOT / f"{model}.{variant}.responses.jsonl"
+                    )
+                    expected = json.loads(
+                        (BASELINE_ROOT / f"{model}.{variant}.report.json").read_text()
+                    )
+
+                    self.assertEqual(score_evaluation(MANIFEST, responses), expected)
 
     def _cases(self, kind: str):
         return [case for case in self.manifest["cases"] if case["kind"] == kind]

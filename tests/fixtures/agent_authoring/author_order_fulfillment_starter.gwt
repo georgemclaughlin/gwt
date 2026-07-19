@@ -8,3 +8,17 @@ RECORD FulfillmentDecision
   status: "new" | "fulfilled" | "partial" | "backordered"
   reserved_units: integer
   backordered_units: integer
+
+REQUEST fulfill order
+  GIVEN order is FulfillmentRequest
+
+  GIVEN fulfillment is FulfillmentDecision
+    status: "new"
+    reserved_units: 0
+    backordered_units: 0
+
+  WHEN fulfill order into fulfillment
+
+  OUTPUT fulfillment is FulfillmentDecision
+
+  THEN fulfillment.status != "new"

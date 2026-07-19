@@ -26,9 +26,11 @@ sentences such as `require document ...`, `score risk signals ...`, and
 `classify decision` constrain an author far more effectively than the generic
 ability to `set` or `add` values.
 
-This is why GWT should be described precisely: it is an executable behavior
-language for defining and running small domain DSLs. It is not automatically a
-domain-specific model merely because its syntax reads like English.
+This is why GWT should be described precisely: it is an executable
+domain-language workbench for defining and running small domain DSLs. It turns
+the executable slice of a team's ubiquitous language into a checked program;
+it does not generate custom grammars, and a program is not automatically a good
+domain model merely because its syntax reads like English.
 
 ## Two Phases Of Work
 

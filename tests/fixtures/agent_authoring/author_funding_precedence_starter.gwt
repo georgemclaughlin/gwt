@@ -8,3 +8,17 @@ RECORD FundingFacts
 RECORD FundingDecision
   outcome: "new" | "funded" | "not_funded"
   reason: "new" | "unfunded_cohort" | "previously_funded" | "eligible" | "ineligible_institution"
+
+REQUEST assess funding
+  GIVEN facts is FundingFacts
+
+  GIVEN decision is FundingDecision
+    outcome: "new"
+    reason: "new"
+
+  WHEN assess facts into decision
+
+  OUTPUT decision is FundingDecision
+
+  THEN decision.outcome != "new"
+  AND decision.reason != "new"

@@ -1,0 +1,580 @@
+{
+  "attemptedCaseCount": 15,
+  "caseCount": 15,
+  "cases": [
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "author-explicit-return-window",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "author"
+    },
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "author-incident-triage-priority",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "author"
+    },
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "author-order-fulfillment-boundaries",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "author"
+    },
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "author-funding-eligibility-precedence",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "author"
+    },
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "author-semantic-release-precedence",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "author"
+    },
+    {
+      "attemptCount": 2,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": true,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": true
+        }
+      ],
+      "caseId": "repair-domain-behavior-typo",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": true,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": true
+        }
+      ],
+      "caseId": "repair-explicit-missing-case",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 2,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": true,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": true
+        }
+      ],
+      "caseId": "repair-behavior-argument-type",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": true,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": true
+        }
+      ],
+      "caseId": "repair-optional-presence-guard",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 3,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 3,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [
+            "GWT900"
+          ],
+          "diagnosticSubcodes": [
+            "parse.unknown-top-level-form"
+          ],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "repair-unknown-domain-type",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 2,
+      "attempts": [
+        {
+          "action": "code",
+          "attempt": 1,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": false
+        },
+        {
+          "action": "code",
+          "attempt": 2,
+          "checkOk": true,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": true,
+          "parseOk": true,
+          "scenariosOk": true,
+          "semanticOk": true,
+          "validationOk": true
+        }
+      ],
+      "caseId": "repair-builtin-statement-shape",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "repair"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "clarify",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "clarify-undefined-risk-policy",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "clarify"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "clarify",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": true,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "clarify-missing-null-domain-meaning",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "clarify"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "clarify",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": true,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "clarify-overlapping-decision-precedence",
+      "finalSemanticOk": true,
+      "finalValidationOk": true,
+      "kind": "clarify"
+    },
+    {
+      "attemptCount": 1,
+      "attempts": [
+        {
+          "action": "clarify",
+          "attempt": 1,
+          "checkOk": false,
+          "clarificationOk": false,
+          "diagnosticCodes": [],
+          "diagnosticSubcodes": [],
+          "formatOk": false,
+          "parseOk": false,
+          "scenariosOk": false,
+          "semanticOk": false,
+          "validationOk": false
+        }
+      ],
+      "caseId": "clarify-decimal-rounding-policy",
+      "finalSemanticOk": false,
+      "finalValidationOk": false,
+      "kind": "clarify"
+    }
+  ],
+  "metrics": {
+    "correctClarificationRate": 0.5,
+    "finalValidationRate": 0.45454545454545453,
+    "firstPassCheckRate": 0.45454545454545453,
+    "firstPassParseRate": 0.45454545454545453,
+    "medianRepairIterations": 1.0,
+    "repairAttemptedCaseCount": 9,
+    "repairRecoveryRate": 0.3333333333333333,
+    "scenarioSemanticSuccessRate": 0.45454545454545453
+  },
+  "schemaVersion": 1
+}

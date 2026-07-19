@@ -7,6 +7,14 @@ GWT is a small experimental programming language built around executable
 examples, and typed request/response programs where the spec is also the
 runtime artifact.
 
+GWT is also an executable domain-language workbench. Its fixed core grammar
+lets a team turn the executable part of its ubiquitous language into a checked
+program: records and types name domain concepts, behavior signatures name
+domain operations, requests define public boundaries, and scenarios establish
+meaning through examples. A GWT program is therefore a small domain DSL, even
+though GWT does not generate a custom parser or claim to encode every part of
+the broader domain language.
+
 GWT is not a policy decision point like OPA, not a SQL-like query language, and
 not a general-purpose replacement for Python, JavaScript, or Go. The goal is
 narrower: make behavior contracts readable enough for stakeholders and precise
@@ -289,6 +297,7 @@ For a quick public review, start with the current user-facing paths:
 | [`docs/dsl-and-llms.md`](docs/dsl-and-llms.md) | How GWT programs define constrained domain DSLs and serve as durable LLM context |
 | [`docs/agent-authoring.md`](docs/agent-authoring.md) | Canonical inspect, generate, repair, format, and validate workflow for agents |
 | [`docs/agent-evaluation.md`](docs/agent-evaluation.md) | Provider-neutral JSONL protocol and behavioral metrics for evaluating agent authoring and repair |
+| [`evaluations/agent-authoring/2026-07-18`](evaluations/agent-authoring/2026-07-18/README.md) | First captured Luna/Sol context-and-repair matrix, raw candidates, and deterministic reports |
 | [`docs/adoption-modes.md`](docs/adoption-modes.md) | Practical paths for host-side executable specs and embedded decision runners |
 | [`docs/execution-cases.md`](docs/execution-cases.md) | Execution Case, Case Corpus, comparison, and workbench contracts and trust boundaries |
 | [`docs/host-language-clients.md`](docs/host-language-clients.md) | Integration model for Python, .NET, Java, TypeScript, and other host-language clients |

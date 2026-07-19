@@ -8,3 +8,17 @@ RECORD ReturnRequest
 RECORD ReturnDecision
   status: ReturnStatus
   reason: "new" | "within_window" | "outside_window"
+
+REQUEST review return
+  GIVEN item is ReturnRequest
+
+  GIVEN decision is ReturnDecision
+    status: "new"
+    reason: "new"
+
+  WHEN review item into decision
+
+  OUTPUT decision is ReturnDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"

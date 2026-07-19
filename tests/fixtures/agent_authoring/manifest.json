@@ -4,7 +4,7 @@
     {
       "id": "author-explicit-return-window",
       "kind": "author",
-      "task": "Define a return-review request. Items returned within 30 days are approved; later returns require review. Preserve an explicit initial state and add boundary scenarios for days 30 and 31.",
+      "task": "Complete the existing return-review request. Items returned within 30 days are approved; later returns require review. Preserve its public vocabulary and explicit initial state, then add boundary scenarios for days 30 and 31.",
       "starterSource": "author_return_window_starter.gwt",
       "source": "author_return_window.gwt",
       "minimumScenarioCount": 2,
@@ -24,7 +24,7 @@
     {
       "id": "author-incident-triage-priority",
       "kind": "author",
-      "task": "Implement incident triage. A customer outage or critical severity is urgent, degraded service without an outage needs review, and normal service is routine. Outage precedence must be executable and scenario-covered.",
+      "task": "Complete the existing incident-triage request. A customer outage or critical severity is urgent, degraded service without an outage needs review, and normal service is routine. Preserve its public vocabulary; outage precedence must be executable and scenario-covered.",
       "starterSource": "author_incident_triage_starter.gwt",
       "source": "author_incident_triage.gwt",
       "minimumScenarioCount": 3,
@@ -49,7 +49,7 @@
     {
       "id": "author-order-fulfillment-boundaries",
       "kind": "author",
-      "task": "Implement the fulfillment request. Reserve every requested unit when stock is sufficient, produce explicit partial counts when some stock exists, and backorder every unit when none exists. Add scenarios for all three states.",
+      "task": "Complete the existing fulfillment request. Reserve every requested unit when stock is sufficient, produce explicit partial counts when some stock exists, and backorder every unit when none exists. Preserve its public vocabulary and add scenarios for all three states.",
       "starterSource": "author_order_fulfillment_starter.gwt",
       "source": "author_order_fulfillment.gwt",
       "minimumScenarioCount": 3,
@@ -74,7 +74,7 @@
     {
       "id": "author-funding-eligibility-precedence",
       "kind": "author",
-      "task": "Implement the funding decision with explicit precedence: an unfunded cohort wins first, previous funding wins next, then institution eligibility decides funding. Add scenarios that prove overlapping facts select the earlier reason.",
+      "task": "Complete the existing funding request with explicit precedence: an unfunded cohort wins first, previous funding wins next, then institution eligibility decides funding. Preserve its public vocabulary and add scenarios that prove overlapping facts select the earlier reason.",
       "starterSource": "author_funding_precedence_starter.gwt",
       "source": "author_funding_precedence.gwt",
       "minimumScenarioCount": 3,
@@ -99,7 +99,7 @@
     {
       "id": "author-semantic-release-precedence",
       "kind": "author",
-      "task": "Implement semantic release classification. Breaking changes are major even when also features, features are minor even when also fixes, fixes are patch, and irrelevant commits produce no release. Prove precedence with scenarios.",
+      "task": "Complete the existing semantic-release request. Breaking changes are major even when also features, features are minor even when also fixes, fixes are patch, and irrelevant commits produce no release. Preserve its public vocabulary and prove precedence with scenarios.",
       "starterSource": "author_semantic_release_starter.gwt",
       "source": "author_semantic_release.gwt",
       "minimumScenarioCount": 4,
@@ -138,7 +138,7 @@
     {
       "id": "repair-explicit-missing-case",
       "kind": "repair",
-      "task": "Make the item lookup's missing case explicit and preserve the successful match behavior.",
+      "task": "Make the item lookup's missing case explicit, preserve the successful match behavior, and add an executable scenario for the missing case.",
       "brokenSource": "repair_missing_else_bad.gwt",
       "repairedSource": "repair_missing_else_fixed.gwt",
       "requiredDiagnosticSubcodes": ["parse.missing-else"],
@@ -190,8 +190,8 @@
         "What precedence applies when approval and rejection conditions overlap?"
       ],
       "requiredConcepts": [
-        ["define high risk", "high-risk threshold", "high risk threshold"],
-        ["approvable", "can be approved", "approval exceptions"],
+        ["define high risk", "high-risk threshold", "high risk threshold", "risk factors", "risk score", "criteria classify", "makes a vendor"],
+        ["approvable", "can be approved", "approval exceptions", "approval criteria", "approval is appropriate", "approving a high-risk"],
         ["precedence", "overlap", "priority"]
       ]
     },
@@ -238,8 +238,8 @@
       "requiredConcepts": [
         ["round", "rounded"],
         ["scale", "decimal places"],
-        ["rounding mode", "half up", "half even"],
-        ["before tax", "tax order", "discounts applied"]
+        ["rounding mode", "rounding rule", "half up", "half even"],
+        ["before tax", "tax order", "discounts applied", "discount and tax", "tax be calculated", "tax calculated", "tax to the discounted"]
       ]
     }
   ]
