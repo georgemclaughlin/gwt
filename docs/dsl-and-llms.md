@@ -4,10 +4,11 @@ GWT treats an LLM as a replaceable collaborator around an executable domain
 language. It does not make an LLM, a prompt, or generated host code part of the
 runtime semantics.
 
-This model is consistent with the two roles described in Martin Fowler's
-[DSLs Enable Reliable Use of LLMs](https://martinfowler.com/articles/llm-and-dsls.html):
-an LLM can help discover a domain model, and after that model stabilizes it can
-serve as a natural-language interface to a constrained vocabulary.
+This model is consistent with the two roles described in Unmesh Joshi's
+[DSLs Enable Reliable Use of LLMs](https://martinfowler.com/articles/llm-and-dsls.html),
+published on Martin Fowler's site: an LLM can help discover a domain model, and
+after that model stabilizes it can serve as a natural-language interface to a
+constrained vocabulary.
 
 ## The Three Layers
 
