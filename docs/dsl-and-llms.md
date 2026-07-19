@@ -79,8 +79,9 @@ This has practical consequences:
 
 An agent needs more than an exit code. JSON diagnostics provide a stable base
 code, a repair-specific `subcode`, a source range, and—when known—structured
-`expected`, `actual`, and `help` values. Human-readable messages remain useful,
-but agents should branch on codes and fields rather than parse prose.
+`expected`, `actual`, `candidates`, and `help` values. Human-readable messages
+remain useful, but agents should branch on codes and fields rather than parse
+prose.
 
 `gwt inspect --json` supplies the current domain vocabulary. For file-backed
 programs it includes both the compatible entry-source `programHash` and a
@@ -95,11 +96,13 @@ runtime, debugger, symbols, tracing, and inspection surfaces share. Consumers
 should not independently rediscover whether raw text represents a builtin,
 behavior call, or control statement.
 
-The current migration begins with typed leaf-statement classification while
-retaining original source lines for exact diagnostics and evidence. Future
-internal refactoring can attach parsed operands and expressions to those nodes.
-This is an implementation boundary, not a reason to add syntax or expose a
-second JSON/YAML rule representation.
+Typed leaf statements retain the original source line, semantic kind, command,
+token stream, and common expression, binding, and target operands. The checker,
+runtime, and symbol index consume that shared parse result instead of
+re-tokenizing the same statement. More complex expressions and block forms can
+migrate incrementally behind the same boundary. This is an implementation
+boundary, not a reason to add syntax or expose a second JSON/YAML rule
+representation.
 
 ## Constraint Budget
 

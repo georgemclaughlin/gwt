@@ -1,0 +1,7 @@
+WHEN approve <decision>
+  set decision to "approved"
+
+SCENARIO approval changes the decision
+GIVEN decision is "new"
+WHEN approve decision
+THEN decision == "approved"

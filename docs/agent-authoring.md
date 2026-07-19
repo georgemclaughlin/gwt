@@ -46,7 +46,7 @@ Interpret diagnostics in this order:
 1. Use `code` for the stable diagnostic family.
 2. Use `subcode` for the repair-specific condition.
 3. Use the source `range` to constrain the edit.
-4. Use `expected`, `actual`, and `help` when present.
+4. Use `expected`, `actual`, `candidates`, and `help` when present.
 5. Re-run the complete loop; do not assume a syntactic repair preserved intent.
 
 `validate` checks semantics, canonical formatting, and executable scenarios.
@@ -97,6 +97,25 @@ Run its executable contract with:
 ```sh
 python -m unittest tests.test_agent_authoring
 ```
+
+Prepare blind, provider-neutral tasks and score an external model run with:
+
+```sh
+python -m gwtlang.agent_evaluation prepare \
+  tests/fixtures/agent_authoring/manifest.json \
+  --variant inspect --output /tmp/gwt-agent-tasks.jsonl
+
+# Send each task through the model harness of your choice, preserving every
+# attempt in the response JSONL described in agent-evaluation.md.
+
+python -m gwtlang.agent_evaluation score \
+  tests/fixtures/agent_authoring/manifest.json \
+  /tmp/gwt-agent-responses.jsonl --output /tmp/gwt-agent-report.json
+```
+
+See [agent-evaluation.md](agent-evaluation.md) for context variants, the JSONL
+response contract, metric denominators, repair-loop guidance, and interpretation
+limits.
 
 When evaluating a model, preserve the task text, model/version, supplied
 context, raw candidate, repair iterations, and final result outside the runtime

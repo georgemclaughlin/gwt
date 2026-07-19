@@ -1,0 +1,71 @@
+PROGRAM funding eligibility slice
+
+RECORD FundingFacts
+  cohort_funded: boolean
+  previously_funded: boolean
+  institution_eligible: boolean
+
+RECORD FundingDecision
+  outcome: "new" | "funded" | "not_funded"
+  reason: "new" | "unfunded_cohort" | "previously_funded" | "eligible" | "ineligible_institution"
+
+REQUEST assess funding
+  GIVEN facts is FundingFacts
+
+  GIVEN decision is FundingDecision
+    outcome: "new"
+    reason: "new"
+
+  WHEN assess facts into decision
+
+  OUTPUT decision is FundingDecision
+
+  THEN decision.outcome != "new"
+  AND decision.reason != "new"
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is FundingFacts
+  AND decision is FundingDecision
+  DECIDE
+    WHEN facts.cohort_funded == false
+      set decision.outcome to "not_funded"
+      set decision.reason to "unfunded_cohort"
+    WHEN facts.previously_funded
+      set decision.outcome to "not_funded"
+      set decision.reason to "previously_funded"
+    WHEN facts.institution_eligible
+      set decision.outcome to "funded"
+      set decision.reason to "eligible"
+    ELSE
+      set decision.outcome to "not_funded"
+      set decision.reason to "ineligible_institution"
+
+SCENARIO an unfunded cohort takes precedence
+GIVEN facts is FundingFacts
+  cohort_funded: false
+  previously_funded: true
+  institution_eligible: true
+
+REQUEST assess funding
+
+THEN decision.reason == "unfunded_cohort"
+
+SCENARIO previous funding is checked before institution eligibility
+GIVEN facts is FundingFacts
+  cohort_funded: true
+  previously_funded: true
+  institution_eligible: true
+
+REQUEST assess funding
+
+THEN decision.reason == "previously_funded"
+
+SCENARIO a new eligible applicant is funded
+GIVEN facts is FundingFacts
+  cohort_funded: true
+  previously_funded: false
+  institution_eligible: true
+
+REQUEST assess funding
+
+THEN decision.outcome == "funded"

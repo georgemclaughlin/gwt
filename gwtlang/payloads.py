@@ -40,6 +40,7 @@ class DiagnosticPayload(SourceRangePayload, total=False):
     expected: str
     actual: str
     help: str
+    candidates: list[str]
 
 
 class ScenarioExecutionPayload(TypedDict):

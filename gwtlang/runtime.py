@@ -118,6 +118,10 @@ class LeafStatement:
     kind: LeafStatementKind
     command: str
     line: Line
+    tokens: tuple[str, ...] = ()
+    expression: str | None = None
+    target: str | None = None
+    binding: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1265,14 +1269,14 @@ class Runtime:
         self, statement: LeafStatement, env: dict[str, Any], *, allow_let: bool = False
     ) -> BehaviorReturn | None:
         line = statement.line
-        tokens = _tokens(line.text, "<source>", line.number)
+        tokens = statement.tokens
         if not tokens:
             return
 
         if statement.kind == "return":
             if not allow_let:
                 raise GwtError(f"line {line.number}: RETURN is only allowed inside behavior")
-            expression = line.text[len("RETURN") :].strip()
+            expression = statement.expression or ""
             if not expression:
                 raise GwtError(f"line {line.number}: RETURN requires a value")
             return BehaviorReturn(self._eval_expression_or_returning_action(expression, line, env))
@@ -1285,23 +1289,27 @@ class Runtime:
         if statement.kind == "let":
             if not allow_let:
                 raise GwtError(f"line {line.number}: LET is only allowed inside behavior")
-            self._run_let(line, env)
+            self._run_let(statement, env)
             return
         if statement.kind == "require":
-            condition = line.text.removeprefix("REQUIRE ").strip()
+            condition = statement.expression or ""
             if not self._evaluate_condition(condition, env, line):
                 raise GwtError(f"line {line.number}: requirement failed: {condition}")
             return
         if statement.kind == "builtin":
-            self._run_builtin(tokens, line, env)
+            self._run_builtin(statement, env)
             return
 
-        self._call_action(tokens, line, env)
+        self._call_action(list(tokens), line, env)
         return None
 
-    def _run_let(self, line: Line, env: dict[str, Any]) -> None:
-        binding = line.text.removeprefix("LET ").strip()
-        name, expression = _split_required(binding, " be ", line.number)
+    def _run_let(self, statement: LeafStatement, env: dict[str, Any]) -> None:
+        line = statement.line
+        if statement.binding is None or statement.expression is None:
+            binding = line.text.removeprefix("LET ").strip()
+            name, expression = _split_required(binding, " be ", line.number)
+        else:
+            name, expression = statement.binding, statement.expression
         name = name.strip()
         if not _is_local_name(name):
             raise GwtError(f"line {line.number}: LET requires a simple local name")
@@ -1309,12 +1317,14 @@ class Runtime:
             raise GwtError(f"line {line.number}: LET cannot overwrite an existing name")
         env[name] = self._eval_expression_or_returning_action(expression.strip(), line, env)
 
-    def _run_builtin(self, tokens: list[str], line: Line, env: dict[str, Any]) -> None:
-        if tokens[0] == "set":
+    def _run_builtin(self, statement: LeafStatement, env: dict[str, Any]) -> None:
+        tokens = statement.tokens
+        line = statement.line
+        if statement.command == "set":
             if len(tokens) < 4 or tokens[2] != "to":
                 raise GwtError(f"line {line.number}: expected 'set path to value'")
             self._set_path(tokens[1], self._eval_expression(_after_keyword(line.text, " to "), env), env, line)
-        elif tokens[0] == "add":
+        elif statement.command == "add":
             if len(tokens) < 4 or "to" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'add value to path'")
             value_text, path = _split_required(line.text.removeprefix("add ").strip(), " to ", line.number)
@@ -1328,7 +1338,7 @@ class Runtime:
                 )
                 raise GwtError(f"line {line.number}: cannot add {_value_type_name(value)} to {current_type}") from exc
             self._set_path(path, new_value, env, line)
-        elif tokens[0] == "subtract":
+        elif statement.command == "subtract":
             if len(tokens) < 4 or "from" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'subtract value from path'")
             value_text, path = _split_required(
@@ -1346,7 +1356,7 @@ class Runtime:
                     f"line {line.number}: cannot subtract {_value_type_name(value)} from {current_type}"
                 ) from exc
             self._set_path(path, new_value, env, line)
-        elif tokens[0] == "append":
+        elif statement.command == "append":
             if len(tokens) < 4 or "to" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'append value to path'")
             value_text, path = _split_required(line.text.removeprefix("append ").strip(), " to ", line.number)
@@ -1357,7 +1367,7 @@ class Runtime:
             current_items = cast(list[Any], current)
             new_value: list[Any] = [*current_items, value]
             self._set_path(path, new_value, env, line)
-        elif tokens[0] == "count":
+        elif statement.command == "count":
             if len(tokens) < 4 or "into" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'count list into path'")
             value_text, path = _split_required(line.text.removeprefix("count ").strip(), " into ", line.number)
@@ -1366,7 +1376,7 @@ class Runtime:
                 raise GwtError(f"line {line.number}: count requires a list")
             values = cast(list[Any], value)
             self._set_path(path, len(values), env, line)
-        elif tokens[0] == "sum":
+        elif statement.command == "sum":
             if len(tokens) < 4 or "into" not in tokens:
                 raise GwtError(f"line {line.number}: expected 'sum list into path'")
             projection = _parse_sum_projection(line.text)
@@ -1397,11 +1407,11 @@ class Runtime:
                     raise GwtError(f"line {line.number}: sum requires a list of numbers")
                 total += value
             self._set_path(path, total, env, line)
-        elif tokens[0] == "find":
+        elif statement.command == "find":
             self._run_find(line, env)
-        elif tokens[0] == "exists":
+        elif statement.command == "exists":
             self._run_exists(line, env)
-        elif tokens[0] == "print":
+        elif statement.command == "print":
             value = self._eval_expression(line.text.removeprefix("print ").strip(), env)
             self.output.append(str(value))
             if self.tracer is not None:
@@ -3363,21 +3373,56 @@ def _parse_leaf_statement(line: Line, filename: str) -> LeafStatement:
 
     tokens = _tokens(line.text, filename, line.number)
     if not tokens:
-        return LeafStatement("behavior_call", "", line)
+        return LeafStatement("behavior_call", "", line, ())
     command = tokens[0]
+    expression: str | None = None
+    target: str | None = None
+    binding: str | None = None
     if command == "RETURN":
         kind: LeafStatementKind = "return"
+        expression = line.text.removeprefix("RETURN").strip()
     elif command == "PASS":
         kind = "pass"
     elif command == "LET":
         kind = "let"
+        remainder = line.text.removeprefix("LET").strip()
+        if " be " in remainder:
+            binding, expression = (part.strip() for part in remainder.split(" be ", 1))
     elif command == "REQUIRE":
         kind = "require"
+        expression = line.text.removeprefix("REQUIRE").strip()
     elif _is_builtin_statement(tokens, line.text):
         kind = "builtin"
+        separators = {
+            "set": " to ",
+            "add": " to ",
+            "subtract": " from ",
+            "append": " to ",
+            "count": " into ",
+            "sum": " into ",
+        }
+        separator = separators.get(command)
+        if command == "set" and len(tokens) >= 2 and separator is not None and separator in line.text:
+            target = tokens[1]
+            expression = line.text.split(separator, 1)[1].strip()
+        elif separator is not None and separator in line.text:
+            expression, target = (
+                part.strip()
+                for part in line.text.removeprefix(command).strip().split(separator, 1)
+            )
+        elif command == "print":
+            expression = line.text.removeprefix("print").strip()
     else:
         kind = "behavior_call"
-    return LeafStatement(kind, command, line)
+    return LeafStatement(
+        kind,
+        command,
+        line,
+        tuple(tokens),
+        expression=expression,
+        target=target,
+        binding=binding,
+    )
 
 
 def _signature_parameters(signature: list[str]) -> list[str]:
@@ -3439,27 +3484,37 @@ def _action_mismatch_message(
     if not call:
         return message
 
-    candidates = actions_by_name.get(call[0], [])
+    candidates = _action_candidate_signatures(call, actions_by_name)
+    if call[0] in actions_by_name:
+        return f"{message}; available signatures: {_format_limited_list(candidates)}"
     if candidates:
-        return f"{message}; available signatures: {_format_action_signatures(candidates)}"
-
-    close = get_close_matches(call[0], sorted(actions_by_name), n=1, cutoff=0.72)
-    if close:
-        return f"{message}; did you mean {_format_action_signatures(actions_by_name[close[0]])}?"
+        return f"{message}; did you mean {_format_limited_list(candidates)}?"
 
     return message
 
 
-def _format_action_signatures(actions: list[Action]) -> str:
+def _action_candidate_signatures(
+    call: list[str],
+    actions_by_name: dict[str, list[Action]],
+) -> list[str]:
+    """Return the repair candidates used in mismatch messages and payloads."""
+
+    if not call:
+        return []
+    actions = actions_by_name.get(call[0], [])
+    if not actions:
+        close = get_close_matches(call[0], sorted(actions_by_name), n=1, cutoff=0.72)
+        if not close:
+            return []
+        actions = actions_by_name[close[0]]
     signatures: list[str] = []
     seen: set[str] = set()
     for action in actions:
         signature = action.signature_text or " ".join(action.signature)
-        if signature in seen:
-            continue
-        seen.add(signature)
-        signatures.append(signature)
-    return _format_limited_list(signatures)
+        if signature not in seen:
+            seen.add(signature)
+            signatures.append(signature)
+    return signatures
 
 
 def _format_limited_list(values: list[str], *, limit: int = 5) -> str:

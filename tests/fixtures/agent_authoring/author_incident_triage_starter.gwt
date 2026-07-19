@@ -1,0 +1,12 @@
+PROGRAM incident triage
+
+TYPE IncidentSeverity is "normal" | "degraded" | "critical"
+TYPE IncidentPriority is "new" | "routine" | "review" | "urgent"
+
+RECORD IncidentRequest
+  severity: IncidentSeverity
+  customer_outage: boolean
+
+RECORD IncidentDecision
+  priority: IncidentPriority
+  reason: "new" | "normal_operations" | "degraded_service" | "customer_outage"

@@ -1,0 +1,10 @@
+WHEN record waiting <days> into <total>
+  GIVEN days is integer
+  AND total is integer
+  add days to total
+
+SCENARIO waiting days are counted
+GIVEN days is "five"
+GIVEN total is 0
+WHEN record waiting days into total
+THEN total == 5

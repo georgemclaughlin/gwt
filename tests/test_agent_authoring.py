@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
+from gwtlang.agent_evaluation import (
+    main as evaluation_main,
+    prepare_evaluation,
+    read_jsonl,
+    score_evaluation,
+)
 from gwtlang.formatter import format_text
 from gwtlang.runtime import run_source
 from gwtlang.service import analyze_source
@@ -27,6 +34,10 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
             {case["kind"] for case in cases},
             {"author", "repair", "clarify"},
         )
+        self.assertEqual(len(cases), 15)
+        self.assertEqual(len(self._cases("author")), 5)
+        self.assertEqual(len(self._cases("repair")), 6)
+        self.assertEqual(len(self._cases("clarify")), 4)
 
     def test_author_gold_artifacts_check_format_and_run(self):
         for case in self._cases("author"):
@@ -76,6 +87,153 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                 self.assertNotIn("source", case)
                 self.assertNotIn("repairedSource", case)
                 self.assertGreaterEqual(len(case["requiredClarifications"]), 1)
+
+    def test_prepared_context_variants_do_not_expose_gold_or_hidden_probes(self):
+        for variant in ("source-only", "inspect", "guide"):
+            with self.subTest(variant=variant):
+                prepared = prepare_evaluation(MANIFEST, variant=variant)
+                serialized = json.dumps(prepared)
+
+                self.assertEqual(len(prepared), len(self.manifest["cases"]))
+                self.assertNotIn("expectedResult", serialized)
+                self.assertNotIn('"probes"', serialized)
+                author = next(
+                    record
+                    for record in prepared
+                    if record["caseId"] == "author-explicit-return-window"
+                )
+                self.assertNotIn("REQUEST review return", author["context"]["source"])
+                if variant == "source-only":
+                    self.assertNotIn("inspection", author["context"])
+                else:
+                    self.assertIn("inspection", author["context"])
+                if variant == "guide":
+                    self.assertIn("Generate And Repair", author["context"]["guide"])
+
+    def test_gold_responses_score_full_semantic_and_clarification_success(self):
+        attempts = []
+        for case in self.manifest["cases"]:
+            if case["kind"] == "author":
+                attempts.append(
+                    {
+                        "caseId": case["id"],
+                        "attempt": 1,
+                        "action": "code",
+                        "source": (FIXTURE_ROOT / case["source"]).read_text(),
+                    }
+                )
+            elif case["kind"] == "repair":
+                attempts.append(
+                    {
+                        "caseId": case["id"],
+                        "attempt": 1,
+                        "action": "code",
+                        "source": (FIXTURE_ROOT / case["repairedSource"]).read_text(),
+                    }
+                )
+            else:
+                attempts.append(
+                    {
+                        "caseId": case["id"],
+                        "attempt": 1,
+                        "action": "clarify",
+                        "clarifications": case["requiredClarifications"],
+                    }
+                )
+
+        result = score_evaluation(MANIFEST, attempts)
+
+        self.assertEqual(result["attemptedCaseCount"], len(self.manifest["cases"]))
+        self.assertEqual(result["metrics"]["firstPassParseRate"], 1.0)
+        self.assertEqual(result["metrics"]["firstPassCheckRate"], 1.0)
+        self.assertEqual(result["metrics"]["finalValidationRate"], 1.0)
+        self.assertEqual(result["metrics"]["scenarioSemanticSuccessRate"], 1.0)
+        self.assertEqual(result["metrics"]["correctClarificationRate"], 1.0)
+        self.assertEqual(result["metrics"]["medianRepairIterations"], 0.0)
+
+    def test_scoring_records_a_failed_first_attempt_and_successful_repair(self):
+        case = next(
+            case
+            for case in self.manifest["cases"]
+            if case["id"] == "repair-domain-behavior-typo"
+        )
+        attempts = [
+            {
+                "caseId": case["id"],
+                "attempt": 1,
+                "action": "code",
+                "source": (FIXTURE_ROOT / case["brokenSource"]).read_text(),
+            },
+            {
+                "caseId": case["id"],
+                "attempt": 2,
+                "action": "code",
+                "source": (FIXTURE_ROOT / case["repairedSource"]).read_text(),
+            },
+        ]
+
+        result = score_evaluation(MANIFEST, attempts)
+        detail = next(item for item in result["cases"] if item["caseId"] == case["id"])
+
+        self.assertFalse(detail["attempts"][0]["checkOk"])
+        self.assertIn("call.no-match", detail["attempts"][0]["diagnosticSubcodes"])
+        self.assertTrue(detail["attempts"][1]["validationOk"])
+        self.assertTrue(detail["finalSemanticOk"])
+
+    def test_scoring_rejects_non_contiguous_attempt_numbers(self):
+        with self.assertRaisesRegex(ValueError, "contiguous from 1"):
+            score_evaluation(
+                MANIFEST,
+                [
+                    {
+                        "caseId": "clarify-undefined-risk-policy",
+                        "attempt": 2,
+                        "action": "clarify",
+                        "clarifications": ["What defines high risk?"],
+                    }
+                ],
+            )
+
+    def test_prepare_and_score_cli_round_trip_jsonl(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            tasks = root / "tasks.jsonl"
+            responses = root / "responses.jsonl"
+            report = root / "report.json"
+
+            self.assertEqual(
+                evaluation_main(
+                    [
+                        "prepare",
+                        str(MANIFEST),
+                        "--variant",
+                        "source-only",
+                        "--output",
+                        str(tasks),
+                    ]
+                ),
+                0,
+            )
+            prepared = read_jsonl(tasks)
+            self.assertEqual(len(prepared), len(self.manifest["cases"]))
+            responses.write_text(
+                json.dumps(
+                    {
+                        "caseId": "clarify-undefined-risk-policy",
+                        "attempt": 1,
+                        "action": "clarify",
+                        "clarifications": self._cases("clarify")[0]["requiredClarifications"],
+                    }
+                )
+                + "\n"
+            )
+            self.assertEqual(
+                evaluation_main(
+                    ["score", str(MANIFEST), str(responses), "--output", str(report)]
+                ),
+                0,
+            )
+            self.assertEqual(json.loads(report.read_text())["attemptedCaseCount"], 1)
 
     def _cases(self, kind: str):
         return [case for case in self.manifest["cases"] if case["kind"] == kind]

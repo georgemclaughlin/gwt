@@ -1,0 +1,68 @@
+PROGRAM incident triage
+
+TYPE IncidentSeverity is "normal" | "degraded" | "critical"
+TYPE IncidentPriority is "new" | "routine" | "review" | "urgent"
+
+RECORD IncidentRequest
+  severity: IncidentSeverity
+  customer_outage: boolean
+
+RECORD IncidentDecision
+  priority: IncidentPriority
+  reason: "new" | "normal_operations" | "degraded_service" | "customer_outage"
+
+REQUEST triage incident
+  GIVEN incident is IncidentRequest
+
+  GIVEN decision is IncidentDecision
+    priority: "new"
+    reason: "new"
+
+  WHEN triage incident into decision
+
+  OUTPUT decision is IncidentDecision
+
+  THEN decision.priority != "new"
+  AND decision.reason != "new"
+
+WHEN triage <incident> into <decision>
+  GIVEN incident is IncidentRequest
+  AND decision is IncidentDecision
+  DECIDE
+    WHEN incident.customer_outage or incident.severity == "critical"
+      set decision.priority to "urgent"
+      set decision.reason to "customer_outage"
+    WHEN incident.severity == "degraded"
+      set decision.priority to "review"
+      set decision.reason to "degraded_service"
+    ELSE
+      set decision.priority to "routine"
+      set decision.reason to "normal_operations"
+
+SCENARIO a customer outage is urgent
+GIVEN incident is IncidentRequest
+  severity: "degraded"
+  customer_outage: true
+
+REQUEST triage incident
+
+THEN decision.priority == "urgent"
+AND decision.reason == "customer_outage"
+
+SCENARIO degraded service needs review
+GIVEN incident is IncidentRequest
+  severity: "degraded"
+  customer_outage: false
+
+REQUEST triage incident
+
+THEN decision.priority == "review"
+
+SCENARIO normal service is routine
+GIVEN incident is IncidentRequest
+  severity: "normal"
+  customer_outage: false
+
+REQUEST triage incident
+
+THEN decision.priority == "routine"

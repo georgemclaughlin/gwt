@@ -1,0 +1,74 @@
+PROGRAM semantic release slice
+
+RECORD CommitFacts
+  breaking_change: boolean
+  feature: boolean
+  fix: boolean
+
+RECORD ReleaseDecision
+  level: "new" | "major" | "minor" | "patch" | "none"
+
+REQUEST analyze commit
+  GIVEN commit is CommitFacts
+
+  GIVEN release is ReleaseDecision
+    level: "new"
+
+  WHEN analyze commit into release
+
+  OUTPUT release is ReleaseDecision
+
+  THEN release.level != "new"
+
+WHEN analyze <commit> into <release>
+  GIVEN commit is CommitFacts
+  AND release is ReleaseDecision
+  DECIDE
+    WHEN commit.breaking_change
+      set release.level to "major"
+    WHEN commit.feature
+      set release.level to "minor"
+    WHEN commit.fix
+      set release.level to "patch"
+    ELSE
+      set release.level to "none"
+
+SCENARIO a breaking feature remains major
+GIVEN commit is CommitFacts
+  breaking_change: true
+  feature: true
+  fix: false
+
+REQUEST analyze commit
+
+THEN release.level == "major"
+
+SCENARIO a feature is minor
+GIVEN commit is CommitFacts
+  breaking_change: false
+  feature: true
+  fix: true
+
+REQUEST analyze commit
+
+THEN release.level == "minor"
+
+SCENARIO a fix is patch
+GIVEN commit is CommitFacts
+  breaking_change: false
+  feature: false
+  fix: true
+
+REQUEST analyze commit
+
+THEN release.level == "patch"
+
+SCENARIO an irrelevant commit has no release
+GIVEN commit is CommitFacts
+  breaking_change: false
+  feature: false
+  fix: false
+
+REQUEST analyze commit
+
+THEN release.level == "none"

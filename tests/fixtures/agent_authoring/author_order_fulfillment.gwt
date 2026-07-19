@@ -1,0 +1,71 @@
+PROGRAM order fulfillment slice
+
+RECORD FulfillmentRequest
+  requested_units: integer
+  available_units: integer
+
+RECORD FulfillmentDecision
+  status: "new" | "fulfilled" | "partial" | "backordered"
+  reserved_units: integer
+  backordered_units: integer
+
+REQUEST fulfill order
+  GIVEN order is FulfillmentRequest
+
+  GIVEN fulfillment is FulfillmentDecision
+    status: "new"
+    reserved_units: 0
+    backordered_units: 0
+
+  WHEN fulfill order into fulfillment
+
+  OUTPUT fulfillment is FulfillmentDecision
+
+  THEN fulfillment.status != "new"
+
+WHEN fulfill <order> into <fulfillment>
+  GIVEN order is FulfillmentRequest
+  AND fulfillment is FulfillmentDecision
+  DECIDE
+    WHEN order.available_units >= order.requested_units
+      set fulfillment.status to "fulfilled"
+      set fulfillment.reserved_units to order.requested_units
+      set fulfillment.backordered_units to 0
+    WHEN order.available_units > 0
+      set fulfillment.status to "partial"
+      set fulfillment.reserved_units to order.available_units
+      set fulfillment.backordered_units to order.requested_units - order.available_units
+    ELSE
+      set fulfillment.status to "backordered"
+      set fulfillment.reserved_units to 0
+      set fulfillment.backordered_units to order.requested_units
+
+SCENARIO sufficient inventory fulfills the order
+GIVEN order is FulfillmentRequest
+  requested_units: 3
+  available_units: 5
+
+REQUEST fulfill order
+
+THEN fulfillment.status == "fulfilled"
+AND fulfillment.reserved_units == 3
+
+SCENARIO limited inventory creates a partial fulfillment
+GIVEN order is FulfillmentRequest
+  requested_units: 5
+  available_units: 2
+
+REQUEST fulfill order
+
+THEN fulfillment.status == "partial"
+AND fulfillment.backordered_units == 3
+
+SCENARIO missing inventory backorders every unit
+GIVEN order is FulfillmentRequest
+  requested_units: 4
+  available_units: 0
+
+REQUEST fulfill order
+
+THEN fulfillment.status == "backordered"
+AND fulfillment.backordered_units == 4
