@@ -100,9 +100,6 @@ This distinction matters for agent-assisted work:
 
 See [dsl-and-llms.md](dsl-and-llms.md) for the full model and
 [agent-authoring.md](agent-authoring.md) for the authoring and repair loop.
-`gwt agent-context` makes the program-specific vocabulary and a bounded set of
-worked scenarios available to any agent without duplicating durable domain
-knowledge into a provider-specific skill.
 
 ## Spec Is The Code
 

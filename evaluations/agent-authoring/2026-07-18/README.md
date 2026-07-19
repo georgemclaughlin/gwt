@@ -8,8 +8,8 @@ corpus. It is an exploratory baseline, not a general model ranking.
 - Codex CLI: `0.144.6`
 - models: `gpt-5.6-luna` with low reasoning and `gpt-5.6-sol` with high
   reasoning
-- contexts: `source-only`, `inspect`, `guide`, and the later productized
-  `agent-context` pack
+- contexts: `source-only`, `inspect`, `guide`, and a later retired experimental
+  `agent-context` composition
 - samples: one independent call per case and context cell
 - concurrency: four calls, except the three-case Sol/guide repair run
 - isolation: fresh read-only temporary directory, ephemeral session, ignored
@@ -65,15 +65,16 @@ The final semantic counts make the context effect especially clear:
    discounted price” are now normalized without exposing the hidden concepts
    during generation. The later context-pack run added equivalent phrases such
    as “decimal precision,” “criteria determine,” and “which rejection reason.”
-6. The productized context pack is a useful middle condition, not a replacement
-   for the full guide yet. Both models repaired all six broken programs and
+6. The experimental context composition was a useful middle condition, not a
+   replacement for the full guide. Both models repaired all six broken programs and
    correctly clarified all four ambiguous tasks, but authored only two of five
    (Luna) and three of five (Sol) new programs after repair.
 7. Two fixed tiny syntax examples are too narrow for broad authoring. Remaining
    candidates repeatedly invented conditional `ELSE` forms or malformed
-   behavior contracts. The next context-pack iteration should select compact
-   syntax examples by relevant language capability while remaining independent
-   of corpus gold and hidden probes.
+   behavior contracts. Rather than add more prompt-selection policy to the core
+   language, the public command, schema, and SDK surface were retired. Agent
+   orchestration belongs in documentation or a thin skill over source,
+   inspection, diagnostics, and validation.
 
 One known baseline caveat remains. The captured
 `repair-explicit-missing-case` task asked for an explicit missing branch but did
@@ -93,6 +94,11 @@ the caveat accounts for Luna/guide's single remaining code failure.
 
 Raw CLI progress logs were intentionally excluded. They duplicate task and
 candidate content and are not required to reproduce scoring.
+
+The `agent-context` task file is preserved exactly as captured even though its
+composer is no longer part of the current evaluator. It can be passed directly
+to `gwtlang.agent_matrix`, and its responses remain fully supported by the
+provider-neutral scorer.
 
 Re-score any cell from the repository root, for example:
 

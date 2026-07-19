@@ -1,7 +1,6 @@
 """GWT language interpreter package."""
 
 from .api import (
-    AgentContextResult,
     CheckResult,
     CompiledProgram,
     ExecutionResult,
@@ -14,8 +13,6 @@ from .api import (
     ValidationResult,
     check_file,
     check_text,
-    build_agent_context_file,
-    build_agent_context_source,
     compile_file,
     compile_text,
     generate_openapi_file,
@@ -35,7 +32,6 @@ from .api import (
     run_text,
     validate_file,
 )
-from .agent_context import AGENT_CONTEXT_SCHEMA_VERSION, AgentContextPayload
 from .asgi import (
     SUPPORTED_ASGI_HTTP_SPEC_MAJOR,
     SUPPORTED_ASGI_LIFESPAN_SPEC_VERSION,
@@ -169,9 +165,6 @@ from .version import (
 from .workbench import render_workbench_html
 
 __all__ = [
-    "AGENT_CONTEXT_SCHEMA_VERSION",
-    "AgentContextPayload",
-    "AgentContextResult",
     "CheckResult",
     "CheckPayload",
     "CompiledProgram",
@@ -265,8 +258,6 @@ __all__ = [
     "analyze_source",
     "build_symbol_table",
     "build_program_identity",
-    "build_agent_context_file",
-    "build_agent_context_source",
     "check_file",
     "check_program",
     "check_text",

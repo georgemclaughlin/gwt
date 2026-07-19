@@ -111,7 +111,7 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                 self.assertGreaterEqual(len(case["requiredClarifications"]), 1)
 
     def test_prepared_context_variants_do_not_expose_gold_or_hidden_probes(self):
-        for variant in ("source-only", "inspect", "guide", "agent-context"):
+        for variant in ("source-only", "inspect", "guide"):
             with self.subTest(variant=variant):
                 prepared = prepare_evaluation(MANIFEST, variant=variant)
                 serialized = json.dumps(prepared)
@@ -125,7 +125,7 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                     if record["caseId"] == "author-explicit-return-window"
                 )
                 self.assertNotIn("SCENARIO", author["context"]["source"])
-                if variant in {"source-only", "agent-context"}:
+                if variant == "source-only":
                     self.assertNotIn("inspection", author["context"])
                 else:
                     self.assertIn("inspection", author["context"])
@@ -134,13 +134,10 @@ class AgentAuthoringCorpusTests(unittest.TestCase):
                     self.assertIn("PROGRAM hello", author["context"]["guide"])
                     self.assertIn("PROGRAM language tour", author["context"]["guide"])
                     self.assertNotIn("REQUEST review return", author["context"]["guide"])
-                if variant == "agent-context":
-                    generated = author["context"]["agentContext"]
-                    self.assertIn("GWT domain-language context", generated)
-                    self.assertIn("## Domain vocabulary", generated)
-                    self.assertIn("## GWT syntax examples", generated)
-                    self.assertIn("- `review return`", generated)
-                    self.assertNotIn("SCENARIO return inside window", generated)
+
+    def test_retired_agent_context_variant_is_not_prepared(self):
+        with self.assertRaisesRegex(ValueError, "unknown context variant: agent-context"):
+            prepare_evaluation(MANIFEST, variant="agent-context")
 
     def test_gold_responses_score_full_semantic_and_clarification_success(self):
         attempts = []

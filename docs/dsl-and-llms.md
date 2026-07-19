@@ -92,13 +92,6 @@ portable `programIdentity` for the complete dependency closure. A source-only
 inspection cannot establish filesystem closure identity and reports
 `programIdentity: null`.
 
-`gwt agent-context` packages that semantic vocabulary with selected executable
-domain scenarios, two small syntax examples, and the check/format/validate loop.
-Its Markdown form is prompt-ready; its versioned JSON form is suitable for a
-provider-specific skill or agent runtime. The pack is derived context, while
-the checked `.gwt` program remains the durable source of truth. See
-[agent-context.md](agent-context.md).
-
 ## Semantic Model Boundary
 
 The parser should produce a typed semantic representation that the checker,
