@@ -58,14 +58,14 @@ WHEN review <report> into <decision>
   FOR line in report.lines WHERE line.reimbursable == true and line.amount <= report.policy_limit
     add line.amount to decision.approved_total
     append line.description to decision.approved_descriptions
-  exists line in report.lines WHERE line.amount > report.policy_limit into decision.has_violation
-  IF decision.has_violation
-    find line in report.lines WHERE line.amount > report.policy_limit into policy_violation
+  FIND policy_violation in report.lines WHERE policy_violation.amount > report.policy_limit
+    set decision.has_violation to true
     set decision.violation_description to policy_violation.description
     set decision.violation_amount to policy_violation.amount
     set decision.status to "needs_review"
     set decision.reason to "line_over_policy_limit"
   ELSE
+    set decision.has_violation to false
     set decision.violation_description to ""
     set decision.violation_amount to 0
     set decision.status to "approved"
@@ -95,3 +95,60 @@ AND decision.violation_description == "monitor"
 AND decision.violation_amount == 225
 AND decision.status == "needs_review"
 AND decision.reason == "line_over_policy_limit"
+
+SCENARIO policy boundaries and first violation
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description | amount          | category | reimbursable          |
+  | "first"     | <first_amount>  | "other"  | <first_reimbursable>  |
+  | "second"    | <second_amount> | "other"  | <second_reimbursable> |
+
+REQUEST review expense report
+
+THEN decision.line_count == 2
+AND decision.submitted_total == <submitted>
+AND decision.approved_total == <approved>
+AND decision.approved_descriptions == <descriptions>
+AND decision.has_violation == <has_violation>
+AND decision.violation_description == <violation_description>
+AND decision.violation_amount == <violation_amount>
+AND decision.status == <status>
+AND decision.reason == <reason>
+
+EXAMPLES
+  | first_amount | first_reimbursable | second_amount | second_reimbursable | submitted | approved | descriptions        | has_violation | violation_description | violation_amount | status         | reason                   |
+  | 100          | true               | 50            | true                | 150       | 150      | ["first", "second"] | false         | ""                    | 0                | "approved"     | "within_policy"          |
+  | 101          | true               | 102           | true                | 203       | 0        | []                  | true          | "first"               | 101              | "needs_review" | "line_over_policy_limit" |
+  | 101          | false              | 50            | true                | 151       | 50       | ["second"]          | true          | "first"               | 101              | "needs_review" | "line_over_policy_limit" |
+  | 50           | false              | 101           | true                | 151       | 0        | []                  | true          | "second"              | 101              | "needs_review" | "line_over_policy_limit" |
+  | 100          | false              | 100           | true                | 200       | 100      | ["second"]          | false         | ""                    | 0                | "approved"     | "within_policy"          |
+  | 0            | false              | 0             | true                | 0         | 0        | ["second"]          | false         | ""                    | 0                | "approved"     | "within_policy"          |
+
+SCENARIO reused decision clears a previous violation
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description | amount | category | reimbursable |
+  | "monitor"   | 225    | "other"  | true         |
+
+REQUEST review expense report
+
+WHEN set report.lines to []
+AND review report into decision
+
+THEN decision.line_count == 0
+AND decision.submitted_total == 0
+AND decision.approved_total == 0
+AND decision.approved_descriptions == []
+AND decision.has_violation == false
+AND decision.violation_description == ""
+AND decision.violation_amount == 0
+AND decision.status == "approved"
+AND decision.reason == "within_policy"

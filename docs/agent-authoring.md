@@ -1,5 +1,10 @@
 # Authoring GWT With Agents
 
+A repository skill packages this workflow at
+[`.agents/skills/gwt-authoring/SKILL.md`](../.agents/skills/gwt-authoring/SKILL.md).
+For paired maintenance experiments against Python, use
+[maintenance-evaluation.md](maintenance-evaluation.md).
+
 This guide defines the supported agent workflow. Natural language can propose
 intent, but the checked and scenario-backed `.gwt` program is the source of
 truth.
@@ -16,6 +21,23 @@ The manifest identifies records, type aliases, one-of records, named requests,
 behavior signatures and contracts, scenarios, direct imports, diagnostics, and
 the complete file-backed program identity. Read the relevant scenarios as
 worked examples; they express semantic expectations that a manifest cannot.
+
+For a native-only program, use the native compiler's contract report instead:
+
+```sh
+cargo run -p gwt-core --bin gwt-native -- inspect examples/native_early_returns/rules.gwt
+```
+
+[Native inspection](native-inspection.md) reports the checked closure's resolved
+contracts and source locations without executing rules. It excludes request-local
+setup from host inputs and does not mistake scenario enumeration for passing tests.
+Use the same engine for subsequent validation and case review.
+
+For native operating-budget checks, use the same
+[`--limits FILE.json`](native-execution-limits.md) for validation, profiling,
+request execution, and capture. Include representative request inputs: passing
+small embedded scenarios does not prove that a larger workload fits the budget.
+Review resource failures separately from intended domain rejections.
 
 For a new program, use the smallest relevant examples rather than the entire
 repository. Usually that means `examples/hello.gwt`,

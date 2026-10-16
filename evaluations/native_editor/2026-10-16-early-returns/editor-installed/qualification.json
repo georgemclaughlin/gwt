@@ -1,0 +1,23 @@
+{
+  "engine": "native",
+  "command": [
+    "code",
+    "--new-window",
+    "--user-data-dir",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-9kscfc48/profile",
+    "--extensions-dir",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-9kscfc48/extensions",
+    "--extensionDevelopmentPath=/home/g/code/gwt/vscode-gwt",
+    "--extensionTestsPath=/home/g/code/gwt/vscode-gwt/tests/extension-host.js",
+    "--skip-welcome",
+    "--skip-release-notes",
+    "--disable-workspace-trust",
+    "--disable-extensions",
+    "--no-sandbox",
+    "--wait",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-9kscfc48/workspace"
+  ],
+  "temporaryDirectory": "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-9kscfc48",
+  "nativeSha256": "8d536ccecc3486e21b49c8c7c9e397f641b9f78e4d96e07061fdddd8ae73c598",
+  "launcherExitCode": 0
+}

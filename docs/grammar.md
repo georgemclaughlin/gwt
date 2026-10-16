@@ -5,6 +5,11 @@ language notes live in [spec/v0.2.md](spec/v0.2.md). The parser is currently
 hand-written, but behavior bodies are parsed into structured statement nodes for
 blocks such as `IF`, `FOR`, `FIND`, and `ELSE`.
 
+The experimental Rust engine has a separate [native grammar](native-grammar.md)
+with deliberate semantic differences; see [native semantics](native-semantics.md) and
+[native conformance](native-conformance.md). This grammar remains the complete
+v0.2 surface, not a claim of native coverage.
+
 ```ebnf
 program        = top_level* ;
 top_level      = program_header
@@ -200,3 +205,155 @@ execute.
 `BACKGROUND` must appear before explicit `SCENARIO` blocks. `EXAMPLES` attaches
 to the current scenario. Behavior names cannot use reserved built-in or
 behavior-body keywords.
+
+The experimental native profile also supports [sequential REQUIRE proofs](native-require.md).
+This is a checker/runtime semantic extension over existing statement syntax;
+it does not change the Python v0.2 contract. The native profile also carries
+supported facts from [FOR/FIND filters](native-filter-proofs.md) into selected bodies.
+[Early-return analysis](native-early-returns.md) also retains supported facts on
+paths that continue, without adding syntax.
+Native [branch-exit joins](native-branch-proofs.md) additionally retain
+supported REQUIRE and nested-continuation proofs common to all continuing branches.
+Native [explicit failure exits](native-failure-exits.md) recognize literal
+`REQUIRE false` in structural return/continuation analysis without adding syntax.
+
+## Experimental native call arguments
+
+This extension describes the Rust engine only; it does not change the Python
+v0.2 grammar above. Native signatures determine argument positions, with one
+argument token per parameter:
+
+```ebnf
+native_argument = path | literal | "-" number | list | "(" expression ")" ;
+```
+
+Whitespace splits call tokens only outside double-quoted strings and balanced
+parentheses/brackets. A bare path shares state. Literals, list expressions, and
+parenthesized expressions copy values; `(state)` explicitly copies a path.
+Computed arguments need parentheses even without spaces. Signature literal words
+cannot contain `"()[]<>`; complete `<parameter>` placeholders are allowed.
+Behavior calls remain statements or whole `LET` right-hand sides, and cannot
+appear inside argument expressions. See [native call arguments](native-semantics.md#call-arguments)
+for typing, evaluation order, and evidence rules.
+
+## Experimental native printed-output assertions
+
+In scenarios and backgrounds, the Rust engine additionally accepts:
+
+```ebnf
+native_print_assertion = ("THEN" | "AND"), "prints", json_array ;
+```
+
+`json_array` is a literal serialized output sequence, with exact integer numbers
+and JSON strings for decimals. It is not a GWT list expression. Duplicate object
+keys and fractional/exponent JSON numbers are rejected. `AND` must continue a
+`THEN` step. A binding named `prints` still works in ordinary expressions such as
+`THEN prints == true`; the extension requires the array form. See
+[native printed-output expectations](native-semantics.md#printed-output-expectations)
+for order, scope, limits, and evidence semantics. Python v0.2 does not implement
+this assertion.
+
+## Experimental native expected failures
+
+```ebnf
+native_failure_assertion = "THEN", "fails with", string ;
+```
+
+This scenario/background annotation immediately follows one `WHEN` or `REQUEST`
+action and asserts its failure code. The permitted strings are `"assertion_failed"`,
+`"division_by_zero"`, and `"nonterminating_decimal"`. Other errors cannot satisfy
+it. It cannot introduce new caller bindings or wrap another assertion. The
+scenario can continue after a match, preserving earlier state and output. See
+[expected action failures](native-semantics.md#expected-action-failures) for scope,
+budget behavior, and evidence. Python v0.2 does not implement this form.
+
+## Experimental native typed setup tables
+
+The Rust engine implements the typed `GIVEN path are name` setup form. Its table
+production permits a header without data rows:
+
+```ebnf
+native_typed_setup = ("GIVEN" | "AND"), path, "are", name, native_setup_table ;
+native_setup_table = table_row, { table_row } ;
+```
+
+`AND` must continue `GIVEN`. The item name resolves to a record or record alias;
+columns are direct field names and cells are ordinary checked expressions.
+Unquoted empty cells are invalid. Untyped and scalar-item tables remain outside
+the native subset. See [typed setup semantics](native-setup-tables.md) for header
+validation, atomic field replacement, bounds, and source evidence.
+
+## Native presence proofs
+
+Native `IF` and `DECIDE` use the existing productions and presence expressions;
+no new token is required for [branch-local optional proofs](native-presence.md).
+Their checker and runtime carry supported presence facts into selected bodies
+and protect those facts against invalidating alias writes.
+[Literal kind comparisons](native-kind-conditions.md) use the existing equality
+and boolean productions to refine one-of paths in expressions and these bodies.
+An indented optional record initializer uses the ordinary record-body production
+and explicitly constructs a present value; optional scalars cannot have a body.
+
+## Native one-of contracts
+
+The native engine also recognizes `RECORD Name is one of` declarations. Native
+record setup selects a kind with an explicit `kind: "name"` field inside the
+ordinary record initializer; the kind must be a literal. This differs from the
+Python `contains a ... of kind ...` form. See [native one-of contracts](native-one-of.md)
+for field access and alias-safe branch semantics. Native kind dispatch uses
+`DEPENDING ON path` with indented `WHEN the kind is name` bodies and an optional
+final `ELSE`. All declared kinds must be covered; an unreachable `ELSE` is an
+error. Scalar subjects use the same `DEPENDING ON expression` production with
+`WHEN the value is literal` branches. Native scalar coverage includes boolean
+and text-union values; broader scalar types require a final `ELSE`. Native
+numeric labels compare by exact value across integers and decimals, so equal
+representations cannot appear as separate cases. See
+[native value dispatch](native-value-dispatch.md).
+
+Native type expressions also permit `name "of kind" name`, where the first name
+resolves to a one-of record or alias and the second selects one declared kind.
+This form can appear as a `TYPE` target or contract annotation, and can be nested
+inside `list<...>` or `optional<...>`. It retains the tagged record shape. For
+example, `TYPE Email is Contact of kind email` makes payload requirements explicit
+in a helper contract. Python formatting preserves this source form; Python
+execution does not implement it.
+
+## Native request entries
+
+A native request entry uses the existing `USE`, setup, request-call, and scenario
+productions; it introduces no additional grammar. Single-entry CLI selection and
+its difference from Python's externally paired input files are documented in
+[native request entries](native-request-entries.md).
+
+## Experimental native rounded division
+
+The Rust profile adds this explicit step; it is not part of the Python v0.2
+surface:
+
+```ebnf
+rounded_division = "divide" expression "by" expression "rounded to"
+                   scale "places using" rounding_mode "into" path ;
+scale            = digit+ ; (* integer literal 0..512 *)
+rounding_mode    = "half_even" | "half_away_from_zero" | "toward_zero"
+                 | "floor" | "ceiling" ;
+```
+
+It is a behavior-body statement and can follow top-level/request `WHEN`.
+Operands must be numeric; the destination must be decimal. The word `divide`
+is reserved for this built-in in native behavior definitions. See
+[native rounded division](native-rounded-division.md) for arithmetic, evidence,
+limits, and migration semantics. Ordinary `/` retains exact-only semantics.
+
+## Experimental native local record construction
+
+```ebnf
+local_record = "LET" name "be" type ":", record_value_block? ;
+```
+
+This extends native behavior-body statements and request/scenario `WHEN` actions.
+The type must resolve to a record, one-of record, or optional record, including
+aliases and selected-kind contracts. Fields use the existing record initializer
+syntax and checks. An empty body is valid only when no required fields remain.
+The trailing colon distinguishes construction from expression/call bindings.
+See [typed local records](native-local-records.md), including the migration for
+old returning behavior calls whose last token ends with a colon.

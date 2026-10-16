@@ -1,0 +1,16 @@
+{
+  "crates/gwt-core/src/inspection.rs": "4eb2432f098907c2e5340163e8780f66becf77c56597dbed363552bf12ed6a15",
+  "crates/gwt-core/src/main.rs": "0917d13a3230f11c5afc212e78d1cf0803812d02080e9a6ead05f923420b57c9",
+  "crates/gwt-core/src/lib.rs": "90e7dc81abf0415246d2eef67f0e69be965d7c506663447d76dc2b36fc037793",
+  "crates/gwt-core/tests/inspection.rs": "1f3784d85c9a7eb4fb1654132f6e748f8711bedb70e9d8868b19c0630c717d51",
+  "evaluations/native_packaging/host.rs": "6fbad8e0c5294ece5a0e138a315fbd5598fac457ce20422932b1683612425de0",
+  "evaluations/native_packaging/qualify.py": "343e5013623df1d817b6f895fa66f556d43908e1e3925a09d5e32f572ce69987",
+  "evaluations/native_packaging/qualify_binary_runtime.py": "b07c4e73df557ffb5af59038da19deba49785c631504e0dc0c32b7956ddfad78",
+  "docs/native-inspection.md": "efe81a862a2a806802c712155cb2f9c3cb8628fffca50a36a6676fa6417dc230",
+  "docs/native-embedding.md": "e13a0905613336fc3197114b414ce2e8e7eab7a9b7a0a7d8dbad7170cca08ff0",
+  "docs/agent-authoring.md": "7b61f41bf874b56d74303042f8b0fa998cde49f9db2300e8b9776798196b6cdc",
+  "docs/native-conformance.md": "4752c9eeb54b57461967ea5cb461225f22a6bfe84cb35cadfc25f228c0b2c6d6",
+  "docs/project-goal-progress.md": "da0d79e8f4a681978fa0e5ed3744dc77abeb16e6f105010df685a26cc9b62548",
+  "README.md": "b3d45525d9a416f37f97f486f5041adfc1af3368fc9b5ed888e8d10439810f5c",
+  "evaluations/native_editor/2026-10-16-inspection/README.md": "fabd73f8c40ea5aa0e0c098a2dacf032d66888638a70db9b23a26d5bac90ba34"
+}

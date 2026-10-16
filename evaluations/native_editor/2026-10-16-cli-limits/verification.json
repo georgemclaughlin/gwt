@@ -1,0 +1,31 @@
+{
+  "nativeTests": {
+    "1.85.0": 382,
+    "1.96.0": 382
+  },
+  "clippyPassedBoth": true,
+  "formatPassed": true,
+  "diffPassed": true,
+  "packageInputsMatched": 56,
+  "documentationLinksChecked": 207,
+  "sourceSha256": {
+    "docs/native-execution-limits.md": "7dcfc6fbdbef68147aae41b3f5d68dc2f67198eaa80bbc2207559fb9582eb016",
+    "docs/native-profiling.md": "9ecead8e99866e4c05b80012c9aab92b5a0ac88af4b6e64b32f93a3c2742a286",
+    "docs/native-validation.md": "888fddb0e7449166f2aaab300074cc94ac83fdb21bd44a40753af1cbd548ca6c",
+    "docs/native-cases.md": "6606000621610366a38b94b36ac82acb0173cb2fdd6c3545cefd13101334e9b6",
+    "docs/native-embedding.md": "eae24b9b3e5c767aaf01b6e202e752edab164991868369487cd98dca94fed166",
+    "docs/native-conformance.md": "422c83fd56876b03bc0df694155da5cb54706e680805293befbd5c1da89fd297",
+    "docs/agent-authoring.md": "648aa8b618c9459d0652e8c2e4fc12d1b1020b4b07baea66f6bbd70b342911ab",
+    "docs/project-goal-progress.md": "b3a483c62b09e17fa987ece23ed1003cc6126f62300ab3a32d098087b5672df4",
+    "README.md": "91526f48b15c5f32064cd8dbc1e3f5d9691671a01ee28c8e2fe01fd1256781eb",
+    "examples/native_weighted_allocation/README.md": "886792c3ce8418660115aa6ec92b11ee2b6c0035f548dfb18ef74241d2786b7a",
+    "evaluations/native_editor/2026-10-16-cli-limits/README.md": "4650584fa57b5f3ecf2b9b32cc5c4c7a6e9ec222d79a33844c9d8b9153f53a9f",
+    "crates/gwt-core/src/limits_cli.rs": "0c8df049be05d024e973e19fabb61f6f55323e6e85c663ada1eb709b807db147",
+    "crates/gwt-core/src/main.rs": "bbfb20b0b0e98f6eab7780e80f4bd8bdbdce58937d10d1b698ea00a2143d8503",
+    "crates/gwt-core/src/validation_cli.rs": "3ab8d41ee701cdce4ed23d02423e175b7f63e85136b72e28d4218e58d1a8fe59",
+    "crates/gwt-core/tests/cli_limits.rs": "820b14646a76d93d040a3d3fa831bac7cbfc4a2b879a23b879415c037dba0af2",
+    "evaluations/native_packaging/qualify.py": "56d91784c5b2608854ad0b5fde37da9200b7075e5d0a364c2b5019de0cbe4efa",
+    "evaluations/native_editor/qualify_cli_limits.py": "05033609380655773e48050fdfbfaac5b7cdc7a41d2535bcab581adad94a0cdf",
+    "examples/native_weighted_allocation/limits.json": "5d698a95a0acbe61c12b0b421bf3ad01878eeceb1de8d26ac0bfd7cd43d61de7"
+  }
+}

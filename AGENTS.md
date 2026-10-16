@@ -8,10 +8,15 @@ GWT is an experimental programming language built around executable
 `GIVEN / WHEN / THEN` programs.
 
 - Runtime/parser/checker code lives in `gwtlang/`.
+- The experimental Rust foundation lives in `crates/gwt-core/`. Its current
+  supported language subset and deliberate semantic choices are documented in
+  `docs/native-semantics.md`; full-goal progress is in
+  `docs/project-goal-progress.md`.
 - The VS Code extension lives in `vscode-gwt/`.
 - Language examples live in `examples/`.
 - The current versioned spec is `docs/spec/v0.2.md`.
-- The EBNF grammar is `docs/grammar.md`.
+- The Python v0.2 EBNF grammar is `docs/grammar.md`; the experimental Rust
+  profile's grammar and context rules are in `docs/native-grammar.md`.
 - The longer language guide is `docs/language.md`.
 - Design principles and language-shape guardrails are in
   `docs/design-principles.md`.
@@ -50,6 +55,13 @@ git diff --check
 For doc-only changes, run the relevant example commands from the changed docs
 plus `git diff --check`.
 
+For Rust foundation changes, run `cargo fmt --all -- --check`,
+`cargo clippy --workspace --all-targets --locked -- -D warnings`, and
+`cargo test --workspace --locked`. CI tests the declared minimum Rust version
+as well as the pinned current toolchain. Keep the native semantic decisions
+and conformance expectations aligned; Python behavior is a comparison oracle
+only where that behavior is intentionally retained.
+
 ## Language Design Rules
 
 - Preserve the language's spec-as-code shape. OpenSpec's persistent-spec idea
@@ -73,7 +85,7 @@ plus `git diff --check`.
   general query pipelines, or implicit set-based mutation unless the design
   principles are intentionally revised first.
 - Behavior names cannot use built-ins or behavior-body keywords such as `set`,
-  `count`, `sum`, `find`, `exists`, `LET`, `RETURN`, `PASS`, `IF`, `FOR`, or
+  `count`, `sum`, native `divide`, `find`, `exists`, `LET`, `RETURN`, `PASS`, `IF`, `FOR`, or
   `FIND`.
 - `REQUEST` contracts validate after `GIVEN` setup and before `WHEN`
   execution. `OUTPUT` contracts validate after execution.

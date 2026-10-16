@@ -1,0 +1,413 @@
+{
+  "kind": "gwt.development-performance-comparison",
+  "schemaVersion": 1,
+  "beforeEngine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:02453a0df357e44073927ea90e6a7e112f91d98485fb3d38d16a443c292be607"
+  },
+  "afterEngine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:d9fa6490d59a29aded789d387d366e3aaa1f387e1159c80b4f5ae9ef6515b6a2"
+  },
+  "iterations": 100,
+  "batches": 7,
+  "matchingObservations": 189,
+  "workloads": [
+    {
+      "name": "delivery",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 141.33778,
+            "minUs": 140.81219000000002,
+            "maxUs": 208.09882000000002
+          },
+          "after": {
+            "medianUs": 150.59920000000002,
+            "minUs": 137.97886,
+            "maxUs": 157.74984
+          },
+          "beforeOverAfter": 0.9385028605729644
+        },
+        "run": {
+          "before": {
+            "medianUs": 17.69247,
+            "minUs": 17.64639,
+            "maxUs": 18.47634
+          },
+          "after": {
+            "medianUs": 15.935559999999999,
+            "minUs": 15.847100000000001,
+            "maxUs": 16.63739
+          },
+          "beforeOverAfter": 1.110250910542209
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 4.61748,
+            "minUs": 4.56829,
+            "maxUs": 4.784590000000001
+          },
+          "after": {
+            "medianUs": 4.55216,
+            "minUs": 4.5271099999999995,
+            "maxUs": 4.58983
+          },
+          "beforeOverAfter": 1.0143492320129346
+        }
+      }
+    },
+    {
+      "name": "invoice",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 42.76261,
+            "minUs": 35.33034,
+            "maxUs": 56.33864
+          },
+          "after": {
+            "medianUs": 35.434940000000005,
+            "minUs": 35.07646,
+            "maxUs": 42.36807
+          },
+          "beforeOverAfter": 1.2067922225916001
+        },
+        "run": {
+          "before": {
+            "medianUs": 39.281169999999996,
+            "minUs": 36.99567,
+            "maxUs": 39.890519999999995
+          },
+          "after": {
+            "medianUs": 22.52475,
+            "minUs": 22.43429,
+            "maxUs": 23.38869
+          },
+          "beforeOverAfter": 1.7439114751551068
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 8.57653,
+            "minUs": 8.50058,
+            "maxUs": 8.74434
+          },
+          "after": {
+            "medianUs": 4.8424,
+            "minUs": 4.8148599999999995,
+            "maxUs": 4.85894
+          },
+          "beforeOverAfter": 1.771132083264497
+        }
+      }
+    },
+    {
+      "name": "reservation",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 258.52645,
+            "minUs": 248.06658,
+            "maxUs": 275.54094
+          },
+          "after": {
+            "medianUs": 175.1713,
+            "minUs": 175.064,
+            "maxUs": 180.54491000000002
+          },
+          "beforeOverAfter": 1.475849354317745
+        },
+        "run": {
+          "before": {
+            "medianUs": 207.45181,
+            "minUs": 142.13047,
+            "maxUs": 218.0857
+          },
+          "after": {
+            "medianUs": 105.41332000000001,
+            "minUs": 104.00137,
+            "maxUs": 108.93925999999999
+          },
+          "beforeOverAfter": 1.967984785983403
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 22.2819,
+            "minUs": 22.22239,
+            "maxUs": 22.311259999999997
+          },
+          "after": {
+            "medianUs": 22.04185,
+            "minUs": 21.80951,
+            "maxUs": 22.60431
+          },
+          "beforeOverAfter": 1.010890646656247
+        }
+      }
+    },
+    {
+      "name": "scalar_unrelated_0",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 115.67302000000001,
+            "minUs": 83.94366000000001,
+            "maxUs": 145.49770999999998
+          },
+          "after": {
+            "medianUs": 87.19686999999999,
+            "minUs": 86.87156,
+            "maxUs": 89.17399
+          },
+          "beforeOverAfter": 1.326573075386766
+        },
+        "run": {
+          "before": {
+            "medianUs": 138.81053,
+            "minUs": 136.7749,
+            "maxUs": 210.82074
+          },
+          "after": {
+            "medianUs": 134.85909,
+            "minUs": 134.21749,
+            "maxUs": 137.09219000000002
+          },
+          "beforeOverAfter": 1.0293005091462504
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 36.99346,
+            "minUs": 21.03586,
+            "maxUs": 40.44365
+          },
+          "after": {
+            "medianUs": 20.38944,
+            "minUs": 20.302880000000002,
+            "maxUs": 20.44635
+          },
+          "beforeOverAfter": 1.8143440918436209
+        }
+      }
+    },
+    {
+      "name": "scalar_field_0",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 83.88465,
+            "minUs": 82.57718,
+            "maxUs": 108.059
+          },
+          "after": {
+            "medianUs": 84.0744,
+            "minUs": 83.03093,
+            "maxUs": 143.40206
+          },
+          "beforeOverAfter": 0.9977430704233393
+        },
+        "run": {
+          "before": {
+            "medianUs": 134.77313,
+            "minUs": 134.1695,
+            "maxUs": 137.97977
+          },
+          "after": {
+            "medianUs": 134.79517,
+            "minUs": 134.48339,
+            "maxUs": 143.3727
+          },
+          "beforeOverAfter": 0.9998364926577117
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 20.084169999999997,
+            "minUs": 19.92427,
+            "maxUs": 20.30508
+          },
+          "after": {
+            "medianUs": 20.31971,
+            "minUs": 19.932779999999998,
+            "maxUs": 21.12473
+          },
+          "beforeOverAfter": 0.9884082991341903
+        }
+      }
+    },
+    {
+      "name": "scalar_unrelated_100",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 84.24572,
+            "minUs": 84.12939999999999,
+            "maxUs": 85.21565
+          },
+          "after": {
+            "medianUs": 86.36591,
+            "minUs": 85.38125,
+            "maxUs": 148.65213
+          },
+          "beforeOverAfter": 0.975451077861624
+        },
+        "run": {
+          "before": {
+            "medianUs": 202.75868,
+            "minUs": 202.22417000000002,
+            "maxUs": 231.59781
+          },
+          "after": {
+            "medianUs": 148.46247,
+            "minUs": 148.00611999999998,
+            "maxUs": 186.67924
+          },
+          "beforeOverAfter": 1.3657234720667115
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 21.31719,
+            "minUs": 20.85642,
+            "maxUs": 22.032130000000002
+          },
+          "after": {
+            "medianUs": 20.96602,
+            "minUs": 20.7933,
+            "maxUs": 21.485599999999998
+          },
+          "beforeOverAfter": 1.016749483211406
+        }
+      }
+    },
+    {
+      "name": "scalar_field_100",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 82.54592,
+            "minUs": 82.18395,
+            "maxUs": 84.23249
+          },
+          "after": {
+            "medianUs": 81.67989,
+            "minUs": 81.59413,
+            "maxUs": 82.47439
+          },
+          "beforeOverAfter": 1.0106027322025042
+        },
+        "run": {
+          "before": {
+            "medianUs": 197.63173,
+            "minUs": 194.37301000000002,
+            "maxUs": 201.58377
+          },
+          "after": {
+            "medianUs": 148.19747,
+            "minUs": 147.58061999999998,
+            "maxUs": 153.90822
+          },
+          "beforeOverAfter": 1.333570201974433
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 21.06121,
+            "minUs": 20.83909,
+            "maxUs": 21.324099999999998
+          },
+          "after": {
+            "medianUs": 20.53872,
+            "minUs": 20.2088,
+            "maxUs": 21.311580000000003
+          },
+          "beforeOverAfter": 1.025439267880374
+        }
+      }
+    },
+    {
+      "name": "scalar_unrelated_4000",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 81.64583,
+            "minUs": 81.35368,
+            "maxUs": 81.98637
+          },
+          "after": {
+            "medianUs": 83.0651,
+            "minUs": 81.21512,
+            "maxUs": 90.24039
+          },
+          "beforeOverAfter": 0.9829137628197643
+        },
+        "run": {
+          "before": {
+            "medianUs": 2202.75839,
+            "minUs": 2189.10952,
+            "maxUs": 2376.8955499999997
+          },
+          "after": {
+            "medianUs": 893.26003,
+            "minUs": 816.49428,
+            "maxUs": 1033.90601
+          },
+          "beforeOverAfter": 2.465976665271813
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 35.47562,
+            "minUs": 34.44137,
+            "maxUs": 35.6805
+          },
+          "after": {
+            "medianUs": 34.916959999999996,
+            "minUs": 33.85086,
+            "maxUs": 37.5459
+          },
+          "beforeOverAfter": 1.0159996746566713
+        }
+      }
+    },
+    {
+      "name": "scalar_field_4000",
+      "timings": {
+        "compile": {
+          "before": {
+            "medianUs": 81.59614,
+            "minUs": 80.64966,
+            "maxUs": 89.03572
+          },
+          "after": {
+            "medianUs": 80.36111,
+            "minUs": 79.74135000000001,
+            "maxUs": 81.05361
+          },
+          "beforeOverAfter": 1.015368503496281
+        },
+        "run": {
+          "before": {
+            "medianUs": 2258.38499,
+            "minUs": 2253.66923,
+            "maxUs": 2267.62146
+          },
+          "after": {
+            "medianUs": 887.66452,
+            "minUs": 876.88003,
+            "maxUs": 1018.56135
+          },
+          "beforeOverAfter": 2.5441875157970717
+        },
+        "serialize": {
+          "before": {
+            "medianUs": 33.88051,
+            "minUs": 33.46463,
+            "maxUs": 34.81346
+          },
+          "after": {
+            "medianUs": 35.323029999999996,
+            "minUs": 34.10253,
+            "maxUs": 36.23033
+          },
+          "beforeOverAfter": 0.9591620537649235
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,367 @@
+{
+  "results": [
+    {
+      "variant": "preserved",
+      "case": "invoice",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "rejected-request",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "invalid-input",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "expected-rejection",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "exact-prints",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "raw-failure",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "imported",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "limited-request",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "preserved",
+      "case": "limited-scenario",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "invoice",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "rejected-request",
+      "status": "observation_changed",
+      "changes": {
+        "evidence": true,
+        "outcome": true,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "invalid-input",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "expected-rejection",
+      "status": "observation_changed",
+      "changes": {
+        "evidence": true,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "exact-prints",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "raw-failure",
+      "status": "observation_changed",
+      "changes": {
+        "evidence": true,
+        "outcome": true,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "imported",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "limited-request",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    },
+    {
+      "variant": "changed-message",
+      "case": "limited-scenario",
+      "status": "observation_preserved",
+      "changes": {
+        "evidence": false,
+        "outcome": false,
+        "source": false,
+        "state": false
+      },
+      "newCaseReplayVerified": true,
+      "originalEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:93058bfe2e2018f29f6330c9528e8faaa3215dad606a2be697ac5bda49628fc3"
+      },
+      "targetEngine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:034e7c011d19da0787d638a414db2177beea3d63e74e98b45b0095eea97db6e8"
+      }
+    }
+  ],
+  "syntheticChangedEngine": true,
+  "forgedObservationRefusals": 2,
+  "promotedCases": 0
+}

@@ -20,6 +20,15 @@ than additional language syntax. For the relationship between the core
 language, program-specific domain DSLs, semantic models, and LLM authoring, see
 [dsl-and-llms.md](dsl-and-llms.md) and [agent-authoring.md](agent-authoring.md).
 
+The experimental native profile also supports [sequential REQUIRE proofs](native-require.md).
+This is a checker/runtime semantic extension over existing statement syntax;
+it does not change the Python v0.2 contract. The native profile also carries
+supported facts from [FOR/FIND filters](native-filter-proofs.md) into selected bodies.
+[Early-return analysis](native-early-returns.md) also retains supported facts on
+paths that continue, without adding syntax.
+Native [branch-exit joins](native-branch-proofs.md) additionally retain
+supported REQUIRE and nested-continuation proofs common to all continuing branches.
+
 ## Program Shape
 
 ```gwt
@@ -219,6 +228,18 @@ types.
 
 Records can also describe values that are one of several named kinds:
 
+The following section describes the Python language profile. The Rust engine's
+[one-of contracts](native-one-of.md) support closed tagged values, explicit
+`kind` initializers, common fields, and exhaustive `DEPENDING ON` kind branches
+with scoped payload access. Native [scalar dispatch](native-value-dispatch.md)
+is also supported. [Kind comparisons](native-kind-conditions.md) narrow
+short-circuit expressions and `IF`/`DECIDE` bodies. Active proofs guard against
+alias writes that would invalidate the remaining kind set.
+Native helpers may name a selected kind with `TYPE Email is Contact of kind
+email` or use that type expression directly in a contract. This exposes only
+the selected payload and requires callers to prove that kind. Python formatting
+preserves these annotations, but Python execution does not implement them.
+
 ```gwt
 RECORD Statement is one of
   let_number:
@@ -295,10 +316,18 @@ GWT v0.2 does not have a source-level `null` literal. JSON input can contain
 `null` where a contract is `optional<Type>` or `any`; other typed contracts
 reject it. An optional contract also accepts an omitted field or contract path.
 Missing and JSON null intentionally collapse to the same absent value.
+An explicit empty object is not absence: an `optional<text>` field containing
+`{}` fails its inner text contract. Empty unknown fields are still rejected.
 
 Use `optional<Type>` when absence is the only fact behavior needs. Use `any`
 for raw untyped input, or normalize into status fields or one-of records when
 missing, unknown, and not-applicable have different domain meanings.
+
+For a known raw shape, prefer declaring its actual fields, as the
+[contact normalization example](../examples/input_normalization/README.md) does.
+The [native boundary decision](native-input-boundary-decisions.md) keeps this
+typed boundary and explicit domain states rather than introducing native `any`.
+Its migration notes identify stricter acceptance and remaining engine differences.
 
 Declared record, request input, `OUTPUT`, typed table, and behavior parameter
 contracts also protect later writes. A `set`, `add`, or `subtract` that would
@@ -348,6 +377,12 @@ run; imports are for reusable behavior. If a local behavior has the same
 signature as an imported behavior, the later local definition is tried first.
 
 ## Request Mode
+
+The following paired-file mode describes the Python CLI. The experimental Rust
+engine uses [native request entries](native-request-entries.md): an ordinary
+source file explicitly imports its rules with `USE`, then supplies setup, public
+calls, and expectations. Its single-entry result is the complete scenario state;
+native JSON request calls retain declared-output results.
 
 The CLI can run a behavior file with a separate GWT-shaped request file:
 
@@ -720,6 +755,11 @@ values such as list literals.
 
 ## Data Tables
 
+The experimental Rust engine supports the typed record form described in
+[native setup tables](native-setup-tables.md), with explicit differences for
+empty tables, optional columns, expressions, and limits. Native request-file
+execution remains pending.
+
 `GIVEN path are` creates a list of records from a pipe table:
 
 ```gwt
@@ -959,6 +999,13 @@ For broad `number` expressions, decimal-looking branch literals match host
 number values by numeric value; use `decimal` when exact decimal matching is
 required.
 
+The experimental native profile makes a deliberate different choice:
+[scalar dispatch](native-value-dispatch.md) follows native exact `==`, so integer
+`1` and decimal `1.0` match the same value and are duplicate labels. Both boolean
+values also constitute exhaustive native coverage without `ELSE`. Text and
+booleans remain separate from numbers. These native rules do not change the
+Python behavior described above.
+
 Use `DECIDE` for first-matching priority policies over arbitrary conditions.
 Use `DEPENDING ON` when dispatching on one known value or one one-of record
 kind.
@@ -983,6 +1030,25 @@ WHEN withdraw <amount> from <account>
 
 `RETURN` exits the current behavior immediately. Calling a returning behavior
 with a single-line `WHEN` is allowed, but the returned value is discarded.
+
+The experimental native engine additionally requires explicit parameter and
+return contracts and a return on every normal path. Its
+[pricing example](../examples/native_return_values/README.md) uses the shared
+syntax; [native return rules](native-semantics.md#returned-behavior-values)
+describe checking, copied result values, and execution evidence.
+The native [value-argument example](../examples/native_value_arguments/README.md)
+also passes literals and parenthesized expressions. Bare paths share state;
+`(path)` passes a copy. This call extension is not supported by the Python
+runtime/checker; see [native argument rules](native-semantics.md#call-arguments).
+Native scenarios can assert exact serialized output with `THEN prints [...]`.
+The [receipt example](../examples/native_print_expectations/README.md) shows mixed
+values and empty output. This assertion is native-only as well; its array is a
+JSON snapshot rather than a GWT expression.
+The native [stock-rejection example](../examples/native_expected_failures/README.md)
+uses `THEN fails with "assertion_failed"` immediately after one request action.
+The scenario passes when the expected rejection occurs and its subsequent
+state/print assertions pass. Direct host execution still reports the rejection.
+See [expected action failures](native-semantics.md#expected-action-failures).
 
 ## Expressions
 
@@ -1026,6 +1092,12 @@ ELSE
 The inner value cannot be used by operators until it is guarded. Narrowing is
 branch-local; it does not currently propagate through compound conditions or
 after a branch returns.
+
+The experimental [native presence rules](native-presence.md) additionally carry
+proven presence through supported `not`, true-`and`, and false-`or` conditions,
+into `IF`/`ELSE` bodies, and past earlier false `DECIDE` conditions. Active proofs
+are protected against clearing writes through aliases and ancestors. They do
+not propagate beyond the branch or after an early return.
 
 ## Behavior
 
@@ -1131,3 +1203,20 @@ gwt: examples/bank.gwt:12: unknown name: total
   REQUIRE account.balance >= total
                             ^^^^^
 ```
+
+## Native explicit rounding
+
+The experimental Rust profile can quote a rounded quotient as a visible behavior
+step: `divide total by units rounded to 2 places using half_even into price`.
+The destination must be decimal, and the source must choose both scale and mode.
+See [rounded division](native-rounded-division.md) and the
+[quoted-price example](../examples/native_rounded_division/README.md). This native
+extension does not change Python arithmetic or make ordinary native `/` round.
+
+## Native typed local records
+
+The native profile supports [typed local records](native-local-records.md):
+`LET share be Share:` followed by explicit indented fields creates a checked
+local result without a template argument. The trailing colon selects
+construction; the remaining `LET` forms retain their expression/call meaning.
+This extension and its colon-call migration are separate from Python v0.2.

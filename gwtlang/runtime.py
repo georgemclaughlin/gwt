@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from difflib import get_close_matches
+from functools import lru_cache
 from pathlib import Path
 import re
 import shlex
@@ -1019,8 +1020,8 @@ class Runtime:
             raise _with_line_context(validation.line, exc) from exc
 
     def _validate_record_fields(self, base_path: str, value: dict[str, Any], record: RecordDefinition, line: Line) -> None:
-        flat_value = _flatten_record(value)
         expected_fields = set(record.fields)
+        flat_value = _flatten_record(value, field_boundaries=expected_fields)
         actual_fields = set(flat_value)
 
         missing_fields = expected_fields - actual_fields
@@ -1113,8 +1114,8 @@ class Runtime:
         if case is None:
             raise GwtError(f"record {variant.name} has unknown kind: {kind}")
 
-        flat_value = _flatten_record(record)
         expected_fields = {"kind", *case.fields}
+        flat_value = _flatten_record(record, field_boundaries=expected_fields)
         actual_fields = set(flat_value)
 
         missing_fields = expected_fields - actual_fields
@@ -3545,12 +3546,19 @@ def _signature_has_explicit_parameters(signature: list[str]) -> bool:
     return any(SIGNATURE_PARAMETER_PATTERN.match(token) is not None for token in signature[1:])
 
 
-def _flatten_record(value: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+def _flatten_record(
+    value: dict[str, Any], prefix: str = "", *, field_boundaries: set[str] | None = None,
+) -> dict[str, Any]:
     flattened: dict[str, Any] = {}
     for key, item in value.items():
         path = key if prefix == "" else f"{prefix}.{key}"
-        if isinstance(item, dict):
-            flattened.update(_flatten_record(cast(dict[str, Any], item), path))
+        # An explicit empty object is still a supplied value. Dropping it makes
+        # optional scalar fields appear absent and hides unknown empty fields.
+        if isinstance(item, dict) and item and (field_boundaries is None or path not in field_boundaries):
+            # A declared field owns its whole value. Its own contract validates
+            # nested records/variants, optional values, or explicit `any` data.
+            # Flatten only structural prefixes of legacy dotted declarations.
+            flattened.update(_flatten_record(cast(dict[str, Any], item), path, field_boundaries=field_boundaries))
         else:
             flattened[path] = item
     return flattened
@@ -3789,6 +3797,19 @@ def _split_pipes_outside_string(text: str) -> list[str]:
 def _literal_union_values(value_type: str) -> tuple[Any, ...] | None:
     if "|" not in value_type:
         return None
+    # These are immutable scalar type literals, never request values or ASTs.
+    # Bound both entry count and retained source length for long-lived hosts.
+    if len(value_type) > 4096:
+        return _parse_literal_union_values(value_type)
+    return _cached_literal_union_values(value_type)
+
+
+@lru_cache(maxsize=256)
+def _cached_literal_union_values(value_type: str) -> tuple[Any, ...] | None:
+    return _parse_literal_union_values(value_type)
+
+
+def _parse_literal_union_values(value_type: str) -> tuple[Any, ...] | None:
     parts = _split_pipes_outside_string(value_type)
     if len(parts) < 2 or any(not part for part in parts):
         return None

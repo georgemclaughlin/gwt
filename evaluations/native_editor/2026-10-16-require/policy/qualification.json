@@ -1,0 +1,24 @@
+{
+  "native": "/tmp/gwt-package-host-d91quug9/installed/bin/gwt-native",
+  "nativeSha256": "5f6d566cbe9a3ed31f8035ad79966ff984d01d0c59d5fb21f351de1dc0ce7764",
+  "previousEngine": "/tmp/gwt-package-host-fh2x9e_s/installed/bin/gwt-native",
+  "previousSha256": "677c27f0f1f42e33182aeb26c34942c894455192a87bfc24e1bb89c11da01949",
+  "policyCases": 24,
+  "policyAccepted": 2,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 20,
+    "compared": 24,
+    "evidenceChanged": 24,
+    "outcomeChanged": 2,
+    "sourceChanged": 24,
+    "stateChanged": 2,
+    "total": 24,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "engineChange": "observation_changed",
+  "previousCaseUnchanged": true,
+  "candidateGuardReplayVerified": true,
+  "reviewApproved": false
+}

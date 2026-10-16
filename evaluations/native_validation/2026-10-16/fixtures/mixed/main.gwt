@@ -1,0 +1,22 @@
+# café 😀 </script><img src=x onerror=alert(1)>
+USE "helpers.gwt"
+SCENARIO exact receipt
+GIVEN amount is 9007199254740993
+WHEN touch amount
+WHEN print amount
+THEN prints [9007199254740993]
+AND amount == 9007199254740993
+SCENARIO action only
+WHEN print 0
+SCENARIO failing expectation
+THEN false
+AND true
+SCENARIO café rows
+GIVEN amount is <value>
+THEN amount == <expected>
+EXAMPLES
+  | value | expected |
+  | 1     | 1        |
+  | 2     | 0        |
+SCENARIO </script><script>alert(2)</script>
+THEN true

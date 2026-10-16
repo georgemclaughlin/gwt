@@ -1,0 +1,21 @@
+{
+  "pythonTests": 664,
+  "focusedTests": 20,
+  "unchangedPolicyFiles": 25,
+  "unchangedNativeEngineInputs": 56,
+  "browserValidation": "pending: runtime reported no browser; discovery returned []",
+  "humanParticipants": 0,
+  "liveModelCalls": 0,
+  "sourceHashes": {
+    "evaluations/human_review/study.py": "43b2fd7323dd9254956de34b1b6effdbce7cc073245b717c6c99bb9a5d9489cc",
+    "evaluations/human_review/session.html": "5ed2e569f75a15870b2ee4bf9b1bb6f8b260d97f57f3b712ace70c4b73717012",
+    "evaluations/human_review/session-recovery.js": "9f8696836889e5f0c8e3b1604d45c953da541bb880d1185052e063d612694937",
+    "evaluations/human_review/qualify_recovery.py": "9b0c0e98c693cd0c9021adf81b0b3df3dc42e9d8b7f5ebf0e5852bd0b66f2ae5",
+    "evaluations/human_review/qualify_adjudication.py": "d27d9d0ddf8c7a83fb5d00a79552b54e7955784276e52db5229759f6b4aa88df",
+    "tests/test_human_review.py": "4e50e7fe71ff8022a05a468c47e39f580ecf7b295de5a524286f909c5723680f",
+    "tests/test_human_recovery.py": "1054b04fede1bca41757f1f6f277636cf6b9dd5d07159612f13a5d49ca13b1db",
+    "docs/human-review-study.md": "c984075899bfb6227aa80c23b48be203ab7e39fcd07109b0ee6f25883edec24c",
+    "evaluations/human_review/README.md": "30cfb35bf63ed1d9183071c7485fac0bbedeb602c9e86a504a873c732c66d54b",
+    "evaluations/human_review/2026-10-16-recovery/README.md": "8b561a903021cf7ce9868cceb128dab08169003019c99e40688f724e65e40067"
+  }
+}

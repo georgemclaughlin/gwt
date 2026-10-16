@@ -1,0 +1,25 @@
+PROGRAM delivery review
+
+RECORD Facts
+  subtotal: integer
+  express: boolean
+
+RECORD Decision
+  fee: integer
+
+REQUEST assess
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    fee: 0
+  WHEN assess facts into decision
+  OUTPUT decision is Decision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  IF facts.subtotal >= 120
+    set decision.fee to 0
+  ELSE
+    set decision.fee to 5
+  IF facts.express
+    add 10 to decision.fee

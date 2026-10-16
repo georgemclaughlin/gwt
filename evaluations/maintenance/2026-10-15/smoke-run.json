@@ -1,0 +1,29 @@
+{
+  "caseCount": 1,
+  "cliVersion": "codex-cli 0.162.1",
+  "completedCaseCount": 1,
+  "contextVariants": [
+    "maintenance-guide"
+  ],
+  "durationSeconds": 24.409,
+  "failedCaseCount": 0,
+  "failures": [],
+  "finishedAt": "2026-10-16T03:21:06.949646+00:00",
+  "jobs": 1,
+  "mode": "first-pass",
+  "provider": "openai-codex-cli",
+  "reasoningEffort": "medium",
+  "repairResponses": null,
+  "requestedModel": "gpt-6-astra",
+  "schemaVersion": 1,
+  "startedAt": "2026-10-16T03:20:42.540191+00:00",
+  "status": "complete",
+  "successfulCaseCount": 1,
+  "taskCaseIds": [
+    "damage-precedence-gwt-1"
+  ],
+  "taskDigest": "sha256:14802f67c641b9a84ca35c3bddb60932227d6d1bc3236902eb67c66e5c75fa51",
+  "taskFile": "evaluations/maintenance/2026-10-15/smoke-tasks.jsonl",
+  "timeoutSeconds": 180,
+  "totalResponseCount": 1
+}

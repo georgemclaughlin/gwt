@@ -1,0 +1,51 @@
+{
+  "accepted": 12,
+  "artifactHashes": {
+    "crates/gwt-core/tests/finite_literals.rs": "ab6df0f725e5be3d7914fc8b8f93ecb99a2fd65c8c9a0babae7ca83763048e0c",
+    "crates/gwt-core/tests/language_choices.rs": "0e3de907a1b2b24a184d0621c8a066e18c2e2770ab9c5d686358f4c45e3cd53d",
+    "evaluations/native_language/2026-10-16-finite/browser-check.js": "65d7e9c5d3e32c9f9b6d25079b8dac749de0ce4a48c944467d3f1452021a8c47",
+    "evaluations/native_language/2026-10-16-finite/browser-result.json": "b7daa9a057474e645f27493db0e3d86cfa67ccffcc1fedc10e14723299659ae7",
+    "evaluations/native_language/2026-10-16-finite/desktop.png": "fdc36c4eb86b942fe8a2442e1e37eb525c1c4bbc891a372074ebeef53be88126",
+    "evaluations/native_language/2026-10-16-finite/downloaded-review.json": "be6cd1e376238e962c6c174370e8a85e3b6b72b915987bf599498ba312989cc4",
+    "evaluations/native_language/2026-10-16-finite/mobile.png": "bc5a0cf889a18cd42add0508c57c2efc4a00bcd0c2c2500428b214bbc6e5374b",
+    "evaluations/native_language/2026-10-16-finite/packaged/independent-probes.json": "3ca90ae271694c47068c49cf8482e365cd13a25467b3edce6ec32bb812347f64",
+    "evaluations/native_language/2026-10-16-finite/packaged/review.json": "f2ca8c7be101f55da92bbb22a4bef84ed287d14cfd9061edf9b91d00c6e29c54",
+    "gwtlang/formatter.py": "9d267c62643a80d599489b30624e924c0352564a6f2784deae89b863709876e4",
+    "tests/test_examples.py": "783a4d3a3b55777bce5127dd87c724f0e6f70c3aec0e6dabb02f9ca326197c14",
+    "tests/test_formatter.py": "64b412d84058cd4acae22ddb241cf55eaa09c590f948afb6115d7a91aa0ba1ae"
+  },
+  "browserChecks": 87,
+  "capturedCases": 12,
+  "changedOutcomes": 3,
+  "clippyBothToolchains": true,
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:79444fc4a87f366006de4d4be90ac3bf3fb81a8789bea9e01071e0a2adb8d42b"
+  },
+  "engineSourceInputs": 60,
+  "exactBrowserDownload": true,
+  "exampleFormatting": "all examples checked with Python formatter; new native example also checked with native formatter",
+  "externalPilot": false,
+  "gitDiffCheck": true,
+  "humanParticipants": 0,
+  "independentRequests": 144,
+  "packagedSourceMatchesWorktree": true,
+  "pythonRootExamples": "all checked",
+  "pythonTests": 671,
+  "pythonWorkflows": [
+    "order_fulfillment",
+    "language_tour"
+  ],
+  "rejectedBeforeExecution": 132,
+  "retainedExecutable": "/home/g/.cache/gwt-qualifications/finite-literals-79444fc4/gwt-native",
+  "retainedExecutableSha256": "3f5e08d4fcfc56f1ce80c954b2152361c059a7088db78533d4f0d9e5eb61bf7c",
+  "rustTestCounts": {
+    "1.85": 429,
+    "1.96": 429
+  },
+  "screenshotsInspected": [
+    "desktop.png",
+    "mobile.png"
+  ],
+  "vscodeCheck": true
+}

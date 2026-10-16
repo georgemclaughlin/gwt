@@ -13,6 +13,18 @@ from gwtlang.agent_matrix import (
 
 
 class AgentMatrixTests(unittest.TestCase):
+    def test_maintenance_python_prompt_and_repair_use_the_python_contract(self):
+        task = {
+            "caseId": "maintenance-python", "kind": "maintain", "language": "python",
+            "contextVariant": "maintenance-guide", "task": "Change a decision.",
+            "context": {"request": "decide", "publicProbes": [{"input": {}, "expected": {"approved": True}}]},
+        }
+        prompt = _task_prompt(task)
+        self.assertIn("complete Python source defining decide(state)", prompt)
+        self.assertNotIn("canonical GWT source", prompt)
+        feedback = _public_repair_feedback(task, {"action": "code", "source": 'def decide(state):\n    return {"approved": False}\n'})
+        self.assertEqual(feedback, [{"gate": "public-probe", "input": {}, "expected": {"approved": True}}])
+
     def test_prompt_contains_task_and_blind_execution_boundary(self):
         prompt = _task_prompt(
             {

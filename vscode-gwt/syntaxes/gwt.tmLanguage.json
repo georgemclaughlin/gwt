@@ -65,7 +65,7 @@
       "patterns": [
         {
           "name": "support.function.builtin.gwt",
-          "match": "\\b(?:set|add|subtract|append|count|sum|find|exists|print)\\b"
+          "match": "\\b(?:set|add|subtract|append|count|sum|divide|find|exists|print)\\b"
         },
         {
           "name": "keyword.operator.word.gwt",

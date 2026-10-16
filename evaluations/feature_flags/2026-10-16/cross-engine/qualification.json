@@ -1,0 +1,19 @@
+{
+  "inputs": 6272,
+  "executions": 18816,
+  "outputReasons": [
+    "account_disabled",
+    "invalid_bucket",
+    "kill_switch",
+    "no_matching_rule",
+    "override_disabled",
+    "override_enabled",
+    "rollout_rule_disabled",
+    "rollout_rule_enabled"
+  ],
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-axbdwpjw/installed/bin/gwt-native",
+  "nativeSha256": "dc37feafaeec5fd6854254c2eae73ccb600e594ed264f7115a455304cb40874d",
+  "beforeSha256": "574cb0296d6a853dfb44f9e7f4775fbee010d87c7060c973f0f1a386801349fe",
+  "afterSha256": "8aeccd86e0e65fd4ae9b9769d00f5d6f82f58b24669e8d25479ad41253f4cfdd",
+  "humanParticipants": 0
+}

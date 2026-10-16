@@ -1,0 +1,23 @@
+{
+  "kind": "goal-completion-readiness",
+  "goal": "docs/project-goal.md",
+  "achieved": false,
+  "previousTurn": "progress",
+  "engineSourceInputsMatched": 61,
+  "humanSessions": "pending-by-owner",
+  "externalPilots": "deferred-by-owner",
+  "apiKeyConfigured": false,
+  "providerPreflight": "OPENAI_API_KEY is required for live calls",
+  "codexCliVersion": "0.163.0",
+  "codexAuthentication": "ChatGPT",
+  "retainedNativeExperiments": "synthetic-only",
+  "liveCallsThisCheckpoint": 0,
+  "additionalAgentsLaunched": 0,
+  "blockingConditionObservedAcrossConsecutiveGoalTurns": [
+    "evidence audit and owner deferral",
+    "native support and transition contract",
+    "native toolchain identity",
+    "completion checkpoint"
+  ],
+  "atImpasseOnRequiredEvidence": true
+}

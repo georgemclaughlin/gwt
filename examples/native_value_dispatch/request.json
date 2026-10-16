@@ -1,0 +1,7 @@
+{
+  "facts": {
+    "status": "retry",
+    "attempt": 2,
+    "notify": true
+  }
+}

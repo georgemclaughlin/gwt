@@ -1,0 +1,16 @@
+{
+  "pythonTests": 658,
+  "focusedTests": 14,
+  "sourceHashesMatch": true,
+  "unchangedNativeEngineInputs": 56,
+  "documentationLinksChecked": true,
+  "humanParticipants": 0,
+  "actualHumanAssessorJudgments": 0,
+  "liveModelCalls": 0,
+  "browserAvailability": {
+    "selection": "No browser is available",
+    "discovery": [],
+    "visualValidation": "pending"
+  },
+  "unchangedStudyInputs": 27
+}

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,6 +8,12 @@ version = "0.3.0"
 description = "A small deterministic workflow language with BDD-shaped syntax."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+
+[project.urls]
+Repository = "https://github.com/georgemclaughlin/gwt"
+Issues = "https://github.com/georgemclaughlin/gwt/issues"
 
 [project.scripts]
 gwt = "gwtlang.__main__:main"

@@ -1,0 +1,5 @@
+TYPE Code is -2.5 | 1.0
+REQUEST echo
+  GIVEN value is Code
+  WHEN PASS
+  OUTPUT value is Code

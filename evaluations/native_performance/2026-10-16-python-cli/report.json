@@ -1,0 +1,6126 @@
+{
+  "completed": true,
+  "timedInvocations": 360,
+  "summary": [
+    {
+      "workload": "invoice",
+      "python": {
+        "medianMs": 113.62305649999999,
+        "minimumMs": 102.210189,
+        "maximumMs": 126.759851,
+        "passMediansMs": [
+          112.3207955,
+          113.95697799999999
+        ]
+      },
+      "rust": {
+        "medianMs": 1.6573125,
+        "minimumMs": 0.950305,
+        "maximumMs": 2.312954,
+        "passMediansMs": [
+          1.526186,
+          1.7204105
+        ]
+      },
+      "pythonOverRustMedianRatio": 68.55861914997925
+    },
+    {
+      "workload": "member-pricing",
+      "python": {
+        "medianMs": 113.36077850000001,
+        "minimumMs": 103.110499,
+        "maximumMs": 131.803223,
+        "passMediansMs": [
+          114.8085775,
+          112.8197475
+        ]
+      },
+      "rust": {
+        "medianMs": 1.804814,
+        "minimumMs": 1.034192,
+        "maximumMs": 2.781273,
+        "passMediansMs": [
+          1.7175255,
+          1.916785
+        ]
+      },
+      "pythonOverRustMedianRatio": 62.81022781294915
+    },
+    {
+      "workload": "fulfillment",
+      "python": {
+        "medianMs": 117.99962500000001,
+        "minimumMs": 108.902617,
+        "maximumMs": 135.082592,
+        "passMediansMs": [
+          117.922155,
+          118.711848
+        ]
+      },
+      "rust": {
+        "medianMs": 3.850431,
+        "minimumMs": 2.894035,
+        "maximumMs": 4.77621,
+        "passMediansMs": [
+          3.7219794999999998,
+          3.951556
+        ]
+      },
+      "pythonOverRustMedianRatio": 30.645822506623286
+    }
+  ],
+  "allIndependentResultsMatched": true,
+  "withinEngineFullStdoutPreserved": true,
+  "observations": {
+    "invoice/python": {
+      "file": "crates/gwt-core/tests/fixtures/invoice.gwt",
+      "ok": true,
+      "output": [],
+      "request_file": "crates/gwt-core/tests/fixtures/invoice-input.json",
+      "result": {
+        "decision": {
+          "status": "priced",
+          "total": "47.880"
+        }
+      },
+      "scenario_count": 1,
+      "scenarios": [
+        {
+          "name": "Main",
+          "output": [],
+          "result": {
+            "decision": {
+              "status": "priced",
+              "total": "47.880"
+            }
+          },
+          "state": {
+            "decision": {
+              "status": "priced",
+              "total": "47.880"
+            },
+            "invoice": {
+              "quantity": 2,
+              "unit_price": "19.95"
+            }
+          }
+        }
+      ],
+      "state": {
+        "decision": {
+          "status": "priced",
+          "total": "47.880"
+        },
+        "invoice": {
+          "quantity": 2,
+          "unit_price": "19.95"
+        }
+      }
+    },
+    "invoice/rust": {
+      "diagnostic": null,
+      "events": [
+        {
+          "inputs": [],
+          "operation": "enter request",
+          "sequence": 1,
+          "span": {
+            "column": 1,
+            "end": 214,
+            "file": "invoice.gwt",
+            "line": 13,
+            "start": 193
+          },
+          "value": {
+            "definition": {
+              "column": 1,
+              "end": 214,
+              "file": "invoice.gwt",
+              "line": 13,
+              "start": 193
+            },
+            "name": "price invoice"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 2,
+          "span": {
+            "column": 12,
+            "end": 300,
+            "file": "invoice.gwt",
+            "line": 16,
+            "start": 294
+          },
+          "value": "0.00"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 3,
+          "span": {
+            "column": 13,
+            "end": 318,
+            "file": "invoice.gwt",
+            "line": 17,
+            "start": 313
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            2,
+            3
+          ],
+          "operation": "initialize",
+          "sequence": 4,
+          "span": {
+            "column": 3,
+            "end": 282,
+            "file": "invoice.gwt",
+            "line": 15,
+            "start": 249
+          },
+          "value": {
+            "after": {
+              "status": "new",
+              "total": "0"
+            },
+            "path": "decision"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 5,
+          "span": {
+            "column": 8,
+            "end": 353,
+            "file": "invoice.gwt",
+            "line": 18,
+            "start": 326
+          },
+          "value": {
+            "bindings": {
+              "decision": "decision",
+              "invoice": "invoice"
+            },
+            "definition": {
+              "column": 1,
+              "end": 455,
+              "file": "invoice.gwt",
+              "line": 22,
+              "start": 419
+            },
+            "signature": "price <invoice> into <decision>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read invoice.unit_price",
+          "sequence": 6,
+          "span": {
+            "column": 11,
+            "end": 550,
+            "file": "invoice.gwt",
+            "line": 25,
+            "start": 532
+          },
+          "value": "19.95"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 7,
+          "span": {
+            "column": 33,
+            "end": 555,
+            "file": "invoice.gwt",
+            "line": 25,
+            "start": 554
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            6,
+            7
+          ],
+          "operation": ">=",
+          "sequence": 8,
+          "span": {
+            "column": 11,
+            "end": 555,
+            "file": "invoice.gwt",
+            "line": 25,
+            "start": 532
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            8
+          ],
+          "operation": "assert",
+          "sequence": 9,
+          "span": {
+            "column": 3,
+            "end": 555,
+            "file": "invoice.gwt",
+            "line": 25,
+            "start": 524
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read invoice.quantity",
+          "sequence": 10,
+          "span": {
+            "column": 11,
+            "end": 582,
+            "file": "invoice.gwt",
+            "line": 26,
+            "start": 566
+          },
+          "value": 2
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 11,
+          "span": {
+            "column": 30,
+            "end": 586,
+            "file": "invoice.gwt",
+            "line": 26,
+            "start": 585
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            10,
+            11
+          ],
+          "operation": ">",
+          "sequence": 12,
+          "span": {
+            "column": 11,
+            "end": 586,
+            "file": "invoice.gwt",
+            "line": 26,
+            "start": 566
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            12
+          ],
+          "operation": "assert",
+          "sequence": 13,
+          "span": {
+            "column": 3,
+            "end": 586,
+            "file": "invoice.gwt",
+            "line": 26,
+            "start": 558
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read invoice.unit_price",
+          "sequence": 14,
+          "span": {
+            "column": 19,
+            "end": 623,
+            "file": "invoice.gwt",
+            "line": 27,
+            "start": 605
+          },
+          "value": "19.95"
+        },
+        {
+          "inputs": [],
+          "operation": "read invoice.quantity",
+          "sequence": 15,
+          "span": {
+            "column": 40,
+            "end": 642,
+            "file": "invoice.gwt",
+            "line": 27,
+            "start": 626
+          },
+          "value": 2
+        },
+        {
+          "inputs": [
+            14,
+            15
+          ],
+          "operation": "*",
+          "sequence": 16,
+          "span": {
+            "column": 19,
+            "end": 642,
+            "file": "invoice.gwt",
+            "line": 27,
+            "start": 605
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [
+            16
+          ],
+          "operation": "initialize",
+          "sequence": 17,
+          "span": {
+            "column": 3,
+            "end": 642,
+            "file": "invoice.gwt",
+            "line": 27,
+            "start": 589
+          },
+          "value": {
+            "after": "39.9",
+            "path": "subtotal"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read subtotal",
+          "sequence": 18,
+          "span": {
+            "column": 25,
+            "end": 675,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 667
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [],
+          "operation": "read subtotal",
+          "sequence": 19,
+          "span": {
+            "column": 36,
+            "end": 686,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 678
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 20,
+          "span": {
+            "column": 47,
+            "end": 692,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 689
+          },
+          "value": "0.2"
+        },
+        {
+          "inputs": [
+            19,
+            20
+          ],
+          "operation": "*",
+          "sequence": 21,
+          "span": {
+            "column": 36,
+            "end": 692,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 678
+          },
+          "value": "7.98"
+        },
+        {
+          "inputs": [
+            18,
+            21
+          ],
+          "operation": "+",
+          "sequence": 22,
+          "span": {
+            "column": 25,
+            "end": 692,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 667
+          },
+          "value": "47.88"
+        },
+        {
+          "inputs": [
+            22
+          ],
+          "operation": "set",
+          "sequence": 23,
+          "span": {
+            "column": 3,
+            "end": 692,
+            "file": "invoice.gwt",
+            "line": 28,
+            "start": 645
+          },
+          "value": {
+            "after": "47.88",
+            "before": "0",
+            "path": "decision.total",
+            "sourcePath": "decision.total"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 24,
+          "span": {
+            "column": 26,
+            "end": 726,
+            "file": "invoice.gwt",
+            "line": 29,
+            "start": 718
+          },
+          "value": "priced"
+        },
+        {
+          "inputs": [
+            24
+          ],
+          "operation": "set",
+          "sequence": 25,
+          "span": {
+            "column": 3,
+            "end": 726,
+            "file": "invoice.gwt",
+            "line": 29,
+            "start": 695
+          },
+          "value": {
+            "after": "priced",
+            "before": "new",
+            "path": "decision.status",
+            "sourcePath": "decision.status"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 26,
+          "span": {
+            "column": 8,
+            "end": 353,
+            "file": "invoice.gwt",
+            "line": 18,
+            "start": 326
+          },
+          "value": {
+            "signature": "price <invoice> into <decision>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "output contract",
+          "sequence": 27,
+          "span": {
+            "column": 3,
+            "end": 390,
+            "file": "invoice.gwt",
+            "line": 19,
+            "start": 356
+          },
+          "value": {
+            "path": "decision",
+            "value": {
+              "status": "priced",
+              "total": "47.88"
+            }
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read decision.total",
+          "sequence": 28,
+          "span": {
+            "column": 8,
+            "end": 412,
+            "file": "invoice.gwt",
+            "line": 20,
+            "start": 398
+          },
+          "value": "47.88"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 29,
+          "span": {
+            "column": 26,
+            "end": 417,
+            "file": "invoice.gwt",
+            "line": 20,
+            "start": 416
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            28,
+            29
+          ],
+          "operation": ">=",
+          "sequence": 30,
+          "span": {
+            "column": 8,
+            "end": 417,
+            "file": "invoice.gwt",
+            "line": 20,
+            "start": 398
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            30
+          ],
+          "operation": "assert",
+          "sequence": 31,
+          "span": {
+            "column": 3,
+            "end": 417,
+            "file": "invoice.gwt",
+            "line": 20,
+            "start": 393
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "leave request",
+          "sequence": 32,
+          "span": {
+            "column": 1,
+            "end": 214,
+            "file": "invoice.gwt",
+            "line": 13,
+            "start": 193
+          },
+          "value": {
+            "name": "price invoice"
+          }
+        }
+      ],
+      "file": "invoice.gwt",
+      "kind": "gwt.native-run",
+      "ok": true,
+      "output": [],
+      "program": "invoice pricing",
+      "programIdentity": {
+        "algorithm": "gwt-native-program-sha256-v1",
+        "digest": "sha256:a102aeaa32dcc5f512b6fabbda0e9d48aaf4b7e427391224fa2c506200fa02c1",
+        "entry": "invoice.gwt",
+        "modules": [
+          {
+            "digest": "sha256:276f77bebe112ec7b019fd0b7442ac71455ef3759292ba74e6404cb323d7cf78",
+            "imports": [],
+            "path": "invoice.gwt"
+          }
+        ]
+      },
+      "request": "price invoice",
+      "result": {
+        "decision": {
+          "status": "priced",
+          "total": "47.88"
+        }
+      },
+      "schemaVersion": 1,
+      "state": {
+        "decision": {
+          "status": "priced",
+          "total": "47.88"
+        },
+        "invoice": {
+          "quantity": 2,
+          "unit_price": "19.95"
+        }
+      },
+      "steps": 28
+    },
+    "member-pricing/python": {
+      "file": "examples/native_return_values/rules.gwt",
+      "ok": true,
+      "output": [],
+      "request_file": "examples/native_return_values/input.json",
+      "result": {
+        "quote": {
+          "total": "35.910"
+        }
+      },
+      "scenario_count": 1,
+      "scenarios": [
+        {
+          "name": "Main",
+          "output": [],
+          "result": {
+            "quote": {
+              "total": "35.910"
+            }
+          },
+          "state": {
+            "order": {
+              "member": true,
+              "quantity": 2,
+              "unit_price": "19.95"
+            },
+            "quote": {
+              "total": "35.910"
+            }
+          }
+        }
+      ],
+      "state": {
+        "order": {
+          "member": true,
+          "quantity": 2,
+          "unit_price": "19.95"
+        },
+        "quote": {
+          "total": "35.910"
+        }
+      }
+    },
+    "member-pricing/rust": {
+      "diagnostic": null,
+      "events": [
+        {
+          "inputs": [],
+          "operation": "enter request",
+          "sequence": 1,
+          "span": {
+            "column": 1,
+            "end": 148,
+            "file": "rules.gwt",
+            "line": 11,
+            "start": 129
+          },
+          "value": {
+            "definition": {
+              "column": 1,
+              "end": 148,
+              "file": "rules.gwt",
+              "line": 11,
+              "start": 129
+            },
+            "name": "quote order"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 2,
+          "span": {
+            "column": 12,
+            "end": 209,
+            "file": "rules.gwt",
+            "line": 14,
+            "start": 206
+          },
+          "value": "0"
+        },
+        {
+          "inputs": [
+            2
+          ],
+          "operation": "initialize",
+          "sequence": 3,
+          "span": {
+            "column": 3,
+            "end": 194,
+            "file": "rules.gwt",
+            "line": 13,
+            "start": 174
+          },
+          "value": {
+            "after": {
+              "total": "0"
+            },
+            "path": "quote"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 4,
+          "span": {
+            "column": 8,
+            "end": 239,
+            "file": "rules.gwt",
+            "line": 15,
+            "start": 217
+          },
+          "value": {
+            "bindings": {
+              "order": "order",
+              "quote": "quote"
+            },
+            "definition": {
+              "column": 1,
+              "end": 320,
+              "file": "rules.gwt",
+              "line": 19,
+              "start": 289
+            },
+            "signature": "quote <order> into <quote>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 5,
+          "span": {
+            "column": 3,
+            "end": 405,
+            "file": "rules.gwt",
+            "line": 22,
+            "start": 367
+          },
+          "value": {
+            "bindings": {
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 466,
+              "file": "rules.gwt",
+              "line": 25,
+              "start": 434
+            },
+            "signature": "calculate total for <order>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 6,
+          "span": {
+            "column": 3,
+            "end": 559,
+            "file": "rules.gwt",
+            "line": 28,
+            "start": 515
+          },
+          "value": {
+            "bindings": {
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 670,
+              "file": "rules.gwt",
+              "line": 32,
+              "start": 635
+            },
+            "signature": "calculate subtotal for <order>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read order.unit_price",
+          "sequence": 7,
+          "span": {
+            "column": 11,
+            "end": 743,
+            "file": "rules.gwt",
+            "line": 35,
+            "start": 727
+          },
+          "value": "19.95"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 8,
+          "span": {
+            "column": 31,
+            "end": 748,
+            "file": "rules.gwt",
+            "line": 35,
+            "start": 747
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            7,
+            8
+          ],
+          "operation": ">=",
+          "sequence": 9,
+          "span": {
+            "column": 11,
+            "end": 748,
+            "file": "rules.gwt",
+            "line": 35,
+            "start": 727
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            9
+          ],
+          "operation": "assert",
+          "sequence": 10,
+          "span": {
+            "column": 3,
+            "end": 748,
+            "file": "rules.gwt",
+            "line": 35,
+            "start": 719
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read order.quantity",
+          "sequence": 11,
+          "span": {
+            "column": 11,
+            "end": 773,
+            "file": "rules.gwt",
+            "line": 36,
+            "start": 759
+          },
+          "value": 2
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 12,
+          "span": {
+            "column": 28,
+            "end": 777,
+            "file": "rules.gwt",
+            "line": 36,
+            "start": 776
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            11,
+            12
+          ],
+          "operation": ">",
+          "sequence": 13,
+          "span": {
+            "column": 11,
+            "end": 777,
+            "file": "rules.gwt",
+            "line": 36,
+            "start": 759
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            13
+          ],
+          "operation": "assert",
+          "sequence": 14,
+          "span": {
+            "column": 3,
+            "end": 777,
+            "file": "rules.gwt",
+            "line": 36,
+            "start": 751
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read order.unit_price",
+          "sequence": 15,
+          "span": {
+            "column": 10,
+            "end": 803,
+            "file": "rules.gwt",
+            "line": 37,
+            "start": 787
+          },
+          "value": "19.95"
+        },
+        {
+          "inputs": [],
+          "operation": "read order.quantity",
+          "sequence": 16,
+          "span": {
+            "column": 29,
+            "end": 820,
+            "file": "rules.gwt",
+            "line": 37,
+            "start": 806
+          },
+          "value": 2
+        },
+        {
+          "inputs": [
+            15,
+            16
+          ],
+          "operation": "*",
+          "sequence": 17,
+          "span": {
+            "column": 10,
+            "end": 820,
+            "file": "rules.gwt",
+            "line": 37,
+            "start": 787
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [
+            17
+          ],
+          "operation": "return",
+          "sequence": 18,
+          "span": {
+            "column": 3,
+            "end": 820,
+            "file": "rules.gwt",
+            "line": 37,
+            "start": 780
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [
+            18
+          ],
+          "operation": "leave behavior",
+          "sequence": 19,
+          "span": {
+            "column": 3,
+            "end": 559,
+            "file": "rules.gwt",
+            "line": 28,
+            "start": 515
+          },
+          "value": {
+            "returned": "39.9",
+            "signature": "calculate subtotal for <order>"
+          }
+        },
+        {
+          "inputs": [
+            19
+          ],
+          "operation": "initialize",
+          "sequence": 20,
+          "span": {
+            "column": 3,
+            "end": 559,
+            "file": "rules.gwt",
+            "line": 28,
+            "start": 515
+          },
+          "value": {
+            "after": "39.9",
+            "path": "subtotal"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 21,
+          "span": {
+            "column": 3,
+            "end": 597,
+            "file": "rules.gwt",
+            "line": 29,
+            "start": 562
+          },
+          "value": {
+            "bindings": {
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 852,
+              "file": "rules.gwt",
+              "line": 39,
+              "start": 822
+            },
+            "signature": "discount rate for <order>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read order.member",
+          "sequence": 22,
+          "span": {
+            "column": 10,
+            "end": 929,
+            "file": "rules.gwt",
+            "line": 43,
+            "start": 917
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            22
+          ],
+          "operation": "branch",
+          "sequence": 23,
+          "span": {
+            "column": 10,
+            "end": 929,
+            "file": "rules.gwt",
+            "line": 43,
+            "start": 917
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 24,
+          "skipped": {
+            "column": 5,
+            "end": 955,
+            "file": "rules.gwt",
+            "line": 45,
+            "start": 951
+          },
+          "span": {
+            "column": 5,
+            "end": 955,
+            "file": "rules.gwt",
+            "line": 45,
+            "start": 951
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 25,
+          "span": {
+            "column": 14,
+            "end": 946,
+            "file": "rules.gwt",
+            "line": 44,
+            "start": 943
+          },
+          "value": "0.1"
+        },
+        {
+          "inputs": [
+            25
+          ],
+          "operation": "return",
+          "sequence": 26,
+          "span": {
+            "column": 7,
+            "end": 946,
+            "file": "rules.gwt",
+            "line": 44,
+            "start": 936
+          },
+          "value": "0.1"
+        },
+        {
+          "inputs": [
+            26
+          ],
+          "operation": "leave behavior",
+          "sequence": 27,
+          "span": {
+            "column": 3,
+            "end": 597,
+            "file": "rules.gwt",
+            "line": 29,
+            "start": 562
+          },
+          "value": {
+            "returned": "0.1",
+            "signature": "discount rate for <order>"
+          }
+        },
+        {
+          "inputs": [
+            27
+          ],
+          "operation": "initialize",
+          "sequence": 28,
+          "span": {
+            "column": 3,
+            "end": 597,
+            "file": "rules.gwt",
+            "line": 29,
+            "start": 562
+          },
+          "value": {
+            "after": "0.1",
+            "path": "rate"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read subtotal",
+          "sequence": 29,
+          "span": {
+            "column": 10,
+            "end": 615,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 607
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [],
+          "operation": "read subtotal",
+          "sequence": 30,
+          "span": {
+            "column": 21,
+            "end": 626,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 618
+          },
+          "value": "39.9"
+        },
+        {
+          "inputs": [],
+          "operation": "read rate",
+          "sequence": 31,
+          "span": {
+            "column": 32,
+            "end": 633,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 629
+          },
+          "value": "0.1"
+        },
+        {
+          "inputs": [
+            30,
+            31
+          ],
+          "operation": "*",
+          "sequence": 32,
+          "span": {
+            "column": 21,
+            "end": 633,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 618
+          },
+          "value": "3.99"
+        },
+        {
+          "inputs": [
+            29,
+            32
+          ],
+          "operation": "-",
+          "sequence": 33,
+          "span": {
+            "column": 10,
+            "end": 633,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 607
+          },
+          "value": "35.91"
+        },
+        {
+          "inputs": [
+            33
+          ],
+          "operation": "return",
+          "sequence": 34,
+          "span": {
+            "column": 3,
+            "end": 633,
+            "file": "rules.gwt",
+            "line": 30,
+            "start": 600
+          },
+          "value": "35.91"
+        },
+        {
+          "inputs": [
+            34
+          ],
+          "operation": "leave behavior",
+          "sequence": 35,
+          "span": {
+            "column": 3,
+            "end": 405,
+            "file": "rules.gwt",
+            "line": 22,
+            "start": 367
+          },
+          "value": {
+            "returned": "35.91",
+            "signature": "calculate total for <order>"
+          }
+        },
+        {
+          "inputs": [
+            35
+          ],
+          "operation": "initialize",
+          "sequence": 36,
+          "span": {
+            "column": 3,
+            "end": 405,
+            "file": "rules.gwt",
+            "line": 22,
+            "start": 367
+          },
+          "value": {
+            "after": "35.91",
+            "path": "total"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read total",
+          "sequence": 37,
+          "span": {
+            "column": 22,
+            "end": 432,
+            "file": "rules.gwt",
+            "line": 23,
+            "start": 427
+          },
+          "value": "35.91"
+        },
+        {
+          "inputs": [
+            37
+          ],
+          "operation": "set",
+          "sequence": 38,
+          "span": {
+            "column": 3,
+            "end": 432,
+            "file": "rules.gwt",
+            "line": 23,
+            "start": 408
+          },
+          "value": {
+            "after": "35.91",
+            "before": "0",
+            "path": "quote.total",
+            "sourcePath": "quote.total"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 39,
+          "span": {
+            "column": 8,
+            "end": 239,
+            "file": "rules.gwt",
+            "line": 15,
+            "start": 217
+          },
+          "value": {
+            "signature": "quote <order> into <quote>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "output contract",
+          "sequence": 40,
+          "span": {
+            "column": 3,
+            "end": 263,
+            "file": "rules.gwt",
+            "line": 16,
+            "start": 242
+          },
+          "value": {
+            "path": "quote",
+            "value": {
+              "total": "35.91"
+            }
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read quote.total",
+          "sequence": 41,
+          "span": {
+            "column": 8,
+            "end": 282,
+            "file": "rules.gwt",
+            "line": 17,
+            "start": 271
+          },
+          "value": "35.91"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 42,
+          "span": {
+            "column": 23,
+            "end": 287,
+            "file": "rules.gwt",
+            "line": 17,
+            "start": 286
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            41,
+            42
+          ],
+          "operation": ">=",
+          "sequence": 43,
+          "span": {
+            "column": 8,
+            "end": 287,
+            "file": "rules.gwt",
+            "line": 17,
+            "start": 271
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            43
+          ],
+          "operation": "assert",
+          "sequence": 44,
+          "span": {
+            "column": 3,
+            "end": 287,
+            "file": "rules.gwt",
+            "line": 17,
+            "start": 266
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "leave request",
+          "sequence": 45,
+          "span": {
+            "column": 1,
+            "end": 148,
+            "file": "rules.gwt",
+            "line": 11,
+            "start": 129
+          },
+          "value": {
+            "name": "quote order"
+          }
+        }
+      ],
+      "file": "rules.gwt",
+      "kind": "gwt.native-run",
+      "ok": true,
+      "output": [],
+      "program": "member pricing",
+      "programIdentity": {
+        "algorithm": "gwt-native-program-sha256-v1",
+        "digest": "sha256:a9cde7968971640c68462fe521e81435b04c66a6d22a5cb5184c3a6cacb07201",
+        "entry": "rules.gwt",
+        "modules": [
+          {
+            "digest": "sha256:18030e6388056893994505e663b6b2533cdfc5dcb70b67a4c07d4bd2e0b51c4a",
+            "imports": [],
+            "path": "rules.gwt"
+          }
+        ]
+      },
+      "request": "quote order",
+      "result": {
+        "quote": {
+          "total": "35.91"
+        }
+      },
+      "schemaVersion": 1,
+      "state": {
+        "order": {
+          "member": true,
+          "quantity": 2,
+          "unit_price": "19.95"
+        },
+        "quote": {
+          "total": "35.91"
+        }
+      },
+      "steps": 34
+    },
+    "fulfillment/python": {
+      "file": "examples/order_fulfillment/rules.gwt",
+      "ok": true,
+      "output": [],
+      "request_file": "examples/order_fulfillment/request.json",
+      "result": {
+        "fulfillment": {
+          "backordered_units": 1,
+          "cable_backordered": 0,
+          "cable_reserved": 1,
+          "gadget_backordered": 1,
+          "gadget_reserved": 1,
+          "package_count": 1,
+          "reason": "partial_inventory",
+          "requested_units": 4,
+          "reserved_units": 3,
+          "shipping_fee": 19.5,
+          "status": "partial",
+          "unknown_sku_count": 0,
+          "widget_backordered": 0,
+          "widget_reserved": 1
+        },
+        "inventory": {
+          "cable_available": 4,
+          "cable_reserved": 1,
+          "gadget_available": 0,
+          "gadget_reserved": 1,
+          "widget_available": 4,
+          "widget_reserved": 1
+        }
+      },
+      "scenario_count": 1,
+      "scenarios": [
+        {
+          "name": "Main",
+          "output": [],
+          "result": {
+            "fulfillment": {
+              "backordered_units": 1,
+              "cable_backordered": 0,
+              "cable_reserved": 1,
+              "gadget_backordered": 1,
+              "gadget_reserved": 1,
+              "package_count": 1,
+              "reason": "partial_inventory",
+              "requested_units": 4,
+              "reserved_units": 3,
+              "shipping_fee": 19.5,
+              "status": "partial",
+              "unknown_sku_count": 0,
+              "widget_backordered": 0,
+              "widget_reserved": 1
+            },
+            "inventory": {
+              "cable_available": 4,
+              "cable_reserved": 1,
+              "gadget_available": 0,
+              "gadget_reserved": 1,
+              "widget_available": 4,
+              "widget_reserved": 1
+            }
+          },
+          "state": {
+            "fulfillment": {
+              "backordered_units": 1,
+              "cable_backordered": 0,
+              "cable_reserved": 1,
+              "gadget_backordered": 1,
+              "gadget_reserved": 1,
+              "package_count": 1,
+              "reason": "partial_inventory",
+              "requested_units": 4,
+              "reserved_units": 3,
+              "shipping_fee": 19.5,
+              "status": "partial",
+              "unknown_sku_count": 0,
+              "widget_backordered": 0,
+              "widget_reserved": 1
+            },
+            "inventory": {
+              "cable_available": 4,
+              "cable_reserved": 1,
+              "gadget_available": 0,
+              "gadget_reserved": 1,
+              "widget_available": 4,
+              "widget_reserved": 1
+            },
+            "order": {
+              "expedited": true,
+              "fraud_score": 12,
+              "items": [
+                {
+                  "quantity": 1,
+                  "sku": "widget"
+                },
+                {
+                  "quantity": 2,
+                  "sku": "gadget"
+                },
+                {
+                  "quantity": 1,
+                  "sku": "cable"
+                }
+              ],
+              "order_id": "A200",
+              "payment_status": "paid"
+            }
+          }
+        }
+      ],
+      "state": {
+        "fulfillment": {
+          "backordered_units": 1,
+          "cable_backordered": 0,
+          "cable_reserved": 1,
+          "gadget_backordered": 1,
+          "gadget_reserved": 1,
+          "package_count": 1,
+          "reason": "partial_inventory",
+          "requested_units": 4,
+          "reserved_units": 3,
+          "shipping_fee": 19.5,
+          "status": "partial",
+          "unknown_sku_count": 0,
+          "widget_backordered": 0,
+          "widget_reserved": 1
+        },
+        "inventory": {
+          "cable_available": 4,
+          "cable_reserved": 1,
+          "gadget_available": 0,
+          "gadget_reserved": 1,
+          "widget_available": 4,
+          "widget_reserved": 1
+        },
+        "order": {
+          "expedited": true,
+          "fraud_score": 12,
+          "items": [
+            {
+              "quantity": 1,
+              "sku": "widget"
+            },
+            {
+              "quantity": 2,
+              "sku": "gadget"
+            },
+            {
+              "quantity": 1,
+              "sku": "cable"
+            }
+          ],
+          "order_id": "A200",
+          "payment_status": "paid"
+        }
+      }
+    },
+    "fulfillment/rust": {
+      "diagnostic": null,
+      "events": [
+        {
+          "inputs": [],
+          "operation": "enter request",
+          "sequence": 1,
+          "span": {
+            "column": 1,
+            "end": 983,
+            "file": "rules.gwt",
+            "line": 38,
+            "start": 962
+          },
+          "value": {
+            "definition": {
+              "column": 1,
+              "end": 983,
+              "file": "rules.gwt",
+              "line": 38,
+              "start": 962
+            },
+            "name": "fulfill order"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 2,
+          "span": {
+            "column": 22,
+            "end": 1111,
+            "file": "rules.gwt",
+            "line": 43,
+            "start": 1110
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 3,
+          "span": {
+            "column": 21,
+            "end": 1133,
+            "file": "rules.gwt",
+            "line": 44,
+            "start": 1132
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 4,
+          "span": {
+            "column": 24,
+            "end": 1158,
+            "file": "rules.gwt",
+            "line": 45,
+            "start": 1157
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 5,
+          "span": {
+            "column": 22,
+            "end": 1181,
+            "file": "rules.gwt",
+            "line": 46,
+            "start": 1180
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 6,
+          "span": {
+            "column": 22,
+            "end": 1204,
+            "file": "rules.gwt",
+            "line": 47,
+            "start": 1203
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 7,
+          "span": {
+            "column": 21,
+            "end": 1226,
+            "file": "rules.gwt",
+            "line": 48,
+            "start": 1225
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 8,
+          "span": {
+            "column": 25,
+            "end": 1252,
+            "file": "rules.gwt",
+            "line": 49,
+            "start": 1251
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 9,
+          "span": {
+            "column": 25,
+            "end": 1278,
+            "file": "rules.gwt",
+            "line": 50,
+            "start": 1277
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 10,
+          "span": {
+            "column": 24,
+            "end": 1303,
+            "file": "rules.gwt",
+            "line": 51,
+            "start": 1302
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 11,
+          "span": {
+            "column": 24,
+            "end": 1328,
+            "file": "rules.gwt",
+            "line": 52,
+            "start": 1327
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 12,
+          "span": {
+            "column": 20,
+            "end": 1349,
+            "file": "rules.gwt",
+            "line": 53,
+            "start": 1348
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 13,
+          "span": {
+            "column": 19,
+            "end": 1369,
+            "file": "rules.gwt",
+            "line": 54,
+            "start": 1368
+          },
+          "value": 0
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 14,
+          "span": {
+            "column": 13,
+            "end": 1387,
+            "file": "rules.gwt",
+            "line": 55,
+            "start": 1382
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 15,
+          "span": {
+            "column": 13,
+            "end": 1405,
+            "file": "rules.gwt",
+            "line": 56,
+            "start": 1400
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "operation": "initialize",
+          "sequence": 16,
+          "span": {
+            "column": 3,
+            "end": 1088,
+            "file": "rules.gwt",
+            "line": 42,
+            "start": 1051
+          },
+          "value": {
+            "after": {
+              "backordered_units": "0",
+              "cable_backordered": "0",
+              "cable_reserved": "0",
+              "gadget_backordered": "0",
+              "gadget_reserved": "0",
+              "package_count": "0",
+              "reason": "new",
+              "requested_units": "0",
+              "reserved_units": "0",
+              "shipping_fee": "0",
+              "status": "new",
+              "unknown_sku_count": "0",
+              "widget_backordered": "0",
+              "widget_reserved": "0"
+            },
+            "path": "fulfillment"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 17,
+          "span": {
+            "column": 8,
+            "end": 1459,
+            "file": "rules.gwt",
+            "line": 58,
+            "start": 1414
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 7019,
+              "file": "rules.gwt",
+              "line": 219,
+              "start": 6963
+            },
+            "signature": "fulfill <order> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 18,
+          "span": {
+            "column": 3,
+            "end": 7153,
+            "file": "rules.gwt",
+            "line": 223,
+            "start": 7124
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment"
+            },
+            "definition": {
+              "column": 1,
+              "end": 1643,
+              "file": "rules.gwt",
+              "line": 66,
+              "start": 1607
+            },
+            "signature": "reset_fulfillment <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 19,
+          "span": {
+            "column": 38,
+            "end": 1722,
+            "file": "rules.gwt",
+            "line": 68,
+            "start": 1721
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            19
+          ],
+          "operation": "set",
+          "sequence": 20,
+          "span": {
+            "column": 3,
+            "end": 1722,
+            "file": "rules.gwt",
+            "line": 68,
+            "start": 1686
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.requested_units",
+            "sourcePath": "fulfillment.requested_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 21,
+          "span": {
+            "column": 37,
+            "end": 1760,
+            "file": "rules.gwt",
+            "line": 69,
+            "start": 1759
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            21
+          ],
+          "operation": "set",
+          "sequence": 22,
+          "span": {
+            "column": 3,
+            "end": 1760,
+            "file": "rules.gwt",
+            "line": 69,
+            "start": 1725
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.reserved_units",
+            "sourcePath": "fulfillment.reserved_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 23,
+          "span": {
+            "column": 40,
+            "end": 1801,
+            "file": "rules.gwt",
+            "line": 70,
+            "start": 1800
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            23
+          ],
+          "operation": "set",
+          "sequence": 24,
+          "span": {
+            "column": 3,
+            "end": 1801,
+            "file": "rules.gwt",
+            "line": 70,
+            "start": 1763
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.backordered_units",
+            "sourcePath": "fulfillment.backordered_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 25,
+          "span": {
+            "column": 38,
+            "end": 1840,
+            "file": "rules.gwt",
+            "line": 71,
+            "start": 1839
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            25
+          ],
+          "operation": "set",
+          "sequence": 26,
+          "span": {
+            "column": 3,
+            "end": 1840,
+            "file": "rules.gwt",
+            "line": 71,
+            "start": 1804
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.widget_reserved",
+            "sourcePath": "fulfillment.widget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 27,
+          "span": {
+            "column": 38,
+            "end": 1879,
+            "file": "rules.gwt",
+            "line": 72,
+            "start": 1878
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            27
+          ],
+          "operation": "set",
+          "sequence": 28,
+          "span": {
+            "column": 3,
+            "end": 1879,
+            "file": "rules.gwt",
+            "line": 72,
+            "start": 1843
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.gadget_reserved",
+            "sourcePath": "fulfillment.gadget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 29,
+          "span": {
+            "column": 37,
+            "end": 1917,
+            "file": "rules.gwt",
+            "line": 73,
+            "start": 1916
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            29
+          ],
+          "operation": "set",
+          "sequence": 30,
+          "span": {
+            "column": 3,
+            "end": 1917,
+            "file": "rules.gwt",
+            "line": 73,
+            "start": 1882
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.cable_reserved",
+            "sourcePath": "fulfillment.cable_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 31,
+          "span": {
+            "column": 41,
+            "end": 1959,
+            "file": "rules.gwt",
+            "line": 74,
+            "start": 1958
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            31
+          ],
+          "operation": "set",
+          "sequence": 32,
+          "span": {
+            "column": 3,
+            "end": 1959,
+            "file": "rules.gwt",
+            "line": 74,
+            "start": 1920
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.widget_backordered",
+            "sourcePath": "fulfillment.widget_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 33,
+          "span": {
+            "column": 41,
+            "end": 2001,
+            "file": "rules.gwt",
+            "line": 75,
+            "start": 2000
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            33
+          ],
+          "operation": "set",
+          "sequence": 34,
+          "span": {
+            "column": 3,
+            "end": 2001,
+            "file": "rules.gwt",
+            "line": 75,
+            "start": 1962
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.gadget_backordered",
+            "sourcePath": "fulfillment.gadget_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 35,
+          "span": {
+            "column": 40,
+            "end": 2042,
+            "file": "rules.gwt",
+            "line": 76,
+            "start": 2041
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            35
+          ],
+          "operation": "set",
+          "sequence": 36,
+          "span": {
+            "column": 3,
+            "end": 2042,
+            "file": "rules.gwt",
+            "line": 76,
+            "start": 2004
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.cable_backordered",
+            "sourcePath": "fulfillment.cable_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 37,
+          "span": {
+            "column": 40,
+            "end": 2083,
+            "file": "rules.gwt",
+            "line": 77,
+            "start": 2082
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            37
+          ],
+          "operation": "set",
+          "sequence": 38,
+          "span": {
+            "column": 3,
+            "end": 2083,
+            "file": "rules.gwt",
+            "line": 77,
+            "start": 2045
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.unknown_sku_count",
+            "sourcePath": "fulfillment.unknown_sku_count"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 39,
+          "span": {
+            "column": 36,
+            "end": 2120,
+            "file": "rules.gwt",
+            "line": 78,
+            "start": 2119
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            39
+          ],
+          "operation": "set",
+          "sequence": 40,
+          "span": {
+            "column": 3,
+            "end": 2120,
+            "file": "rules.gwt",
+            "line": 78,
+            "start": 2086
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.package_count",
+            "sourcePath": "fulfillment.package_count"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 41,
+          "span": {
+            "column": 35,
+            "end": 2156,
+            "file": "rules.gwt",
+            "line": 79,
+            "start": 2155
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            41
+          ],
+          "operation": "set",
+          "sequence": 42,
+          "span": {
+            "column": 3,
+            "end": 2156,
+            "file": "rules.gwt",
+            "line": 79,
+            "start": 2123
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.shipping_fee",
+            "sourcePath": "fulfillment.shipping_fee"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 43,
+          "span": {
+            "column": 29,
+            "end": 2190,
+            "file": "rules.gwt",
+            "line": 80,
+            "start": 2185
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            43
+          ],
+          "operation": "set",
+          "sequence": 44,
+          "span": {
+            "column": 3,
+            "end": 2190,
+            "file": "rules.gwt",
+            "line": 80,
+            "start": 2159
+          },
+          "value": {
+            "after": "new",
+            "before": "new",
+            "path": "fulfillment.status",
+            "sourcePath": "fulfillment.status"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 45,
+          "span": {
+            "column": 29,
+            "end": 2224,
+            "file": "rules.gwt",
+            "line": 81,
+            "start": 2219
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            45
+          ],
+          "operation": "set",
+          "sequence": 46,
+          "span": {
+            "column": 3,
+            "end": 2224,
+            "file": "rules.gwt",
+            "line": 81,
+            "start": 2193
+          },
+          "value": {
+            "after": "new",
+            "before": "new",
+            "path": "fulfillment.reason",
+            "sourcePath": "fulfillment.reason"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 47,
+          "span": {
+            "column": 3,
+            "end": 7153,
+            "file": "rules.gwt",
+            "line": 223,
+            "start": 7124
+          },
+          "value": {
+            "signature": "reset_fulfillment <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 48,
+          "span": {
+            "column": 3,
+            "end": 7190,
+            "file": "rules.gwt",
+            "line": 224,
+            "start": 7156
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 2269,
+              "file": "rules.gwt",
+              "line": 83,
+              "start": 2226
+            },
+            "signature": "count_units <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read order.items",
+          "sequence": 49,
+          "span": {
+            "column": 15,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2352
+          },
+          "value": [
+            {
+              "quantity": "1",
+              "sku": "widget"
+            },
+            {
+              "quantity": "2",
+              "sku": "gadget"
+            },
+            {
+              "quantity": "1",
+              "sku": "cable"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            49
+          ],
+          "operation": "enter collection",
+          "sequence": 50,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "binding": "item",
+            "length": 3,
+            "mode": "FOR",
+            "sourcePath": "order.items"
+          }
+        },
+        {
+          "inputs": [
+            49
+          ],
+          "operation": "collection item",
+          "sequence": 51,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "binding": "item",
+            "index": 0,
+            "path": "order.items[0]",
+            "value": {
+              "quantity": "1",
+              "sku": "widget"
+            }
+          }
+        },
+        {
+          "inputs": [
+            51
+          ],
+          "operation": "collection selection",
+          "sequence": 52,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "index": 0,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.quantity",
+          "sequence": 53,
+          "span": {
+            "column": 9,
+            "end": 2385,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2372
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            53
+          ],
+          "operation": "add",
+          "sequence": 54,
+          "span": {
+            "column": 5,
+            "end": 2416,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2368
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.requested_units",
+            "sourcePath": "fulfillment.requested_units"
+          }
+        },
+        {
+          "inputs": [
+            49
+          ],
+          "operation": "collection item",
+          "sequence": 55,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "binding": "item",
+            "index": 1,
+            "path": "order.items[1]",
+            "value": {
+              "quantity": "2",
+              "sku": "gadget"
+            }
+          }
+        },
+        {
+          "inputs": [
+            55
+          ],
+          "operation": "collection selection",
+          "sequence": 56,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "index": 1,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.quantity",
+          "sequence": 57,
+          "span": {
+            "column": 9,
+            "end": 2385,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2372
+          },
+          "value": "2"
+        },
+        {
+          "inputs": [
+            57
+          ],
+          "operation": "add",
+          "sequence": 58,
+          "span": {
+            "column": 5,
+            "end": 2416,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2368
+          },
+          "value": {
+            "after": "3",
+            "before": "1",
+            "path": "fulfillment.requested_units",
+            "sourcePath": "fulfillment.requested_units"
+          }
+        },
+        {
+          "inputs": [
+            49
+          ],
+          "operation": "collection item",
+          "sequence": 59,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "binding": "item",
+            "index": 2,
+            "path": "order.items[2]",
+            "value": {
+              "quantity": "1",
+              "sku": "cable"
+            }
+          }
+        },
+        {
+          "inputs": [
+            59
+          ],
+          "operation": "collection selection",
+          "sequence": 60,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "index": 2,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.quantity",
+          "sequence": 61,
+          "span": {
+            "column": 9,
+            "end": 2385,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2372
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            61
+          ],
+          "operation": "add",
+          "sequence": 62,
+          "span": {
+            "column": 5,
+            "end": 2416,
+            "file": "rules.gwt",
+            "line": 87,
+            "start": 2368
+          },
+          "value": {
+            "after": "4",
+            "before": "3",
+            "path": "fulfillment.requested_units",
+            "sourcePath": "fulfillment.requested_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave collection",
+          "sequence": 63,
+          "span": {
+            "column": 3,
+            "end": 2363,
+            "file": "rules.gwt",
+            "line": 86,
+            "start": 2340
+          },
+          "value": {
+            "matched": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 64,
+          "span": {
+            "column": 3,
+            "end": 7190,
+            "file": "rules.gwt",
+            "line": 224,
+            "start": 7156
+          },
+          "value": {
+            "signature": "count_units <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 65,
+          "span": {
+            "column": 3,
+            "end": 7225,
+            "file": "rules.gwt",
+            "line": 225,
+            "start": 7193
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 2459,
+              "file": "rules.gwt",
+              "line": 89,
+              "start": 2418
+            },
+            "signature": "authorize <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read order.payment_status",
+          "sequence": 66,
+          "span": {
+            "column": 6,
+            "end": 2553,
+            "file": "rules.gwt",
+            "line": 92,
+            "start": 2533
+          },
+          "value": "paid"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 67,
+          "span": {
+            "column": 30,
+            "end": 2563,
+            "file": "rules.gwt",
+            "line": 92,
+            "start": 2557
+          },
+          "value": "paid"
+        },
+        {
+          "inputs": [
+            66,
+            67
+          ],
+          "operation": "!=",
+          "sequence": 68,
+          "span": {
+            "column": 6,
+            "end": 2563,
+            "file": "rules.gwt",
+            "line": 92,
+            "start": 2533
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            68
+          ],
+          "operation": "branch",
+          "sequence": 69,
+          "span": {
+            "column": 6,
+            "end": 2563,
+            "file": "rules.gwt",
+            "line": 92,
+            "start": 2533
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 70,
+          "span": {
+            "column": 3,
+            "end": 2656,
+            "file": "rules.gwt",
+            "line": 95,
+            "start": 2652
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read order.fraud_score",
+          "sequence": 71,
+          "span": {
+            "column": 8,
+            "end": 2681,
+            "file": "rules.gwt",
+            "line": 96,
+            "start": 2664
+          },
+          "value": "12"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 72,
+          "span": {
+            "column": 29,
+            "end": 2687,
+            "file": "rules.gwt",
+            "line": 96,
+            "start": 2685
+          },
+          "value": 80
+        },
+        {
+          "inputs": [
+            71,
+            72
+          ],
+          "operation": ">=",
+          "sequence": 73,
+          "span": {
+            "column": 8,
+            "end": 2687,
+            "file": "rules.gwt",
+            "line": 96,
+            "start": 2664
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            73
+          ],
+          "operation": "branch",
+          "sequence": 74,
+          "span": {
+            "column": 8,
+            "end": 2687,
+            "file": "rules.gwt",
+            "line": 96,
+            "start": 2664
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 75,
+          "span": {
+            "column": 5,
+            "end": 2782,
+            "file": "rules.gwt",
+            "line": 99,
+            "start": 2778
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 76,
+          "span": {
+            "column": 33,
+            "end": 2827,
+            "file": "rules.gwt",
+            "line": 100,
+            "start": 2815
+          },
+          "value": "authorized"
+        },
+        {
+          "inputs": [
+            76
+          ],
+          "operation": "set",
+          "sequence": 77,
+          "span": {
+            "column": 7,
+            "end": 2827,
+            "file": "rules.gwt",
+            "line": 100,
+            "start": 2789
+          },
+          "value": {
+            "after": "authorized",
+            "before": "new",
+            "path": "fulfillment.status",
+            "sourcePath": "fulfillment.status"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 78,
+          "span": {
+            "column": 33,
+            "end": 2872,
+            "file": "rules.gwt",
+            "line": 101,
+            "start": 2860
+          },
+          "value": "authorized"
+        },
+        {
+          "inputs": [
+            78
+          ],
+          "operation": "set",
+          "sequence": 79,
+          "span": {
+            "column": 7,
+            "end": 2872,
+            "file": "rules.gwt",
+            "line": 101,
+            "start": 2834
+          },
+          "value": {
+            "after": "authorized",
+            "before": "new",
+            "path": "fulfillment.reason",
+            "sourcePath": "fulfillment.reason"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 80,
+          "span": {
+            "column": 3,
+            "end": 7225,
+            "file": "rules.gwt",
+            "line": 225,
+            "start": 7193
+          },
+          "value": {
+            "signature": "authorize <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.status",
+          "sequence": 81,
+          "span": {
+            "column": 6,
+            "end": 7249,
+            "file": "rules.gwt",
+            "line": 226,
+            "start": 7231
+          },
+          "value": "authorized"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 82,
+          "span": {
+            "column": 28,
+            "end": 7265,
+            "file": "rules.gwt",
+            "line": 226,
+            "start": 7253
+          },
+          "value": "authorized"
+        },
+        {
+          "inputs": [
+            81,
+            82
+          ],
+          "operation": "==",
+          "sequence": 83,
+          "span": {
+            "column": 6,
+            "end": 7265,
+            "file": "rules.gwt",
+            "line": 226,
+            "start": 7231
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            83
+          ],
+          "operation": "branch",
+          "sequence": 84,
+          "span": {
+            "column": 6,
+            "end": 7265,
+            "file": "rules.gwt",
+            "line": 226,
+            "start": 7231
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 85,
+          "span": {
+            "column": 5,
+            "end": 7316,
+            "file": "rules.gwt",
+            "line": 227,
+            "start": 7270
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 5270,
+              "file": "rules.gwt",
+              "line": 160,
+              "start": 5213
+            },
+            "signature": "allocate <order> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read order.items",
+          "sequence": 86,
+          "span": {
+            "column": 15,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5387
+          },
+          "value": [
+            {
+              "quantity": "1",
+              "sku": "widget"
+            },
+            {
+              "quantity": "2",
+              "sku": "gadget"
+            },
+            {
+              "quantity": "1",
+              "sku": "cable"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            86
+          ],
+          "operation": "enter collection",
+          "sequence": 87,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "binding": "item",
+            "length": 3,
+            "mode": "FOR",
+            "sourcePath": "order.items"
+          }
+        },
+        {
+          "inputs": [
+            86
+          ],
+          "operation": "collection item",
+          "sequence": 88,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "binding": "item",
+            "index": 0,
+            "path": "order.items[0]",
+            "value": {
+              "quantity": "1",
+              "sku": "widget"
+            }
+          }
+        },
+        {
+          "inputs": [
+            88
+          ],
+          "operation": "collection selection",
+          "sequence": 89,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "index": 0,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 90,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "item": "order.items[0]"
+            },
+            "definition": {
+              "column": 1,
+              "end": 4756,
+              "file": "rules.gwt",
+              "line": 145,
+              "start": 4701
+            },
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 91,
+          "span": {
+            "column": 6,
+            "end": 4868,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": "widget"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 92,
+          "span": {
+            "column": 18,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4872
+          },
+          "value": "widget"
+        },
+        {
+          "inputs": [
+            91,
+            92
+          ],
+          "operation": "==",
+          "sequence": 93,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            93
+          ],
+          "operation": "branch",
+          "sequence": 94,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 95,
+          "skipped": {
+            "column": 3,
+            "end": 4952,
+            "file": "rules.gwt",
+            "line": 151,
+            "start": 4948
+          },
+          "span": {
+            "column": 3,
+            "end": 4952,
+            "file": "rules.gwt",
+            "line": 151,
+            "start": 4948
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 96,
+          "span": {
+            "column": 5,
+            "end": 4945,
+            "file": "rules.gwt",
+            "line": 150,
+            "start": 4885
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "quantity": "order.items[0].quantity"
+            },
+            "definition": {
+              "column": 1,
+              "end": 2940,
+              "file": "rules.gwt",
+              "line": 103,
+              "start": 2874
+            },
+            "signature": "reserve_widget <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read inventory.widget_available",
+          "sequence": 97,
+          "span": {
+            "column": 6,
+            "end": 3071,
+            "file": "rules.gwt",
+            "line": 107,
+            "start": 3045
+          },
+          "value": "5"
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 98,
+          "span": {
+            "column": 36,
+            "end": 3083,
+            "file": "rules.gwt",
+            "line": 107,
+            "start": 3075
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            97,
+            98
+          ],
+          "operation": ">=",
+          "sequence": 99,
+          "span": {
+            "column": 6,
+            "end": 3083,
+            "file": "rules.gwt",
+            "line": 107,
+            "start": 3045
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            99
+          ],
+          "operation": "branch",
+          "sequence": 100,
+          "span": {
+            "column": 6,
+            "end": 3083,
+            "file": "rules.gwt",
+            "line": 107,
+            "start": 3045
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 101,
+          "skipped": {
+            "column": 3,
+            "end": 3236,
+            "file": "rules.gwt",
+            "line": 111,
+            "start": 3232
+          },
+          "span": {
+            "column": 3,
+            "end": 3236,
+            "file": "rules.gwt",
+            "line": 111,
+            "start": 3232
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 102,
+          "span": {
+            "column": 40,
+            "end": 3131,
+            "file": "rules.gwt",
+            "line": 108,
+            "start": 3123
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            102
+          ],
+          "operation": "set",
+          "sequence": 103,
+          "span": {
+            "column": 5,
+            "end": 3131,
+            "file": "rules.gwt",
+            "line": 108,
+            "start": 3088
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.widget_reserved",
+            "sourcePath": "fulfillment.widget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 104,
+          "span": {
+            "column": 43,
+            "end": 3175,
+            "file": "rules.gwt",
+            "line": 109,
+            "start": 3174
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            104
+          ],
+          "operation": "set",
+          "sequence": 105,
+          "span": {
+            "column": 5,
+            "end": 3175,
+            "file": "rules.gwt",
+            "line": 109,
+            "start": 3136
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.widget_backordered",
+            "sourcePath": "fulfillment.widget_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 106,
+          "span": {
+            "column": 14,
+            "end": 3197,
+            "file": "rules.gwt",
+            "line": 110,
+            "start": 3189
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            106
+          ],
+          "operation": "subtract",
+          "sequence": 107,
+          "span": {
+            "column": 5,
+            "end": 3229,
+            "file": "rules.gwt",
+            "line": 110,
+            "start": 3180
+          },
+          "value": {
+            "after": "4",
+            "before": "5",
+            "path": "inventory.widget_available",
+            "sourcePath": "inventory.widget_available"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.widget_reserved",
+          "sequence": 108,
+          "span": {
+            "column": 7,
+            "end": 3456,
+            "file": "rules.gwt",
+            "line": 115,
+            "start": 3429
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            108
+          ],
+          "operation": "add",
+          "sequence": 109,
+          "span": {
+            "column": 3,
+            "end": 3485,
+            "file": "rules.gwt",
+            "line": 115,
+            "start": 3425
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "inventory.widget_reserved",
+            "sourcePath": "inventory.widget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 110,
+          "span": {
+            "column": 5,
+            "end": 4945,
+            "file": "rules.gwt",
+            "line": 150,
+            "start": 4885
+          },
+          "value": {
+            "signature": "reserve_widget <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 111,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [
+            86
+          ],
+          "operation": "collection item",
+          "sequence": 112,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "binding": "item",
+            "index": 1,
+            "path": "order.items[1]",
+            "value": {
+              "quantity": "2",
+              "sku": "gadget"
+            }
+          }
+        },
+        {
+          "inputs": [
+            112
+          ],
+          "operation": "collection selection",
+          "sequence": 113,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "index": 1,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 114,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "item": "order.items[1]"
+            },
+            "definition": {
+              "column": 1,
+              "end": 4756,
+              "file": "rules.gwt",
+              "line": 145,
+              "start": 4701
+            },
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 115,
+          "span": {
+            "column": 6,
+            "end": 4868,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": "gadget"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 116,
+          "span": {
+            "column": 18,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4872
+          },
+          "value": "widget"
+        },
+        {
+          "inputs": [
+            115,
+            116
+          ],
+          "operation": "==",
+          "sequence": 117,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            117
+          ],
+          "operation": "branch",
+          "sequence": 118,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 119,
+          "span": {
+            "column": 3,
+            "end": 4952,
+            "file": "rules.gwt",
+            "line": 151,
+            "start": 4948
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 120,
+          "span": {
+            "column": 8,
+            "end": 4968,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": "gadget"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 121,
+          "span": {
+            "column": 20,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4972
+          },
+          "value": "gadget"
+        },
+        {
+          "inputs": [
+            120,
+            121
+          ],
+          "operation": "==",
+          "sequence": 122,
+          "span": {
+            "column": 8,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            122
+          ],
+          "operation": "branch",
+          "sequence": 123,
+          "span": {
+            "column": 8,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 124,
+          "skipped": {
+            "column": 5,
+            "end": 5056,
+            "file": "rules.gwt",
+            "line": 154,
+            "start": 5052
+          },
+          "span": {
+            "column": 5,
+            "end": 5056,
+            "file": "rules.gwt",
+            "line": 154,
+            "start": 5052
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 125,
+          "span": {
+            "column": 7,
+            "end": 5047,
+            "file": "rules.gwt",
+            "line": 153,
+            "start": 4987
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "quantity": "order.items[1].quantity"
+            },
+            "definition": {
+              "column": 1,
+              "end": 3553,
+              "file": "rules.gwt",
+              "line": 117,
+              "start": 3487
+            },
+            "signature": "reserve_gadget <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read inventory.gadget_available",
+          "sequence": 126,
+          "span": {
+            "column": 6,
+            "end": 3684,
+            "file": "rules.gwt",
+            "line": 121,
+            "start": 3658
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 127,
+          "span": {
+            "column": 36,
+            "end": 3696,
+            "file": "rules.gwt",
+            "line": 121,
+            "start": 3688
+          },
+          "value": "2"
+        },
+        {
+          "inputs": [
+            126,
+            127
+          ],
+          "operation": ">=",
+          "sequence": 128,
+          "span": {
+            "column": 6,
+            "end": 3696,
+            "file": "rules.gwt",
+            "line": 121,
+            "start": 3658
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            128
+          ],
+          "operation": "branch",
+          "sequence": 129,
+          "span": {
+            "column": 6,
+            "end": 3696,
+            "file": "rules.gwt",
+            "line": 121,
+            "start": 3658
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 130,
+          "span": {
+            "column": 3,
+            "end": 3849,
+            "file": "rules.gwt",
+            "line": 125,
+            "start": 3845
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read inventory.gadget_available",
+          "sequence": 131,
+          "span": {
+            "column": 40,
+            "end": 3915,
+            "file": "rules.gwt",
+            "line": 126,
+            "start": 3889
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            131
+          ],
+          "operation": "set",
+          "sequence": 132,
+          "span": {
+            "column": 5,
+            "end": 3915,
+            "file": "rules.gwt",
+            "line": 126,
+            "start": 3854
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.gadget_reserved",
+            "sourcePath": "fulfillment.gadget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 133,
+          "span": {
+            "column": 43,
+            "end": 3966,
+            "file": "rules.gwt",
+            "line": 127,
+            "start": 3958
+          },
+          "value": "2"
+        },
+        {
+          "inputs": [],
+          "operation": "read inventory.gadget_available",
+          "sequence": 134,
+          "span": {
+            "column": 54,
+            "end": 3995,
+            "file": "rules.gwt",
+            "line": 127,
+            "start": 3969
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            133,
+            134
+          ],
+          "operation": "-",
+          "sequence": 135,
+          "span": {
+            "column": 43,
+            "end": 3995,
+            "file": "rules.gwt",
+            "line": 127,
+            "start": 3958
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            135
+          ],
+          "operation": "set",
+          "sequence": 136,
+          "span": {
+            "column": 5,
+            "end": 3995,
+            "file": "rules.gwt",
+            "line": 127,
+            "start": 3920
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.gadget_backordered",
+            "sourcePath": "fulfillment.gadget_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 137,
+          "span": {
+            "column": 39,
+            "end": 4035,
+            "file": "rules.gwt",
+            "line": 128,
+            "start": 4034
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            137
+          ],
+          "operation": "set",
+          "sequence": 138,
+          "span": {
+            "column": 5,
+            "end": 4035,
+            "file": "rules.gwt",
+            "line": 128,
+            "start": 4000
+          },
+          "value": {
+            "after": "0",
+            "before": "1",
+            "path": "inventory.gadget_available",
+            "sourcePath": "inventory.gadget_available"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.gadget_reserved",
+          "sequence": 139,
+          "span": {
+            "column": 7,
+            "end": 4069,
+            "file": "rules.gwt",
+            "line": 129,
+            "start": 4042
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            139
+          ],
+          "operation": "add",
+          "sequence": 140,
+          "span": {
+            "column": 3,
+            "end": 4098,
+            "file": "rules.gwt",
+            "line": 129,
+            "start": 4038
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "inventory.gadget_reserved",
+            "sourcePath": "inventory.gadget_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 141,
+          "span": {
+            "column": 7,
+            "end": 5047,
+            "file": "rules.gwt",
+            "line": 153,
+            "start": 4987
+          },
+          "value": {
+            "signature": "reserve_gadget <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 142,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [
+            86
+          ],
+          "operation": "collection item",
+          "sequence": 143,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "binding": "item",
+            "index": 2,
+            "path": "order.items[2]",
+            "value": {
+              "quantity": "1",
+              "sku": "cable"
+            }
+          }
+        },
+        {
+          "inputs": [
+            143
+          ],
+          "operation": "collection selection",
+          "sequence": 144,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "index": 2,
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 145,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "item": "order.items[2]"
+            },
+            "definition": {
+              "column": 1,
+              "end": 4756,
+              "file": "rules.gwt",
+              "line": 145,
+              "start": 4701
+            },
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 146,
+          "span": {
+            "column": 6,
+            "end": 4868,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": "cable"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 147,
+          "span": {
+            "column": 18,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4872
+          },
+          "value": "widget"
+        },
+        {
+          "inputs": [
+            146,
+            147
+          ],
+          "operation": "==",
+          "sequence": 148,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            148
+          ],
+          "operation": "branch",
+          "sequence": 149,
+          "span": {
+            "column": 6,
+            "end": 4880,
+            "file": "rules.gwt",
+            "line": 149,
+            "start": 4860
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 150,
+          "span": {
+            "column": 3,
+            "end": 4952,
+            "file": "rules.gwt",
+            "line": 151,
+            "start": 4948
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 151,
+          "span": {
+            "column": 8,
+            "end": 4968,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": "cable"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 152,
+          "span": {
+            "column": 20,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4972
+          },
+          "value": "gadget"
+        },
+        {
+          "inputs": [
+            151,
+            152
+          ],
+          "operation": "==",
+          "sequence": 153,
+          "span": {
+            "column": 8,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            153
+          ],
+          "operation": "branch",
+          "sequence": 154,
+          "span": {
+            "column": 8,
+            "end": 4980,
+            "file": "rules.gwt",
+            "line": 152,
+            "start": 4960
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 155,
+          "span": {
+            "column": 5,
+            "end": 5056,
+            "file": "rules.gwt",
+            "line": 154,
+            "start": 5052
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read item.sku",
+          "sequence": 156,
+          "span": {
+            "column": 10,
+            "end": 5074,
+            "file": "rules.gwt",
+            "line": 155,
+            "start": 5066
+          },
+          "value": "cable"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 157,
+          "span": {
+            "column": 22,
+            "end": 5085,
+            "file": "rules.gwt",
+            "line": 155,
+            "start": 5078
+          },
+          "value": "cable"
+        },
+        {
+          "inputs": [
+            156,
+            157
+          ],
+          "operation": "==",
+          "sequence": 158,
+          "span": {
+            "column": 10,
+            "end": 5085,
+            "file": "rules.gwt",
+            "line": 155,
+            "start": 5066
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            158
+          ],
+          "operation": "branch",
+          "sequence": 159,
+          "span": {
+            "column": 10,
+            "end": 5085,
+            "file": "rules.gwt",
+            "line": 155,
+            "start": 5066
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 160,
+          "skipped": {
+            "column": 7,
+            "end": 5164,
+            "file": "rules.gwt",
+            "line": 157,
+            "start": 5160
+          },
+          "span": {
+            "column": 7,
+            "end": 5164,
+            "file": "rules.gwt",
+            "line": 157,
+            "start": 5160
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 161,
+          "span": {
+            "column": 9,
+            "end": 5153,
+            "file": "rules.gwt",
+            "line": 156,
+            "start": 5094
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "inventory": "inventory",
+              "quantity": "order.items[2].quantity"
+            },
+            "definition": {
+              "column": 1,
+              "end": 4165,
+              "file": "rules.gwt",
+              "line": 131,
+              "start": 4100
+            },
+            "signature": "reserve_cable <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read inventory.cable_available",
+          "sequence": 162,
+          "span": {
+            "column": 6,
+            "end": 4295,
+            "file": "rules.gwt",
+            "line": 135,
+            "start": 4270
+          },
+          "value": "5"
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 163,
+          "span": {
+            "column": 35,
+            "end": 4307,
+            "file": "rules.gwt",
+            "line": 135,
+            "start": 4299
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            162,
+            163
+          ],
+          "operation": ">=",
+          "sequence": 164,
+          "span": {
+            "column": 6,
+            "end": 4307,
+            "file": "rules.gwt",
+            "line": 135,
+            "start": 4270
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            164
+          ],
+          "operation": "branch",
+          "sequence": 165,
+          "span": {
+            "column": 6,
+            "end": 4307,
+            "file": "rules.gwt",
+            "line": 135,
+            "start": 4270
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 166,
+          "skipped": {
+            "column": 3,
+            "end": 4457,
+            "file": "rules.gwt",
+            "line": 139,
+            "start": 4453
+          },
+          "span": {
+            "column": 3,
+            "end": 4457,
+            "file": "rules.gwt",
+            "line": 139,
+            "start": 4453
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 167,
+          "span": {
+            "column": 39,
+            "end": 4354,
+            "file": "rules.gwt",
+            "line": 136,
+            "start": 4346
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            167
+          ],
+          "operation": "set",
+          "sequence": 168,
+          "span": {
+            "column": 5,
+            "end": 4354,
+            "file": "rules.gwt",
+            "line": 136,
+            "start": 4312
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.cable_reserved",
+            "sourcePath": "fulfillment.cable_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 169,
+          "span": {
+            "column": 42,
+            "end": 4397,
+            "file": "rules.gwt",
+            "line": 137,
+            "start": 4396
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            169
+          ],
+          "operation": "set",
+          "sequence": 170,
+          "span": {
+            "column": 5,
+            "end": 4397,
+            "file": "rules.gwt",
+            "line": 137,
+            "start": 4359
+          },
+          "value": {
+            "after": "0",
+            "before": "0",
+            "path": "fulfillment.cable_backordered",
+            "sourcePath": "fulfillment.cable_backordered"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read quantity",
+          "sequence": 171,
+          "span": {
+            "column": 14,
+            "end": 4419,
+            "file": "rules.gwt",
+            "line": 138,
+            "start": 4411
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            171
+          ],
+          "operation": "subtract",
+          "sequence": 172,
+          "span": {
+            "column": 5,
+            "end": 4450,
+            "file": "rules.gwt",
+            "line": 138,
+            "start": 4402
+          },
+          "value": {
+            "after": "4",
+            "before": "5",
+            "path": "inventory.cable_available",
+            "sourcePath": "inventory.cable_available"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.cable_reserved",
+          "sequence": 173,
+          "span": {
+            "column": 7,
+            "end": 4671,
+            "file": "rules.gwt",
+            "line": 143,
+            "start": 4645
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            173
+          ],
+          "operation": "add",
+          "sequence": 174,
+          "span": {
+            "column": 3,
+            "end": 4699,
+            "file": "rules.gwt",
+            "line": 143,
+            "start": 4641
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "inventory.cable_reserved",
+            "sourcePath": "inventory.cable_reserved"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 175,
+          "span": {
+            "column": 9,
+            "end": 5153,
+            "file": "rules.gwt",
+            "line": 156,
+            "start": 5094
+          },
+          "value": {
+            "signature": "reserve_cable <quantity> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 176,
+          "span": {
+            "column": 5,
+            "end": 5447,
+            "file": "rules.gwt",
+            "line": 165,
+            "start": 5403
+          },
+          "value": {
+            "signature": "reserve <item> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave collection",
+          "sequence": 177,
+          "span": {
+            "column": 3,
+            "end": 5398,
+            "file": "rules.gwt",
+            "line": 164,
+            "start": 5375
+          },
+          "value": {
+            "matched": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.widget_reserved",
+          "sequence": 178,
+          "span": {
+            "column": 37,
+            "end": 5511,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5484
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.gadget_reserved",
+          "sequence": 179,
+          "span": {
+            "column": 67,
+            "end": 5541,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5514
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            178,
+            179
+          ],
+          "operation": "+",
+          "sequence": 180,
+          "span": {
+            "column": 37,
+            "end": 5541,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5484
+          },
+          "value": "2"
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.cable_reserved",
+          "sequence": 181,
+          "span": {
+            "column": 97,
+            "end": 5570,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5544
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            180,
+            181
+          ],
+          "operation": "+",
+          "sequence": 182,
+          "span": {
+            "column": 37,
+            "end": 5570,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5484
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [
+            182
+          ],
+          "operation": "set",
+          "sequence": 183,
+          "span": {
+            "column": 3,
+            "end": 5570,
+            "file": "rules.gwt",
+            "line": 166,
+            "start": 5450
+          },
+          "value": {
+            "after": "3",
+            "before": "0",
+            "path": "fulfillment.reserved_units",
+            "sourcePath": "fulfillment.reserved_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.widget_backordered",
+          "sequence": 184,
+          "span": {
+            "column": 40,
+            "end": 5640,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5610
+          },
+          "value": "0"
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.gadget_backordered",
+          "sequence": 185,
+          "span": {
+            "column": 73,
+            "end": 5673,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5643
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            184,
+            185
+          ],
+          "operation": "+",
+          "sequence": 186,
+          "span": {
+            "column": 40,
+            "end": 5673,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5610
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.cable_backordered",
+          "sequence": 187,
+          "span": {
+            "column": 106,
+            "end": 5705,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5676
+          },
+          "value": "0"
+        },
+        {
+          "inputs": [
+            186,
+            187
+          ],
+          "operation": "+",
+          "sequence": 188,
+          "span": {
+            "column": 40,
+            "end": 5705,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5610
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            188
+          ],
+          "operation": "set",
+          "sequence": 189,
+          "span": {
+            "column": 3,
+            "end": 5705,
+            "file": "rules.gwt",
+            "line": 167,
+            "start": 5573
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.backordered_units",
+            "sourcePath": "fulfillment.backordered_units"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 190,
+          "span": {
+            "column": 5,
+            "end": 7316,
+            "file": "rules.gwt",
+            "line": 227,
+            "start": 7270
+          },
+          "value": {
+            "signature": "allocate <order> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.unknown_sku_count",
+          "sequence": 191,
+          "span": {
+            "column": 8,
+            "end": 7353,
+            "file": "rules.gwt",
+            "line": 228,
+            "start": 7324
+          },
+          "value": "0"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 192,
+          "span": {
+            "column": 40,
+            "end": 7357,
+            "file": "rules.gwt",
+            "line": 228,
+            "start": 7356
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            191,
+            192
+          ],
+          "operation": ">",
+          "sequence": 193,
+          "span": {
+            "column": 8,
+            "end": 7357,
+            "file": "rules.gwt",
+            "line": 228,
+            "start": 7324
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            193
+          ],
+          "operation": "branch",
+          "sequence": 194,
+          "span": {
+            "column": 8,
+            "end": 7357,
+            "file": "rules.gwt",
+            "line": 228,
+            "start": 7324
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 195,
+          "span": {
+            "column": 5,
+            "end": 7451,
+            "file": "rules.gwt",
+            "line": 231,
+            "start": 7447
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 196,
+          "span": {
+            "column": 7,
+            "end": 7488,
+            "file": "rules.gwt",
+            "line": 232,
+            "start": 7458
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment"
+            },
+            "definition": {
+              "column": 1,
+              "end": 6241,
+              "file": "rules.gwt",
+              "line": 198,
+              "start": 6204
+            },
+            "signature": "classify_inventory <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.reserved_units",
+          "sequence": 197,
+          "span": {
+            "column": 6,
+            "end": 6313,
+            "file": "rules.gwt",
+            "line": 200,
+            "start": 6287
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 198,
+          "span": {
+            "column": 36,
+            "end": 6318,
+            "file": "rules.gwt",
+            "line": 200,
+            "start": 6317
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            197,
+            198
+          ],
+          "operation": "==",
+          "sequence": 199,
+          "span": {
+            "column": 6,
+            "end": 6318,
+            "file": "rules.gwt",
+            "line": 200,
+            "start": 6287
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            199
+          ],
+          "operation": "branch",
+          "sequence": 200,
+          "span": {
+            "column": 6,
+            "end": 6318,
+            "file": "rules.gwt",
+            "line": 200,
+            "start": 6287
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 201,
+          "span": {
+            "column": 3,
+            "end": 6414,
+            "file": "rules.gwt",
+            "line": 203,
+            "start": 6410
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.backordered_units",
+          "sequence": 202,
+          "span": {
+            "column": 8,
+            "end": 6451,
+            "file": "rules.gwt",
+            "line": 204,
+            "start": 6422
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 203,
+          "span": {
+            "column": 40,
+            "end": 6455,
+            "file": "rules.gwt",
+            "line": 204,
+            "start": 6454
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            202,
+            203
+          ],
+          "operation": ">",
+          "sequence": 204,
+          "span": {
+            "column": 8,
+            "end": 6455,
+            "file": "rules.gwt",
+            "line": 204,
+            "start": 6422
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            204
+          ],
+          "operation": "branch",
+          "sequence": 205,
+          "span": {
+            "column": 8,
+            "end": 6455,
+            "file": "rules.gwt",
+            "line": 204,
+            "start": 6422
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 206,
+          "skipped": {
+            "column": 5,
+            "end": 6558,
+            "file": "rules.gwt",
+            "line": 207,
+            "start": 6554
+          },
+          "span": {
+            "column": 5,
+            "end": 6558,
+            "file": "rules.gwt",
+            "line": 207,
+            "start": 6554
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 207,
+          "span": {
+            "column": 33,
+            "end": 6497,
+            "file": "rules.gwt",
+            "line": 205,
+            "start": 6488
+          },
+          "value": "partial"
+        },
+        {
+          "inputs": [
+            207
+          ],
+          "operation": "set",
+          "sequence": 208,
+          "span": {
+            "column": 7,
+            "end": 6497,
+            "file": "rules.gwt",
+            "line": 205,
+            "start": 6462
+          },
+          "value": {
+            "after": "partial",
+            "before": "authorized",
+            "path": "fulfillment.status",
+            "sourcePath": "fulfillment.status"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 209,
+          "span": {
+            "column": 33,
+            "end": 6549,
+            "file": "rules.gwt",
+            "line": 206,
+            "start": 6530
+          },
+          "value": "partial_inventory"
+        },
+        {
+          "inputs": [
+            209
+          ],
+          "operation": "set",
+          "sequence": 210,
+          "span": {
+            "column": 7,
+            "end": 6549,
+            "file": "rules.gwt",
+            "line": 206,
+            "start": 6504
+          },
+          "value": {
+            "after": "partial_inventory",
+            "before": "authorized",
+            "path": "fulfillment.reason",
+            "sourcePath": "fulfillment.reason"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 211,
+          "span": {
+            "column": 7,
+            "end": 7488,
+            "file": "rules.gwt",
+            "line": 232,
+            "start": 7458
+          },
+          "value": {
+            "signature": "classify_inventory <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 212,
+          "span": {
+            "column": 7,
+            "end": 7531,
+            "file": "rules.gwt",
+            "line": 233,
+            "start": 7495
+          },
+          "value": {
+            "bindings": {
+              "fulfillment": "fulfillment",
+              "order": "order"
+            },
+            "definition": {
+              "column": 1,
+              "end": 6693,
+              "file": "rules.gwt",
+              "line": 211,
+              "start": 6648
+            },
+            "signature": "plan_shipping <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 213,
+          "span": {
+            "column": 3,
+            "end": 6819,
+            "file": "rules.gwt",
+            "line": 214,
+            "start": 6764
+          },
+          "value": {
+            "bindings": {
+              "units": "fulfillment.reserved_units"
+            },
+            "definition": {
+              "column": 1,
+              "end": 5732,
+              "file": "rules.gwt",
+              "line": 169,
+              "start": 5707
+            },
+            "signature": "packages_for <units>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read units",
+          "sequence": 214,
+          "span": {
+            "column": 6,
+            "end": 5789,
+            "file": "rules.gwt",
+            "line": 172,
+            "start": 5784
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 215,
+          "span": {
+            "column": 15,
+            "end": 5794,
+            "file": "rules.gwt",
+            "line": 172,
+            "start": 5793
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            214,
+            215
+          ],
+          "operation": "<=",
+          "sequence": 216,
+          "span": {
+            "column": 6,
+            "end": 5794,
+            "file": "rules.gwt",
+            "line": 172,
+            "start": 5784
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            216
+          ],
+          "operation": "branch",
+          "sequence": 217,
+          "span": {
+            "column": 6,
+            "end": 5794,
+            "file": "rules.gwt",
+            "line": 172,
+            "start": 5784
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 218,
+          "span": {
+            "column": 3,
+            "end": 5814,
+            "file": "rules.gwt",
+            "line": 174,
+            "start": 5810
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read units",
+          "sequence": 219,
+          "span": {
+            "column": 8,
+            "end": 5827,
+            "file": "rules.gwt",
+            "line": 175,
+            "start": 5822
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 220,
+          "span": {
+            "column": 17,
+            "end": 5832,
+            "file": "rules.gwt",
+            "line": 175,
+            "start": 5831
+          },
+          "value": 3
+        },
+        {
+          "inputs": [
+            219,
+            220
+          ],
+          "operation": "<=",
+          "sequence": 221,
+          "span": {
+            "column": 8,
+            "end": 5832,
+            "file": "rules.gwt",
+            "line": 175,
+            "start": 5822
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            221
+          ],
+          "operation": "branch",
+          "sequence": 222,
+          "span": {
+            "column": 8,
+            "end": 5832,
+            "file": "rules.gwt",
+            "line": 175,
+            "start": 5822
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 223,
+          "skipped": {
+            "column": 5,
+            "end": 5856,
+            "file": "rules.gwt",
+            "line": 177,
+            "start": 5852
+          },
+          "span": {
+            "column": 5,
+            "end": 5856,
+            "file": "rules.gwt",
+            "line": 177,
+            "start": 5852
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 224,
+          "span": {
+            "column": 14,
+            "end": 5847,
+            "file": "rules.gwt",
+            "line": 176,
+            "start": 5846
+          },
+          "value": 1
+        },
+        {
+          "inputs": [
+            224
+          ],
+          "operation": "return",
+          "sequence": 225,
+          "span": {
+            "column": 7,
+            "end": 5847,
+            "file": "rules.gwt",
+            "line": 176,
+            "start": 5839
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            225
+          ],
+          "operation": "leave behavior",
+          "sequence": 226,
+          "span": {
+            "column": 3,
+            "end": 6819,
+            "file": "rules.gwt",
+            "line": 214,
+            "start": 6764
+          },
+          "value": {
+            "returned": "1",
+            "signature": "packages_for <units>"
+          }
+        },
+        {
+          "inputs": [
+            226
+          ],
+          "operation": "initialize",
+          "sequence": 227,
+          "span": {
+            "column": 3,
+            "end": 6819,
+            "file": "rules.gwt",
+            "line": 214,
+            "start": 6764
+          },
+          "value": {
+            "after": "1",
+            "path": "packages"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "enter behavior",
+          "sequence": 228,
+          "span": {
+            "column": 3,
+            "end": 6879,
+            "file": "rules.gwt",
+            "line": 215,
+            "start": 6822
+          },
+          "value": {
+            "bindings": {
+              "order": "order",
+              "units": "fulfillment.reserved_units"
+            },
+            "definition": {
+              "column": 1,
+              "end": 5957,
+              "file": "rules.gwt",
+              "line": 183,
+              "start": 5923
+            },
+            "signature": "shipping <order> with <units>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read units",
+          "sequence": 229,
+          "span": {
+            "column": 6,
+            "end": 6042,
+            "file": "rules.gwt",
+            "line": 187,
+            "start": 6037
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 230,
+          "span": {
+            "column": 15,
+            "end": 6047,
+            "file": "rules.gwt",
+            "line": 187,
+            "start": 6046
+          },
+          "value": 0
+        },
+        {
+          "inputs": [
+            229,
+            230
+          ],
+          "operation": "<=",
+          "sequence": 231,
+          "span": {
+            "column": 6,
+            "end": 6047,
+            "file": "rules.gwt",
+            "line": 187,
+            "start": 6037
+          },
+          "value": false
+        },
+        {
+          "inputs": [
+            231
+          ],
+          "operation": "branch",
+          "sequence": 232,
+          "span": {
+            "column": 6,
+            "end": 6047,
+            "file": "rules.gwt",
+            "line": 187,
+            "start": 6037
+          },
+          "value": {
+            "selected": false
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "else selected",
+          "sequence": 233,
+          "span": {
+            "column": 3,
+            "end": 6067,
+            "file": "rules.gwt",
+            "line": 189,
+            "start": 6063
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read order.expedited",
+          "sequence": 234,
+          "span": {
+            "column": 8,
+            "end": 6090,
+            "file": "rules.gwt",
+            "line": 190,
+            "start": 6075
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            234
+          ],
+          "operation": "branch",
+          "sequence": 235,
+          "span": {
+            "column": 8,
+            "end": 6090,
+            "file": "rules.gwt",
+            "line": 190,
+            "start": 6075
+          },
+          "value": {
+            "selected": true
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "branch skipped",
+          "sequence": 236,
+          "skipped": {
+            "column": 5,
+            "end": 6129,
+            "file": "rules.gwt",
+            "line": 192,
+            "start": 6125
+          },
+          "span": {
+            "column": 5,
+            "end": 6129,
+            "file": "rules.gwt",
+            "line": 192,
+            "start": 6125
+          },
+          "value": null
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 237,
+          "span": {
+            "column": 14,
+            "end": 6106,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6104
+          },
+          "value": 15
+        },
+        {
+          "inputs": [],
+          "operation": "read units",
+          "sequence": 238,
+          "span": {
+            "column": 19,
+            "end": 6114,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6109
+          },
+          "value": "3"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 239,
+          "span": {
+            "column": 27,
+            "end": 6120,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6117
+          },
+          "value": "1.5"
+        },
+        {
+          "inputs": [
+            238,
+            239
+          ],
+          "operation": "*",
+          "sequence": 240,
+          "span": {
+            "column": 19,
+            "end": 6120,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6109
+          },
+          "value": "4.5"
+        },
+        {
+          "inputs": [
+            237,
+            240
+          ],
+          "operation": "+",
+          "sequence": 241,
+          "span": {
+            "column": 14,
+            "end": 6120,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6104
+          },
+          "value": "19.5"
+        },
+        {
+          "inputs": [
+            241
+          ],
+          "operation": "return",
+          "sequence": 242,
+          "span": {
+            "column": 7,
+            "end": 6120,
+            "file": "rules.gwt",
+            "line": 191,
+            "start": 6097
+          },
+          "value": "19.5"
+        },
+        {
+          "inputs": [
+            242
+          ],
+          "operation": "leave behavior",
+          "sequence": 243,
+          "span": {
+            "column": 3,
+            "end": 6879,
+            "file": "rules.gwt",
+            "line": 215,
+            "start": 6822
+          },
+          "value": {
+            "returned": "19.5",
+            "signature": "shipping <order> with <units>"
+          }
+        },
+        {
+          "inputs": [
+            243
+          ],
+          "operation": "initialize",
+          "sequence": 244,
+          "span": {
+            "column": 3,
+            "end": 6879,
+            "file": "rules.gwt",
+            "line": 215,
+            "start": 6822
+          },
+          "value": {
+            "after": "19.5",
+            "path": "fee"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read packages",
+          "sequence": 245,
+          "span": {
+            "column": 36,
+            "end": 6923,
+            "file": "rules.gwt",
+            "line": 216,
+            "start": 6915
+          },
+          "value": "1"
+        },
+        {
+          "inputs": [
+            245
+          ],
+          "operation": "set",
+          "sequence": 246,
+          "span": {
+            "column": 3,
+            "end": 6923,
+            "file": "rules.gwt",
+            "line": 216,
+            "start": 6882
+          },
+          "value": {
+            "after": "1",
+            "before": "0",
+            "path": "fulfillment.package_count",
+            "sourcePath": "fulfillment.package_count"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fee",
+          "sequence": 247,
+          "span": {
+            "column": 35,
+            "end": 6961,
+            "file": "rules.gwt",
+            "line": 217,
+            "start": 6958
+          },
+          "value": "19.5"
+        },
+        {
+          "inputs": [
+            247
+          ],
+          "operation": "set",
+          "sequence": 248,
+          "span": {
+            "column": 3,
+            "end": 6961,
+            "file": "rules.gwt",
+            "line": 217,
+            "start": 6926
+          },
+          "value": {
+            "after": "19.5",
+            "before": "0",
+            "path": "fulfillment.shipping_fee",
+            "sourcePath": "fulfillment.shipping_fee"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 249,
+          "span": {
+            "column": 7,
+            "end": 7531,
+            "file": "rules.gwt",
+            "line": 233,
+            "start": 7495
+          },
+          "value": {
+            "signature": "plan_shipping <order> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "leave behavior",
+          "sequence": 250,
+          "span": {
+            "column": 8,
+            "end": 1459,
+            "file": "rules.gwt",
+            "line": 58,
+            "start": 1414
+          },
+          "value": {
+            "signature": "fulfill <order> from <inventory> into <fulfillment>"
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "output contract",
+          "sequence": 251,
+          "span": {
+            "column": 3,
+            "end": 1501,
+            "file": "rules.gwt",
+            "line": 60,
+            "start": 1463
+          },
+          "value": {
+            "path": "fulfillment",
+            "value": {
+              "backordered_units": "1",
+              "cable_backordered": "0",
+              "cable_reserved": "1",
+              "gadget_backordered": "1",
+              "gadget_reserved": "1",
+              "package_count": "1",
+              "reason": "partial_inventory",
+              "requested_units": "4",
+              "reserved_units": "3",
+              "shipping_fee": "19.5",
+              "status": "partial",
+              "unknown_sku_count": "0",
+              "widget_backordered": "0",
+              "widget_reserved": "1"
+            }
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "output contract",
+          "sequence": 252,
+          "span": {
+            "column": 3,
+            "end": 1535,
+            "file": "rules.gwt",
+            "line": 61,
+            "start": 1504
+          },
+          "value": {
+            "path": "inventory",
+            "value": {
+              "cable_available": "4",
+              "cable_reserved": "1",
+              "gadget_available": "0",
+              "gadget_reserved": "1",
+              "widget_available": "4",
+              "widget_reserved": "1"
+            }
+          }
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.status",
+          "sequence": 253,
+          "span": {
+            "column": 8,
+            "end": 1562,
+            "file": "rules.gwt",
+            "line": 63,
+            "start": 1544
+          },
+          "value": "partial"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 254,
+          "span": {
+            "column": 30,
+            "end": 1571,
+            "file": "rules.gwt",
+            "line": 63,
+            "start": 1566
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            253,
+            254
+          ],
+          "operation": "!=",
+          "sequence": 255,
+          "span": {
+            "column": 8,
+            "end": 1571,
+            "file": "rules.gwt",
+            "line": 63,
+            "start": 1544
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            255
+          ],
+          "operation": "assert",
+          "sequence": 256,
+          "span": {
+            "column": 3,
+            "end": 1571,
+            "file": "rules.gwt",
+            "line": 63,
+            "start": 1539
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "read fulfillment.reason",
+          "sequence": 257,
+          "span": {
+            "column": 7,
+            "end": 1596,
+            "file": "rules.gwt",
+            "line": 64,
+            "start": 1578
+          },
+          "value": "partial_inventory"
+        },
+        {
+          "inputs": [],
+          "operation": "literal",
+          "sequence": 258,
+          "span": {
+            "column": 29,
+            "end": 1605,
+            "file": "rules.gwt",
+            "line": 64,
+            "start": 1600
+          },
+          "value": "new"
+        },
+        {
+          "inputs": [
+            257,
+            258
+          ],
+          "operation": "!=",
+          "sequence": 259,
+          "span": {
+            "column": 7,
+            "end": 1605,
+            "file": "rules.gwt",
+            "line": 64,
+            "start": 1578
+          },
+          "value": true
+        },
+        {
+          "inputs": [
+            259
+          ],
+          "operation": "assert",
+          "sequence": 260,
+          "span": {
+            "column": 3,
+            "end": 1605,
+            "file": "rules.gwt",
+            "line": 64,
+            "start": 1574
+          },
+          "value": true
+        },
+        {
+          "inputs": [],
+          "operation": "leave request",
+          "sequence": 261,
+          "span": {
+            "column": 1,
+            "end": 983,
+            "file": "rules.gwt",
+            "line": 38,
+            "start": 962
+          },
+          "value": {
+            "name": "fulfill order"
+          }
+        }
+      ],
+      "file": "rules.gwt",
+      "kind": "gwt.native-run",
+      "ok": true,
+      "output": [],
+      "program": "order fulfillment",
+      "programIdentity": {
+        "algorithm": "gwt-native-program-sha256-v1",
+        "digest": "sha256:ffc9adad410ed842009e4490bbac85f90e25650ac6fb47f06e6a157b6b3ab2da",
+        "entry": "rules.gwt",
+        "modules": [
+          {
+            "digest": "sha256:bc5ac4b74b4826936eb62850de8faf90cae309b8e8767af6da5dbb84e41cfe8b",
+            "imports": [],
+            "path": "rules.gwt"
+          }
+        ]
+      },
+      "request": "fulfill order",
+      "result": {
+        "fulfillment": {
+          "backordered_units": "1",
+          "cable_backordered": "0",
+          "cable_reserved": "1",
+          "gadget_backordered": "1",
+          "gadget_reserved": "1",
+          "package_count": "1",
+          "reason": "partial_inventory",
+          "requested_units": "4",
+          "reserved_units": "3",
+          "shipping_fee": "19.5",
+          "status": "partial",
+          "unknown_sku_count": "0",
+          "widget_backordered": "0",
+          "widget_reserved": "1"
+        },
+        "inventory": {
+          "cable_available": "4",
+          "cable_reserved": "1",
+          "gadget_available": "0",
+          "gadget_reserved": "1",
+          "widget_available": "4",
+          "widget_reserved": "1"
+        }
+      },
+      "schemaVersion": 1,
+      "state": {
+        "fulfillment": {
+          "backordered_units": "1",
+          "cable_backordered": "0",
+          "cable_reserved": "1",
+          "gadget_backordered": "1",
+          "gadget_reserved": "1",
+          "package_count": "1",
+          "reason": "partial_inventory",
+          "requested_units": "4",
+          "reserved_units": "3",
+          "shipping_fee": "19.5",
+          "status": "partial",
+          "unknown_sku_count": "0",
+          "widget_backordered": "0",
+          "widget_reserved": "1"
+        },
+        "inventory": {
+          "cable_available": "4",
+          "cable_reserved": "1",
+          "gadget_available": "0",
+          "gadget_reserved": "1",
+          "widget_available": "4",
+          "widget_reserved": "1"
+        },
+        "order": {
+          "expedited": true,
+          "fraud_score": "12",
+          "items": [
+            {
+              "quantity": "1",
+              "sku": "widget"
+            },
+            {
+              "quantity": "2",
+              "sku": "gadget"
+            },
+            {
+              "quantity": "1",
+              "sku": "cable"
+            }
+          ],
+          "order_id": "A200",
+          "payment_status": "paid"
+        }
+      },
+      "steps": 214
+    }
+  },
+  "commands": {
+    "invoice/python": [
+      "/usr/bin/python",
+      "-m",
+      "gwtlang",
+      "run",
+      "crates/gwt-core/tests/fixtures/invoice.gwt",
+      "--request",
+      "price invoice",
+      "--json-input",
+      "crates/gwt-core/tests/fixtures/invoice-input.json",
+      "--json"
+    ],
+    "invoice/rust": [
+      "/home/g/code/gwt/target/release/gwt-native",
+      "run",
+      "crates/gwt-core/tests/fixtures/invoice.gwt",
+      "--request",
+      "price invoice",
+      "--input",
+      "crates/gwt-core/tests/fixtures/invoice-input.json"
+    ],
+    "member-pricing/python": [
+      "/usr/bin/python",
+      "-m",
+      "gwtlang",
+      "run",
+      "examples/native_return_values/rules.gwt",
+      "--request",
+      "quote order",
+      "--json-input",
+      "examples/native_return_values/input.json",
+      "--json"
+    ],
+    "member-pricing/rust": [
+      "/home/g/code/gwt/target/release/gwt-native",
+      "run",
+      "examples/native_return_values/rules.gwt",
+      "--request",
+      "quote order",
+      "--input",
+      "examples/native_return_values/input.json"
+    ],
+    "fulfillment/python": [
+      "/usr/bin/python",
+      "-m",
+      "gwtlang",
+      "run",
+      "examples/order_fulfillment/rules.gwt",
+      "--request",
+      "fulfill order",
+      "--json-input",
+      "examples/order_fulfillment/request.json",
+      "--json"
+    ],
+    "fulfillment/rust": [
+      "/home/g/code/gwt/target/release/gwt-native",
+      "run",
+      "examples/order_fulfillment/rules.gwt",
+      "--request",
+      "fulfill order",
+      "--input",
+      "examples/order_fulfillment/request.json"
+    ]
+  }
+}

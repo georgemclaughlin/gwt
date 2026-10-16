@@ -1,0 +1,32 @@
+{
+  "kind": "synthetic-checkpoint-recovery",
+  "humanParticipants": 0,
+  "browserValidation": "pending",
+  "recoveries": 2,
+  "commands": 5,
+  "summary": {
+    "plannedTasks": 8,
+    "statusCounts": {
+      "submitted": 3,
+      "skipped": 1,
+      "missing_session": 4
+    },
+    "plannedPredictions": 16,
+    "answeredPredictionsIncludingDrafts": 8,
+    "correctSubmittedPredictions": 6,
+    "correctSubmittedDecisions": 3,
+    "submittedTasks": 3,
+    "resumedTasks": 1,
+    "resumedSessions": 1,
+    "submittedTimingEligibleTasks": 2,
+    "medianSubmittedActiveMs": 1000.0,
+    "medianSubmittedWallMs": 1500.0
+  },
+  "sourceHashes": {
+    "/home/g/code/gwt/evaluations/human_review/study.py": "43b2fd7323dd9254956de34b1b6effdbce7cc073245b717c6c99bb9a5d9489cc",
+    "/home/g/code/gwt/evaluations/human_review/session.html": "5ed2e569f75a15870b2ee4bf9b1bb6f8b260d97f57f3b712ace70c4b73717012",
+    "/home/g/code/gwt/evaluations/human_review/session-recovery.js": "9f8696836889e5f0c8e3b1604d45c953da541bb880d1185052e063d612694937",
+    "/home/g/code/gwt/evaluations/human_review/qualify_recovery.py": "9b0c0e98c693cd0c9021adf81b0b3df3dc42e9d8b7f5ebf0e5852bd0b66f2ae5",
+    "/home/g/code/gwt/evaluations/human_review/qualify_adjudication.py": "d27d9d0ddf8c7a83fb5d00a79552b54e7955784276e52db5229759f6b4aa88df"
+  }
+}

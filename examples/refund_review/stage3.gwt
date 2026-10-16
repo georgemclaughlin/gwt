@@ -1,0 +1,92 @@
+PROGRAM refund review
+
+RECORD RefundFacts
+  days: integer
+  damaged: boolean
+  receipt: boolean
+  clearance: boolean
+  member: boolean
+
+RECORD RefundDecision
+  status: "approved" | "rejected"
+  reason: "missing_receipt" | "damaged" | "within_window" | "expired" | "clearance"
+
+REQUEST assess refund
+  GIVEN facts is RefundFacts
+  GIVEN decision is RefundDecision
+    status: "rejected"
+    reason: "expired"
+  WHEN assess facts into decision
+  OUTPUT decision is RefundDecision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is RefundFacts
+  AND decision is RefundDecision
+  DECIDE
+    WHEN facts.clearance
+      set decision.status to "rejected"
+      set decision.reason to "clearance"
+    WHEN facts.damaged
+      set decision.status to "approved"
+      set decision.reason to "damaged"
+    WHEN not facts.receipt
+      set decision.status to "rejected"
+      set decision.reason to "missing_receipt"
+    WHEN facts.days <= 30 or (facts.member and facts.days <= 45)
+      set decision.status to "approved"
+      set decision.reason to "within_window"
+    ELSE
+      set decision.status to "rejected"
+      set decision.reason to "expired"
+
+SCENARIO ordinary refund
+GIVEN facts is RefundFacts
+  days: 30
+  damaged: false
+  receipt: true
+  clearance: false
+  member: false
+
+REQUEST assess refund
+
+THEN decision.status == "approved"
+AND decision.reason == "within_window"
+
+SCENARIO damaged without receipt
+GIVEN facts is RefundFacts
+  days: 46
+  damaged: true
+  receipt: false
+  clearance: false
+  member: false
+
+REQUEST assess refund
+
+THEN decision.status == "approved"
+AND decision.reason == "damaged"
+
+SCENARIO clearance damage
+GIVEN facts is RefundFacts
+  days: 10
+  damaged: true
+  receipt: true
+  clearance: true
+  member: false
+
+REQUEST assess refund
+
+THEN decision.status == "rejected"
+AND decision.reason == "clearance"
+
+SCENARIO member day forty five
+GIVEN facts is RefundFacts
+  days: 45
+  damaged: false
+  receipt: true
+  clearance: false
+  member: true
+
+REQUEST assess refund
+
+THEN decision.status == "approved"
+AND decision.reason == "within_window"

@@ -1,0 +1,237 @@
+{
+  "native": "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+  "nativeSha256": "74ccbb28339e7637acf0315787680713e3fab5a6ee9f2ecb1a71a06d888b1056",
+  "verifiedPolicyReplays": 8,
+  "guardFailureVerified": true,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 0,
+    "compared": 8,
+    "evidenceChanged": 8,
+    "outcomeChanged": 2,
+    "sourceChanged": 8,
+    "stateChanged": 2,
+    "total": 8,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "commands": [
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "validate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/validation.html"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-both-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-both.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-receipt-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-receipt.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-reference-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-reference.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/approved-boundary-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/approved-boundary.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/empty-reference-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/empty-reference.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/over-limit-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/over-limit.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/unverified-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/unverified.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/rules.gwt",
+        "--request",
+        "review reimbursement",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-policy-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-policy.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "corpus",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-both.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-receipt.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-reference.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/approved-boundary.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/empty-reference.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/over-limit.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/unverified.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/missing-policy.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "review",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/corpus.json",
+        "--candidate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/candidate.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/presence-review.html"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/guarded-alias.gwt",
+        "--request",
+        "replace",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/guarded-alias-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-w0d9qqx1/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-presence/reimbursement/guarded-alias-case.json"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

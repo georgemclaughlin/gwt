@@ -1,0 +1,35 @@
+{
+  "node": "v22.22.2",
+  "nativeSha256": "f3c425ef4ff8d00a73f0e92121d61d25a8220febd0820057120bfd4eb2ab298a",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:f5b1f33b4ce11bd6721ab3fd2546e3827e193fcb6928736a2d97e9fa530dfd1c"
+  },
+  "tests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "completeCliObservationComparisons": 4,
+  "concurrentRequests": 12,
+  "independentHostEmptyPath": true,
+  "nativeEngineInputsUnchanged": 59,
+  "ciYaml": "parsed",
+  "ciExecutableSelection": "matches qualified package",
+  "javascriptSyntax": "passed",
+  "relativeLinksChecked": 141,
+  "gitDiffCheck": "passed",
+  "files": {
+    "examples/native_node_host/native.mjs": "38c3dc2018ea79ea65e39da447303d2d15b78934daa36a1ce0b0118c081c0d1f",
+    "examples/native_node_host/quote.mjs": "8b90a0947c71badb9eb4f1a16fe86759fe30b58d0f02f777f2002bcb78ec47bb",
+    "examples/native_node_host/README.md": "cf2fb20afc481579d5fc59cd89012b2538eb4ea1ca842403cbfdb577f4f3c27a",
+    "tests/native_node_host.test.mjs": "b70c590b1a18fd429bf9dd9cfb2e64cf69bf3a4444502ceb15bfd98cfda18dd0",
+    ".github/workflows/ci.yml": "e53b539f0a783f6abc3306d5bb495182774b7b8e3ce400843dc6c4c6024ab439",
+    "docs/native-embedding.md": "d3f41eeb23a43595e0273c35301306658e490217203f94321bc63de3fc3d8e88",
+    "docs/project-goal-progress.md": "d0a494e4f14994c76e1aa535d7b776166fa3289498659d2c777fbee556d6c32c",
+    "evaluations/native_packaging/README.md": "d88fbf0464126bc439ea911ffff55789702fd0a84d872f707ae17d89bfa199f0",
+    "evaluations/native_packaging/2026-10-16-node-host/tests.log": "7e128c023cb7ec5b4602af11628248ce47a1c4e65f89626c00d383b5db2c5495",
+    "evaluations/native_packaging/2026-10-16-node-host/observations.json": "f1e1fabe9d3bf96a845cdc9d1e83fceb08b6c08fea84bb50007436aa08e8e856",
+    "evaluations/native_packaging/2026-10-16-node-host/quote.json": "c6a3d67377e6fda52d3f054f8031215b28d800f95719cd6228c00b64a751d07c",
+    "evaluations/native_packaging/2026-10-16-node-host/README.md": "0d77291f15afc485684d49577842f718ea4aa3746f9abb56545ed466878e04b0"
+  }
+}

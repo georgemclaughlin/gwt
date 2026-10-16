@@ -1,0 +1,24 @@
+{
+  "kind": "goal-evidence-audit",
+  "engineSourceInputsMatched": 60,
+  "nativeSha256": "3f5e08d4fcfc56f1ce80c954b2152361c059a7088db78533d4f0d9e5eb61bf7c",
+  "humanFixtureExecutions": 1305,
+  "maintenanceFixtureExecutions": 6828,
+  "humanParticipants": 0,
+  "liveModelCalls": 0,
+  "humanSessions": "pending-by-owner",
+  "externalPilots": "deferred-by-owner",
+  "fullGoalAchieved": false,
+  "artifactSha256": {
+    "evaluations/goal_audit/2026-10-16/README.md": "7e3825905b6e2139e0cd39368b037520e136ad4e7aaed342d143c2e8a21a84fd",
+    "evaluations/goal_audit/2026-10-16/human-fixture-qualification.json": "8a3b4567a1c0cd6e95cdeced010c1f3b17545187a347a141019a62d91478baf4",
+    "evaluations/goal_audit/2026-10-16/human-fixture.log": "3b61ea57aa123610c28f1d6f3f6d4349de09707d753019d3f25b9b68221f2f46",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/checks.json": "f67ac7b6eb2788eb82bc1e6507db8533411080b73e4a9fa629c2b76ae4c2a62d",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/commands.json": "6b0ba0121c617095abef99baefe92e52c7234d30d8e61d5f6d2f1b405fcc56f5",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/corpus.json": "368b460142da5bf4388237d793b650d9c586adb830b6e33d5bb44285cbb47441",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/observations.json": "9c0fd5b93c6fd996b9655d84370bcb11d7acc78922f1c36799fb9d8b6f12b206",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/qualification.json": "257abc0188ec749e09f96f992b06fd281d03c385a6e3a06a3ea63b7a8766a711",
+    "evaluations/goal_audit/2026-10-16/native-maintenance/tasks.jsonl": "dae8b5c0561211c3e6b388605f90aa9095b1335f88611115f9a472057988b659",
+    "evaluations/goal_audit/2026-10-16/native-maintenance.log": "813defde7725f70303323fd1c33ca6c2860ed3b0caa1e519744ce5ac14722cff"
+  }
+}

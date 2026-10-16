@@ -1,0 +1,33 @@
+{
+  "toolchains": [
+    {
+      "toolchain": "1.85.0",
+      "nativeTestsPassed": 170,
+      "clippyWarningsDenied": true,
+      "packageVerified": true,
+      "hostCases": 18,
+      "concurrentExecutions": 288,
+      "relocatedReplays": 18,
+      "engine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:a9d9325e4c93b551c9634f965572814655c57a6795f0c6bacc333b785a4f349e"
+      }
+    },
+    {
+      "toolchain": "1.96.0",
+      "nativeTestsPassed": 170,
+      "clippyWarningsDenied": true,
+      "packageVerified": true,
+      "hostCases": 18,
+      "concurrentExecutions": 288,
+      "relocatedReplays": 18,
+      "engine": {
+        "profile": "gwt-native-case-engine-v1",
+        "sourceDigest": "sha256:a9d9325e4c93b551c9634f965572814655c57a6795f0c6bacc333b785a4f349e"
+      }
+    }
+  ],
+  "fmtChecked": true,
+  "artifactsUnpublished": true,
+  "target": "x86_64-unknown-linux-gnu"
+}

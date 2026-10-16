@@ -1,5 +1,16 @@
 # Loan Underwriting Example
 
+The separate [`native_rules.gwt`](native_rules.gwt) demonstrates exact ratio
+records and threshold comparisons on the Rust engine. It changes the ratio output
+contract and rejects nonpositive denominators; it is not a drop-in replacement
+for the Python workflow below. See the
+[design and migration note](../../docs/native-exact-ratios.md) and
+[independent comparison](../../evaluations/underwriting/2026-10-16/README.md).
+
+```sh
+cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/loan_underwriting/native_rules.gwt
+```
+
 This folder shows GWT as a small embeddable rules/workflow engine.
 
 - `rules.gwt` contains reusable underwriting behavior and embedded regression

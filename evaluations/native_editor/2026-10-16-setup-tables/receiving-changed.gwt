@@ -1,0 +1,57 @@
+PROGRAM receiving quantities
+
+RECORD ReceiptLine
+  sku: text
+  quantity: integer
+
+TYPE ReceivedLine is ReceiptLine
+
+RECORD Receipt
+  lines: list<ReceiptLine>
+  total: integer
+
+REQUEST summarize receipt
+  GIVEN receipt is Receipt
+  WHEN summarize receipt
+  OUTPUT receipt is Receipt
+  THEN receipt.total >= 0
+
+WHEN summarize <receipt>
+  GIVEN receipt is Receipt
+  FOR line in receipt.lines
+    REQUIRE line.quantity > 0
+  sum line.quantity in receipt.lines into receipt.total
+
+SCENARIO nested table preserves rows and totals
+GIVEN receipt is Receipt
+  lines: []
+  total: 0
+
+GIVEN receipt.lines are ReceivedLine
+  | sku          | quantity |
+  | "widget"     | 3        |
+  | "café crate" | 3        |
+  | "widget"     | 1        |
+
+REQUEST summarize receipt
+THEN receipt.total == 6
+
+SCENARIO a root table supplies a request field
+GIVEN lines are ReceiptLine
+  | sku      | quantity |
+  | "gadget" | 4        |
+
+GIVEN receipt is Receipt
+  lines: lines
+  total: 0
+
+REQUEST summarize receipt
+THEN receipt.total == 4
+
+SCENARIO an empty receipt totals zero
+GIVEN receipt is Receipt
+  lines: []
+  total: 0
+
+REQUEST summarize receipt
+THEN receipt.total == 0

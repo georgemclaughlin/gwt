@@ -1,0 +1,29 @@
+{
+  "native": "/home/g/code/gwt/target/debug/gwt-native",
+  "nativeSha256": "395d87f5e99792ca9271c88fe166ea4ed27e7106aeb2db3b8951637c033a1bc4",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:4c5b3a1ac58944741052c69ddf93bc3bbba630ce6fbd940ca65c96f2339cde2a"
+  },
+  "expectedBinding": "present",
+  "identicalExecutionObservations": 5,
+  "changedBudgetAssessments": [
+    {
+      "budget": "steps",
+      "stale": true
+    },
+    {
+      "budget": "evidence",
+      "stale": true
+    },
+    {
+      "budget": "text",
+      "stale": true
+    },
+    {
+      "budget": "depth",
+      "stale": true
+    }
+  ],
+  "realHumanApprovals": 0
+}

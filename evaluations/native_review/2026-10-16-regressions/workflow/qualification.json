@@ -1,0 +1,159 @@
+{
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-jh_4ju09/installed/bin/gwt-native",
+  "nativeSha256": "6efafab2c6322db66d5939b4ccee32184977f3e74bca2adc940316d4b5b888ea",
+  "caseCount": 9,
+  "regressionReports": 12,
+  "checks": [
+    {
+      "variant": "same",
+      "scope": "outcomes-and-state",
+      "passed": true,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 0,
+        "passed": 9,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "same",
+      "scope": "execution",
+      "passed": true,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 0,
+        "passed": 9,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "moved",
+      "scope": "outcomes-and-state",
+      "passed": true,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 0,
+        "passed": 9,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "moved",
+      "scope": "execution",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 9,
+        "passed": 0,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "tax-change",
+      "scope": "outcomes-and-state",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 4,
+        "passed": 5,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "tax-change",
+      "scope": "execution",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 4,
+        "passed": 5,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "early-write",
+      "scope": "outcomes-and-state",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 2,
+        "passed": 7,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "early-write",
+      "scope": "execution",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 5,
+        "passed": 4,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "extra-check",
+      "scope": "outcomes-and-state",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 1,
+        "passed": 8,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "extra-check",
+      "scope": "execution",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 4,
+        "passed": 5,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "removed-check",
+      "scope": "outcomes-and-state",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 2,
+        "passed": 7,
+        "total": 9,
+        "unavailable": 0
+      }
+    },
+    {
+      "variant": "removed-check",
+      "scope": "execution",
+      "passed": false,
+      "totals": {
+        "baselineMismatch": 0,
+        "changed": 5,
+        "passed": 4,
+        "total": 9,
+        "unavailable": 0
+      }
+    }
+  ],
+  "sourceSha256": "276f77bebe112ec7b019fd0b7442ac71455ef3759292ba74e6404cb323d7cf78",
+  "baselineSteps": 28,
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:8a09d0f137af4670f3efa17a0763a7c95fde71f910ac3d343e0cb7b860653db3"
+  },
+  "corpusUnchanged": true
+}

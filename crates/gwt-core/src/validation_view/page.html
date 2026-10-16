@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>GWT validation review</title></head><body>
+<header><p class="eyebrow">GWT · Validation review</p><h1>What did these scenarios check?</h1><p id="entry" class="file"></p><p id="outcome" role="status"></p>
+<p class="scope">Recorded checks for one captured program. Passing checks do not establish the intended policy, useful expectations, or complete input and branch coverage.</p>
+<div class="actions"><button id="download-report">Download report JSON</button><button id="download-source">Download source bundle</button></div></header>
+<main><section aria-label="Validation gates" id="gates" class="gates"></section>
+<section id="gaps" class="notice" aria-labelledby="gaps-title" hidden><h2 id="gaps-title">Evidence gaps</h2><ul id="warnings"></ul></section>
+<section aria-labelledby="scenarios-title"><div class="section-heading"><h2 id="scenarios-title">Scenarios</h2><p id="scenario-totals"></p></div>
+<div class="filters"><label>Find a scenario<input id="search" type="search" placeholder="Scenario name" autocomplete="off"></label><label>Show<select id="filter"><option value="all">All scenarios</option><option value="failed">Failed scenarios</option><option value="gaps">Scenarios with evidence gaps</option></select></label><p id="visible-count" role="status" aria-live="polite"></p></div>
+<div class="scenario-layout"><nav id="scenario-list" aria-label="Choose a scenario"></nav><article id="scenario-detail" aria-label="Selected scenario"></article></div></section>
+<section aria-labelledby="calls-title"><div class="section-heading"><h2 id="calls-title">Behavior and request observations</h2><label>Show declarations<select id="calls-filter"><option value="all">All declarations</option><option value="unobserved">No recorded calls</option></select></label></div>
+<p class="scope">An entry was recorded when a call began. It does not prove the call completed or that every branch ran. These counts include only the entry's embedded scenarios.</p>
+<p id="call-count" role="status"></p><div class="table-scroll"><table><thead><tr><th>Declaration</th><th>Recorded entries</th><th>Scenario runs</th><th>Source</th></tr></thead><tbody id="calls"></tbody></table></div><button id="more-calls" hidden>Show more declarations</button></section>
+<section aria-labelledby="format-title"><h2 id="format-title">Source formatting</h2><ul id="formats"></ul></section>
+<details class="snapshot"><summary>Captured source and execution settings</summary><p id="capture-note"></p><ul id="source-files"></ul><h3>Program identity</h3><pre id="identity"></pre><h3>Engine source identity</h3><pre id="engine"></pre><h3>Execution limits per scenario</h3><pre id="limits"></pre><p id="policy"></p></details>
+<noscript><p class="notice">This report needs JavaScript to display its captured results and source. Use the validation command's JSON output when scripts are unavailable.</p></noscript>
+</main><dialog id="source-dialog" aria-labelledby="source-title"><div class="dialog-heading"><h2 id="source-title">Captured source</h2><button id="close-source" aria-label="Close source">Close</button></div><p id="source-location" class="file"></p><p id="source-range"></p><button id="full-source">Show full module</button><pre id="source-code" tabindex="0"></pre></dialog>

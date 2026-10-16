@@ -260,7 +260,7 @@ def _render_comparison(
                     f'<button class="filter-button" type="button" data-filter="{classification}" aria-pressed="false">{_h(label)} <span>{count}</span></button>'
                 )
 
-        material_case_buttons: list[str] = []
+        material_case_buttons: dict[tuple[str, ...], list[str]] = {}
         path_case_buttons: list[str] = []
         case_panels: list[str] = []
         has_material_cases = any(
@@ -274,9 +274,12 @@ def _render_comparison(
             case_subtitle = (
                 f"{case.request} · " if case.reference is not None else ""
             )
+            output_paths = tuple(sorted({difference.path for difference in case.output_differences}))
+            search_text = " ".join((case.id, case.reference or "", case.request, label, *output_paths))
             button = (
                 f'''<button class="impact-case{' is-selected' if selected else ''}" type="button"
                   data-case-choice data-classification="{case.classification}"
+                  data-search="{_h(search_text)}"
                   data-target="{target}" aria-controls="{target}" aria-pressed="{'true' if selected else 'false'}">
                   <span class="impact-case__top"><span class="classification classification--{case.classification}">{_h(label)}</span><span class="impact-case__id">{_h(case.id)}</span></span>
                   <strong>{_h(case_title)}</strong>
@@ -286,7 +289,9 @@ def _render_comparison(
             if case.classification == "path_changed":
                 path_case_buttons.append(button)
             else:
-                material_case_buttons.append(button)
+                # Group by affected fields, never by an inferred business meaning.
+                group = (case.request, case.classification, *output_paths)
+                material_case_buttons.setdefault(group, []).append(button)
             case_panels.append(
                 _render_comparison_case(
                     case,
@@ -314,11 +319,27 @@ def _render_comparison(
                 <p>Open the path-only queue to inspect the lower-priority evidence.</p>
               </div>'''
 
+        material_queue = ""
+        for group, buttons in material_case_buttons.items():
+            if len(buttons) == 1:
+                material_queue += buttons[0]
+                continue
+            fields = ", ".join(group[2:]) or _classification_label(cast(ComparisonClassification, group[1]))
+            material_queue += f'''
+              <details class="impact-group" data-impact-group open>
+                <summary>{_h(group[0])} · {_h(fields)} <span data-group-count>{len(buttons)}</span></summary>
+                <div>{''.join(buttons)}</div>
+              </details>'''
+
         cases_html = f'''
           <div class="filter-row" aria-label="Filter changed cases">{''.join(filter_buttons)}</div>
+          <label class="case-search">Find a case or output field
+            <input type="search" data-case-search placeholder="Reference, request, or /output/path" />
+          </label>
+          <p class="muted" data-filter-count aria-live="polite">{len(attention_cases)} matching cases</p>
           <div class="impact-layout">
-            <nav class="impact-list" aria-label="Changed cases">{''.join(material_case_buttons)}{path_queue}</nav>
-            <div class="impact-detail" aria-live="polite">{path_placeholder}{''.join(case_panels)}</div>
+            <nav class="impact-list" aria-label="Changed cases">{material_queue}{path_queue}</nav>
+            <div class="impact-detail" aria-live="polite"><p data-no-matches hidden>No cases match these filters.</p>{path_placeholder}{''.join(case_panels)}</div>
           </div>'''
 
     return f'''
@@ -481,17 +502,20 @@ def _render_comparison_case(
           <code>{_h(case.id)}</code>
         </header>
         {detail}
-        <div class="impact-hashes">
-          <span>Recorded closure <code>{_h(case.recorded_program_hash)}</code></span>
-          <span>Captured evidence <code>{_h(case.captured_evidence_digest)}</code></span>
-          {execution_case_id}
-          {_optional_digest(f"Baseline evidence · {old_label}", case.old_evidence_digest)}
-          {_optional_digest(f"Candidate evidence · {new_label}", case.new_evidence_digest)}
-        </div>
+        {errors}
         <div class="impact-block"><h5>Declared output differences</h5>{difference_html}</div>
         <div class="impact-block"><h5>Selected DECIDE branches</h5>{decisions}</div>
         <div class="impact-block"><h5>Evaluated predicates</h5>{conditions}</div>
-        {errors}
+        <details class="impact-identity">
+          <summary>Capture identities and evidence hashes</summary>
+          <div class="impact-hashes">
+            <span>Recorded closure <code>{_h(case.recorded_program_hash)}</code></span>
+            <span>Captured evidence <code>{_h(case.captured_evidence_digest)}</code></span>
+            {execution_case_id}
+            {_optional_digest(f"Baseline evidence · {old_label}", case.old_evidence_digest)}
+            {_optional_digest(f"Candidate evidence · {new_label}", case.new_evidence_digest)}
+          </div>
+        </details>
       </article>'''
 
 
@@ -753,6 +777,7 @@ def _render_scenario(source: str) -> str:
         <div><p class="eyebrow">Durable behavior</p><h2 id="scenario-heading">Verified scenario preview</h2></div>
         <span class="verified-chip"><span aria-hidden="true">✓</span> Verified before render</span>
       </div>
+      <p class="muted">This scenario reproduces observed behavior. Its assertions require review before they become expected behavior.</p>
       <div class="code-window">
         <div class="code-window__bar"><span></span><span></span><span></span><strong>scenario.gwt</strong></div>
         <pre tabindex="0"><code>{_h(source)}</code></pre>
@@ -1266,6 +1291,8 @@ code, pre { font-family: var(--mono); }
 .impact-panel > header > div { display: grid; gap: 8px; }
 .impact-panel > header code { color: var(--ink-soft); font-size: 10px; }
 .impact-summary { margin: 16px 0 0; color: var(--ink-soft); }
+.impact-identity { margin-top: 16px; border-top: 1px solid var(--line); }
+.impact-identity > summary { padding: 12px 0; color: var(--ink-soft); font-size: 12px; cursor: pointer; }
 .impact-hashes { display: grid; gap: 5px; padding: 15px 0; color: var(--ink-soft); font-size: 11px; }
 .impact-hashes span { min-width: 0; }
 .impact-hashes code { overflow-wrap: anywhere; color: var(--ink); }
@@ -1382,6 +1409,12 @@ code, pre { font-family: var(--mono); }
 .state-change > .source-reference { padding-top: 11px; border-top: 1px solid var(--line); }
 .absence { color: var(--ink-soft); font-size: 11px; font-style: italic; }
 .muted { color: var(--ink-soft); }
+.case-search { display: grid; gap: 6px; max-width: 560px; margin-top: 16px; font-weight: 600; }
+.case-search input { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--line-strong); border-radius: 9px; font: inherit; }
+.impact-group { min-width: 0; margin-bottom: 12px; }
+.impact-group summary { padding: 10px; overflow-wrap: anywhere; cursor: pointer; background: var(--mint); border-radius: 9px; font-size: 12px; }
+.impact-group summary span { font-weight: 800; }
+[hidden] { display: none !important; }
 
 .scenario-section { border-top: 5px solid var(--lime); }
 .code-window { overflow: hidden; color: #dbe8e3; background: #101c18; border: 1px solid #243b34; border-radius: 17px; }
@@ -1400,7 +1433,7 @@ code, pre { font-family: var(--mono); }
 
 .footer { display: flex; justify-content: space-between; gap: 20px; padding: 0 0 42px; color: var(--ink-soft); font-size: 11px; }
 
-button:focus-visible, a:focus-visible, pre:focus-visible { outline: 3px solid #e1ad3e; outline-offset: 3px; }
+button:focus-visible, a:focus-visible, pre:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #e1ad3e; outline-offset: 3px; }
 
 @media (max-width: 1080px) {
   .totals-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1446,9 +1479,9 @@ button:focus-visible, a:focus-visible, pre:focus-visible { outline: 3px solid #e
   body { background: white; }
   .masthead { color: var(--ink); background: white; }
   .masthead__inner, .hero, .page-shell, .footer { width: 100%; }
-  .local-badge, .filter-row, .skip-link { display: none; }
+  .local-badge, .filter-row, .case-search, .skip-link { display: none; }
   .section { break-inside: avoid; box-shadow: none; }
-  .impact-panel[hidden] { display: block; margin-top: 12px; }
+  .impact-panel[hidden] { display: block !important; margin-top: 12px; }
 }
 '''
 
@@ -1464,6 +1497,11 @@ _SCRIPT = r'''
   const panels = Array.from(comparison.querySelectorAll("[data-case-panel]"));
   const pathQueue = comparison.querySelector("[data-path-queue]");
   const pathPlaceholder = comparison.querySelector("[data-path-placeholder]");
+  const search = comparison.querySelector("[data-case-search]");
+  const count = comparison.querySelector("[data-filter-count]");
+  const empty = comparison.querySelector("[data-no-matches]");
+  const groups = Array.from(comparison.querySelectorAll("[data-impact-group]"));
+  let currentFilter = "all";
 
   const selectCase = (choice) => {
     const target = choice.getAttribute("data-target");
@@ -1477,17 +1515,32 @@ _SCRIPT = r'''
   };
 
   const applyFilter = (classification) => {
+    currentFilter = classification;
+    const query = search ? search.value.trim().toLocaleLowerCase() : "";
     filters.forEach((button) => {
       const active = button.getAttribute("data-filter") === classification;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const visible = choices.filter((choice) => {
-      const show = classification === "all" || choice.getAttribute("data-classification") === classification;
+      const show = (classification === "all" || choice.getAttribute("data-classification") === classification)
+        && (choice.getAttribute("data-search") || "").toLocaleLowerCase().includes(query);
       choice.hidden = !show;
       return show;
     });
-    if (pathQueue && classification === "path_changed") pathQueue.open = true;
+    groups.forEach((group) => {
+      const matches = Array.from(group.querySelectorAll("[data-case-choice]")).filter((choice) => !choice.hidden);
+      group.hidden = matches.length === 0;
+      group.querySelector("[data-group-count]").textContent = String(matches.length);
+      if (query && matches.length) group.open = true;
+    });
+    if (pathQueue) {
+      pathQueue.hidden = !visible.some((choice) => choice.getAttribute("data-classification") === "path_changed");
+      if (classification === "path_changed" || query) pathQueue.open = true;
+    }
+    if (count) count.textContent = `${visible.length} matching cases`;
+    if (empty) empty.hidden = visible.length !== 0;
+    if (pathPlaceholder) pathPlaceholder.hidden = true;
     const selected = choices.find((choice) => choice.getAttribute("aria-pressed") === "true");
     if (!selected || selected.hidden) {
       if (visible.length) selectCase(visible[0]);
@@ -1501,5 +1554,6 @@ _SCRIPT = r'''
   choices.forEach((choice) => {
     choice.addEventListener("click", () => selectCase(choice));
   });
+  if (search) search.addEventListener("input", () => applyFilter(currentFilter));
 })();
 '''

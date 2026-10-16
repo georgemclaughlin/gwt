@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "kind": "record",
+    "value": {
+      "days": { "kind": "integer" },
+      "member": { "kind": "boolean" }
+    }
+  }
+}

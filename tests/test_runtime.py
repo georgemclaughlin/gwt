@@ -8,6 +8,103 @@ from gwtlang.runtime import LeafStatement, Runtime, parse_program
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_declared_nested_record_boundaries_validate_children_and_normalize_aliases(self):
+        source = (
+            "RECORD Customer\n  score: integer\n  note: optional<text>\n"
+            "TYPE CustomerAlias is Customer\n"
+            "RECORD Envelope\n  customer: CustomerAlias\n"
+            "REQUEST inspect\n  GIVEN value is Envelope\n  WHEN improve value\n  OUTPUT value is Envelope\n"
+            "WHEN improve <value>\n  GIVEN value is Envelope\n  add 1 to value.customer.score\n"
+        )
+        result = run_json_request(source, {"value": {"customer": {"score": 7}}}, request="inspect")
+        self.assertEqual(result.scenarios[0].returned_state, {"value": {"customer": {"score": 8, "note": None}}})
+        for child, message in [
+            ({}, "missing field: value.customer.score"),
+            ({"score": "bad"}, "expected value.customer.score to be integer"),
+            ({"score": 7, "unknown": {}}, "unknown field: value.customer.unknown"),
+            (7, "expected value.customer to be Customer"),
+        ]:
+            with self.subTest(child=child), self.assertRaisesRegex(GwtError, message):
+                run_json_request(source, {"value": {"customer": child}}, request="inspect")
+
+    def test_optional_record_boundary_preserves_present_empty_record_and_absence(self):
+        source = (
+            "RECORD Contact\n  note: optional<text>\n"
+            "RECORD Envelope\n  contact: optional<Contact>\n"
+            "REQUEST inspect\n  GIVEN value is Envelope\n  WHEN print value\n  OUTPUT value is Envelope\n"
+        )
+        for supplied, expected in [({}, None), ({"contact": None}, None),
+                                   ({"contact": {}}, {"note": None}),
+                                   ({"contact": {"note": "hello"}}, {"note": "hello"})]:
+            with self.subTest(supplied=supplied):
+                result = run_json_request(source, {"value": supplied}, request="inspect")
+                self.assertEqual(result.scenarios[0].returned_state, {"value": {"contact": expected}})
+        with self.assertRaisesRegex(GwtError, "expected value.contact.note to be text"):
+            run_json_request(source, {"value": {"contact": {"note": {"nested": 1}}}}, request="inspect")
+        with self.assertRaisesRegex(GwtError, "unknown field: value.contact.extra"):
+            run_json_request(source, {"value": {"contact": {"extra": {}}}}, request="inspect")
+
+    def test_nested_record_fields_in_variant_payloads_and_lists_keep_their_contracts(self):
+        source = (
+            "RECORD Receipt\n  total: decimal\n"
+            "RECORD Evidence is one of\n  receipt:\n    detail: Receipt\n  absent:\n    reason: text\n"
+            "RECORD Envelope\n  evidence: list<Evidence>\n"
+            "REQUEST inspect\n  GIVEN value is Envelope\n  WHEN print value\n  OUTPUT value is Envelope\n"
+        )
+        result = run_json_request(source, {"value": {"evidence": [
+            {"kind": "receipt", "detail": {"total": "12.30"}},
+            {"kind": "absent", "reason": "not supplied"},
+        ]}}, request="inspect")
+        self.assertEqual(result.state["value"]["evidence"][0]["detail"]["total"], Decimal("12.30"))
+        for evidence, message in [
+            ({"kind": "receipt", "detail": {"total": "12.30", "extra": {}}}, "unknown field"),
+            ({"kind": "receipt", "detail": {}}, "missing field"),
+            ({"kind": "absent", "reason": "missing", "detail": {}}, "unknown field for kind absent"),
+        ]:
+            with self.subTest(evidence=evidence), self.assertRaisesRegex(GwtError, message):
+                run_json_request(source, {"value": {"evidence": [evidence]}}, request="inspect")
+
+    def test_dotted_declarations_and_explicit_any_preserve_distinct_field_boundaries(self):
+        source = (
+            "RECORD Envelope\n  customer.score: integer\n  payload: any\n"
+            "REQUEST inspect\n  GIVEN value is Envelope\n  WHEN print value\n  OUTPUT value is Envelope\n"
+        )
+        supplied = {"customer": {"score": 7}, "payload": {"dynamic": {"empty": {}, "list": [1, None]}}}
+        result = run_json_request(source, {"value": supplied}, request="inspect")
+        self.assertEqual(result.scenarios[0].returned_state, {"value": supplied})
+        with self.assertRaisesRegex(GwtError, "unknown field: value.customer.extra"):
+            run_json_request(source, {"value": {**supplied, "customer": {"score": 7, "extra": {}}}}, request="inspect")
+
+    def test_empty_objects_do_not_become_absent_optional_text_or_unknown_fields(self):
+        source = (
+            "RECORD Input\n  note: optional<text>\n"
+            "REQUEST inspect\n  GIVEN value is Input\n  WHEN print value\n  OUTPUT value is Input\n"
+        )
+        for supplied in ({}, {"note": None}, {"note": ""}, {"note": "hello"}):
+            with self.subTest(supplied=supplied):
+                result = run_json_request(source, {"value": supplied}, request="inspect")
+                self.assertEqual(result.scenarios[0].returned_state, {"value": {"note": supplied.get("note")}})
+        with self.assertRaisesRegex(GwtError, "expected value.note to be text"):
+            run_json_request(source, {"value": {"note": {}}}, request="inspect")
+        with self.assertRaisesRegex(GwtError, "unknown field: value.extra"):
+            run_json_request(source, {"value": {"extra": {}}}, request="inspect")
+
+    def test_empty_object_fields_preserve_variant_and_explicit_any_contracts(self):
+        variant = (
+            "RECORD Input is one of\n  receipt:\n    note: optional<text>\n"
+            "REQUEST inspect\n  GIVEN value is Input\n  WHEN print value\n  OUTPUT value is Input\n"
+        )
+        with self.assertRaisesRegex(GwtError, "expected value.note to be text"):
+            run_json_request(variant, {"value": {"kind": "receipt", "note": {}}}, request="inspect")
+        with self.assertRaisesRegex(GwtError, "unknown field for kind receipt"):
+            run_json_request(variant, {"value": {"kind": "receipt", "extra": {}}}, request="inspect")
+        raw = (
+            "RECORD Input\n  payload: any\n"
+            "REQUEST inspect\n  GIVEN value is Input\n  WHEN print value\n  OUTPUT value is Input\n"
+        )
+        result = run_json_request(raw, {"value": {"payload": {}}}, request="inspect")
+        self.assertEqual(result.scenarios[0].returned_state, {"value": {"payload": {}}})
+
     def test_parser_classifies_leaf_statements_once_for_semantic_consumers(self):
         program = parse_program(
             "REQUEST review\n"

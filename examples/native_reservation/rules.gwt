@@ -1,0 +1,143 @@
+PROGRAM stock reservation
+
+RECORD OrderLine
+  sku: text
+  quantity: integer
+
+RECORD Order
+  lines: list<OrderLine>
+
+RECORD StockItem
+  sku: text
+  available: integer
+
+RECORD Inventory
+  items: list<StockItem>
+
+RECORD Reservation
+  line_count: integer
+  requested: integer
+  reserved: integer
+  remaining: integer
+  missing: list<text>
+  shortages: list<text>
+
+REQUEST reserve order
+  GIVEN order is Order
+  GIVEN inventory is Inventory
+  GIVEN decision is Reservation
+    line_count: 0
+    requested: 0
+    reserved: 0
+    remaining: 0
+    missing: []
+    shortages: []
+  WHEN reserve order using inventory into decision
+  OUTPUT decision is Reservation
+  OUTPUT inventory is Inventory
+  THEN decision.reserved <= decision.requested
+  AND decision.remaining >= 0
+
+WHEN reserve <order> using <inventory> into <decision>
+  GIVEN order is Order
+  AND inventory is Inventory
+  AND decision is Reservation
+  FOR stock in inventory.items
+    REQUIRE stock.available >= 0
+  FOR line in order.lines
+    REQUIRE line.quantity > 0
+  count order.lines into decision.line_count
+  sum line.quantity in order.lines into decision.requested
+  FOR line in order.lines
+    FIND stock in inventory.items WHERE stock.sku == line.sku
+      IF stock.available >= line.quantity
+        subtract line.quantity from stock.available
+        add line.quantity to decision.reserved
+      ELSE
+        append line.sku to decision.shortages
+    ELSE
+      append line.sku to decision.missing
+  sum stock.available in inventory.items into decision.remaining
+
+SCENARIO partial reservation with a missing SKU
+GIVEN widgets is OrderLine
+  sku: "widget"
+  quantity: 3
+
+GIVEN gadgets is OrderLine
+  sku: "gadget"
+  quantity: 5
+
+GIVEN unknown is OrderLine
+  sku: "unknown"
+  quantity: 1
+
+GIVEN order is Order
+  lines: [widgets, gadgets, unknown]
+
+GIVEN widget_stock is StockItem
+  sku: "widget"
+  available: 5
+
+GIVEN gadget_stock is StockItem
+  sku: "gadget"
+  available: 2
+
+GIVEN inventory is Inventory
+  items: [widget_stock, gadget_stock]
+
+REQUEST reserve order
+
+GIVEN expected_widget is StockItem
+  sku: "widget"
+  available: 2
+
+THEN decision.line_count == 3
+AND decision.requested == 9
+AND decision.reserved == 3
+AND decision.remaining == 4
+AND decision.shortages == ["gadget"]
+AND decision.missing == ["unknown"]
+AND inventory.items == [expected_widget, gadget_stock]
+
+SCENARIO empty order and inventory
+GIVEN order is Order
+  lines: []
+
+GIVEN inventory is Inventory
+  items: []
+
+REQUEST reserve order
+
+THEN decision.line_count == 0
+AND decision.requested == 0
+AND decision.reserved == 0
+AND decision.remaining == 0
+AND decision.missing == []
+AND decision.shortages == []
+
+SCENARIO exact exhaustion
+GIVEN requested_widget is OrderLine
+  sku: "widget"
+  quantity: 5
+
+GIVEN order is Order
+  lines: [requested_widget]
+
+GIVEN starting_widget is StockItem
+  sku: "widget"
+  available: 5
+
+GIVEN inventory is Inventory
+  items: [starting_widget]
+
+REQUEST reserve order
+
+GIVEN exhausted is StockItem
+  sku: "widget"
+  available: 0
+
+THEN decision.requested == 5
+AND decision.reserved == 5
+AND decision.remaining == 0
+AND inventory.items == [exhausted]

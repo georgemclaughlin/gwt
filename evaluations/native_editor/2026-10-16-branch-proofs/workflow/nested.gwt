@@ -1,0 +1,104 @@
+PROGRAM collection authorization
+
+TYPE CollectionMode is "counter" | "locker"
+
+RECORD Proof is one of
+  receipt:
+    reference: text
+  gift:
+    message: text
+
+RECORD Facts
+  mode: CollectionMode
+  staff_checked: boolean
+  locker_checked: boolean
+  proof: optional<Proof>
+
+REQUEST authorize collection
+  GIVEN facts is Facts
+  WHEN LET reference be authorize facts
+  OUTPUT reference is text
+
+WHEN authorize <facts>
+  GIVEN facts is Facts
+  THEN returns text
+  IF facts.mode == "counter"
+    REQUIRE facts.staff_checked
+    REQUIRE facts.proof is present
+    REQUIRE facts.proof.kind == "receipt"
+    REQUIRE facts.proof.reference != ""
+    RETURN facts.proof.reference
+  ELSE
+    REQUIRE facts.locker_checked
+    REQUIRE facts.proof is present
+    REQUIRE facts.proof.kind == "receipt"
+    REQUIRE facts.proof.reference != ""
+    RETURN facts.proof.reference
+
+SCENARIO checked counter returns the receipt reference
+GIVEN facts is Facts
+  mode: "counter"
+  staff_checked: true
+  locker_checked: false
+  proof:
+    kind: "receipt"
+    reference: "R-1"
+REQUEST authorize collection
+THEN reference == "R-1"
+
+SCENARIO checked locker returns the receipt reference
+GIVEN facts is Facts
+  mode: "locker"
+  staff_checked: false
+  locker_checked: true
+  proof:
+    kind: "receipt"
+    reference: "R-2"
+REQUEST authorize collection
+THEN reference == "R-2"
+
+SCENARIO checking the other mode does not authorize collection
+GIVEN facts is Facts
+  mode: <mode>
+  staff_checked: <staff_checked>
+  locker_checked: <locker_checked>
+  proof:
+    kind: "receipt"
+    reference: "R-3"
+REQUEST authorize collection
+THEN fails with "assertion_failed"
+
+EXAMPLES
+  | mode      | staff_checked | locker_checked |
+  | "counter" | false         | true           |
+  | "locker"  | true          | false          |
+
+SCENARIO a check cannot replace a receipt
+GIVEN facts is Facts
+  mode: "counter"
+  staff_checked: true
+  locker_checked: false
+REQUEST authorize collection
+THEN fails with "assertion_failed"
+
+SCENARIO a gift message is not a receipt
+GIVEN facts is Facts
+  mode: "locker"
+  staff_checked: false
+  locker_checked: true
+  proof:
+    kind: "gift"
+    message: "Enjoy"
+REQUEST authorize collection
+THEN fails with "assertion_failed"
+
+SCENARIO an empty receipt reference cannot authorize collection
+GIVEN facts is Facts
+  mode: "counter"
+  staff_checked: true
+  locker_checked: false
+  proof:
+    kind: "receipt"
+    reference: ""
+REQUEST authorize collection
+THEN fails with "assertion_failed"

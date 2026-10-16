@@ -1,0 +1,43 @@
+{
+  "browserChecks": 210,
+  "browserVersion": "153.0.8010.12",
+  "builds": [
+    {
+      "bytes": 1098382,
+      "sha256": "b86cda6e7401e2066b6be2cf7710c10d62fdf03224ecf61c697f83e6448a94e5",
+      "toolchain": "1.96.0"
+    },
+    {
+      "bytes": 1171538,
+      "sha256": "6882d84a0ae198830e3a5fb88d9ed72f02db5cf6e8ef1f42ad64f5db0a3cb83c",
+      "toolchain": "1.85.0"
+    }
+  ],
+  "casesEqualOriginalCaptures": 97,
+  "engineInputsUnchanged": 59,
+  "evidenceHashes": {
+    "browser-check.js": "c6f712718e0f5d689709634d7e88cfa43dfe0e1829ef0629dbac1a3efe5fd894",
+    "browser-result.json": "0decfdd463abaf6d06073e9a35b848c3d881933cdbb4f30d5edc5e29605c81ea",
+    "cases.json": "c9514749bbf787c2ce27118ae59cec3d806a95502e9da655944d8873c75e068a",
+    "desktop.png": "efb7519314fc9044f301ad2e9e47e5d37655faf293e42cee86cfa7ab9ba5d645",
+    "mobile.png": "88fe8111a2f4b65c5c258c6c48621b1204bff37c696d66c60c53541094111c12",
+    "origins.json": "46ee9bee05ea52189a8792d1356995a1e5d0dca4005ae721107ccc6cd7773612"
+  },
+  "fullExecutionComparisons": 194,
+  "hostSourceHashes": {
+    "examples/native_browser_host/README.md": "0f1d7bfe86fb0dbb3efd051cee94f33e66c5305d1e28c9dce9bdc34600f07091",
+    "examples/native_browser_host/bridge/Cargo.lock": "2f0f381a5bdf54e488ff9489b8f035f4f4674bd4f07ab423b9ff6c417ff02877",
+    "examples/native_browser_host/bridge/Cargo.toml": "c8cd21dd5a33cbc15dfdd197a2e3c33a3b31957cdeebf4a71abf44064790a530",
+    "examples/native_browser_host/bridge/src/lib.rs": "9273717db4b7b159e269790c2bc67e56c90db06fd635524ef21359fa64c7093b",
+    "examples/native_browser_host/build.py": "fd98dd91b0fda433b174b2057b50c4ad9f15b01edf5fde17af460d6e87e45ab0",
+    "examples/native_browser_host/index.html": "41225df2569afa68c134ff5083c9b53cf685536003809760312c0741c72428a1",
+    "examples/native_browser_host/preview.mjs": "ff52b38d6751316747de9b2e87922d3dd835724ccdedebaf51a6059effb3e0c9",
+    "examples/native_browser_host/worker.mjs": "4e08f77373da4e55b108c16991ae68e320833814a62753dc85c9b54d664b77ac"
+  },
+  "originFilesUnchanged": 82,
+  "scope": "Local Chromium feasibility; no participants, production deployment, or hosted CI.",
+  "screenshotsInspected": [
+    "desktop.png",
+    "mobile.png"
+  ]
+}

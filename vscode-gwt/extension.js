@@ -2,27 +2,44 @@ const vscode = require("vscode");
 const childProcess = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
+const { LanguageClient } = require("vscode-languageclient/node");
 
 let client;
 let debugFactory;
 let outputChannel;
+let nativeEditor;
+let nativeMode = false;
 
 function activate(context) {
   const config = vscode.workspace.getConfiguration("gwt");
-  const serverOptions = serverOptionsFromConfig(context, config);
+  nativeMode = config.get("engine", "python") === "native";
   outputChannel = vscode.window.createOutputChannel("GWT");
   context.subscriptions.push(outputChannel);
 
-  const clientOptions = {
-    documentSelector: [{ scheme: "file", language: "gwt" }],
-    synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/*.gwt"),
-    },
-  };
-
-  client = new LanguageClient("gwtLanguageServer", "GWT Language Server", serverOptions, clientOptions);
-  client.start();
+  if (!vscode.workspace.isTrusted) return;
+  if (nativeMode) {
+    nativeEditor = require("./native-editor").activateNative(vscode, context, outputChannel);
+  } else {
+    const watcher = vscode.workspace.createFileSystemWatcher("**/*.gwt");
+    context.subscriptions.push(watcher);
+    const clientOptions = {
+      documentSelector: [{ scheme: "file", language: "gwt" }],
+      synchronize: { fileEvents: watcher },
+    };
+    const serverOptions = serverOptionsFromConfig(context, config);
+    client = new LanguageClient("gwtLanguageServer", "GWT Language Server", serverOptions, clientOptions);
+    client.start().catch(error => outputChannel.appendLine(error.message));
+  }
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+    if (event.affectsConfiguration("gwt.engine")) {
+      vscode.window.showInformationMessage("Reload the window to switch the GWT engine.", "Reload Window")
+        .then(choice => { if (choice) vscode.commands.executeCommand("workbench.action.reloadWindow"); });
+    } else if (event.affectsConfiguration("gwt.native")) nativeEditor?.schedule();
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("gwt.checkCurrentFile", () =>
+    nativeMode ? nativeEditor.command("check") : runGwtCurrentFile(context, "check", [], "GWT check passed.")
+  ));
+  context.subscriptions.push(vscode.commands.registerCommand("gwt.showEngineInfo", () => showEngineInfo(context)));
 
   debugFactory = new GwtDebugAdapterFactory(context);
   context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("gwt", debugFactory));
@@ -32,27 +49,36 @@ function activate(context) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("gwt.validateCurrentFile", () =>
-      runGwtCurrentFile(context, "validate", [], "GWT validation passed.")
+      nativeMode ? nativeEditor.command("validate") : runGwtCurrentFile(context, "validate", [], "GWT validation passed.")
     )
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("gwt.testCurrentFile", () =>
-      runGwtCurrentFile(context, "test", [], "GWT scenarios passed.")
+      nativeMode ? nativeEditor.command("test") : runGwtCurrentFile(context, "test", [], "GWT scenarios passed.")
     )
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("gwt.runCurrentFile", () =>
-      runGwtCurrentFile(context, "run", ["--json"], "GWT run completed.")
+      nativeMode ? nativeEditor.command("run") : runGwtCurrentFile(context, "run", ["--json"], "GWT run completed.")
     )
   );
   context.subscriptions.push(
+    vscode.commands.registerCommand("gwt.profileCurrentFile", () => {
+      if (nativeMode) return nativeEditor.command("profile");
+      vscode.window.showErrorMessage("Execution evidence profiling requires the native GWT engine. Set gwt.engine to native and reload the window.");
+      return { ok: false };
+    })
+  );
+  context.subscriptions.push(
     vscode.commands.registerCommand("gwt.formatCurrentFile", () =>
-      runGwtCurrentFile(context, "format", [], "GWT formatting completed.")
+      nativeMode ? nativeEditor.command("format") : runGwtCurrentFile(context, "format", [], "GWT formatting completed.")
     )
   );
 }
 
 function serverOptionsFromConfig(context, config) {
+  // Executable clients default to stdio. Setting the transport explicitly adds
+  // a --stdio argument, which the GWT CLI does not accept.
   const configuredCommand = config.get("server.command", "");
   const configuredArgs = config.get("server.args", []);
 
@@ -60,7 +86,6 @@ function serverOptionsFromConfig(context, config) {
     return {
       command: configuredCommand,
       args: configuredArgs,
-      transport: TransportKind.stdio,
     };
   }
 
@@ -70,7 +95,6 @@ function serverOptionsFromConfig(context, config) {
     return {
       command: process.env.GWT_PYTHON || "python",
       args: ["-m", "gwtlang", "lsp"],
-      transport: TransportKind.stdio,
       options: {
         cwd: repoRoot,
         env: {
@@ -84,7 +108,6 @@ function serverOptionsFromConfig(context, config) {
   return {
     command: "gwt",
     args: ["lsp"],
-    transport: TransportKind.stdio,
   };
 }
 
@@ -118,12 +141,63 @@ function gwtProcessOptions(context, cwd) {
   };
 }
 
+async function showEngineInfo(context) {
+  const uri = vscode.window.activeTextEditor?.document.uri;
+  const folder = (uri && vscode.workspace.getWorkspaceFolder(uri)) || vscode.workspace.workspaceFolders?.[0];
+  let options, args;
+  if (nativeMode) {
+    const config = vscode.workspace.getConfiguration("gwt", uri?.scheme === "file" ? uri : folder?.uri);
+    const base = folder?.uri.fsPath || (uri?.scheme === "file" ? path.dirname(uri.fsPath) : undefined);
+    const importRoot = config.get("native.importRoot", "");
+    options = { command: config.get("native.command", "gwt-native"),
+      cwd: importRoot ? path.resolve(base || process.cwd(), importRoot) : base, env: process.env };
+    args = ["version", "--json"];
+  } else {
+    options = gwtProcessOptions(context, folder?.uri.fsPath);
+    args = [...options.baseArgs, "version", "--json"];
+  }
+  const engine = nativeMode ? "native" : "python";
+  outputChannel.show(true);
+  outputChannel.appendLine(`Engine active in this window: ${engine}`);
+  outputChannel.appendLine(`> ${quoteArg(options.command)} ${args.map(quoteArg).join(" ")}`);
+  try {
+    const stdout = await new Promise((resolve, reject) => {
+      const child = childProcess.execFile(options.command, args, {
+        cwd: options.cwd, env: options.env, shell: false, windowsHide: true,
+        encoding: "utf8", timeout: 10000, maxBuffer: 64 * 1024,
+      }, (error, text, stderr) => {
+        if (error) reject(new Error(`GWT identity command failed: ${stderr.trim().slice(0, 1000) || error.message}`));
+        else resolve(text);
+      });
+      child.stdin.on("error", () => {});
+      child.stdin.end();
+    });
+    const payload = JSON.parse(stdout);
+    if ((nativeMode && (payload.kind !== "gwt.native-version" || payload.schemaVersion !== 1 ||
+          payload.packageName !== "gwt-core" || typeof payload.packageVersion !== "string" ||
+          typeof payload.languageProfile !== "string" || typeof payload.status !== "string" ||
+          !(payload.languageVersion === null || typeof payload.languageVersion === "string") ||
+          typeof payload.engine?.profile !== "string" || !/^sha256:[a-f0-9]{64}$/.test(payload.engine?.sourceDigest))) ||
+        (!nativeMode && (payload.packageName !== "gwtlang" || typeof payload.packageVersion !== "string" ||
+          typeof payload.languageSpecVersion !== "string"))) {
+      throw new Error("The selected executable did not return the expected GWT identity. Check its path and update it if necessary.");
+    }
+    outputChannel.append(stdout);
+    return { ok: true, engine, payload, stdout };
+  } catch (error) {
+    outputChannel.appendLine(error.message);
+    vscode.window.showErrorMessage(error.message);
+    return { ok: false, engine };
+  }
+}
+
 class GwtDebugConfigurationProvider {
   provideDebugConfigurations() {
     return [defaultDebugConfiguration()];
   }
 
   resolveDebugConfiguration(folder, config) {
+    if (nativeMode) { vscode.window.showErrorMessage("The GWT debugger currently supports the Python engine only."); return undefined; }
     const resolved = { ...defaultDebugConfiguration(), ...config };
     if (!resolved.program) {
       const editor = vscode.window.activeTextEditor;
@@ -154,6 +228,7 @@ function defaultDebugConfiguration() {
 }
 
 function debugCurrentFile() {
+  if (nativeMode) { vscode.window.showErrorMessage("The GWT debugger currently supports the Python engine only."); return; }
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== "gwt") {
     vscode.window.showErrorMessage("Open a .gwt file before starting the GWT debugger.");
@@ -175,7 +250,7 @@ async function runGwtCurrentFile(context, subcommand, extraArgs, successMessage)
   }
 
   if (editor.document.isDirty) {
-    await editor.document.save();
+    if (!(await editor.document.save())) return;
   }
 
   const file = editor.document.uri.fsPath;
@@ -728,7 +803,7 @@ function collectionLabel(value) {
 }
 
 function deactivate() {
-  if (!client) {
+  if (!client?.isRunning()) {
     return undefined;
   }
   return client.stop();

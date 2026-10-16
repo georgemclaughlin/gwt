@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GWT / Python source review</title>
+<style>
+  :root { color-scheme: light; font: 17px/1.55 system-ui, sans-serif; color: #172a38; background: #f3f6f8; }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 1440px; padding: 24px; }
+  h1, h2, h3 { line-height: 1.2; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.45rem; }
+  h3 { font-size: 1.15rem; }
+  p { max-width: 88ch; }
+  section, fieldset { border: 1px solid #b9c9d4; border-radius: 8px; padding: 20px; background: white; min-width: 0; }
+  section + section, fieldset + fieldset { margin-top: 20px; }
+  legend { font-weight: 650; padding: 0 6px; }
+  label { display: block; margin: 12px 0; }
+  select, textarea, button { font: inherit; max-width: 100%; }
+  select, textarea { display: block; width: 100%; padding: 10px; border: 1px solid #8297a5; border-radius: 4px; background: white; color: inherit; }
+  textarea { min-height: 110px; }
+  button { padding: 10px 16px; border-radius: 5px; border: 1px solid #36596f; background: white; color: #173d56; cursor: pointer; }
+  button.primary { background: #173d56; color: white; }
+  button:disabled { opacity: .55; cursor: default; }
+  :focus-visible { outline: 3px solid #d17200; outline-offset: 3px; }
+  pre { background: #f1f5f7; padding: 14px; overflow-x: auto; font: 14px/1.6 ui-monospace, monospace; tab-size: 2; border-radius: 4px; }
+  .sources, .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .sources > div { min-width: 0; }
+  .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 20px 0; }
+  .badge { display: inline-block; padding: 4px 10px; background: #dce9f0; border-radius: 4px; font-weight: 650; }
+  .option { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #c5d1d9; border-radius: 4px; cursor: pointer; }
+  .option input { flex-shrink: 0; margin-top: 7px; }
+  .option code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+  .notice { border-left: 4px solid #b36b00; padding: 8px 14px; background: #fff4dd; }
+  details { margin: 16px 0; }
+  summary { cursor: pointer; font-weight: 650; }
+  [hidden] { display: none !important; }
+  @media (max-width: 760px) {
+    body { padding: 12px; }
+    section, fieldset { padding: 14px; }
+    .sources, .profile-grid { grid-template-columns: minmax(0, 1fr); }
+    h1 { font-size: 1.5rem; }
+  }
+</style>
+<header>
+  <span class="badge" id="purpose"></span>
+  <h1>Review a proposed rule change</h1>
+  <p id="assignment"></p>
+</header>
+<section id="setup">
+  <h2>Before you begin</h2>
+  <p id="instructions"></p>
+  <p class="notice">This page stays on your device. It sends nothing automatically. Download your
+    answers and return the file to your facilitator. Do not include names or personal information.</p>
+  <div id="recovery" hidden>
+    <label>Continue from a downloaded partial record
+      <input id="checkpoint" type="file" accept=".json,application/json">
+    </label>
+    <p>Use this exact session page and your latest download. Saved answers stay frozen.
+      Work after the download is lost. The interrupted task will be marked as resumed
+      and excluded from timing medians. There is no automatic saving.</p>
+    <p id="recovery-error" role="alert"></p>
+  </div>
+  <form id="profile-form">
+    <div class="profile-grid">
+      <label>Your role
+        <select name="role" required>
+          <option value="">Choose a role</option>
+          <option value="developer">Software developer</option>
+          <option value="domain_specialist">Domain specialist / policy reviewer</option>
+          <option value="other">Another role</option>
+        </select>
+      </label>
+      <label>Have you seen these exact review tasks before?
+        <select name="priorExposure" required>
+          <option value="">Choose an answer</option>
+          <option value="no">No</option><option value="yes">Yes</option><option value="unsure">Unsure</option>
+        </select>
+      </label>
+      <label>Experience with GWT
+        <select name="gwtFamiliarity" required>
+          <option value="">Choose experience</option>
+          <option value="0">None</option><option value="1">Read a little</option>
+          <option value="2">Written some</option><option value="3">Use regularly</option>
+        </select>
+      </label>
+      <label>Experience with Python
+        <select name="pythonFamiliarity" required>
+          <option value="">Choose experience</option>
+          <option value="0">None</option><option value="1">Read a little</option>
+          <option value="2">Written some</option><option value="3">Use regularly</option>
+        </select>
+      </label>
+    </div>
+    <button class="primary" type="submit">Begin review</button>
+  </form>
+</section>
+<div class="controls" id="session-controls" hidden>
+  <button id="pause" type="button">Pause</button>
+  <button id="download" type="button">Download answers</button>
+  <span id="progress" role="status"></span>
+</div>
+<section id="paused" hidden>
+  <h2>Review paused</h2>
+  <p>Active time is paused. Resume when you are ready to read the task again.</p>
+  <p id="recovery-notice" hidden>Your downloaded answers have been restored. Previously
+    submitted tasks stay frozen. This task’s recorded times cover observed segments only;
+    the interruption is not measured.</p>
+</section>
+<section id="task-panel" hidden>
+  <h2 id="task-title" tabindex="-1"></h2>
+  <p><strong>Existing policy: </strong><span id="policy"></span></p>
+  <p><strong>Requested change: </strong><span id="change"></span></p>
+  <p><strong>Input and output: </strong><span id="schema"></span></p>
+  <details><summary id="guide-title"></summary><p id="guide"></p></details>
+  <div class="sources">
+    <div><h3>Existing implementation</h3><pre id="baseline" tabindex="0"></pre></div>
+    <div><h3>Proposed implementation</h3><pre id="proposed" tabindex="0"></pre></div>
+  </div>
+  <form id="task-form">
+    <h3>Predict the proposed implementation’s output</h3>
+    <p>Choose what the code actually returns, even if you think it differs from the requested policy.</p>
+    <div id="questions"></div>
+    <fieldset>
+      <legend>Your review</legend>
+      <label>Recommendation
+        <select name="recommendation" required>
+          <option value="">Choose a recommendation</option>
+          <option value="approve">Approve this change</option>
+          <option value="request_changes">Request changes</option>
+          <option value="unsure">I am not sure</option>
+        </select>
+      </label>
+      <label>Explain your recommendation and any suspected mistake. A concrete input is helpful.
+        <textarea name="rationale" required maxlength="10000"></textarea>
+      </label>
+      <label>Confidence in your review
+        <select name="confidence" required>
+          <option value="">Choose confidence</option><option value="1">1 — very low</option>
+          <option value="2">2 — low</option><option value="3">3 — moderate</option>
+          <option value="4">4 — high</option><option value="5">5 — very high</option>
+        </select>
+      </label>
+    </fieldset>
+    <div class="controls">
+      <button class="primary" type="submit">Save and continue</button>
+      <button id="skip" type="button">Skip this task</button>
+    </div>
+    <p>Continuing freezes this task’s answers. Skipped and unfinished work stays in your record.</p>
+  </form>
+</section>
+<section id="complete" hidden>
+  <h2>Review complete</h2>
+  <p>Download your answers using the button above and return the file to your facilitator.
+    The record includes skipped tasks. This page does not evaluate your answers.</p>
+</section>
+<script type="application/json" id="packet">__PACKET_JSON__</script>
+<script>__RECOVERY_JS__</script>
+<script>
+"use strict";
+(() => {
+  const packet = JSON.parse(document.getElementById("packet").textContent);
+  const $ = id => document.getElementById(id);
+  let response = {
+    schemaVersion: packet.responseSchemaVersion ?? 1, packetId: packet.packetId, assignmentId: packet.assignmentId,
+    purpose: packet.purpose, responseId: crypto.randomUUID(), profile: null, finished: false,
+    tasks: packet.tasks.map(task => ({
+      id: task.id, sourceDigests: task.sourceDigests, status: "unseen",
+      predictions: Object.fromEntries(task.questions.map(q => [q.id, null])),
+      recommendation: null, rationale: "", confidence: null, activeMs: null, wallMs: null,
+      ...(packet.responseSchemaVersion === 2 ? {resumeCount: 0} : {})
+    }))
+  };
+  let index = -1, manuallyPaused = false, clock = null;
+  const recovery = globalThis.GwtReviewRecovery;
+  $("purpose").textContent = packet.purpose === "rehearsal" ? "Rehearsal — not participant evidence" : "Participant session";
+  $("assignment").textContent = `Assignment ${packet.assignmentId} · ${packet.tasks.length} tasks`;
+  $("instructions").textContent = packet.instructions;
+  $("recovery").hidden = packet.responseSchemaVersion !== 2;
+
+  function tick() {
+    if (index < 0 || response.finished) return;
+    return recovery.tick(clock, performance.now(), !manuallyPaused && !document.hidden);
+  }
+  document.addEventListener("visibilitychange", tick);
+
+  function capture() {
+    if (index < 0 || response.finished) return;
+    const timing = tick();
+    const data = new FormData($("task-form"));
+    const row = response.tasks[index];
+    for (const question of packet.tasks[index].questions) row.predictions[question.id] = data.get(question.id);
+    row.recommendation = data.get("recommendation") || null;
+    row.rationale = data.get("rationale") || "";
+    row.confidence = data.get("confidence") ? Number(data.get("confidence")) : null;
+    Object.assign(row, timing);
+  }
+
+  function showTask() {
+    const task = packet.tasks[index];
+    const row = response.tasks[index];
+    row.status = "draft";
+    $("task-form").reset();
+    $("task-panel").querySelector("details").open = false;
+    $("task-title").textContent = `${task.title} · ${task.language === "gwt" ? "GWT" : "Python"}`;
+    for (const name of ["policy", "change", "schema", "guide"]) $(name).textContent = task[name];
+    $("guide-title").textContent = `${task.language === "gwt" ? "GWT" : "Python"} reading guide`;
+    for (const label of ["baseline", "proposed"]) $(label).textContent = task.sources[label];
+    $("questions").replaceChildren();
+    for (const [qi, question] of task.questions.entries()) {
+      const fieldset = document.createElement("fieldset");
+      const legend = document.createElement("legend");
+      legend.textContent = `Input ${qi + 1}`;
+      const input = document.createElement("pre");
+      input.textContent = JSON.stringify(question.input, null, 2);
+      fieldset.append(legend, input);
+      for (const choice of question.choices) {
+        const label = document.createElement("label");
+        label.className = "option";
+        const radio = document.createElement("input");
+        radio.type = "radio"; radio.name = question.id; radio.value = choice.id; radio.required = true;
+        radio.checked = row.predictions[question.id] === choice.id;
+        const code = document.createElement("code");
+        code.textContent = choice.label || JSON.stringify(choice.value);
+        label.append(radio, code); fieldset.append(label);
+      }
+      $("questions").append(fieldset);
+    }
+    $("progress").textContent = `Task ${index + 1} of ${packet.tasks.length}`;
+    $("recovery-notice").hidden = !(row.resumeCount > 0);
+    for (const name of ["recommendation", "rationale", "confidence"]) {
+      $("task-form").elements[name].value = row[name] ?? "";
+    }
+    $("task-panel").hidden = manuallyPaused;
+    if (!manuallyPaused) {
+      $("task-title").focus();
+      $("task-panel").scrollIntoView({block: "start"});
+    }
+    clock = recovery.startClock(row, performance.now(), !manuallyPaused && !document.hidden);
+  }
+
+  function advance(status) {
+    capture(); response.tasks[index].status = status;
+    index++;
+    if (index === packet.tasks.length) {
+      response.finished = true; clock.counting = false;
+      $("task-panel").hidden = true; $("complete").hidden = false;
+      $("pause").hidden = true; $("progress").textContent = "All tasks recorded";
+      $("download").focus();
+    } else showTask();
+  }
+  $("profile-form").addEventListener("submit", event => {
+    event.preventDefault();
+    if (index >= 0) return;
+    const data = new FormData(event.target);
+    response.profile = Object.fromEntries(data);
+    for (const name of ["gwtFamiliarity", "pythonFamiliarity"]) response.profile[name] = Number(response.profile[name]);
+    $("setup").hidden = true; $("session-controls").hidden = false;
+    index = 0; showTask();
+  });
+  $("checkpoint").addEventListener("change", async event => {
+    $("recovery-error").textContent = "";
+    const file = event.target.files[0];
+    if (!file || index >= 0) return;
+    try {
+      if (file.size > 1048576) throw new Error("The checkpoint exceeds one MiB.");
+      const saved = JSON.parse(await file.text());
+      // A participant may have started a new session while the file was loading.
+      if (index >= 0) return;
+      const restored = recovery.restore(packet, saved);
+      response = restored.response; index = restored.index; manuallyPaused = true;
+      $("setup").hidden = true; $("session-controls").hidden = false;
+      $("pause").textContent = "Resume"; $("paused").hidden = false;
+      $("recovery-notice").hidden = false;
+      showTask(); $("pause").focus();
+    } catch (error) {
+      $("recovery-error").textContent = error instanceof SyntaxError ? "The checkpoint is not valid JSON." : error.message;
+    } finally {
+      event.target.value = "";
+    }
+  });
+  $("task-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const rationale = event.target.elements.rationale;
+    if (!rationale.value.trim()) { rationale.focus(); return; }
+    advance("submitted");
+  });
+  $("skip").addEventListener("click", () => advance("skipped"));
+  $("pause").addEventListener("click", () => {
+    tick(); manuallyPaused = !manuallyPaused; clock.counting = !manuallyPaused && !document.hidden;
+    $("pause").textContent = manuallyPaused ? "Resume" : "Pause";
+    $("paused").hidden = !manuallyPaused; $("task-panel").hidden = manuallyPaused;
+  });
+  $("download").addEventListener("click", () => {
+    capture();
+    const exportValue = {...response, exportedAt: new Date().toISOString()};
+    const url = URL.createObjectURL(new Blob([JSON.stringify(exportValue, null, 2) + "\n"], {type: "application/json"}));
+    const link = document.createElement("a"); link.href = url;
+    link.download = `${packet.assignmentId}-${response.finished ? "complete" : "partial"}.json`;
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+})();
+</script>
+</html>
