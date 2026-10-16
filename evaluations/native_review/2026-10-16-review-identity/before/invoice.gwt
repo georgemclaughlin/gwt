@@ -1,0 +1,49 @@
+PROGRAM invoice pricing
+
+TYPE InvoiceStatus is "new" | "priced"
+
+RECORD InvoiceFacts
+  unit_price: decimal
+  quantity: integer
+
+RECORD InvoiceDecision
+  total: decimal
+  status: InvoiceStatus
+
+REQUEST price invoice
+  GIVEN invoice is InvoiceFacts
+  GIVEN decision is InvoiceDecision
+    total: "0.00"
+    status: "new"
+  WHEN price invoice into decision
+  OUTPUT decision is InvoiceDecision
+  THEN decision.total >= 0
+
+WHEN price <invoice> into <decision>
+  GIVEN invoice is InvoiceFacts
+  AND decision is InvoiceDecision
+  REQUIRE invoice.unit_price >= 0
+  REQUIRE invoice.quantity > 0
+  LET subtotal be invoice.unit_price * invoice.quantity
+  set decision.total to subtotal + subtotal * 0.2
+  set decision.status to "priced"
+
+SCENARIO three taxable units
+GIVEN invoice is InvoiceFacts
+  unit_price: "10.25"
+  quantity: 3
+
+REQUEST price invoice
+
+THEN decision.total == 36.9
+AND decision.status == "priced"
+
+SCENARIO zero price
+GIVEN invoice is InvoiceFacts
+  unit_price: "0.00"
+  quantity: 1
+
+REQUEST price invoice
+
+THEN decision.total == 0
+AND decision.status == "priced"

@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "eightCasesSelected": true,
+      "defaultBranchesVisible": true,
+      "noFabricatedAbsentPayloadReads": true,
+      "twoBoundaryChanges": true,
+      "presenceOperandNavigation": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "eightCasesSelected": true,
+      "defaultBranchesVisible": true,
+      "noFabricatedAbsentPayloadReads": true,
+      "twoBoundaryChanges": true,
+      "presenceOperandNavigation": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "scriptErrors": [],
+  "externalRequests": []
+}

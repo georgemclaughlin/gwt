@@ -1,0 +1,387 @@
+{
+  "cases": 63,
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-jh_4ju09/installed/bin/gwt-native",
+  "nativeSha256": "6efafab2c6322db66d5939b4ccee32184977f3e74bca2adc940316d4b5b888ea",
+  "previousEngine": "/home/g/.cache/gwt-qualifications/gwt-package-host-_dh3fx6u/installed/bin/gwt-native",
+  "previousSha256": "644170197d8376ff40022b1a53c97cc9f1857d452b6082dd443195c93018654d",
+  "checks": [
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-0.json",
+      "baselineSha256": "8232c55525e5d6219da024f104b1b92b5cf7814dbf806adc208e2f42d175c7c8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-1.json",
+      "baselineSha256": "6699007b570053f717854426b2080e8db178a2d3105465a08a4846aedb18a184",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-10.json",
+      "baselineSha256": "8032843d15251f332a60368401b647a8ef693136656c4663da1f01725bd83cdc",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-11.json",
+      "baselineSha256": "07cc4e08e993598dbdd35448d6ab7d24d255e9e7645c515fd40d64c0c9f212b8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-12.json",
+      "baselineSha256": "3dc89d51d74fddfdb4465ca8ad2fb7e21233ed3d4c3a7ebe9732c61d9ce923c9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-13.json",
+      "baselineSha256": "b629bf2f57765c84e085d9a2ffa4a56d576166b18bfe0cd934134122390f4871",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-14.json",
+      "baselineSha256": "29bf7ec24f676c12b75129c629719891f680493708b615a7396887b3196a3388",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-15.json",
+      "baselineSha256": "ca4e784a5a6cd29c833f9fab38ef5f3fd385375ce20971bb9bea8af61cc9dbf7",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-16.json",
+      "baselineSha256": "037ad2c79005a2743afffce8209e19f9db44a3268579e9ef0b29b65759683cff",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-17.json",
+      "baselineSha256": "65b69103b19e50575fd96f322b31778de81ce4f9871cdc04c7777e30b35160e4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-18.json",
+      "baselineSha256": "3515c6bb3403d0a64c7fec0996933ba8521f111e10f195404128b219e406b5b5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-19.json",
+      "baselineSha256": "82ba13c26c5d1c148eb072e6d5ad023737024f88a0a0ace9bf072cf1231b8b07",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-2.json",
+      "baselineSha256": "ef36fd440a29bd0cd7b5e79e59571ddd8e28ce6f4e7afe67800c8a9355fb74a8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-20.json",
+      "baselineSha256": "06f01fc4e10f964cbd9b7cd61e031f55d9596af1fd70c7da491b5ba7705694d4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-21.json",
+      "baselineSha256": "bce0a560d555c460075732e4eecae8ef492d62cf74f63c24b66d80682007c4a5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-22.json",
+      "baselineSha256": "1029c240767b4e6186cd21ccb4ceef21fdb1ba4036778d9ffa2a84c8ff355282",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-23.json",
+      "baselineSha256": "5ff97e46d754639ddedb622c27f282980eca5cd2e0a1ec74d505e0cf11b3b123",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-24.json",
+      "baselineSha256": "e2f3ec25e7a9b559e37d344d58e1eb0325a5c7d19260885a93b95cbcd9e4846a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-25.json",
+      "baselineSha256": "459b9a18e16c389f968e75c999e30cce625810681e4b80b5157590eeb1802434",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-26.json",
+      "baselineSha256": "5c83b5e9e16f099f017dd71a8d7c4950f60a3f0fc4c3d0f2c1793a77c8daf486",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-27.json",
+      "baselineSha256": "5949cd2a8a56efb8704c31190e60a8749f712e197778a0c01953f408aaf4e874",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-28.json",
+      "baselineSha256": "9fbcb5d21afca00cb0d36957d817baa5e285d61f4dd7a1f0740d3852a02589a0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-29.json",
+      "baselineSha256": "da202f68d922e4a9a3ffc762c20a8eb58baaff79ba2c1bf4eefc2355d9a4408d",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-3.json",
+      "baselineSha256": "ca25c0b47a912f82e8efde54a349b2af675f595d19b4733209f47077979a0f2d",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-30.json",
+      "baselineSha256": "58d9fa899acff88622576776200d2a30cf192be97d72b4ad240fbd79a4ef29e0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-31.json",
+      "baselineSha256": "0c7b359341574fdb9e181a2e8ede5771e2e729160ea2a1fe1a8fd3779de3f248",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-32.json",
+      "baselineSha256": "85692397a9108afffd3d3357912072b86ce27c8638a6c34c9f14840342bc0dc7",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-33.json",
+      "baselineSha256": "b3c6c353c7aded98607dc97cead58562cd62fe37a611d3f000d540a926a587ed",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-34.json",
+      "baselineSha256": "0cfba3cb7c7915d58501a7c2b505aa5ef2d09bf3cd3427cf332b59ab5809c327",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-35.json",
+      "baselineSha256": "521a5eef0f14c5fcfefa5051c2e68df57aea2a8e69ac97c44067701bd5397d49",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-36.json",
+      "baselineSha256": "fd3a68cbae1817e216662a7374bef96c8c50a792621c7e535bec6634c1fd05f4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-37.json",
+      "baselineSha256": "e11d59fd39732ea3a5b16dc5d4f5770cc6e43b80b97b2cb54d17db9b96863b73",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-38.json",
+      "baselineSha256": "37ac1e8f0995c2aaecd349e688ef424ab5c15e1a506d6357f4e870c0663510f1",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-39.json",
+      "baselineSha256": "792125f39762ac93c62afccab97c248176e72fda999567de7d55e995294511a4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-4.json",
+      "baselineSha256": "d86308f6d15974c4b752d6f2aa47d4c812404946093ce9a3fbcfd24b437bec16",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-40.json",
+      "baselineSha256": "8f04aece1809590087314a221b51bf032b35bf6eb53366fa360d6d1b9cf35720",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-41.json",
+      "baselineSha256": "37b4aaf333f22ac1d1156161be1235a7f3774489cb207a261efb8c9007f0b583",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-42.json",
+      "baselineSha256": "f1489a07d67fe534eddcacc2924ef5a998d3bb98d49673ef60a5966d7469271e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-43.json",
+      "baselineSha256": "71164062a67dea166f30544cec58d8ff16cefb54365ac0875b29db81a3ed6b62",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-44.json",
+      "baselineSha256": "ed1411ec1b6bedfeacffb589c85e18bf72510958b481945415af9bf9d566972c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-45.json",
+      "baselineSha256": "3fdee87323222bca4b0efdd09107aaf39696c7453e47c048b9ada2e85d20d31c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-46.json",
+      "baselineSha256": "8afcb08989bd85068c12718f5ec6ef31c34c4752c66eca65f7a2e739e3e4e2d4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-47.json",
+      "baselineSha256": "1f206d17fe160bdc8d2b9b50aa306e0cd22dcfdac5e1dc285e2003cda832a148",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-48.json",
+      "baselineSha256": "2d3a997d74de5139da3ff231fd9b211f967b8ceacc8d491725c2d36063410cfa",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-49.json",
+      "baselineSha256": "a952bbcebc2c1d46d60244789a8e93999de32f46c3197c4dc1c413e495d541a6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-5.json",
+      "baselineSha256": "4f5a820e76a28c1f345102e4a3b474366e8ee90f74a63d7e7d01d104de76768f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-50.json",
+      "baselineSha256": "f3742b6c053dd3aeffd8bbe8d98d04c7adcde100587bf2d964db135289c393a8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-51.json",
+      "baselineSha256": "cf6612c925c74fc62884872887031ba9a178da2dd4a922f5b894bf37b440a22e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-52.json",
+      "baselineSha256": "72e6b2c0664e73b6eb5e36965c41cca66af7bd89849b6a27227c0ac2c0ad7344",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-53.json",
+      "baselineSha256": "a1466209d28cb39b8ea929a9b005dcb93160aacc6138a04a79d863ad74c2e88e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-54.json",
+      "baselineSha256": "bc2ac8b95c18b580d9ee9294948b4aa99263c7f4f0eeae506b6a725fba4f0740",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-55.json",
+      "baselineSha256": "2994003561db5ff5f360e5b741e09e5fb37d4a728bbd96a33f2c2b18f214387b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-56.json",
+      "baselineSha256": "2fb9e5606333fe16be03b51d3f8960da4c6858a2aec0b89251b4ad5855adeb59",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-57.json",
+      "baselineSha256": "b21a9c2b034c87cf8c025b8c9ff1b7aaf312d7dde9c710fc33a22cad38ec8a2e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-58.json",
+      "baselineSha256": "57d3b9f75cf3b53bb9999d781408725261c2987cf1a22a33604f3e88333b5989",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-59.json",
+      "baselineSha256": "e693edab4c3eb0c7c419924aaea9c6dfe0c9906f2d578e3a9631c3e3a5d7ccdd",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-6.json",
+      "baselineSha256": "a65194f631a4d690232f29fe83242af17b6cb57b0157cc683fcd58f29cbdda7b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-60.json",
+      "baselineSha256": "6499dec3220e8c43785d355a0eb775593dc73f397ef33635ea071b46e1e971d0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-61.json",
+      "baselineSha256": "95a69bf847086f5629250ad48b66b35a5aa465c82809fae7a31736dd78ed320c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-62.json",
+      "baselineSha256": "08d5602aa2b4a0d5714ecd4cafaf321942a91bb0d09cb1b68535829ec919692f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-7.json",
+      "baselineSha256": "d44efe2161655633d286de28c64e2d597ea52cdef7c8a0a65b164ae93a5d6277",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-8.json",
+      "baselineSha256": "988a7b5e9a62f9cc8cf7097df67b711890b81ebe9aa4c488e0e2968acd2d2ffd",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-completion/migration/candidate-9.json",
+      "baselineSha256": "a9c84e6b251271d8284c0b223d0d28ba6be26ffa7ddd4eb0ad8e8fe75df5459a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    }
+  ]
+}

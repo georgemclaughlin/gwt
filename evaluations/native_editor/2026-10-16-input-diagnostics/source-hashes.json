@@ -1,0 +1,12 @@
+{
+  "crates/gwt-core/src/input_diagnostics.rs": "89240e686a46b7676460e55b3dbfd492dbc415ab58a8c944301b6c3159265d4e",
+  "crates/gwt-core/src/value.rs": "f8bd08d040f3b3a185b67e8c4aea7ee298f5462c53c997d303488ee98ff9a674",
+  "crates/gwt-core/src/lib.rs": "362e7964bbcfcfd3c8bb0e59a37b245b9fa6ea145a636df247c14b66ce267d6a",
+  "crates/gwt-core/tests/input_diagnostics.rs": "f0b0320d0f9871568ed02478ccecdff80ca419da598274942a1a20f4c364cb46",
+  "evaluations/native_editor/qualify_input_diagnostics.py": "f27c848111e82a82eddad6897334a935c6a0c65c834ef3abaaae8305103feb16",
+  "docs/native-embedding.md": "c0dc6171e12d62ef97f7cc24fb249414dd43bf95f7e464d92fb92a92848f1d4c",
+  "docs/native-editor.md": "9136cbbb4050eed7ae49ecff22d9ed8de4efbd04012840b09ee94acd2c81a66b",
+  "docs/native-conformance.md": "292963a3a4a20ac9bbc04890dce820ee5c1a07a34a1106861c5af96ad1c28e79",
+  "docs/project-goal-progress.md": "b1c030e46852c984a640b35dedc1c248669f26d2b89632b8d8278acc56669762",
+  "evaluations/native_editor/2026-10-16-input-diagnostics/README.md": "9ce5503f373aa8597a64bf275767c5d256f0647474b60d5ad31e2c52ba046325"
+}

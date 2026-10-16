@@ -1,0 +1,14 @@
+RECORD Box
+  value: optional<integer>
+REQUEST choose
+  GIVEN box is Box
+  GIVEN replacement is Box
+  WHEN choose box through box with replacement
+  OUTPUT box is Box
+WHEN choose <box> through <alias> with <replacement>
+  GIVEN box is Box
+  AND alias is Box
+  AND replacement is Box
+  IF box.value is absent
+    REQUIRE false
+  set alias to replacement

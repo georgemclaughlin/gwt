@@ -1,0 +1,12 @@
+{
+  "kind": "subscription-source-adaptation",
+  "cases": 3276,
+  "executions": 9828,
+  "nativeInputStatePreserved": 3276,
+  "beforeSha256": "1be6d3bf8142c56e18336088899346f352eb5053291745dbec5640aa6c0733cf",
+  "afterSha256": "80bd1dfe85d93539633d7543377ed055862d22f677552b57adaa03d389c99193",
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-p6vjm8lg/installed/bin/gwt-native",
+  "nativeSha256": "0008ff9638d89f930b25a28faeae8765a1b0f4368193f966324296d9a12c4c6f",
+  "humanParticipants": 0,
+  "limitations": "Finite valid integer-domain inputs; helper contract narrowed; no full engine equivalence or human-benefit claim."
+}

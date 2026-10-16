@@ -1,0 +1,41 @@
+{
+  "rustTestsPerToolchain": 394,
+  "toolchains": [
+    "1.85.0",
+    "1.96.0"
+  ],
+  "pythonTests": 666,
+  "nativeEngineInputsUnchanged": 56,
+  "nativeOutcomeCounts": {
+    "behavior_rejected": 8,
+    "result": 56,
+    "boundary_rejected": 30
+  },
+  "caseComparison": {
+    "baselineMismatch": 0,
+    "cases": 16,
+    "failureChanged": 1,
+    "incompatible": 10,
+    "newFailure": 0,
+    "outputChanged": 0,
+    "pathChanged": 5,
+    "resolvedFailure": 0,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "browserValidation": "pending",
+  "humanParticipants": 0,
+  "sourceHashes": {
+    "gwtlang/runtime.py": "55587e78e12cc91bc8ba93ecab2223973967d92c896721c1a8f0cff3bbf92fbb",
+    "tests/test_runtime.py": "65dc251e792e7d871aea590faa6d8f72e8d89ac624a69b985652801bf0a8decd",
+    "tests/test_examples.py": "2e2b5ea0f67b4709ec1a825d0e7917528c7790087d8f7f88001d6cc8492223ce",
+    "crates/gwt-core/tests/input_normalization.rs": "9c8e9b779462971050cf0314b24f2aecf6aa2806b06118069079bc5ca671803a",
+    "examples/input_normalization/rules.gwt": "fce11ac3dcd3feab2fad4280359271d1975707b899a2d6823819e0417ba50dcd",
+    "examples/input_normalization/README.md": "d8529ae692c0c7e7dd6ef45280f32f0737655582e66c5e1250f5289e13a92670",
+    "evaluations/input_normalization/qualify.py": "7349a610260ba6d13853e86c93f500a846779a64c7716a73559705f69cdd4bb6",
+    "docs/native-input-boundary-decisions.md": "75dcf718d89dd509aad3d66e9b3a55b979ef5c9fc9920a5bbb5b8b704d5c39c4",
+    "docs/spec/v0.2.md": "5b245681caaf2ca3a773fe2423a072c8df2bcdb7277c50afb86064cf15cf1350",
+    "docs/language.md": "f9d9e1c92fbc220249a0a19740cfd75fbf46de1779d00e29571f0d78cf862d30",
+    "evaluations/input_normalization/2026-10-16/README.md": "653d00b76a079b84deee000ccbeecd486385738e56a971970a1b227d8207c8fd"
+  }
+}

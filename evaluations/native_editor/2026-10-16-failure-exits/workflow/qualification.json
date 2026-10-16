@@ -1,0 +1,25 @@
+{
+  "inventoryInputs": 720,
+  "inventoryExecutions": 2160,
+  "preservedPortfolioMigrations": 57,
+  "compatibility": [
+    {
+      "probe": "clearing",
+      "status": "observation_changed"
+    },
+    {
+      "probe": "present",
+      "status": "observation_preserved"
+    },
+    {
+      "probe": "redundant",
+      "status": "candidate_unavailable"
+    }
+  ],
+  "executableHashes": {
+    "/home/g/.cache/gwt-qualifications/gwt-package-host-axbdwpjw/installed/bin/gwt-native": "dc37feafaeec5fd6854254c2eae73ccb600e594ed264f7115a455304cb40874d",
+    "/home/g/.cache/gwt-qualifications/gwt-package-host-p6vjm8lg/installed/bin/gwt-native": "0008ff9638d89f930b25a28faeae8765a1b0f4368193f966324296d9a12c4c6f"
+  },
+  "proposalsApproved": false,
+  "humanParticipants": 0
+}

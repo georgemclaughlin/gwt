@@ -1,65 +1,44 @@
-# Input Normalization Example
+# Input normalization with declared facts
 
-This example shows the recommended pattern for JSON payloads that may
-contain null values.
+This example accepts a known JSON shape and keeps normalization decisions in
+GWT. `RawContactInput` declares name, email, the explicit middle-name state,
+and an `optional<text>` middle name. It runs in Python and native GWT without
+an `any` input.
 
-GWT does not have a source-level `null` literal. Instead of passing nullable
-fields into typed domain records, accept raw host data behind an `any` request
-boundary and normalize it into explicit state:
-
-```txt
-raw JSON with possible nulls
-  -> normalize raw into profile
-  -> typed ContactProfile output
+```text
+host JSON -> declared RawContactInput -> GWT behavior -> ContactProfile
 ```
 
-The JSON request contains a raw nullable field:
+Omitted and JSON-null middle names both mean absence. The separate
+`middle_name_state` distinguishes `provided`, `missing`, and `not_applicable`.
+Unknown text labels remain accepted input so GWT can return its existing
+`invalid_middle_name_state` validation error.
 
-```json
-{
-  "raw": {
-    "name": "Grace",
-    "email": "grace@example.com",
-    "middle_name_state": "missing",
-    "middle_name": null
-  }
-}
-```
+- `provided` requires present text. Empty text is present and remains accepted;
+  an absent value fails an assertion instead of producing a profile.
+- `missing` and `not_applicable` produce their named state and an empty output
+  middle name, even when the input supplies unused text.
+- Empty name/email values produce domain errors in a successful request's
+  `profile.status == "invalid"` result. Malformed input types fail contract validation.
 
-The GWT behavior does not test for null. It uses the explicit
-`middle_name_state` value and writes typed output:
+The checked-in [request](request.json) supplies a null middle name with the
+`missing` state. It returns a normalized Grace profile with empty middle name.
 
-```txt
-profile.middle_name_status == "missing"
-profile.middle_name == ""
-```
-
-## Commands
-
-Static check:
+From the repository root:
 
 ```sh
-python -m gwtlang check examples/input_normalization/rules.gwt
+python -m gwtlang validate examples/input_normalization/rules.gwt
+python -m gwtlang run examples/input_normalization/rules.gwt --json-input examples/input_normalization/request.json --request "normalize contact profile" --json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/input_normalization/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/input_normalization/rules.gwt --request "normalize contact profile" --input examples/input_normalization/request.json
 ```
 
-Run embedded scenario:
+Both validation commands execute six scenarios. Native `error_count` serializes
+as an exact decimal string because its declared type remains `number`.
 
-```sh
-python -m gwtlang test examples/input_normalization/rules.gwt
-```
-
-Run with JSON input:
-
-```sh
-python -m gwtlang run examples/input_normalization/rules.gwt \
-  --json-input examples/input_normalization/request.json \
-  --request "normalize contact profile" \
-  --json
-```
-
-## Why This Exists
-
-Typed contracts reject JSON null for fields such as `text`, `number`,
-`boolean`, `list`, records, and literal unions. That keeps domain behavior
-explicit. Use `any` for raw host data, then normalize missing, unknown, or
-not-applicable values into reviewable fields or one-of records.
+The previous example used `any`. This adaptation deliberately rejects malformed
+declared fields before normalization; native also rejects extra top-level host
+bindings. The [boundary decision](../../docs/native-input-boundary-decisions.md)
+records acceptance changes, the Python empty-object validation fix, captured
+review cases, and remaining profile differences. This is a synthetic language
+example, not a complete contact-data standard, email validator, or external pilot.

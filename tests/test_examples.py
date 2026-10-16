@@ -27,14 +27,41 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
     Path("examples/type_aliases.gwt"),
 ]
 
+# Deliberate native syntax, exercised by the named Rust suites. Keep this list
+# explicit: all other examples, including shared native examples, must pass
+# Python checking/execution. Formatting continues to cover every source file.
+NATIVE_ONLY_EXAMPLES = {
+    Path("examples/native_finite_codes/rules.gwt"): "finite_literals.rs: closed scalar contracts and exhaustive code dispatch",
+    Path("examples/native_lookup/rules.gwt"): "lookup_contracts.rs: native local constructors, returning lookup, and optional snapshots",
+    Path("examples/loan_underwriting/native_rules.gwt"): "underwriting.rs: exact ratio pairs and native expected failures",
+    Path("examples/inventory_allocation_spike/native_scenarios.gwt"): "failure_exits.rs: returning required lookup, snapshot inspection, and expected failure",
+    Path("examples/native_branch_proofs/rules.gwt"): "branch_proofs.rs: common branch-exit proofs and native expected failures",
+    Path("examples/native_weighted_allocation/rules.gwt"): "weighted_allocation.rs: explicit rounding with rational allocation oracle",
+    Path("examples/native_rounded_division/rules.gwt"): "rounded_division.rs: explicit native rounding step",
+    Path("examples/native_early_returns/rules.gwt"): "early_returns.rs: presence/kind facts after paths return",
+    Path("examples/native_filter_proofs/rules.gwt"): "filter_proofs.rs: WHERE presence/kind facts and guarded selected bodies",
+    Path("examples/native_require/rules.gwt"): "require_proofs.rs: sequential presence/kind assertions and native expected failures",
+    Path("examples/native_kind_conditions/rules.gwt"): "kind_conditions.rs: compound kind/presence proofs and remaining-kind payloads",
+    Path("examples/native_presence/rules.gwt"): "presence.rs: IF/DECIDE optional-record proofs; Python runtime rejects nested optional paths",
+    Path("examples/native_value_dispatch/rules.gwt"): "value_dispatch.rs: exhaustive boolean dispatch and native exact-value semantics",
+    Path("examples/native_kind_contracts/rules.gwt"): "kind_contracts.rs: explicit contracts for selected kinds",
+    Path("examples/minilang_spec/native_scenarios.gwt"): "minilang.rs: shared engine with explicit native kind setup",
+    Path("examples/native_kind_dispatch/rules.gwt"): "depending.rs: explicit kind initializers and exhaustive branch narrowing",
+    Path("examples/native_one_of/rules.gwt"): "one_of.rs: explicit kind initializers and common-field contracts",
+    Path("examples/native_expected_failures/rules.gwt"): "failure_expectations.rs: THEN fails with / THEN prints",
+    Path("examples/native_print_expectations/rules.gwt"): "print_expectations.rs: THEN prints",
+    Path("examples/native_value_arguments/rules.gwt"): "arguments.rs: grouped and literal behavior arguments",
+}
+
 
 def example_gwt_files():
     return sorted(Path("examples").rglob("*.gwt"))
 
 
-def example_program_files():
+def python_example_program_files():
     request_files = {request for _, request in example_gwt_request_pairs()}
-    return [program for program in example_gwt_files() if program not in request_files]
+    return [program for program in example_gwt_files()
+            if program not in request_files and program not in NATIVE_ONLY_EXAMPLES]
 
 
 def example_gwt_request_pairs():
@@ -59,8 +86,8 @@ class ExampleProgramTests(unittest.TestCase):
             with self.subTest(program=str(program)):
                 self.assertTrue(is_formatted(program.read_text(), filename=str(program)))
 
-    def test_all_example_program_files_check(self):
-        for program in example_program_files():
+    def test_all_python_example_program_files_check(self):
+        for program in python_example_program_files():
             with self.subTest(program=str(program)):
                 result = check_file(program)
                 self.assertTrue(result.ok, result.as_payload())
@@ -71,8 +98,8 @@ class ExampleProgramTests(unittest.TestCase):
                 payload = json.loads(schema.read_text())
                 self.assertEqual(payload["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
-    def test_all_example_programs_run(self):
-        for program in example_program_files():
+    def test_all_python_example_programs_run(self):
+        for program in python_example_program_files():
             with self.subTest(program=str(program)):
                 run_file(program)
 
@@ -81,10 +108,10 @@ class ExampleProgramTests(unittest.TestCase):
             with self.subTest(program=str(program), request=str(request)):
                 run_file(program, request_file=request)
 
-    def test_all_example_json_request_files_run_with_their_program(self):
+    def test_all_python_example_json_request_files_run_with_their_program(self):
         for request in sorted(Path("examples").glob("*/request.json")):
             program = request.parent / "rules.gwt"
-            if not program.exists():
+            if not program.exists() or program in NATIVE_ONLY_EXAMPLES:
                 continue
             with self.subTest(program=str(program), request=str(request)):
                 run_json_file(
@@ -134,8 +161,11 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(analysis.diagnostics, [])
 
         result = run_source(program.read_text(), filename=str(program))
-        self.assertEqual(result.state["decision"]["status"], "needs_review")
-        self.assertEqual(result.state["decision"]["approved_total"], 60)
+        self.assertEqual(len(result.scenarios), 8)
+        self.assertEqual(result.scenarios[0].state["decision"]["status"], "needs_review")
+        self.assertEqual(result.scenarios[0].state["decision"]["approved_total"], 60)
+        self.assertEqual(result.scenarios[-1].state["decision"]["has_violation"], False)
+        self.assertEqual(result.scenarios[-1].state["decision"]["violation_description"], "")
 
         request_result = run_request(
             program.read_text(),
@@ -517,9 +547,11 @@ class ExampleProgramTests(unittest.TestCase):
         self.assertEqual(analysis.diagnostics, [])
 
         result = run_source(program.read_text(), filename=str(program))
-        self.assertEqual(result.state["profile"]["status"], "normalized")
-        self.assertEqual(result.state["profile"]["middle_name_status"], "provided")
-        self.assertEqual(result.state["profile"]["middle_name"], "Lovelace")
+        provided = result.scenarios[0].state["profile"]
+        self.assertEqual(len(result.scenarios), 6)
+        self.assertEqual(provided["status"], "normalized")
+        self.assertEqual(provided["middle_name_status"], "provided")
+        self.assertEqual(provided["middle_name"], "Lovelace")
 
         request_result = run_json_request(
             program.read_text(),

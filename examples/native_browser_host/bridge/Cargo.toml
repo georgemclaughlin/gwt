@@ -1,0 +1,23 @@
+[package]
+name = "gwt-browser-preview"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+publish = false
+license = "MIT"
+
+[workspace]
+resolver = "3"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+gwt-core = { path = "../../../crates/gwt-core" }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154", features = ["arbitrary_precision"] }
+
+[profile.release]
+lto = true
+opt-level = "s"
+panic = "abort"

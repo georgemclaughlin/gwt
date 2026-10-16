@@ -1,0 +1,50 @@
+{
+  "toolchains": {
+    "1.85.0": {
+      "passedTests": 234,
+      "clippyPassed": true
+    },
+    "1.96.0": {
+      "passedTests": 234,
+      "clippyPassed": true
+    }
+  },
+  "editor": {
+    "native": {
+      "version": "1.137.0",
+      "passedChecks": 19
+    },
+    "native-packaged": {
+      "version": "1.137.0",
+      "passedChecks": 19
+    }
+  },
+  "commandsPassed": [
+    [
+      "cargo",
+      "+1.96.0",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    [
+      "git",
+      "diff",
+      "--check"
+    ],
+    [
+      "node",
+      "--check",
+      "vscode-gwt/tests/extension-host.js"
+    ],
+    [
+      "python",
+      "-m",
+      "gwtlang",
+      "format",
+      "examples/order_fulfillment/native_request.gwt",
+      "--check"
+    ]
+  ]
+}

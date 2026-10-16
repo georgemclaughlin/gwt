@@ -15,6 +15,10 @@ change is authorized by this document.
 
 ## Candidate Highlights
 
+- Python record validation preserves explicitly supplied empty objects. They
+  cannot disappear into optional absence or hide unknown fields; an explicit
+  `any` field can retain an empty object. Previously captured observations that
+  relied on the old flattening behavior require review.
 - Deterministic runtime safeguards include execution budgets, behavior-call
   depth limits, source-located expected failures, and iteration accounting.
 - Program identity covers the entry module and its transitively loaded `USE`
@@ -140,12 +144,6 @@ This draft is not release-ready. The
 [release-candidate checklist](release-v0.4-checklist.md) records the complete
 gate; the following blockers are non-optional:
 
-- **Owner name decision:** `GWT` collides with the established Web Toolkit
-  identity and package/editor surfaces. The owner must approve a rename or
-  explicitly retain the name with its tradeoffs.
-- **Owner license decision:** the repository has no root license file or
-  Python project license metadata. Public distribution must not infer a
-  license.
 - **Two actual external pilots:** repository examples do not replace two
   unrelated workflow pilots, with at least one maintained primarily outside
   the project.
@@ -159,6 +157,10 @@ gate; the following blockers are non-optional:
 
 The project must not publish a final v0.4 package, release, or editor artifact
 while these gates remain open.
+
+Owner decisions resolved on 2026-10-15: retain GWT for now and use the MIT
+license. The root `LICENSE` and Python package metadata reflect that choice.
+These decisions do not authorize a release or replace the gates above.
 
 ## Candidate Distribution
 

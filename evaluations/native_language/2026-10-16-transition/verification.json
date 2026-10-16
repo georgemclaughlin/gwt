@@ -1,0 +1,89 @@
+{
+  "kind": "native-support-transition-qualification",
+  "probesPerEngine": 30,
+  "changedProbeObservations": [
+    {
+      "id": "numeric-literal-union",
+      "previous": {
+        "accepted": false,
+        "checkDiagnostic": "unsupported_type",
+        "run": {
+          "ok": null,
+          "state": null,
+          "result": null,
+          "output": null
+        },
+        "runDiagnostic": null
+      },
+      "current": {
+        "accepted": false,
+        "checkDiagnostic": "argument_type",
+        "run": {
+          "ok": null,
+          "state": null,
+          "result": null,
+          "output": null
+        },
+        "runDiagnostic": null
+      }
+    },
+    {
+      "id": "boolean-literal-union",
+      "previous": {
+        "accepted": false,
+        "checkDiagnostic": "unsupported_type",
+        "run": {
+          "ok": null,
+          "state": null,
+          "result": null,
+          "output": null
+        },
+        "runDiagnostic": null
+      },
+      "current": {
+        "accepted": true,
+        "checkDiagnostic": null,
+        "run": {
+          "ok": true,
+          "state": {
+            "code": true
+          },
+          "result": {
+            "code": true
+          },
+          "output": []
+        },
+        "runDiagnostic": null
+      }
+    }
+  ],
+  "engineSourceInputsMatched": 60,
+  "focusedRustTestPassed": true,
+  "invalidExpectationOverridesRefused": true,
+  "humanParticipants": 0,
+  "runtimeChanged": false,
+  "languageVersionAssigned": false,
+  "artifactSha256": {
+    "evaluations/native_language/2026-10-16-transition/README.md": "d2e32afd83ff50fa38bf6eecbd23dc71a5f17e765223eb2bb0158ae5dd0ef659",
+    "evaluations/native_language/2026-10-16-transition/current-choices/failures.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "evaluations/native_language/2026-10-16-transition/current-choices/observations.json": "c8ee7576a5e27a1f00dac1c289da8d2dcda70936f8645a23083dc580b33d76de",
+    "evaluations/native_language/2026-10-16-transition/current-choices/qualification.json": "a86d6ebe46370a7f9b1616bdf501ff16a4e9e15b5ab322eec214e0823cb54886",
+    "evaluations/native_language/2026-10-16-transition/historical-expectations.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "evaluations/native_language/2026-10-16-transition/previous-choices/failures.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "evaluations/native_language/2026-10-16-transition/previous-choices/observations.json": "b410a75cedab4e53b65a55178e8c72bf33a79fe8bea9f6a2965c3f7d2c10f3bd",
+    "evaluations/native_language/2026-10-16-transition/previous-choices/qualification.json": "01d5716218f4f5876782f5f49c7747b73e56c00da6b8bf0eeeb1f66f0ec75826"
+  },
+  "auditedSourceSha256": {
+    "evaluations/native_language/qualify_choices.py": "ed6abd00d48a6daf603aa671a7665c48bcfa648ab09557dd46f59569d417c4d3",
+    "evaluations/native_language/current-choice-expectations.json": "76d7cc7cb855f5adce53dcdb47e5c2e2b9e5d9674bb0860ae68d3aa60a515b53",
+    "docs/native-language-transition.md": "8dccfe1a73795b9290e1d34667ac590976833270acb9f68b945bc62af1bb8a9b",
+    "docs/native-language-decisions.md": "844332323a49e70ca7ea11d3aa4d75c6dacd47a0db73bc69e7f53d33b7eb0ee6",
+    "docs/native-execution-model.md": "5b525cc1e07d1bda824ea519a8243a04aab0cd8f1fd6fb2c2f0e71cdc9190403",
+    "docs/native-semantics.md": "201a0bf31789ae282e196ab6751b62247393b1e0e18fcc69c89c3f3dd86ec02c",
+    "docs/native-conformance.md": "51eb6165fb526ad4fe50483c18481fae5919c4f117548948ba52216f1d14c32a",
+    "docs/project-goal-progress.md": "6bd802a4275117be413160b07792a51475a401117cfa09274e613f0a1c1d4ab4",
+    "README.md": "256f9c3fbcc556966656047e029e9d1c6f08413e4ed2eef5bc0a723fbe7e7ea2"
+  },
+  "finalRunnerRecheckPassed": true,
+  "malformedExpectationObjectRefused": true
+}

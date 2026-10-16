@@ -1,0 +1,1 @@
+{"queue":{"parcels":[{"label":"first","route":{"kind":"counter","code":"B","ready":true},"prepared":false},{"label":"second","route":{"kind":"counter","code":"A","ready":true},"prepared":false}]}}

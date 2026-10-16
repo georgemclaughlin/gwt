@@ -18,7 +18,10 @@
     "onCommand:gwt.validateCurrentFile",
     "onCommand:gwt.testCurrentFile",
     "onCommand:gwt.runCurrentFile",
-    "onCommand:gwt.formatCurrentFile"
+    "onCommand:gwt.formatCurrentFile",
+    "onCommand:gwt.checkCurrentFile",
+    "onCommand:gwt.profileCurrentFile",
+    "onCommand:gwt.showEngineInfo"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -62,6 +65,18 @@
       {
         "command": "gwt.formatCurrentFile",
         "title": "GWT: Format Current File"
+      },
+      {
+        "command": "gwt.checkCurrentFile",
+        "title": "GWT: Check Current File"
+      },
+      {
+        "command": "gwt.profileCurrentFile",
+        "title": "GWT: Profile Execution Evidence"
+      },
+      {
+        "command": "gwt.showEngineInfo",
+        "title": "GWT: Show Engine Information"
       }
     ],
     "breakpoints": [
@@ -149,14 +164,49 @@
           },
           "default": [],
           "description": "Arguments passed to the GWT language server command when gwt.server.command is set."
+        },
+        "gwt.engine": {
+          "type": "string",
+          "enum": [
+            "python",
+            "native"
+          ],
+          "default": "python",
+          "scope": "window",
+          "description": "Language engine for diagnostics and commands. Reload the window after changing. Native mode provides diagnostics, semantic hover/definition, declaration completion, outline, formatting, and test/run. Debugging currently uses Python."
+        },
+        "gwt.native.command": {
+          "type": "string",
+          "scope": "resource",
+          "default": "gwt-native",
+          "description": "Explicit native executable path or PATH command. No shell or Python fallback is used."
+        },
+        "gwt.native.importRoot": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Native import root, absolute or relative to the workspace folder. Empty uses the workspace folder, or the file parent outside a workspace."
+        },
+        "gwt.native.limitsFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Execution limit JSON file for native run, profile, test, and validate. Absolute or relative to the workspace folder (file parent outside a workspace). Empty uses native defaults. Dirty open limit files are saved before execution; requires a native executable with --limits support."
         }
       }
     }
   },
   "scripts": {
-    "check": "node --check extension.js"
+    "check": "node --check extension.js && node --check native-editor.js && node --check native-tools.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "GWT checks and commands execute a configured local language tool."
+    }
   }
 }

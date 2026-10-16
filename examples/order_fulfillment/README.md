@@ -8,6 +8,8 @@ shipping details.
   scenarios.
 - `request.gwt` is a production-style request with no inline assertions.
 - `request_with_assertions.gwt` is the same request with `THEN` assertions.
+- `native_request.gwt` explicitly imports `rules.gwt`, so it can run directly
+  as a native entry with the same inputs and ten expectations.
 - `request.json` is the same production request as JSON state for host
   integrations.
 
@@ -73,6 +75,19 @@ python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/orde
 ```
 
 ## What This Stresses
+
+The Rust engine can execute the self-contained request entry:
+
+```sh
+cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/order_fulfillment/native_request.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/order_fulfillment/native_request.gwt
+```
+
+The entry imports rule declarations without running their five embedded scenarios.
+Its result contains the full entry state; an explicit JSON request returns only
+declared outputs. See [native request entries](../../docs/native-request-entries.md).
+
+The workflow exercises:
 
 - multi-step state transitions
 - payment and fraud gates before allocation

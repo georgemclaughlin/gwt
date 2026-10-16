@@ -1,0 +1,11 @@
+{
+  "order": {"lines": [
+    {"sku": "widget", "quantity": 3},
+    {"sku": "gadget", "quantity": 5},
+    {"sku": "unknown", "quantity": 1}
+  ]},
+  "inventory": {"items": [
+    {"sku": "widget", "available": 5},
+    {"sku": "gadget", "available": 2}
+  ]}
+}

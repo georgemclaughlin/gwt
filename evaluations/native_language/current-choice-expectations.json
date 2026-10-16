@@ -1,0 +1,8 @@
+{
+  "numeric-literal-union": {
+    "nativeCheckDiagnostic": "argument_type"
+  },
+  "boolean-literal-union": {
+    "nativeCheck": true
+  }
+}

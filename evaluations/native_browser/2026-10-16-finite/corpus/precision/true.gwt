@@ -1,0 +1,5 @@
+TYPE Code is true
+REQUEST echo
+  GIVEN value is Code
+  WHEN PASS
+  OUTPUT value is Code

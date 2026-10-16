@@ -1,0 +1,16 @@
+RECORD Contact is one of
+  email:
+    address: text
+  phone:
+    number: text
+REQUEST replace
+  GIVEN contact is Contact
+  GIVEN replacement is Contact
+  WHEN replace contact through contact with replacement
+  OUTPUT contact is Contact
+WHEN replace <contact> through <alias> with <replacement>
+  GIVEN contact is Contact
+  AND alias is Contact
+  AND replacement is Contact
+  IF contact.kind == "email"
+    set alias to replacement

@@ -1,5 +1,11 @@
 PROGRAM Input normalization example
 
+RECORD RawContactInput
+  name: text
+  email: text
+  middle_name_state: text
+  middle_name: optional<text>
+
 RECORD ContactProfile
   name: text
   email: text
@@ -10,7 +16,7 @@ RECORD ContactProfile
   status: "new" | "normalized" | "invalid"
 
 REQUEST normalize contact profile
-  GIVEN raw is any
+  GIVEN raw is RawContactInput
 
   GIVEN profile is ContactProfile
     name: ""
@@ -38,7 +44,7 @@ WHEN reset profile state <profile>
   set profile.status to "new"
 
 WHEN normalize <raw> into <profile>
-  GIVEN raw is any
+  GIVEN raw is RawContactInput
   AND profile is ContactProfile
   reset profile state profile
   IF raw.name == ""
@@ -57,11 +63,14 @@ WHEN normalize <raw> into <profile>
     set profile.status to "invalid"
 
 WHEN normalize middle name from <raw> into <profile>
-  GIVEN raw is any
+  GIVEN raw is RawContactInput
   AND profile is ContactProfile
   IF raw.middle_name_state == "provided"
-    set profile.middle_name_status to "provided"
-    set profile.middle_name to raw.middle_name
+    IF raw.middle_name is present
+      set profile.middle_name_status to "provided"
+      set profile.middle_name to raw.middle_name
+    ELSE
+      REQUIRE false
   ELSE
     IF raw.middle_name_state == "not_applicable"
       set profile.middle_name_status to "not_applicable"
@@ -74,7 +83,7 @@ WHEN normalize middle name from <raw> into <profile>
         append "invalid_middle_name_state" to profile.errors
 
 SCENARIO provided middle name normalizes
-GIVEN raw is
+GIVEN raw is RawContactInput
   name: "Ada"
   email: "ada@example.com"
   middle_name_state: "provided"
@@ -88,3 +97,61 @@ AND profile.email == "ada@example.com"
 AND profile.middle_name_status == "provided"
 AND profile.middle_name == "Lovelace"
 AND profile.errors == []
+
+SCENARIO absence follows the explicit middle name state
+GIVEN raw is RawContactInput
+  name: "Grace"
+  email: "grace@example.com"
+  middle_name_state: <state>
+
+REQUEST normalize contact profile
+
+THEN profile.status == "normalized"
+AND profile.middle_name_status == <state>
+AND profile.middle_name == ""
+AND profile.errors == []
+
+EXAMPLES
+  | state            |
+  | "missing"        |
+  | "not_applicable" |
+
+SCENARIO unused middle name text does not override its declared state
+GIVEN raw is RawContactInput
+  name: "Grace"
+  email: "grace@example.com"
+  middle_name_state: "not_applicable"
+  middle_name: "Ignored"
+
+REQUEST normalize contact profile
+
+THEN profile.status == "normalized"
+AND profile.middle_name_status == "not_applicable"
+AND profile.middle_name == ""
+
+SCENARIO an empty provided middle name remains a present text value
+GIVEN raw is RawContactInput
+  name: "Ada"
+  email: "ada@example.com"
+  middle_name_state: "provided"
+  middle_name: ""
+
+REQUEST normalize contact profile
+
+THEN profile.status == "normalized"
+AND profile.middle_name_status == "provided"
+AND profile.middle_name == ""
+
+SCENARIO ordinary validation errors stay in the domain result
+GIVEN raw is RawContactInput
+  name: ""
+  email: ""
+  middle_name_state: "unrecognized"
+
+REQUEST normalize contact profile
+
+THEN profile.status == "invalid"
+AND profile.errors == ["missing_name", "missing_email", "invalid_middle_name_state"]
+AND profile.error_count == 3
+AND profile.middle_name_status == "missing"
+AND profile.middle_name == ""

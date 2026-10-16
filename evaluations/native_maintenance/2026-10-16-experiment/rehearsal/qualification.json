@@ -1,0 +1,24 @@
+{
+  "liveModelCalls": 0,
+  "humanParticipants": 0,
+  "syntheticProviderResponses": 36,
+  "metrics": {
+    "gwt": {
+      "trials": 15,
+      "missing": 0,
+      "firstPassSucceeded": 9,
+      "finalSucceeded": 12,
+      "repairedTrials": 3,
+      "recoveredTrials": 3
+    },
+    "python": {
+      "trials": 15,
+      "missing": 0,
+      "firstPassSucceeded": 9,
+      "finalSucceeded": 12,
+      "repairedTrials": 3,
+      "recoveredTrials": 3
+    }
+  },
+  "qualifierSha256": "6da9960fd8373add5e38a2956deba02f71d10f6d9d2713d785506756720b987c"
+}

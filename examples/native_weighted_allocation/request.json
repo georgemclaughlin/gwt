@@ -1,0 +1,22 @@
+{
+  "budget": {
+    "total": "1.00",
+    "recipients": [
+      {
+        "label": "first",
+        "weight": 1,
+        "eligible": true
+      },
+      {
+        "label": "second",
+        "weight": 1,
+        "eligible": true
+      },
+      {
+        "label": "third",
+        "weight": 1,
+        "eligible": true
+      }
+    ]
+  }
+}

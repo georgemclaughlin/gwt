@@ -1,0 +1,27 @@
+{
+  "pythonTests": 633,
+  "fixtureExecutions": 6828,
+  "nativeEngineInputsUnchanged": 56,
+  "sourceDigestsVerified": 35,
+  "taskFileDigestVerified": true,
+  "documentationLinksChecked": 93,
+  "diffCheckPassed": true,
+  "modelCalls": 0,
+  "participants": 0,
+  "sourceSha256": {
+    "evaluations/native_maintenance/README.md": "5ed23b845796dddbca3bda559cf27630831bae321818d718b3b1a3450cc6e0fc",
+    "evaluations/native_maintenance/2026-10-16/README.md": "400dd1310cab728183871a1af74cb19e90062dfcf648953e36f565b7dab1b742",
+    "docs/maintenance-evaluation.md": "61d06314d404128ab97198090674bd2a576f0115c898491d998a4e8096d3cd17",
+    "docs/project-goal-progress.md": "4cae8381c7ddf37e1857a402a0107e35e146262c29a953ad0a4728e90506c5f6",
+    "evaluations/native_maintenance/fixtures/allocation/baseline.gwt": "77e173b412337d359a4a94ae5d5d0981a43bb9f13edce64e9f90ae746716c60d",
+    "evaluations/native_maintenance/fixtures/allocation/baseline.py": "a8b25ad5d326ce4f8bd4999291e4499614484a5ec06482610f1c673de238653d",
+    "evaluations/native_maintenance/fixtures/allocation/correct.gwt": "885c8273a9c81501f4e4addf92edb511d5ff6efa8ef3bc89314e62d11e65be55",
+    "evaluations/native_maintenance/fixtures/allocation/correct.py": "ca4a73b36301da12a545e2744e677dc9dea9b37a0eacbaf3584de526645bfa3d",
+    "evaluations/native_maintenance/fixtures/allocation/faulty.gwt": "b2338719a9afdae1c1431996b7300157470608787aee1721a5faf316ecf1ae03",
+    "evaluations/native_maintenance/fixtures/allocation/faulty.py": "bd159c18741a5a8d8ca99a500ca670297b7156e845d18c46bfb0307aebf8c317",
+    "evaluations/native_maintenance/corpus.py": "9868884c1113c2ce00d960a2b69e8c535ee61fdbf2a3b5d5585d139d3055868b",
+    "evaluations/native_maintenance/study.py": "e21173c90cc33a01fff1fa2761ac82d59fd304a689eb052aaa44b5aa81d3893d",
+    "evaluations/native_maintenance/worker.py": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "tests/test_native_maintenance.py": "fada53577d891200eae420a970b30614c3037800372f312ce5d1b82d163f1490"
+  }
+}

@@ -1,0 +1,30 @@
+PROGRAM expenses review
+
+RECORD Line
+  amount: integer
+  reimbursable: boolean
+
+RECORD Facts
+  limit: integer
+  lines: list<Line>
+
+RECORD Decision
+  status: "approved" | "review"
+  total: integer
+
+REQUEST assess
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    status: "approved"
+    total: 0
+  WHEN assess facts into decision
+  OUTPUT decision is Decision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  FOR line in facts.lines
+    IF line.amount > facts.limit
+      set decision.status to "review"
+    IF line.amount <= facts.limit
+      add line.amount to decision.total

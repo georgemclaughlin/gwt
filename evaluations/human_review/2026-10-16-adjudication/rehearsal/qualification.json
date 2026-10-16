@@ -1,0 +1,35 @@
+{
+  "kind": "human-rationale-adjudication-rehearsal",
+  "humanParticipants": 0,
+  "liveModelCalls": 0,
+  "syntheticSessions": 3,
+  "syntheticResponses": 2,
+  "syntheticAssessors": 2,
+  "commandsPassed": 6,
+  "summary": {
+    "plannedTasks": 12,
+    "submittedTasks": 5,
+    "plannedFaultyTasks": 6,
+    "submittedFaultyTasks": 2,
+    "reviewStatusCounts": {
+      "consensus": 11,
+      "resolved": 1
+    },
+    "finalAssessmentCounts": {
+      "supported_approval": 2,
+      "recognized_defect": 1,
+      "uncertain": 2,
+      "unavailable": 7
+    },
+    "assessorJudgedRecognizedDefects": 1,
+    "assessorJudgedSupportedApprovals": 2
+  },
+  "sourceSha256": {
+    "/home/g/code/gwt/evaluations/human_review/adjudication.py": "8c2fadb5fd1c987e508e975959a3c727161f42e4bbf1b1aaeb1a0caf346c216a",
+    "/home/g/code/gwt/evaluations/human_review/study.py": "cd06d9f05f367b7760799ee3aafee17372a4a3861093b5f800183dc61a5de40a",
+    "/home/g/code/gwt/evaluations/human_review/corpus.py": "45952a98e6b674a5689289c9a2e7ed43e142f838c4b649ca397c21bcf8dcdfcf",
+    "/home/g/code/gwt/evaluations/human_review/qualify_adjudication.py": "a4cb34e91161e1bc1fa64be0edf5ed08eab23a4264682230459da4814572557d"
+  },
+  "browserValidation": "not performed; browser runtime reported no available browser",
+  "participantPageChanged": false
+}

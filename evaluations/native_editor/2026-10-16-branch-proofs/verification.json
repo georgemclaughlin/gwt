@@ -1,0 +1,25 @@
+{
+  "rustTestsPerToolchain": 388,
+  "toolchains": [
+    "1.85.0",
+    "1.96.0"
+  ],
+  "clippyWarnings": 0,
+  "pythonTests": 658,
+  "javascriptTests": 10,
+  "installedEditorChecks": 39,
+  "verifiedPackageEngineInputs": 56,
+  "maintenanceFixtureExecutions": 6828,
+  "exampleResult": {
+    "reference": "R-2"
+  },
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:dadbf1c27369642ae87f33d22ce0860aeed68c36ba18958cdfece7e946c61941"
+  },
+  "executable": "/home/g/.cache/gwt-qualifications/gwt-package-host-p6vjm8lg/installed/bin/gwt-native",
+  "executableSha256": "0008ff9638d89f930b25a28faeae8765a1b0f4368193f966324296d9a12c4c6f",
+  "liveModelCalls": 0,
+  "humanParticipants": 0,
+  "browserValidation": "pending"
+}

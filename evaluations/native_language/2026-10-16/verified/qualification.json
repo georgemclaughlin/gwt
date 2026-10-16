@@ -1,0 +1,12 @@
+{
+  "probes": 30,
+  "nativeAccepted": 17,
+  "nativeExecuted": 17,
+  "nativeSuccessful": 15,
+  "pythonChecked": 28,
+  "pythonSuccessful": 26,
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-_dh3fx6u/installed/bin/gwt-native",
+  "nativeSha256": "644170197d8376ff40022b1a53c97cc9f1857d452b6082dd443195c93018654d",
+  "fixtureSha256": "ee5d0f2f28e5a28ff75efef247c3d981629ecd46f8600f8d2d042638be27ebad",
+  "humanParticipants": 0
+}

@@ -1,0 +1,13 @@
+{
+  "inputs": 1072,
+  "nativeExecutions": 1072,
+  "pythonExecutions": 1072,
+  "changedPolicyCases": 52,
+  "ratioOutputContractChangedForEveryCase": true,
+  "capturesReplayed": 6,
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-axbdwpjw/installed/bin/gwt-native",
+  "nativeSha256": "dc37feafaeec5fd6854254c2eae73ccb600e594ed264f7115a455304cb40874d",
+  "beforeSha256": "c6ff7aa38abb428def229227cedaf0ce84c205e8e95858775f8f56519d5bc35a",
+  "afterSha256": "50b1be884233fc0a4e8dd7c4ce04f46908c00815a9c054f83ec0f43a60253a80",
+  "humanParticipants": 0
+}

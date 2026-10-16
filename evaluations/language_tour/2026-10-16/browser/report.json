@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "allNineCasesSelected": true,
+      "pathFilterAndSearch": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "allNineCasesSelected": true,
+      "pathFilterAndSearch": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "scriptErrors": [],
+  "externalRequests": []
+}

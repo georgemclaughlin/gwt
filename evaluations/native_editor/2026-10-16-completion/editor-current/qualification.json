@@ -1,0 +1,32 @@
+{
+  "engine": "native",
+  "command": [
+    "code",
+    "--new-window",
+    "--user-data-dir",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-kbd0pvgn/profile",
+    "--extensions-dir",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-kbd0pvgn/extensions",
+    "--extensionDevelopmentPath=/home/g/code/gwt/vscode-gwt",
+    "--extensionTestsPath=/home/g/code/gwt/vscode-gwt/tests/extension-host.js",
+    "--skip-welcome",
+    "--skip-release-notes",
+    "--disable-workspace-trust",
+    "--disable-extensions",
+    "--no-sandbox",
+    "--wait",
+    "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-kbd0pvgn/workspace"
+  ],
+  "temporaryDirectory": "/home/g/.cache/gwt-qualifications/gwt-editor-qualification-kbd0pvgn",
+  "extensionSourceSha256": {
+    "extension.js": "3e8b565fae0cb942500bef54dc8a2e19c1c34b008e6be80a49354053fd34a252",
+    "native-editor.js": "b4ab2efdac75fef598300913e6271732ee2542ef42a0a7a9bfa37582019e4d46",
+    "native-tools.js": "9f56d3e1d7ddecbeb8fc1a0fe1adb2bd6a29d215b4448dae53033efa2b8b4c26",
+    "package.json": "12a601e18e6f109536f437fed232feab3e7c85ceaf2076185900eff5be6ded0f",
+    "language-configuration.json": "4206c81659dff4341dfb1a382ed36ed0b3bf0a968176f094b325fa88ae5521f1",
+    "syntaxes/gwt.tmLanguage.json": "06a35dc8cbc3d19a444390d22f040c498f0edc9078a6a4c6b4bbeac0d0ff1e33",
+    "tests/extension-host.js": "78d8fc190a1d3ccfbe65af3c1cde598a5436dd669103828cf2272839011c56a3"
+  },
+  "nativeSha256": "644170197d8376ff40022b1a53c97cc9f1857d452b6082dd443195c93018654d",
+  "launcherExitCode": 0
+}

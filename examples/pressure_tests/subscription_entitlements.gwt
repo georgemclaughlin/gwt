@@ -1,5 +1,7 @@
 PROGRAM subscription entitlements pressure test
 
+TYPE SubscriptionPlan is "free" | "pro" | "enterprise"
+
 RECORD Invoice
   invoice_id: text
   status: "paid" | "past_due" | "void"
@@ -12,7 +14,7 @@ RECORD FeatureOverride
 
 RECORD AccountRequest
   account_id: text
-  plan: "free" | "pro" | "enterprise"
+  plan: SubscriptionPlan
   requested_feature: text
   active_users: number
   seat_limit: number
@@ -52,7 +54,7 @@ REQUEST decide entitlement
   AND decision.reason != "new"
 
 WHEN plan rank for <plan>
-  GIVEN plan is text
+  GIVEN plan is SubscriptionPlan
   THEN returns number
   IF plan == "free"
     RETURN 1
@@ -88,6 +90,14 @@ WHEN reset <decision>
   set decision.status to "new"
   set decision.reason to "new"
 
+WHEN has past due invoice in <invoices>
+  GIVEN invoices is list<Invoice>
+  THEN returns boolean
+  FIND invoice in invoices WHERE invoice.status == "past_due"
+    RETURN true
+  ELSE
+    RETURN false
+
 WHEN collect account facts from <account> into <decision>
   GIVEN account is AccountRequest
   AND decision is EntitlementDecision
@@ -95,7 +105,8 @@ WHEN collect account facts from <account> into <decision>
   LET required_rank be required rank for account.requested_feature
   set decision.plan_rank to plan_rank
   set decision.required_plan_rank to required_rank
-  exists invoice in account.invoices where invoice.status == "past_due" into decision.has_past_due_invoice
+  LET has_past_due be has past due invoice in account.invoices
+  set decision.has_past_due_invoice to has_past_due
   IF account.active_users > account.seat_limit
     set decision.seat_limit_exceeded to true
 
@@ -233,3 +244,100 @@ AND decision.status == "allowed"
 AND decision.reason == "manual_override"
 AND decision.matched_override == true
 AND decision.reasons == ["migration_support"]
+
+SCENARIO invoice status decides whether a later invoice blocks access
+GIVEN account is AccountRequest
+  account_id: "acct_status"
+  plan: "pro"
+  requested_feature: "automations"
+  active_users: 1
+  seat_limit: 1
+  invoices: []
+  overrides: []
+
+GIVEN account.invoices are Invoice
+  | invoice_id | status   | days_overdue |
+  | "first"    | <first>  | 9            |
+  | "second"   | <second> | 0            |
+
+REQUEST decide entitlement
+
+THEN decision.has_past_due_invoice == <past_due>
+AND decision.allowed == <allowed>
+AND decision.reason == <reason>
+AND decision.seat_limit_exceeded == false
+
+EXAMPLES
+  | first      | second     | past_due | allowed | reason             |
+  | "paid"     | "void"     | false    | true    | "feature_in_plan"  |
+  | "void"     | "paid"     | false    | true    | "feature_in_plan"  |
+  | "paid"     | "past_due" | true     | false   | "past_due_invoice" |
+  | "past_due" | "paid"     | true     | false   | "past_due_invoice" |
+
+SCENARIO only the first matching override decides whether blockers are bypassed
+GIVEN account is AccountRequest
+  account_id: "acct_first_override"
+  plan: "free"
+  requested_feature: "audit_log"
+  active_users: 2
+  seat_limit: 1
+  invoices: []
+  overrides: []
+
+GIVEN account.invoices are Invoice
+  | invoice_id | status     | days_overdue |
+  | "unpaid"   | "past_due" | 0            |
+
+GIVEN account.overrides are FeatureOverride
+  | feature     | active   | reason      |
+  | "projects"  | true     | "unrelated" |
+  | "audit_log" | <first>  | "first"     |
+  | "audit_log" | <second> | "second"    |
+
+REQUEST decide entitlement
+
+THEN decision.allowed == <first>
+AND decision.matched_override == <first>
+AND decision.has_past_due_invoice == true
+AND decision.seat_limit_exceeded == true
+AND decision.reason == <reason>
+AND decision.reasons == <reasons>
+
+EXAMPLES
+  | first | second | reason             | reasons                  |
+  | false | true   | "past_due_invoice" | ["invoice_must_be_paid"] |
+  | true  | false  | "manual_override"  | ["first"]                |
+  | true  | true   | "manual_override"  | ["first"]                |
+  | false | false  | "past_due_invoice" | ["invoice_must_be_paid"] |
+
+SCENARIO decision reuse clears earlier invoice and seat blockers
+GIVEN account is AccountRequest
+  account_id: "acct_reused"
+  plan: "pro"
+  requested_feature: "automations"
+  active_users: 2
+  seat_limit: 1
+  invoices: []
+  overrides: []
+GIVEN was_past_due is false
+GIVEN was_over_seats is false
+
+GIVEN account.invoices are Invoice
+  | invoice_id | status     | days_overdue |
+  | "unpaid"   | "past_due" | 1            |
+
+REQUEST decide entitlement
+WHEN set was_past_due to decision.has_past_due_invoice
+WHEN set was_over_seats to decision.seat_limit_exceeded
+WHEN set account.invoices to []
+WHEN set account.active_users to 1
+WHEN decide entitlement for account into decision
+
+THEN was_past_due == true
+AND was_over_seats == true
+AND decision.has_past_due_invoice == false
+AND decision.seat_limit_exceeded == false
+AND decision.matched_override == false
+AND decision.allowed == true
+AND decision.reason == "feature_in_plan"
+AND decision.reasons == []

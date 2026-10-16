@@ -1,0 +1,37 @@
+{
+  "cases": 94,
+  "executions": 282,
+  "expectedNative": {
+    "behavior_rejected": 8,
+    "result": 56,
+    "boundary_rejected": 30
+  },
+  "pythonBefore": {
+    "rejected": 27,
+    "result": 67
+  },
+  "pythonAfter": {
+    "rejected": 36,
+    "result": 58
+  },
+  "pythonAcceptanceChanges": [
+    "bad-middle_name_state-1",
+    "bad-middle_name_state-2",
+    "bad-middle_name_state-3",
+    "bad-middle_name_state-4",
+    "bad-middle_name_state-5",
+    "unused-wrong-middle-0",
+    "unused-wrong-middle-1",
+    "unused-wrong-middle-2",
+    "extra-raw"
+  ],
+  "nativePythonAcceptanceDifferences": [
+    "unused-wrong-middle-3",
+    "extra-root"
+  ],
+  "beforeSha256": "b7785f82cd2c2caa67422b7374435357f96395820acdc598ac19907da6432c2b",
+  "afterSha256": "fce11ac3dcd3feab2fad4280359271d1975707b899a2d6823819e0417ba50dcd",
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-p6vjm8lg/installed/bin/gwt-native",
+  "nativeSha256": "0008ff9638d89f930b25a28faeae8765a1b0f4368193f966324296d9a12c4c6f",
+  "humanParticipants": 0
+}

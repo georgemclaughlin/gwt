@@ -1,0 +1,21 @@
+{
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "defaultTableEventsVisible": true,
+      "operandNavigation": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "defaultTableEventsVisible": true,
+      "operandNavigation": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "exactDownload": true,
+  "scriptErrors": [],
+  "networkRequests": [],
+  "ok": true
+}

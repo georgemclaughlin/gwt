@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "allThreeCasesSelected": true,
+      "defaultKindDecisionsVisible": true,
+      "operandNavigation": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "allThreeCasesSelected": true,
+      "defaultKindDecisionsVisible": true,
+      "operandNavigation": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "scriptErrors": [],
+  "externalRequests": []
+}

@@ -1,0 +1,26 @@
+{
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-fc2qk7m9/installed/bin/gwt-native",
+  "nativeSha256": "f3c425ef4ff8d00a73f0e92121d61d25a8220febd0820057120bfd4eb2ab298a",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:f5b1f33b4ce11bd6721ab3fd2546e3827e193fcb6928736a2d97e9fa530dfd1c"
+  },
+  "sourceSha256": "f22a5774b19dd669393001c74e2409c884860d3d93f3c9f69b691fa667a8fd4c",
+  "independentRequests": 150,
+  "scenarios": 7,
+  "reviewedCases": 9,
+  "changedOutcomes": 3,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 1,
+    "compared": 9,
+    "evidenceChanged": 9,
+    "outcomeChanged": 3,
+    "sourceChanged": 9,
+    "stateChanged": 3,
+    "total": 9,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "baseline": "Deliberately faulty copied-record mutation; not a historical production rule"
+}

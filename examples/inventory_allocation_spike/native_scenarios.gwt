@@ -1,0 +1,129 @@
+USE "rules.gwt"
+
+SCENARIO partial allocation mutates list inventory
+GIVEN order is OrderRequest
+  order_id: "LIST-100"
+  payment_status: "paid"
+  fraud_score: 12
+  expedited: true
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku      | quantity |
+  | "widget" | 1        |
+  | "gadget" | 2        |
+  | "cable"  | 1        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 5         | 0        |
+  | "gadget" | 1         | 0        |
+  | "cable"  | 5         | 0        |
+
+REQUEST fulfill order
+WHEN LET widget_inventory be inventory item for "widget" in inventory
+WHEN LET gadget_inventory be inventory item for "gadget" in inventory
+WHEN LET cable_inventory be inventory item for "cable" in inventory
+
+THEN fulfillment.status == "partial"
+AND fulfillment.reason == "partial_inventory"
+AND fulfillment.requested_units == 4
+AND fulfillment.reserved_units == 3
+AND fulfillment.backordered_units == 1
+AND fulfillment.package_count == 1
+AND fulfillment.shipping_fee == 19.5
+AND widget_inventory.available == 4
+AND widget_inventory.reserved == 1
+AND gadget_inventory.available == 0
+AND gadget_inventory.reserved == 1
+AND cable_inventory.available == 4
+AND cable_inventory.reserved == 1
+
+SCENARIO duplicate sku consumes updated availability
+GIVEN order is OrderRequest
+  order_id: "LIST-101"
+  payment_status: "paid"
+  fraud_score: 20
+  expedited: false
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku      | quantity |
+  | "widget" | 2        |
+  | "widget" | 2        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 3         | 0        |
+
+REQUEST fulfill order
+WHEN LET widget_inventory be inventory item for "widget" in inventory
+
+THEN fulfillment.status == "partial"
+AND fulfillment.reason == "partial_inventory"
+AND fulfillment.requested_units == 4
+AND fulfillment.reserved_units == 3
+AND fulfillment.backordered_units == 1
+AND widget_inventory.available == 0
+AND widget_inventory.reserved == 3
+
+SCENARIO unknown sku holds fulfillment
+GIVEN order is OrderRequest
+  order_id: "LIST-102"
+  payment_status: "paid"
+  fraud_score: 10
+  expedited: false
+  items: []
+
+GIVEN order.items are OrderItem
+  | sku       | quantity |
+  | "mystery" | 1        |
+
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "widget" | 5         | 0        |
+
+REQUEST fulfill order
+WHEN LET widget_inventory be inventory item for "widget" in inventory
+
+THEN fulfillment.status == "held"
+AND fulfillment.reason == "unknown_sku"
+AND fulfillment.unknown_sku_count == 1
+AND fulfillment.reserved_units == 0
+AND widget_inventory.available == 5
+AND widget_inventory.reserved == 0
+
+SCENARIO inventory inspection selects the first matching record
+GIVEN inventory is InventoryState
+  items: []
+
+GIVEN inventory.items are InventoryItem
+  | sku      | available | reserved |
+  | "gadget" | 9         | 0        |
+  | "widget" | 3         | 1        |
+  | "widget" | 8         | 2        |
+
+WHEN LET selected be inventory item for "widget" in inventory
+WHEN set selected.available to 99
+WHEN LET original be inventory item for "widget" in inventory
+
+THEN selected.available == 99
+AND original.available == 3
+AND original.reserved == 1
+
+SCENARIO a required inventory lookup fails when the item is missing
+GIVEN inventory is InventoryState
+  items: []
+
+WHEN LET selected be inventory item for "missing" in inventory
+THEN fails with "assertion_failed"
+AND inventory.items == []

@@ -318,12 +318,17 @@ def _task_prompt(
     previous: Mapping[str, Any] | None = None,
     feedback: Sequence[Mapping[str, Any]] = (),
 ) -> str:
+    language = str(task.get("language", "gwt"))
+    source_contract = (
+        "complete Python source defining decide(state)"
+        if language == "python"
+        else "complete canonical GWT source, including requested executable scenarios"
+    )
     prompt = (
-        "You are completing one blind evaluation of agent-authored GWT. "
+        f"You are completing one blind evaluation of agent-authored {language.upper()}. "
         "Use only the supplied task record. Do not inspect the filesystem, use tools, "
-        "or search for benchmark answers. For author and repair tasks, return action "
-        "'code' and the complete canonical GWT source, including requested executable "
-        "scenarios; set clarifications to an empty array. For a genuinely underspecified "
+        "or search for benchmark answers. For author, maintenance, and repair tasks, return action "
+        f"'code' and the {source_contract}; set clarifications to an empty array. For a genuinely underspecified "
         "clarify task, return action 'clarify', an empty source, and explicit questions "
         "covering every missing domain decision. Do not return Markdown fences or prose.\n\n"
         f"TASK RECORD\n{json.dumps(task, indent=2, ensure_ascii=False, sort_keys=True)}"
@@ -397,6 +402,11 @@ def _public_repair_feedback(
     response: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     """Return public parser/checker/formatter/runtime feedback, never hidden probes."""
+
+    if task.get("contextVariant") == "maintenance-guide":
+        from .maintenance_evaluation import public_feedback
+
+        return public_feedback(task, response)
 
     if task.get("kind") == "clarify":
         return []

@@ -6,6 +6,61 @@ on:
   pull_request:
 
 jobs:
+  native:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: ["1.85.0", "1.96.0"]
+        profile: ["dev", "release"]
+        target: ["x86_64-unknown-linux-gnu"]
+        include:
+          - rust: "1.85.0"
+            profile: "release"
+            target: "x86_64-unknown-linux-musl"
+          - rust: "1.96.0"
+            profile: "release"
+            target: "x86_64-unknown-linux-musl"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Rust toolchain
+        run: rustup toolchain install "${{ matrix.rust }}" --profile minimal --component clippy,rustfmt --target "${{ matrix.target }}"
+      - name: Configure static musl linking
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          GWT_SYSROOT=$(rustup run "${{ matrix.rust }}" rustc --print sysroot)
+          echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=$GWT_SYSROOT/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld" >> "$GITHUB_ENV"
+          echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-C link-self-contained=yes -C target-feature=+crt-static' >> "$GITHUB_ENV"
+      - name: Test native foundation
+        run: rustup run "${{ matrix.rust }}" cargo test --profile "${{ matrix.profile }}" --target "${{ matrix.target }}" --workspace --locked
+      - name: Check native code
+        if: matrix.profile == 'dev' || matrix.target == 'x86_64-unknown-linux-musl'
+        run: rustup run "${{ matrix.rust }}" cargo clippy --profile "${{ matrix.profile }}" --target "${{ matrix.target }}" --workspace --all-targets --locked -- -D warnings
+      - name: Check native formatting
+        if: matrix.rust == '1.96.0' && matrix.profile == 'dev'
+        run: rustup run "${{ matrix.rust }}" cargo fmt --all -- --check
+      - name: Set up Python for native package qualification
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Qualify packaged native library and CLI
+        run: |
+          python evaluations/native_packaging/qualify.py \
+            --toolchain "${{ matrix.rust }}" \
+            --profile "${{ matrix.profile }}" \
+            --target "${{ matrix.target }}" \
+            --output "$RUNNER_TEMP/gwt-packaging-${{ matrix.rust }}-${{ matrix.profile }}-${{ matrix.target }}"
+      - name: Set up Node for native host qualification
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Qualify Node host against the packaged native executable
+        run: |
+          GWT_PACKAGE_EVIDENCE="$RUNNER_TEMP/gwt-packaging-${{ matrix.rust }}-${{ matrix.profile }}-${{ matrix.target }}"
+          GWT_NATIVE_PATH="$(python -c 'import json, pathlib, sys; print(pathlib.Path(json.load(open(sys.argv[1]))["workspace"]) / "installed/bin/gwt-native")' "$GWT_PACKAGE_EVIDENCE/qualification.json")"
+          export GWT_NATIVE_PATH
+          GWT_NODE_EVIDENCE="$GWT_PACKAGE_EVIDENCE/node-host" node --test tests/native_node_host.test.mjs
+
   validate:
     runs-on: ubuntu-latest
 
@@ -83,6 +138,9 @@ jobs:
 
       - name: Validate typed module fixture
         run: |
+          python -m gwtlang validate crates/gwt-core/tests/fixtures/invoice.gwt
+          python -m gwtlang validate examples/native_reservation/rules.gwt
+          python -m gwtlang validate examples/native_delivery/rules.gwt
           python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
             --import-root examples/vendor_onboarding \
             --no-absolute-imports
@@ -177,10 +235,15 @@ jobs:
 
       - name: Check VS Code extension
         working-directory: vscode-gwt
-        run: npm run check
+        run: |
+          npm run check
+          npm test
 
       - name: Check whitespace
         run: git diff --check
+
+      - name: Check native validation view JavaScript
+        run: node --check crates/gwt-core/src/validation_view/view.js
 
       - name: Run advisory GWT release gate
         run: python examples/release_readiness/release_gate.py --evidence ci-passed

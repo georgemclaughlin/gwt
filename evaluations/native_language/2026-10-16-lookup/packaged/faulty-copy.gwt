@@ -1,0 +1,156 @@
+PROGRAM stock lookup contracts
+
+RECORD StockItem
+  sku: text
+  available: integer
+
+RECORD Inventory
+  items: list<StockItem>
+
+RECORD Reading
+  sku: text
+  available: integer
+
+RECORD Query
+  sku: text
+
+RECORD Selection
+  item: optional<StockItem>
+
+RECORD Receipt
+  matched: boolean
+
+REQUEST preview stock count
+  GIVEN inventory is Inventory
+  AND reading is Reading
+  WHEN LET selection be Selection:
+  WHEN preview reading against inventory into selection
+  OUTPUT selection is Selection
+  AND inventory is Inventory
+
+REQUEST record stock count
+  GIVEN inventory is Inventory
+  AND reading is Reading
+  GIVEN receipt is Receipt
+    matched: false
+  WHEN record reading against inventory into receipt
+  OUTPUT inventory is Inventory
+  AND receipt is Receipt
+
+REQUEST retain stock selection
+  GIVEN inventory is Inventory
+  AND query is Query
+  AND selection is Selection
+  WHEN retain selection for query from inventory
+  OUTPUT selection is Selection
+  AND inventory is Inventory
+
+WHEN stock snapshot for <sku> in <inventory>
+  GIVEN sku is text
+  AND inventory is Inventory
+  THEN returns Selection
+  LET selection be Selection:
+  FIND item in inventory.items WHERE item.sku == sku
+    set selection.item to item
+  ELSE
+    PASS
+  RETURN selection
+
+WHEN preview <reading> against <inventory> into <selection>
+  GIVEN reading is Reading
+  AND inventory is Inventory
+  AND selection is Selection
+  REQUIRE reading.available >= 0
+  LET snapshot be stock snapshot for reading.sku in inventory
+  set selection.item to snapshot.item
+  IF selection.item is present
+    set selection.item.available to reading.available
+
+WHEN record <reading> against <inventory> into <receipt>
+  GIVEN reading is Reading
+  AND inventory is Inventory
+  AND receipt is Receipt
+  REQUIRE reading.available >= 0
+  FIND item in inventory.items WHERE item.sku == reading.sku
+    LET selected be item
+    set selected.available to reading.available
+    set receipt.matched to true
+  ELSE
+    set receipt.matched to false
+
+WHEN retain <selection> for <query> from <inventory>
+  GIVEN selection is Selection
+  AND query is Query
+  AND inventory is Inventory
+  FIND item in inventory.items WHERE item.sku == query.sku
+    set selection.item to item
+  ELSE
+    PASS
+
+BACKGROUND
+GIVEN first is StockItem
+  sku: "widget"
+  available: 5
+
+GIVEN duplicate is StockItem
+  sku: "widget"
+  available: 9
+
+GIVEN inventory is Inventory
+  items: [first, duplicate]
+
+GIVEN reading is Reading
+  sku: "widget"
+  available: 2
+
+SCENARIO preview changes a snapshot without changing stock
+REQUEST preview stock count
+THEN selection.item is present and selection.item.available == 2
+AND inventory.items == [first, duplicate]
+
+SCENARIO a missing preview has no selected item
+WHEN set reading.sku to "missing"
+REQUEST preview stock count
+THEN selection.item is absent
+AND inventory.items == [first, duplicate]
+
+SCENARIO recording changes only the first matching stock item
+REQUEST record stock count
+GIVEN expected is StockItem
+  sku: "widget"
+  available: 2
+THEN receipt.matched == true
+AND inventory.items == [expected, duplicate]
+
+SCENARIO recording a missing SKU leaves stock unchanged
+WHEN set reading.sku to "missing"
+REQUEST record stock count
+THEN receipt.matched == false
+AND inventory.items == [first, duplicate]
+
+SCENARIO a missing lookup retains a previous selection
+GIVEN query is Query
+  sku: "missing"
+GIVEN selection is Selection
+  item: first
+REQUEST retain stock selection
+THEN selection.item is present and selection.item == first
+AND inventory.items == [first, duplicate]
+
+SCENARIO a matching lookup replaces a previous selection
+GIVEN query is Query
+  sku: "widget"
+GIVEN selection is Selection
+  item: duplicate
+REQUEST retain stock selection
+THEN selection.item is present and selection.item == first
+AND inventory.items == [first, duplicate]
+
+SCENARIO empty stock retains an absent selection
+WHEN set inventory.items to []
+GIVEN query is Query
+  sku: "widget"
+WHEN LET selection be Selection:
+REQUEST retain stock selection
+THEN selection.item is absent
+AND inventory.items == []

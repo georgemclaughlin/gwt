@@ -1,0 +1,10 @@
+RECORD Contact is one of
+  email:
+    address: text
+  phone:
+    number: text
+TYPE Email is Contact of kind email
+REQUEST show email
+  GIVEN email is Email
+  WHEN print email.address
+  OUTPUT email is Email

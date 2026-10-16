@@ -1,0 +1,53 @@
+PROGRAM dispatch receipt
+
+TYPE ReceiptCode is 10 | 20 | 30
+TYPE RetryFactor is 0.5 | 1.0 | 2.0
+TYPE Confirmed is true
+
+RECORD Receipt
+  code: ReceiptCode
+  retry_factor: RetryFactor
+  confirmed: Confirmed
+
+RECORD Decision
+  action: "complete" | "retry" | "manual"
+  delay_minutes: decimal
+
+REQUEST review receipt
+  GIVEN receipt is Receipt
+  GIVEN decision is Decision
+    action: "manual"
+    delay_minutes: "0"
+  WHEN review receipt into decision
+  OUTPUT decision is Decision
+
+WHEN review <receipt> into <decision>
+  GIVEN receipt is Receipt
+  AND decision is Decision
+  DEPENDING ON receipt.code
+    WHEN the value is 10
+      set decision.action to "complete"
+    WHEN the value is 20
+      set decision.action to "retry"
+      set decision.delay_minutes to 10 * receipt.retry_factor
+    WHEN the value is 30
+      set decision.action to "manual"
+
+SCENARIO receipt codes determine the action
+GIVEN receipt is Receipt
+  code: <code>
+  retry_factor: <factor>
+  confirmed: true
+
+REQUEST review receipt
+
+THEN decision.action == <action>
+AND decision.delay_minutes == <delay>
+
+EXAMPLES
+  | code | factor | action     | delay |
+  | 10   | 0.5    | "complete" | 0     |
+  | 20   | 0.5    | "retry"    | 5     |
+  | 20   | 1.0    | "retry"    | 10    |
+  | 20   | 2.0    | "retry"    | 20    |
+  | 30   | 2.0    | "manual"   | 0     |

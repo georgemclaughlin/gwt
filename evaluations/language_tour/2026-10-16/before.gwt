@@ -1,0 +1,97 @@
+PROGRAM language tour
+
+RECORD ExpenseLine
+  description: text
+  amount: number
+  category: text
+  reimbursable: boolean
+
+TYPE ExpenseLines is list<ExpenseLine>
+TYPE ApprovedDescriptions is list<text>
+TYPE ExpenseStatus is "new" | "approved" | "needs_review"
+TYPE DecisionReason is "new" | "within_policy" | "line_over_policy_limit"
+
+RECORD ExpenseReport
+  employee: text
+  policy_limit: number
+  lines: ExpenseLines
+
+RECORD ExpenseDecision
+  line_count: number
+  submitted_total: number
+  approved_total: number
+  approved_descriptions: ApprovedDescriptions
+  has_violation: boolean
+  violation_description: text
+  violation_amount: number
+  status: ExpenseStatus
+  reason: DecisionReason
+
+REQUEST review expense report
+  GIVEN report is ExpenseReport
+
+  GIVEN decision is ExpenseDecision
+    line_count: 0
+    submitted_total: 0
+    approved_total: 0
+    approved_descriptions: []
+    has_violation: false
+    violation_description: ""
+    violation_amount: 0
+    status: "new"
+    reason: "new"
+
+  WHEN review report into decision
+
+  OUTPUT decision is ExpenseDecision
+
+  THEN decision.status != "new"
+  AND decision.reason != "new"
+
+WHEN review <report> into <decision>
+  GIVEN report is ExpenseReport
+  AND decision is ExpenseDecision
+  count report.lines into decision.line_count
+  sum line.amount in report.lines into decision.submitted_total
+  set decision.approved_total to 0
+  set decision.approved_descriptions to []
+  FOR line in report.lines WHERE line.reimbursable == true and line.amount <= report.policy_limit
+    add line.amount to decision.approved_total
+    append line.description to decision.approved_descriptions
+  exists line in report.lines WHERE line.amount > report.policy_limit into decision.has_violation
+  IF decision.has_violation
+    find line in report.lines WHERE line.amount > report.policy_limit into policy_violation
+    set decision.violation_description to policy_violation.description
+    set decision.violation_amount to policy_violation.amount
+    set decision.status to "needs_review"
+    set decision.reason to "line_over_policy_limit"
+  ELSE
+    set decision.violation_description to ""
+    set decision.violation_amount to 0
+    set decision.status to "approved"
+    set decision.reason to "within_policy"
+
+SCENARIO expense report with one policy violation
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description    | amount | category    | reimbursable |
+  | "airport taxi" | 42     | "transport" | true         |
+  | "team lunch"   | 18     | "meals"     | true         |
+  | "monitor"      | 225    | "equipment" | true         |
+  | "gift card"    | 12     | "gift"      | false        |
+
+REQUEST review expense report
+
+THEN decision.line_count == 4
+AND decision.submitted_total == 297
+AND decision.approved_total == 60
+AND decision.approved_descriptions == ["airport taxi", "team lunch"]
+AND decision.has_violation == true
+AND decision.violation_description == "monitor"
+AND decision.violation_amount == 225
+AND decision.status == "needs_review"
+AND decision.reason == "line_over_policy_limit"

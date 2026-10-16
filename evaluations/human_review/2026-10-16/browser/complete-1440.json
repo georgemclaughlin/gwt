@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "packetId": "6bd7f8c93bcb88e4ae9a7f1749d3fd2393888807de17d9b85c357f628924080c",
+  "assignmentId": "rehearsal-desktop",
+  "purpose": "rehearsal",
+  "responseId": "6b3027ee-5c5e-4fe0-8932-fb55927a0ad2",
+  "profile": {
+    "role": "developer",
+    "priorExposure": "yes",
+    "gwtFamiliarity": 3,
+    "pythonFamiliarity": 3
+  },
+  "finished": true,
+  "tasks": [
+    {
+      "id": "task-1",
+      "sourceDigests": {
+        "baseline": "0e9bb41a359636bb2faca906532cea5aadeac2556ad4caec818917cb3face276",
+        "proposed": "e42b37bb6c4278c15716e8868d9b3a6c4127c19ca3e0919d7180d46e6ea31b81"
+      },
+      "status": "submitted",
+      "predictions": {
+        "q1": "c2",
+        "q2": "c1"
+      },
+      "recommendation": "approve",
+      "rationale": "Synthetic browser rehearsal; answers supplied by the test key.",
+      "confidence": 5,
+      "activeMs": 579.2000002861023,
+      "wallMs": 1076.8000001907349
+    },
+    {
+      "id": "task-2",
+      "sourceDigests": {
+        "baseline": "7531809ac268f0cc5bdb54f2f99067b0ea4bacab34ee62fe34af3c6cc032dc8f",
+        "proposed": "aeffe5d8184dc59c5209e7f2c3a5a44645a4df4b656894aad06ead2861bbc04c"
+      },
+      "status": "submitted",
+      "predictions": {
+        "q1": "c3",
+        "q2": "c2"
+      },
+      "recommendation": "approve",
+      "rationale": "Synthetic browser rehearsal; answers supplied by the test key.",
+      "confidence": 5,
+      "activeMs": 98.80000019073486,
+      "wallMs": 98.80000019073486
+    },
+    {
+      "id": "task-3",
+      "sourceDigests": {
+        "baseline": "d594d2ce66d28540a7b23cf73a7f70e82118bd4a03494ad7ecaf7c47046c4d15",
+        "proposed": "4a3dc8f8fb135d9c32edf1416d45289f25549824ccf4b72f16db29800d417061"
+      },
+      "status": "submitted",
+      "predictions": {
+        "q1": "c1",
+        "q2": "c3"
+      },
+      "recommendation": "request_changes",
+      "rationale": "Synthetic browser rehearsal; answers supplied by the test key.",
+      "confidence": 5,
+      "activeMs": 98.59999990463257,
+      "wallMs": 98.59999990463257
+    },
+    {
+      "id": "task-4",
+      "sourceDigests": {
+        "baseline": "80fe161f05e3fb3b9d60d801694df662d23a3269ee0c4fecf14b170c3cffd4bb",
+        "proposed": "0b31d83a027a3701cb087c2763002317be98ee9d259d7d390f5605d0ae012635"
+      },
+      "status": "submitted",
+      "predictions": {
+        "q1": "c1",
+        "q2": "c1"
+      },
+      "recommendation": "request_changes",
+      "rationale": "Synthetic browser rehearsal; answers supplied by the test key.",
+      "confidence": 5,
+      "activeMs": 99.09999990463257,
+      "wallMs": 99.09999990463257
+    }
+  ],
+  "exportedAt": "2026-10-16T13:22:00.208Z"
+}
