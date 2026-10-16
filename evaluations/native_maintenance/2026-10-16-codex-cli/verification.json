@@ -1,0 +1,33 @@
+{
+  "kind": "codex-experiment-artifact-audit",
+  "schemaVersion": 1,
+  "recordedCalls": 30,
+  "scheduledTrials": 30,
+  "complete": true,
+  "publicPromptsReconstructed": true,
+  "acceptedToolEvents": 0,
+  "sealedResponsesVerified": true,
+  "scoresMatchRetainedObservations": true,
+  "sourceFilesDifferNow": [],
+  "metrics": {
+    "gwt": {
+      "trials": 15,
+      "missing": 0,
+      "firstPassSucceeded": 15,
+      "finalSucceeded": 15,
+      "repairedTrials": 0,
+      "recoveredTrials": 0
+    },
+    "python": {
+      "trials": 15,
+      "missing": 0,
+      "firstPassSucceeded": 15,
+      "finalSucceeded": 15,
+      "repairedTrials": 0,
+      "recoveredTrials": 0
+    }
+  },
+  "humanParticipants": 0,
+  "auditSourceSha256": "a22dcdc7617dd420f9db1435c94e503e5da43c2e74c04f2a78049c130ca33877",
+  "scope": "Artifact consistency; not a model rerun, independent policy oracle, or human study"
+}

@@ -4,9 +4,56 @@
 requests, public repairs, and the isolated native/Python scorer. The complete
 workflow has been rehearsed with synthetic provider replies and real containers.
 The Responses API transport has mocked contract tests but has **not yet been
-qualified with a live API call**. No API key was configured during preparation.
+qualified with a live API call**. The separate Codex CLI adapter can use an
+existing ChatGPT login; a missing API key does not block that path.
 
-## Run
+## Codex CLI transport
+
+```sh
+python -m evaluations.native_maintenance.experiment --provider codex-cli --qualification /path/to/qualification --native /path/to/gwt-native --image python:3.12-slim --model gpt-6-astra --reasoning-effort medium --maximum-attempts 3 --output /path/to/new-cli-experiment
+python -m unittest tests.test_native_maintenance_codex tests.test_native_maintenance_experiment
+```
+
+This protocol is explicitly labeled `codex-cli-v1` and checks client version
+`0.163.0`. It uses the existing login through the CLI without reading, copying,
+or exporting credentials. Each call starts an ephemeral session in a fresh
+temporary directory, ignores user configuration and policy files, suppresses
+project/skill/memory instructions, disables shell execution, apps, plugins,
+browser access and agent delegation, and requests structured final JSON.
+It does not reuse conversations or expose this repository as its working directory.
+
+Codex supplies its own built-in context. This is **not equivalent to the API's
+`tools: []` request**, and the prompt length alone is not the whole model context.
+Unknown events, tool events, reported errors, incomplete turns, and inconsistent
+final messages stop the experiment. This event check detects protocol violations;
+it is not a guarantee that the CLI could never dispatch a tool. Accepted calls
+must contain no tool activity in the retained event stream. The repository is
+public; this protocol does not establish absence of training contamination.
+
+The CLI has no qualified output-token cap here, so `maximumOutputTokens` is null
+and supplying `--maximum-output-tokens` is rejected. The shared
+`--provider-socket-timeout` option instead bounds the CLI's whole process lifetime
+(300 seconds by default). Output files are limited to twenty MiB each, and a
+deadline terminates the owned process group, including the npm launcher's child.
+The orchestrator never retries a failed invocation; internal CLI transport
+behavior is not asserted to have zero retries. A timeout may still have incurred
+usage before termination.
+
+Each transport record retains exact command arguments, original JSONL events,
+stderr, final message, exit code and elapsed time. `rawBody` is explicitly marked
+as our normalized envelope for the shared scorer, **not** an original HTTP
+response. HTTP/request IDs and the returned model are not invented; the requested
+model is frozen, but the CLI event stream does not independently attest which
+model served it. Usage is the CLI's reported usage, with its original field names.
+The same public repair, sealing, isolated execution and withheld scoring policy
+below applies to both transports.
+
+Configuration follows the installed CLI help and official
+[configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+The [CLI evidence](2026-10-16-codex-cli/README.md) keeps live results separate
+from earlier synthetic rehearsals and the older refund-only experiment.
+
+## Responses API transport
 
 Select an exact model available to your API account and its supported reasoning
 effort. The runner makes no model substitution. Configure `OPENAI_API_KEY` in the
@@ -31,9 +78,9 @@ stops the run rather than silently selecting another model or retrying.
 
 Every request contains only an explicit projection of the public task: intent,
 baseline source, guide, request name, public examples, and output contract. Repair
-requests add the preceding normalized response and public feedback. Requests use
+requests add the preceding normalized response and public feedback. API requests use
 `tools: []`, `tool_choice: "none"`, structured JSON output, and `store: false`.
-No shell, file, search, or external tool is exposed or dispatched. Each call is
+In the API transport no shell, file, search, or external tool is exposed or dispatched. Each call is
 independent; no provider conversation ID carries earlier tasks or hidden context.
 
 The adapter follows official OpenAI documentation for

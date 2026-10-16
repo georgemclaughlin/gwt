@@ -45,7 +45,7 @@ def prompt_for(task, previous=None, feedback=None):
     return prompt
 
 
-def run_loop(tasks, specs, provider, evaluate, output, *, settings, metadata):
+def run_loop(tasks, specs, provider, evaluate, output, *, settings, metadata, build_request=request_body):
     """Provider receives request JSON only; evaluator receives inputs without expected values.
 
     Output must already exist and be reserved for this run. Infrastructure failures
@@ -89,8 +89,8 @@ def run_loop(tasks, specs, provider, evaluate, output, *, settings, metadata):
                     continue
                 previous, feedback = pending[case_id]
                 prompt = prompt_for(task, previous, feedback)
-                body = request_body(prompt, model=settings['model'], reasoning_effort=settings['reasoningEffort'],
-                                    maximum_output_tokens=settings['maximumOutputTokens'])
+                body = build_request(prompt, model=settings['model'], reasoning_effort=settings['reasoningEffort'],
+                                     maximum_output_tokens=settings['maximumOutputTokens'])
                 call_dir = output / 'calls' / f'{case_id}-{attempt}'
                 call_dir.mkdir()
                 write_json(call_dir / 'request.json', body)
@@ -99,7 +99,10 @@ def run_loop(tasks, specs, provider, evaluate, output, *, settings, metadata):
                 checkpoint()  # Persist intent before a possibly billable request.
                 reply = provider(deepcopy(body))
                 write_json(call_dir / 'transport.json', reply)
-                if reply['httpStatus'] != 200:
+                if reply.get('transport') == 'codex-cli':
+                    if reply.get('transportError'):
+                        raise RuntimeError(reply['transportError'])
+                elif reply['httpStatus'] != 200:
                     raise RuntimeError(f'provider HTTP status {reply["httpStatus"]}; no automatic retry')
                 try:
                     raw = strict_json(reply['rawBody'])
@@ -162,7 +165,7 @@ def run_loop(tasks, specs, provider, evaluate, output, *, settings, metadata):
 def run_experiment(qualification, native, image, output, provider, settings):
     tasks, specs, identities = load_tasks(qualification)
     source_paths = [Path(__file__).with_name(name) for name in
-                    ('experiment.py', 'provider.py', 'scorer.py', 'isolated.py', 'worker.py', 'study.py')]
+                    ('experiment.py', 'provider.py', 'codex_provider.py', 'scorer.py', 'isolated.py', 'worker.py', 'study.py')]
     hashes = {str(path): digest(path.read_bytes()) for path in source_paths}
     evaluator = ContainerEvaluator(native, image, timeout=settings['executionTimeoutSeconds'])
     try:
@@ -183,7 +186,8 @@ def run_experiment(qualification, native, image, output, provider, settings):
             if any(digest(Path(path).read_bytes()) != sha for path, sha in hashes.items()):
                 raise RuntimeError('experiment source changed')
             return provider(body)
-        report = run_loop(tasks, specs, guarded_provider, evaluator.evaluate, output, settings=settings, metadata=metadata)
+        report = run_loop(tasks, specs, guarded_provider, evaluator.evaluate, output, settings=settings, metadata=metadata,
+                          build_request=getattr(type(provider), 'build_request', request_body))
         if any(digest(Path(path).read_bytes()) != sha for path, sha in hashes.items()):
             state = strict_json((output / 'run.json').read_bytes())
             state.update(status='invalidated', errorType='source_changed')
@@ -202,19 +206,28 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', required=True)
     parser.add_argument('--reasoning-effort', required=True)
+    parser.add_argument('--provider', choices=('responses', 'codex-cli'), default='responses')
     parser.add_argument('--maximum-attempts', type=int, default=3)
-    parser.add_argument('--maximum-output-tokens', type=int, default=16000)
+    parser.add_argument('--maximum-output-tokens', type=int)
     parser.add_argument('--provider-socket-timeout', type=float, default=300)
     parser.add_argument('--execution-timeout', type=float, default=120)
     args = parser.parse_args()
-    if args.maximum_attempts < 1 or args.maximum_output_tokens < 1 or any(
+    if args.provider == 'codex-cli' and args.maximum_output_tokens is not None:
+        parser.error('Codex CLI does not expose a qualified output-token cap')
+    if args.provider == 'responses' and args.maximum_output_tokens is None:
+        args.maximum_output_tokens = 16000
+    if args.maximum_attempts < 1 or (args.maximum_output_tokens is not None and args.maximum_output_tokens < 1) or any(
             not math.isfinite(value) or value <= 0 for value in (args.provider_socket_timeout, args.execution_timeout)):
         parser.error('attempt/token bounds and finite timeouts must be positive')
     settings = {'model': args.model, 'reasoningEffort': args.reasoning_effort,
                 'maximumAttempts': args.maximum_attempts, 'maximumOutputTokens': args.maximum_output_tokens,
                 'providerSocketTimeoutSeconds': args.provider_socket_timeout,
                 'executionTimeoutSeconds': args.execution_timeout}
-    provider = ResponsesProvider(socket_timeout=args.provider_socket_timeout)
+    if args.provider == 'codex-cli':
+        from .codex_provider import CodexProvider
+        provider = CodexProvider(timeout=args.provider_socket_timeout)
+    else:
+        provider = ResponsesProvider(socket_timeout=args.provider_socket_timeout)
     report = run_experiment(args.qualification, args.native, args.image, args.output, provider, settings)
     print(json.dumps(report['metrics']))
 

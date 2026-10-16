@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Complete this maintenance task using only the supplied source, language guide, intent, and public examples. Return complete replacement source with action code and an empty clarifications array. Preserve the request entry (GWT) or decide(state) (Python) and its output contract. No tools or external context are available.\n\nTASK\n{\"caseId\": \"native-maintenance-expenses-python-1\", \"context\": {\"executionEngine\": \"python\", \"guide\": \"Return complete Python source defining decide(state). Inputs and outputs are the same JSON objects shown in the task and starter. Use only the Python standard library. Each call receives fresh copied input. Preserve all output fields and exact types; bool is distinct from integer. Decimal money is encoded as canonical strings without trailing zeros, using exact arithmetic rather than binary floats. For the allocation task only, reject invalid policy inputs by raising ValueError(\\\"policy_rejected\\\"). Other exceptions are execution failures. Tests are optional; only independently checked request outcomes determine scores.\", \"outcomeContract\": \"Public expected outcomes wrap successful return values in result; rejected:true denotes a policy rejection. Do not add this wrapper to the function/request return value.\", \"publicProbes\": [{\"expected\": {\"result\": {\"decision\": {\"status\": \"approved\", \"total\": 50}}}, \"input\": {\"facts\": {\"limit\": 100, \"lines\": [{\"amount\": 50, \"reimbursable\": true}, {\"amount\": 20, \"reimbursable\": false}]}}}, {\"expected\": {\"result\": {\"decision\": {\"status\": \"review\", \"total\": 0}}}, \"input\": {\"facts\": {\"limit\": 100, \"lines\": [{\"amount\": 101, \"reimbursable\": false}]}}}], \"request\": \"assess\", \"source\": \"def decide(state):\\n    facts = state[\\\"facts\\\"]\\n    status = \\\"approved\\\"\\n    total = 0\\n    for line in facts[\\\"lines\\\"]:\\n        if line[\\\"reimbursable\\\"] and line[\\\"amount\\\"] > facts[\\\"limit\\\"]:\\n            status = \\\"review\\\"\\n        if line[\\\"reimbursable\\\"] and line[\\\"amount\\\"] <= facts[\\\"limit\\\"]:\\n            total += line[\\\"amount\\\"]\\n    return {\\\"decision\\\": {\\\"status\\\": status, \\\"total\\\": total}}\\n\"}, \"kind\": \"maintain\", \"language\": \"python\", \"task\": \"Send an expense report for review if a reimbursable line exceeds its limit. Otherwise approve it. Independently, total only reimbursable lines at or below the limit. This total is still reported when the status is review.\\nRequested change: Send the report for review if any line exceeds the limit, even if that line is not reimbursable. Preserve the total calculation.\\nContract: facts: limit (nonnegative integer), lines (ordered list of amount: nonnegative integer and reimbursable: boolean). decision: status (approved or review), total (integer).\"}",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

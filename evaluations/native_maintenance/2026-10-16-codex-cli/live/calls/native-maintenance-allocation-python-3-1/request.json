@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Complete this maintenance task using only the supplied source, language guide, intent, and public examples. Return complete replacement source with action code and an empty clarifications array. Preserve the request entry (GWT) or decide(state) (Python) and its output contract. No tools or external context are available.\n\nTASK\n{\"caseId\": \"native-maintenance-allocation-python-3\", \"context\": {\"executionEngine\": \"python\", \"guide\": \"Return complete Python source defining decide(state). Inputs and outputs are the same JSON objects shown in the task and starter. Use only the Python standard library. Each call receives fresh copied input. Preserve all output fields and exact types; bool is distinct from integer. Decimal money is encoded as canonical strings without trailing zeros, using exact arithmetic rather than binary floats. For the allocation task only, reject invalid policy inputs by raising ValueError(\\\"policy_rejected\\\"). Other exceptions are execution failures. Tests are optional; only independently checked request outcomes determine scores.\", \"outcomeContract\": \"Public expected outcomes wrap successful return values in result; rejected:true denotes a policy rejection. Do not add this wrapper to the function/request return value.\", \"publicProbes\": [{\"expected\": {\"result\": {\"allocation\": {\"shares\": [{\"amount\": \"0.01\", \"label\": \"first\", \"participates\": true, \"received_extra_cent\": true, \"remainder_score\": \"0.01\"}, {\"amount\": \"0\", \"label\": \"second\", \"participates\": true, \"received_extra_cent\": false, \"remainder_score\": \"0.01\"}], \"total\": \"0.01\"}}}, \"input\": {\"budget\": {\"recipients\": [{\"eligible\": true, \"label\": \"first\", \"weight\": 0}, {\"eligible\": true, \"label\": \"second\", \"weight\": 0}], \"total\": \"0.01\"}}}, {\"expected\": {\"result\": {\"allocation\": {\"shares\": [{\"amount\": \"0.01\", \"label\": \"first\", \"participates\": true, \"received_extra_cent\": true, \"remainder_score\": \"0.01\"}, {\"amount\": \"0\", \"label\": \"second\", \"participates\": true, \"received_extra_cent\": false, \"remainder_score\": \"0.01\"}], \"total\": \"0.01\"}}}, \"input\": {\"budget\": {\"recipients\": [{\"eligible\": true, \"label\": \"first\", \"weight\": 1}, {\"eligible\": true, \"label\": \"second\", \"weight\": 1}], \"total\": \"0.01\"}}}], \"request\": \"allocate budget\", \"source\": \"from fractions import Fraction\\n\\n\\ndef cents_text(cents):\\n    whole, tail = divmod(cents, 100)\\n    return (f\\\"{whole}.{tail:02d}\\\".rstrip(\\\"0\\\").rstrip(\\\".\\\") if tail else str(whole))\\n\\n\\ndef decide(state):\\n    budget = state[\\\"budget\\\"]\\n    total = Fraction(budget[\\\"total\\\"])\\n    recipients = budget[\\\"recipients\\\"]\\n    if total < 0 or (total * 100).denominator != 1:\\n        raise ValueError(\\\"policy_rejected\\\")\\n    if any(row[\\\"weight\\\"] < 0 for row in recipients):\\n        raise ValueError(\\\"policy_rejected\\\")\\n    weights = [row[\\\"weight\\\"] if row[\\\"eligible\\\"] else 0 for row in recipients]\\n    eligible_weight = sum(weights)\\n    if total > 0 and eligible_weight == 0:\\n        raise ValueError(\\\"policy_rejected\\\")\\n    total_cents = int(total * 100)\\n    shares = []\\n    allocated = 0\\n    for row, weight in zip(recipients, weights):\\n        amount = total_cents * weight // eligible_weight if eligible_weight else 0\\n        remainder = total_cents * weight - amount * eligible_weight\\n        allocated += amount\\n        shares.append({\\\"label\\\": row[\\\"label\\\"], \\\"participates\\\": weight > 0,\\n                       \\\"amount\\\": amount, \\\"remainder_score\\\": remainder,\\n                       \\\"received_extra_cent\\\": False})\\n    while allocated < total_cents:\\n        winner = None\\n        for index, share in enumerate(shares):\\n            if share[\\\"participates\\\"] and not share[\\\"received_extra_cent\\\"]:\\n                if winner is None or share[\\\"remainder_score\\\"] > shares[winner][\\\"remainder_score\\\"]:\\n                    winner = index\\n        assert winner is not None\\n        shares[winner][\\\"amount\\\"] += 1\\n        shares[winner][\\\"received_extra_cent\\\"] = True\\n        allocated += 1\\n    for share in shares:\\n        share[\\\"amount\\\"] = cents_text(share[\\\"amount\\\"])\\n        share[\\\"remainder_score\\\"] = cents_text(share[\\\"remainder_score\\\"])\\n    return {\\\"allocation\\\": {\\\"shares\\\": shares, \\\"total\\\": cents_text(total_cents)}}\\n\"}, \"kind\": \"maintain\", \"language\": \"python\", \"task\": \"Change the allocation policy so that, when the sum of eligible weights is zero, every eligible recipient has effective weight one. Ineligible recipients still have effective weight zero, regardless of their supplied weight. This fallback also applies to a zero total, so eligible zero-weight rows participate and expose the corresponding metadata. If any eligible weight is positive, retain the existing weights, including zero-weight nonparticipants. Negative weights remain invalid even for ineligible recipients. A positive total with no eligible recipients remains rejected; zero total with no eligible recipients succeeds. Preserve whole-cent/nonnegative budget checks, exact arithmetic, largest-remainder selection, at most one extra cent per participating row, input-order ties, and the existing request/output shape and row order. Duplicate labels are not keys. Compute participates, amount, remainder_score, and received_extra_cent using effective weights; keep labels and canonical decimal strings unchanged. Remainder score is total times effective weight minus base amount times total effective weight, before extra cents. Preserve every behavior unaffected by this change.\"}",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
