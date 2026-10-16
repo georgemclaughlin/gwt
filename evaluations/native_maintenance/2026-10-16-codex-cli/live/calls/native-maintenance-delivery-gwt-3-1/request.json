@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Complete this maintenance task using only the supplied source, language guide, intent, and public examples. Return complete replacement source with action code and an empty clarifications array. Preserve the request entry (GWT) or decide(state) (Python) and its output contract. No tools or external context are available.\n\nTASK\n{\"caseId\": \"native-maintenance-delivery-gwt-3\", \"context\": {\"executionEngine\": \"native-gwt\", \"guide\": \"RECORD declares fields. REQUEST supplies facts, initializes decision, calls a WHEN behavior, and exposes OUTPUT. GIVEN/AND in a behavior declare its parameter types. set replaces a value; add increases it. DECIDE takes the first matching WHEN, or ELSE. IF/ELSE selects a branch; separate IF statements are evaluated independently. FOR visits every list item in order. Dotted paths access fields. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups steps.\\nThis task uses the experimental Rust GWT engine, not the Python interpreter. REQUEST input contracts are checked before execution. OUTPUT returns a wrapper keyed by each output name. REQUIRE failure rejects the policy. Decimal values use exact arithmetic; / must have a finite decimal result. The explicit step divide numerator by denominator rounded to 2 places using floor into destination rounds once into an existing decimal. LET name be expression binds a copied value; LET name be RecordType: followed by indented fields constructs a record. A behavior can declare THEN returns Type and RETURN a value; call it with LET name be behavior arguments. Dotted-path behavior arguments are shared; parenthesized expressions pass copies. append item to list adds one item. sum item.field in collection into destination totals fields. FOR item in collection WHERE condition filters traversal. FIND item in collection WHERE condition takes the first matching item; ELSE handles no match. Behaviors cannot use arbitrary Python, list indexing, sorting, or general query syntax. Preserve the supplied request and output contracts. Embedded scenarios are optional for this comparison; only independently checked request outcomes determine scores.\", \"outcomeContract\": \"Public expected outcomes wrap successful return values in result; rejected:true denotes a policy rejection. Do not add this wrapper to the function/request return value.\", \"publicProbes\": [{\"expected\": {\"result\": {\"decision\": {\"fee\": 10}}}, \"input\": {\"facts\": {\"express\": true, \"subtotal\": 120}}}, {\"expected\": {\"result\": {\"decision\": {\"fee\": 5}}}, \"input\": {\"facts\": {\"express\": false, \"subtotal\": 110}}}], \"request\": \"assess\", \"source\": \"PROGRAM delivery review\\n\\nRECORD Facts\\n  subtotal: integer\\n  express: boolean\\n\\nRECORD Decision\\n  fee: integer\\n\\nREQUEST assess\\n  GIVEN facts is Facts\\n  GIVEN decision is Decision\\n    fee: 0\\n  WHEN assess facts into decision\\n  OUTPUT decision is Decision\\n\\nWHEN assess <facts> into <decision>\\n  GIVEN facts is Facts\\n  AND decision is Decision\\n  IF facts.subtotal >= 100\\n    set decision.fee to 0\\n  ELSE\\n    set decision.fee to 5\\n  IF facts.express\\n    add 10 to decision.fee\\n\"}, \"kind\": \"maintain\", \"language\": \"gwt\", \"task\": \"The base delivery fee is 0 at a subtotal of 100 or more, otherwise 5. Express delivery always adds 10, including when the base fee is 0.\\nRequested change: Raise the free base-delivery threshold to 120 inclusive. Preserve the express surcharge.\\nContract: facts: subtotal (nonnegative integer), express (boolean). decision: fee (integer).\"}",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

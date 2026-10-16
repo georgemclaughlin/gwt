@@ -2377,3 +2377,34 @@ route. Missing API credentials block the prepared Responses runner, not model
 evaluation in general. Adapting and qualifying the larger experiment for CLI
 is actionable engineering work; keep its protocol/results distinct from the
 Responses experiment and preserve withheld scoring. Human sessions remain pending.
+
+## Backed-up checkpoint and live five-domain CLI comparison
+
+The accumulated native implementation is committed as `052d14d` on
+`work/native-foundation-checkpoint`, pushed to the public origin, and available in
+[draft PR #2](https://github.com/georgemclaughlin/gwt/pull/2). All seven checkpoint
+CI jobs passed: Python/host/editor validation and the six Rust toolchain/profile/
+target combinations. Large historical generated artifacts remain local with a
+compressed backup and a versioned inventory; the source suite was also verified
+from an export containing only staged files.
+
+The [live Codex CLI comparison](../evaluations/native_maintenance/2026-10-16-codex-cli/README.md)
+closes the previously pending five-domain model run. It requested `gpt-6-astra`
+at medium effort through CLI 0.163.0 using the existing login. Thirty independent
+calls cover five policies, two languages, and three repeats. Both native GWT and
+Python pass 15/15 trials on their first attempts, including all withheld cases.
+There are no repairs or missing trials. This is parity on the selected tasks,
+not evidence of a GWT advantage. Unequal guides and Codex built-in context are
+recorded; CLI events do not independently attest the returned model.
+
+The new transport preserves original events and usage, stops on tool/unknown/error
+events, bounds process lifetime, and keeps the established public-feedback and
+sealed-withheld-scoring boundary. All 678 Python tests and the retained artifact
+audit pass. The current packaged native engine was separately qualified against
+6,828 trusted-fixture executions before model calls. Exact live records and the
+audit are versioned together; no raw API response or token cap is fabricated.
+
+This removes the API-key obstacle for CLI-based model evaluation. The Responses
+API transport remains separately unqualified live. Human comprehension, review
+benefit, native release commitments and adoption remain open; human sessions and
+external pilots stay pending by owner choice. The full goal is not complete.

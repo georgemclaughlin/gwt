@@ -1,0 +1,613 @@
+{
+  "kind": "native-maintenance-experiment",
+  "schemaVersion": 1,
+  "identities": {
+    "taskSha256": "dae8b5c0561211c3e6b388605f90aa9095b1335f88611115f9a472057988b659",
+    "corpusSha256": "368b460142da5bf4388237d793b650d9c586adb830b6e33d5bb44285cbb47441",
+    "qualificationSha256": "0ab917afa691f77c37980a728eadb6cacd1d82cebe562f71ea3c5eb87351b069",
+    "qualifiedNativeSha256": "22803923302696abe60e382fce16dc4b1cb841ea597505b7692e50b7a8df1696",
+    "qualifiedWorkerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556"
+  },
+  "sourceSha256": {
+    "/home/g/code/gwt/evaluations/native_maintenance/experiment.py": "0e052704b0ad114be1f193a8d6164c1f152c24a793fb1a7e76c1932d451f535e",
+    "/home/g/code/gwt/evaluations/native_maintenance/provider.py": "c67a9aebc44e28b6ee38c7a45deb6d1a09be35be11f9dc158c0db4534825f6af",
+    "/home/g/code/gwt/evaluations/native_maintenance/codex_provider.py": "eb1a2c903c2aafadcb37307350e939bb4c3a84fc242c620722d89846d1cb13ff",
+    "/home/g/code/gwt/evaluations/native_maintenance/scorer.py": "26df96f51f304e46a56dae245eb34e27c5b9602c2058eb300023ac54a2783638",
+    "/home/g/code/gwt/evaluations/native_maintenance/isolated.py": "d27a8bd08ae99d3efac33d820425e57242e8621caad22dc1f0db145460c82b96",
+    "/home/g/code/gwt/evaluations/native_maintenance/worker.py": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "/home/g/code/gwt/evaluations/native_maintenance/study.py": "7cf958795385836360c56ad2b5bfc0dfb1345c217dcc2aa6ae036a27d11606cb"
+  },
+  "provider": {
+    "provider": "codex-cli",
+    "protocol": "codex-cli-v1",
+    "synthetic": false,
+    "version": "codex-cli 0.163.0",
+    "executable": "/usr/local/bin/codex",
+    "launcherSha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+    "orchestratorRetries": 0,
+    "internalRetries": "CLI-managed; not asserted absent",
+    "maximumOutputTokens": null,
+    "timeoutSeconds": 300.0,
+    "disabledFeatures": [
+      "shell_tool",
+      "unified_exec",
+      "apps",
+      "plugins",
+      "remote_plugin",
+      "hooks",
+      "multi_agent",
+      "multi_agent_v2",
+      "browser_use",
+      "browser_use_external",
+      "in_app_browser",
+      "computer_use",
+      "image_generation",
+      "view_image",
+      "skill_search",
+      "skill_mcp_dependency_install",
+      "tool_suggest",
+      "sleep_tool",
+      "unbounded_connection_retries"
+    ],
+    "config": [
+      "web_search=\"disabled\"",
+      "mcp_servers={}",
+      "project_doc_max_bytes=0",
+      "skills.include_instructions=false",
+      "memories.use_memories=false",
+      "memories.generate_memories=false",
+      "memories.dedicated_tools=false"
+    ],
+    "toolEvents": "stop experiment",
+    "systemContext": "Codex CLI built-in context",
+    "authentication": "existing Codex login; no credential export"
+  },
+  "executionEnvironment": {
+    "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+    "repoDigests": [
+      "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+    ],
+    "architecture": "amd64",
+    "os": "linux",
+    "nativeSha256": "22803923302696abe60e382fce16dc4b1cb841ea597505b7692e50b7a8df1696",
+    "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "timeoutSeconds": 120,
+    "stdoutBytes": 16777216,
+    "stderrBytes": 262144,
+    "network": "none",
+    "readOnlyRoot": true,
+    "user": "65534:65534",
+    "memoryBytes": 268435456,
+    "cpus": 1,
+    "pids": 64,
+    "temporaryBytes": 33554432
+  },
+  "settings": {
+    "model": "gpt-6-astra",
+    "reasoningEffort": "medium",
+    "maximumAttempts": 3,
+    "maximumOutputTokens": null,
+    "providerSocketTimeoutSeconds": 300.0,
+    "executionTimeoutSeconds": 120
+  },
+  "phase": "complete",
+  "status": "complete",
+  "startedAt": "2026-10-16T22:55:38.787465+00:00",
+  "scheduledTrials": 30,
+  "sealedResponsesSha256": "0980ba1fc291fc7a37348c07ac1660e43542752ac872b041f6ba1769e539bd34",
+  "finishedAt": "2026-10-16T23:00:38.542684+00:00",
+  "recordedAttempts": 30,
+  "completedCalls": 30,
+  "calls": [
+    {
+      "caseId": "native-maintenance-refund-gwt-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ed-9a86-7612-a253-0964bd4c9c58",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10259,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 200,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.867969037997682,
+      "promptUtf8Bytes": 3886,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ed-b6ab-7fd0-aa0d-82173e90f001",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9974,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 132,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.115688984998997,
+      "promptUtf8Bytes": 2439,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ed-cfef-72e0-bf4e-705acbec63ba",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9907,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 94,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.989684139000019,
+      "promptUtf8Bytes": 2137,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ed-e8b6-7772-a605-41783caf2381",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10186,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 154,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.83000207099758,
+      "promptUtf8Bytes": 3513,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-0116-76b1-b64d-d6d5fc95a7c8",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10322,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 193,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 7.424420445997384,
+      "promptUtf8Bytes": 4078,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-1ef5-7381-96b7-9106cbc2f5af",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10049,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 136,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.4215748329988855,
+      "promptUtf8Bytes": 2692,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-3998-79e1-9006-08eaa10c7d6a",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9927,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 85,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.238266288000887,
+      "promptUtf8Bytes": 2343,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-4f70-7683-b6e3-d6e089e8db73",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10207,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.589119652999216,
+      "promptUtf8Bytes": 3738,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-6a42-7842-90c5-21eb7611548f",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 11090,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 841,
+        "reasoning_output_tokens": 38
+      },
+      "durationSeconds": 18.417912521999824,
+      "promptUtf8Bytes": 7477,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-1",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-b374-7743-8a16-70e44e627611",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10708,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 606,
+        "reasoning_output_tokens": 22
+      },
+      "durationSeconds": 13.689862086997891,
+      "promptUtf8Bytes": 5471,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ee-ea3d-7562-bad0-c6335fd35670",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9976,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 132,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.8117744060000405,
+      "promptUtf8Bytes": 2439,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-023e-7230-84cf-d1b334cba5e2",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10263,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 200,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.534433944001648,
+      "promptUtf8Bytes": 3886,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-1d09-7563-905d-f568ac5d7032",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10186,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 154,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.0114126640000904,
+      "promptUtf8Bytes": 3513,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-35cf-7133-92d9-885c22ee6e56",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9907,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 94,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.660513736998837,
+      "promptUtf8Bytes": 2137,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-4d43-7330-a2ed-c763a38a6877",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10047,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 136,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.561897838000732,
+      "promptUtf8Bytes": 2692,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-6453-7490-b3c6-a56e19e7a484",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10322,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 193,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.914722700999846,
+      "promptUtf8Bytes": 4078,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-808c-7782-9387-458eda0e709a",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10207,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.6724998250028875,
+      "promptUtf8Bytes": 3738,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-9be6-79e2-b843-2244b0db3773",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9925,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 85,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.918122375001985,
+      "promptUtf8Bytes": 2343,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-b44c-7ef3-b33f-78ac8c42eaf4",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10708,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 617,
+        "reasoning_output_tokens": 33
+      },
+      "durationSeconds": 13.397277887997916,
+      "promptUtf8Bytes": 5471,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-2",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146ef-e9f2-7e03-9a04-0343ed130454",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 11086,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 874,
+        "reasoning_output_tokens": 71
+      },
+      "durationSeconds": 18.919689435999317,
+      "promptUtf8Bytes": 7477,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-3549-7602-bc79-696907c3356c",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10263,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 200,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 10.183273237998947,
+      "promptUtf8Bytes": 3886,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-5e72-73c2-b55c-a9a64c6cd5f8",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9976,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 132,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.424129740000353,
+      "promptUtf8Bytes": 2439,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-78d1-7ba0-9a81-d863928a429a",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9907,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 94,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 10.23547690599662,
+      "promptUtf8Bytes": 2137,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-a220-7a63-9767-f18da154449c",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10186,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 154,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 7.125050694001402,
+      "promptUtf8Bytes": 3513,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-bf36-7f81-b4b7-8e40cc020724",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10320,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 193,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.472507590002351,
+      "promptUtf8Bytes": 4078,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-d9c3-7392-ad80-723050551ce5",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10051,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 136,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 6.574881741998979,
+      "promptUtf8Bytes": 2692,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f0-f4c9-7511-89cc-2272a9f7a4b4",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 9923,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 85,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 5.077117093002016,
+      "promptUtf8Bytes": 2343,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f1-09dd-78e0-87bc-132b50ecacd6",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10207,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 8.026947321002808,
+      "promptUtf8Bytes": 3738,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f1-2a74-7650-ac5d-8adc1cb94772",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 11086,
+        "cached_input_tokens": 8192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 957,
+        "reasoning_output_tokens": 158
+      },
+      "durationSeconds": 20.910591714000475,
+      "promptUtf8Bytes": 7477,
+      "generationError": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-3",
+      "attempt": 1,
+      "requestId": null,
+      "responseId": "01a146f1-7d6d-74f3-a386-cc3ff1e9cdef",
+      "returnedModel": null,
+      "usage": {
+        "input_tokens": 10708,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 582,
+        "reasoning_output_tokens": 0
+      },
+      "durationSeconds": 12.732904082997266,
+      "promptUtf8Bytes": 5471,
+      "generationError": null
+    }
+  ]
+}

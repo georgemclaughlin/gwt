@@ -22,7 +22,8 @@ and executable; a current run cannot silently recreate an old engine checkpoint.
 Do not overwrite old evidence or report a rerun as the original observation.
 
 Source, test fixtures, reproduction scripts, compact qualification records, the
-live refund comparison, and the direct Python/native CLI benchmark are versioned.
+live refund comparison, the complete five-domain Codex CLI comparison, and the
+direct Python/native CLI benchmark are versioned.
 Tests run from a clean staged checkout before committing to verify that local
 generated artifacts are not required for the source regression suite.
 

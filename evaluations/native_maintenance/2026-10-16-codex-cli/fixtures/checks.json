@@ -1,0 +1,812 @@
+[
+  {
+    "domain": "refund",
+    "language": "gwt",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 30,
+        "total": 33
+      },
+      "changed": {
+        "passed": 0,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 29,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "refund",
+    "language": "gwt",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 33,
+        "total": 33
+      },
+      "changed": {
+        "passed": 3,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 31,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "refund",
+    "language": "gwt",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 32,
+        "total": 33
+      },
+      "changed": {
+        "passed": 2,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 31,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "refund",
+    "language": "python",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 30,
+        "total": 33
+      },
+      "changed": {
+        "passed": 0,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 29,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "refund",
+    "language": "python",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 33,
+        "total": 33
+      },
+      "changed": {
+        "passed": 3,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 31,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "refund",
+    "language": "python",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 32,
+        "total": 33
+      },
+      "changed": {
+        "passed": 2,
+        "total": 3
+      },
+      "preserved": {
+        "passed": 30,
+        "total": 30
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 31,
+        "total": 31
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "gwt",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 8,
+        "total": 13
+      },
+      "changed": {
+        "passed": 0,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 8,
+        "total": 8
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 7,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "gwt",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 13,
+        "total": 13
+      },
+      "changed": {
+        "passed": 5,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 8,
+        "total": 8
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 11,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "gwt",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 11,
+        "total": 13
+      },
+      "changed": {
+        "passed": 5,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 6,
+        "total": 8
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 10,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "python",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 8,
+        "total": 13
+      },
+      "changed": {
+        "passed": 0,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 8,
+        "total": 8
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 7,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "python",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 13,
+        "total": 13
+      },
+      "changed": {
+        "passed": 5,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 8,
+        "total": 8
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 11,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "delivery",
+    "language": "python",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 11,
+        "total": 13
+      },
+      "changed": {
+        "passed": 5,
+        "total": 5
+      },
+      "preserved": {
+        "passed": 6,
+        "total": 8
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 10,
+        "total": 11
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "gwt",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 60,
+        "total": 74
+      },
+      "changed": {
+        "passed": 0,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 60,
+        "total": 60
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 59,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "gwt",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 74,
+        "total": 74
+      },
+      "changed": {
+        "passed": 14,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 60,
+        "total": 60
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 72,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "gwt",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 43,
+        "total": 74
+      },
+      "changed": {
+        "passed": 10,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 33,
+        "total": 60
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 42,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "python",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 60,
+        "total": 74
+      },
+      "changed": {
+        "passed": 0,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 60,
+        "total": 60
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 59,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "python",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 74,
+        "total": 74
+      },
+      "changed": {
+        "passed": 14,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 60,
+        "total": 60
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 72,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "expenses",
+    "language": "python",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 43,
+        "total": 74
+      },
+      "changed": {
+        "passed": 10,
+        "total": 14
+      },
+      "preserved": {
+        "passed": 33,
+        "total": 60
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 42,
+        "total": 72
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "gwt",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 14,
+        "total": 20
+      },
+      "changed": {
+        "passed": 0,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 14,
+        "total": 14
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 13,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "gwt",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 20,
+        "total": 20
+      },
+      "changed": {
+        "passed": 6,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 14,
+        "total": 14
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 18,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "gwt",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 10,
+        "total": 20
+      },
+      "changed": {
+        "passed": 0,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 10,
+        "total": 14
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 9,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "python",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 14,
+        "total": 20
+      },
+      "changed": {
+        "passed": 0,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 14,
+        "total": 14
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 13,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "python",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 20,
+        "total": 20
+      },
+      "changed": {
+        "passed": 6,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 14,
+        "total": 14
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 18,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "inventory",
+    "language": "python",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 10,
+        "total": 20
+      },
+      "changed": {
+        "passed": 0,
+        "total": 6
+      },
+      "preserved": {
+        "passed": 10,
+        "total": 14
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 9,
+        "total": 18
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "gwt",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 840,
+        "total": 998
+      },
+      "changed": {
+        "passed": 0,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 840,
+        "total": 840
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 839,
+        "total": 996
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "gwt",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 998,
+        "total": 998
+      },
+      "changed": {
+        "passed": 158,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 840,
+        "total": 840
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 996,
+        "total": 996
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "gwt",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 618,
+        "total": 998
+      },
+      "changed": {
+        "passed": 158,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 460,
+        "total": 840
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 616,
+        "total": 996
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "python",
+    "revision": "baseline",
+    "scores": {
+      "all": {
+        "passed": 840,
+        "total": 998
+      },
+      "changed": {
+        "passed": 0,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 840,
+        "total": 840
+      },
+      "public": {
+        "passed": 1,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 839,
+        "total": 996
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "python",
+    "revision": "correct",
+    "scores": {
+      "all": {
+        "passed": 998,
+        "total": 998
+      },
+      "changed": {
+        "passed": 158,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 840,
+        "total": 840
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 996,
+        "total": 996
+      }
+    }
+  },
+  {
+    "domain": "allocation",
+    "language": "python",
+    "revision": "faulty",
+    "scores": {
+      "all": {
+        "passed": 618,
+        "total": 998
+      },
+      "changed": {
+        "passed": 158,
+        "total": 158
+      },
+      "preserved": {
+        "passed": 460,
+        "total": 840
+      },
+      "public": {
+        "passed": 2,
+        "total": 2
+      },
+      "withheld": {
+        "passed": 616,
+        "total": 996
+      }
+    }
+  }
+]

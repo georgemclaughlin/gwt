@@ -2,8 +2,10 @@
 
 This research corpus extends the refund-only maintenance experiment to five
 policy domains and the current Rust GWT implementation. It prepares paired tasks
-and qualifies trusted references against independent expectations. **No live
-model or participant results have been collected here.**
+and qualifies trusted references against independent expectations. The
+[Codex CLI comparison](2026-10-16-codex-cli/README.md) records the subsequent live
+model experiment separately from fixture qualification. Human sessions remain
+pending; there are no participant results.
 
 Four smaller tasks reuse the human-review kit's refund, delivery, expenses, and
 inventory policies. The new allocation task changes a larger policy involving
@@ -56,8 +58,9 @@ sandbox. Its subprocesses have timeouts and normal account permissions. Use the
 separate [isolated scorer](scoring.md) for candidate responses. It runs native
 GWT and Python in bounded disposable containers, keeps expected answers in the
 parent, and provides public-only repair feedback. The
-[model experiment runner](experiment.md) connects that loop to tool-free API
-requests; live provider qualification and model results remain pending.
+[model experiment runner](experiment.md) connects that loop to either tool-free
+API requests or a separately labeled Codex CLI protocol. Live Responses API
+qualification remains pending; CLI evidence is recorded independently.
 
 Artifacts contain the exact corpus, observations for both languages and three
 revisions, partitioned scores, commands, source/executable hashes, and 30 task

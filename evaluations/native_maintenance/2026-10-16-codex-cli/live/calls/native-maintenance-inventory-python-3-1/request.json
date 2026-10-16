@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Complete this maintenance task using only the supplied source, language guide, intent, and public examples. Return complete replacement source with action code and an empty clarifications array. Preserve the request entry (GWT) or decide(state) (Python) and its output contract. No tools or external context are available.\n\nTASK\n{\"caseId\": \"native-maintenance-inventory-python-3\", \"context\": {\"executionEngine\": \"python\", \"guide\": \"Return complete Python source defining decide(state). Inputs and outputs are the same JSON objects shown in the task and starter. Use only the Python standard library. Each call receives fresh copied input. Preserve all output fields and exact types; bool is distinct from integer. Decimal money is encoded as canonical strings without trailing zeros, using exact arithmetic rather than binary floats. For the allocation task only, reject invalid policy inputs by raising ValueError(\\\"policy_rejected\\\"). Other exceptions are execution failures. Tests are optional; only independently checked request outcomes determine scores.\", \"outcomeContract\": \"Public expected outcomes wrap successful return values in result; rejected:true denotes a policy rejection. Do not add this wrapper to the function/request return value.\", \"publicProbes\": [{\"expected\": {\"result\": {\"decision\": {\"remaining\": 0, \"reserved\": 3}}}, \"input\": {\"facts\": {\"requested\": 5, \"stock\": 3}}}, {\"expected\": {\"result\": {\"decision\": {\"remaining\": 2, \"reserved\": 3}}}, \"input\": {\"facts\": {\"requested\": 3, \"stock\": 5}}}], \"request\": \"assess\", \"source\": \"def decide(state):\\n    facts = state[\\\"facts\\\"]\\n    if facts[\\\"stock\\\"] >= facts[\\\"requested\\\"]:\\n        reserved = facts[\\\"requested\\\"]\\n    else:\\n        reserved = 0\\n    remaining = facts[\\\"stock\\\"] - reserved\\n    return {\\\"decision\\\": {\\\"reserved\\\": reserved, \\\"remaining\\\": remaining}}\\n\"}, \"kind\": \"maintain\", \"language\": \"python\", \"task\": \"Reserve the requested quantity if enough stock is available; otherwise reserve nothing. Remaining stock is starting stock minus the amount reserved.\\nRequested change: Allow partial fulfillment: reserve all available stock when stock is insufficient. Keep remaining stock equal to starting stock minus the amount actually reserved.\\nContract: facts: stock and requested (nonnegative integers). decision: reserved and remaining (integers).\"}",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
