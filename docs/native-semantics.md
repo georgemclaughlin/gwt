@@ -1,5 +1,9 @@
 # Native GWT semantics: working decisions
 
+For the consolidated language contract, start with the
+[native draft specification](spec/native-draft.md). This document retains the
+detailed decisions, migration examples, and their development context.
+
 Status: experimental native language profile. The existing Python language
 specification remains [v0.2](spec/v0.2.md). This document records deliberate
 choices for the Rust foundation, implemented features, and unresolved needs.

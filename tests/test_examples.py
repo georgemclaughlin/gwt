@@ -31,6 +31,7 @@ PUBLIC_EXAMPLES_WITH_EMBEDDED_SCENARIOS = [
 # explicit: all other examples, including shared native examples, must pass
 # Python checking/execution. Formatting continues to cover every source file.
 NATIVE_ONLY_EXAMPLES = {
+    Path("examples/native_review_walkthrough/candidate.gwt"): "CI native walkthrough: expected rejection, 14 scenarios, nine independently specified comparisons",
     Path("examples/native_finite_codes/rules.gwt"): "finite_literals.rs: closed scalar contracts and exhaustive code dispatch",
     Path("examples/native_lookup/rules.gwt"): "lookup_contracts.rs: native local constructors, returning lookup, and optional snapshots",
     Path("examples/loan_underwriting/native_rules.gwt"): "underwriting.rs: exact ratio pairs and native expected failures",
