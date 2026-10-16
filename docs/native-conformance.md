@@ -1,6 +1,7 @@
 # Native feature and evidence matrix
 
-This matrix supports the [full project goal](project-goal.md). A passing refund
+This matrix supports the [native draft specification](spec/native-draft.md) and
+the [full project goal](project-goal.md). A passing refund
 policy is not evidence of complete language support. Native behavior follows
 the experimental [semantic decisions](native-semantics.md), introduced in
 [the execution-model guide](native-execution-model.md). Unsupported Python forms

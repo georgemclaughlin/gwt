@@ -9,8 +9,9 @@ GWT is an experimental programming language built around executable
 
 - Runtime/parser/checker code lives in `gwtlang/`.
 - The experimental Rust foundation lives in `crates/gwt-core/`. Its current
-  supported language subset and deliberate semantic choices are documented in
-  `docs/native-semantics.md`; full-goal progress is in
+  language reference is `docs/spec/native-draft.md`; the short executable review
+  walkthrough is `docs/native-review-walkthrough.md`. Detailed semantic choices
+  are retained in `docs/native-semantics.md`; full-goal progress is in
   `docs/project-goal-progress.md`.
 - The VS Code extension lives in `vscode-gwt/`.
 - Language examples live in `examples/`.

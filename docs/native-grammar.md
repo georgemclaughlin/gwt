@@ -1,6 +1,8 @@
 # Native GWT grammar
 
-This reference describes the **current experimental Rust profile**, alongside
+The [consolidated native draft](spec/native-draft.md) is the main language
+reference. This document supplies its complete source productions and context
+rules. It describes the **current experimental Rust profile**, alongside
 its [execution model](native-execution-model.md) and
 [semantic decisions](native-semantics.md). It does not declare a language release
 or require eventual parity with Python. The published Python v0.2 surface has
@@ -154,7 +156,7 @@ an explicit missing branch. `DECIDE` selects its first true condition and
 requires a final `ELSE`. Kind dispatch requires an explicit one-of state path;
 scalar dispatch takes an expression. Kind and value arms cannot mix. Dispatch
 must cover its domain, with a final `ELSE` when needed; duplicate cases and an
-unreachable fallback fail. Boolean and text-union domains can be covered
+unreachable fallback fail. Finite boolean, text, and numeric domains can be covered
 explicitly, while unrestricted scalar domains require `ELSE`.
 
 Typed local construction requires the trailing colon and a record-compatible

@@ -1,0 +1,32 @@
+{
+  "kind": "native-delivery-walkthrough",
+  "cases": 9,
+  "changedOutcomes": [
+    "new-band",
+    "new-limit"
+  ],
+  "expectedFailures": [
+    "invalid-weight"
+  ],
+  "reviewDecisions": "all pending",
+  "humanParticipants": 0,
+  "nativeSha256": "c6c7f1277ac309e9fef27c1d64020b8f8cfbd91d388deba0ee0329e949c86c9a",
+  "sourceSha256": {
+    "examples/native_delivery/rules.gwt": "ef06278f3621adca10beaa35cee18d70fa475bd35175a456d005f655d6018891",
+    "examples/native_review_walkthrough/candidate.gwt": "64a5fc95908ba6dfebfdc20da677582f324d81e5238e52585214109ccf3693e2",
+    "examples/native_review_walkthrough/cases.json": "1377ad634eb56d366c77b87665dab992d4ba887036e7c6910756206a9025cb2d",
+    "examples/native_review_walkthrough/prepare.py": "14c770e85c5f8c4557eed2870563f9ff60ae4c46d37851f04874dd19db14e224"
+  },
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 1,
+    "compared": 9,
+    "evidenceChanged": 9,
+    "outcomeChanged": 2,
+    "sourceChanged": 9,
+    "stateChanged": 2,
+    "total": 9,
+    "unavailable": 0,
+    "unchanged": 0
+  }
+}

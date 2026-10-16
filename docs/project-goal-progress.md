@@ -2408,3 +2408,34 @@ This removes the API-key obstacle for CLI-based model evaluation. The Responses
 API transport remains separately unqualified live. Human comprehension, review
 benefit, native release commitments and adoption remain open; human sessions and
 external pilots stay pending by owner choice. The full goal is not complete.
+
+## Consolidated native draft and executable review walkthrough
+
+The [native language draft](spec/native-draft.md) is now the primary reference
+for the experimental profile. It brings source forms, contracts, arithmetic,
+state sharing, control flow, proofs, requests, scenarios, failure semantics and
+conformance references into one document. Implementation bounds and tool/artifact
+contracts are identified separately. The grammar retains full productions;
+detailed feature notes retain design history. No native language version is
+assigned and no runtime behavior changes.
+
+[Read, change, explain, review](native-review-walkthrough.md) gives readers one
+complete example: extend the delivery low-fee band from 1,000g to 1,500g while
+preserving membership, overweight precedence and rejection. Fourteen candidate
+scenarios pass. Nine independently specified captured requests verify exactly
+two changed outcomes and one preserved failure. The helper generates an offline
+review and nine pending decisions; downloaded pending choices also assess as
+pending. CI runs this path on the current Rust development build.
+
+The [qualification record](../evaluations/native_walkthrough/2026-10-16/README.md)
+retains hashes, comparison counts and Playwright CLI checks. Desktop/mobile
+case filtering, source/operand evidence navigation, expected rejection, and
+pending-decision download pass; screenshots were inspected. All 678 Python tests
+pass after explicitly classifying the native-only failure scenario in the example
+inventory. The native formatter and Python layout check pass for the new source.
+Local documentation links and anchors resolve.
+
+The README now provides a short reading path instead of a long feature inventory.
+These changes make the implemented language and review process easier to find;
+they do not establish measured human benefit. Human sessions, external pilots,
+compatibility freezing, and release decisions remain open.

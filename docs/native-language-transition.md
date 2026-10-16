@@ -1,8 +1,9 @@
 # Native language support and transition contract
 
 GWT currently has two explicitly selected implementations. The Python toolchain
-implements the [v0.2 specification](spec/v0.2.md). The Rust toolchain implements
-the [experimental native grammar](native-grammar.md) and
+implements the [v0.2 specification](spec/v0.2.md). The Rust toolchain's current
+contract is consolidated in the [native draft specification](spec/native-draft.md),
+with the [experimental native grammar](native-grammar.md) and
 [native semantics](native-semantics.md). Shared `.gwt` syntax does not imply
 equivalent acceptance, state changes, numbers, or evidence.
 

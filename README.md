@@ -97,70 +97,28 @@ The package is `0.3.0`; the language specification is `v0.2`. The v0.4
 behavior-review implementation is a development candidate, not a published
 v0.4 release. `python -m gwtlang version --json` reports installed versions.
 The project retains the GWT name and uses the [MIT license](LICENSE).
-The [project goal](docs/project-goal.md) sets the direction toward human
-understanding and a Rust foundation. An [experimental native
-engine](crates/gwt-core/README.md) runs typed requests and scenarios in a documented
-language subset. Start with [the native execution model](docs/native-execution-model.md)
-to understand its state, decisions, failures, and evidence; use the
-[native grammar](docs/native-grammar.md) for accepted source forms. Complete native language coverage
-and human-benefit evidence remain open in the [goal ledger](docs/project-goal-progress.md).
-Native [engine migration review](docs/native-migration.md) compares retained cases
-across engines and supports saved decisions with verified case export.
-[Whole-corpus migration](docs/native-corpus-migration.md) preserves all entries and
-metadata across mixed engines, with complete review required before export.
-[Captured-case regression tests](docs/native-regressions.md) enforce an explicit
-outcome/state or execution scope, including retained boundary and resource failures.
-The native crate also has a [qualified local packaging and Rust embedding path](docs/native-embedding.md).
-[Native inspection](docs/native-inspection.md) exposes checked request contracts,
-behavior signatures, types, scenarios, and source identity without executing rules.
-An explicit [native editor mode](docs/native-editor.md) checks unsaved source and
-imports and runs scenarios/requests from VS Code; Python remains the default.
-Native editor commands can share an explicit operating-budget file with the CLI
-and profile execution evidence from the command palette.
-The [native formatter](docs/native-formatting.md) formats buffers or previews,
-checks, and explicitly rewrites files without invoking Python.
-Native authoring now includes a [combined validation command](docs/native-validation.md)
-for checking source, formatting, and embedded scenarios from one captured closure.
-Its optional HTML report makes expectation results, evidence gaps, and captured
-source available for offline review. [Typed setup tables](docs/native-setup-tables.md)
-provide readable record collection inputs for native scenarios and request setup.
-[Readable request entries](docs/native-request-entries.md) explicitly import their
-rules and can run or be captured directly when they contain one scenario.
-[One-of contracts](docs/native-one-of.md) validate named domain states without
-unrelated payload fields. Exhaustive kind branches expose their specific payloads
-and guard against kind-changing writes through shared aliases.
-Kind-specific contracts let helpers name their required payload and keep calls short.
-[Scalar-value dispatch](docs/native-value-dispatch.md) selects behavior from one
-status, flag, or exact numeric value, with checked coverage and source evidence.
-The [native support and transition contract](docs/native-language-transition.md)
-separates supported language, deliberate omissions, and migration responsibilities.
-`gwt-native version --json` and the editor’s **GWT: Show Engine Information**
-command identify the selected engine without executing source.
-[Finite scalar contracts](docs/native-finite-literals.md) declare closed numeric
-and boolean domains, reject unsupported inputs, and enable exhaustive decisions.
-[Presence guards](docs/native-presence.md) let branches use optional values
-safely and reject alias writes that would invalidate those branches' assumptions.
-[Kind conditions](docs/native-kind-conditions.md) expose the appropriate payload
-inside ordinary conditions, including rules that combine kind and consent.
-[Explicit rounded division](docs/native-rounded-division.md) makes decimal scale
-and rounding mode visible in native behavior steps while ordinary `/` stays exact.
-[Weighted allocation](examples/native_weighted_allocation/README.md) combines
-rounding, eligibility, remainder selection, and conservation checks, with an
-independent oracle and captured review of a faulty change. Its documented limits
-include evidence growth on larger inputs. [Typed local records](docs/native-local-records.md)
-now let its behaviors construct results directly, removing template parameters.
-[Append evidence](docs/native-append-evidence.md) records individual insertions,
-reducing repeated list snapshots while retaining the item, position, and source.
-[Native profiling](docs/native-profiling.md) identifies evidence costs by operation
-and source location, including partial traces from executions that reach a limit.
-[Explicit execution budgets](docs/native-execution-limits.md) let validation,
-profiling, request execution, and captured review use a shared limit file.
-Actual external pilots and release review remain open; see the
+The [project goal](docs/project-goal.md) centers human understanding and a
+Rust foundation. The native engine is explicitly selected and experimental;
+Python remains the default. Start here:
+
+| Native reference | Purpose |
+| --- | --- |
+| [Read, change, explain, review](docs/native-review-walkthrough.md) | A short runnable delivery-policy change with captured cases and pending review |
+| [Consolidated native draft](docs/spec/native-draft.md) | Current syntax, types, execution, contracts, failures, and conformance map |
+| [Execution model](docs/native-execution-model.md), [grammar](docs/native-grammar.md) | Narrative explanation and full source productions |
+| [Native CLI and library](crates/gwt-core/README.md), [editor](docs/native-editor.md) | Build, run, embed, and author with the selected engine |
+| [Support and transition](docs/native-language-transition.md) | Deliberate differences, source/artifact migration, and release preparation |
+| [Feature/evidence matrix](docs/native-conformance.md), [goal ledger](docs/project-goal-progress.md) | Detailed feature notes, tested scope, and remaining work |
+
+The [five-domain Codex CLI comparison](evaluations/native_maintenance/2026-10-16-codex-cli/README.md)
+passed 15/15 first-attempt trials in each language, including withheld cases.
+That establishes no advantage over Python or human-review benefit. Human sessions,
+external pilots, and release review remain pending. See the
 [current checkpoint](docs/development-checkpoint.md).
 
 | Reference | Purpose |
 | --- | --- |
-| [Language guide](docs/language.md), [spec](docs/spec/v0.2.md), [grammar](docs/grammar.md) | Syntax and semantics |
+| [Language guide](docs/language.md), [spec](docs/spec/v0.2.md), [grammar](docs/grammar.md) | Python v0.2 syntax and semantics |
 | [Command and example reference](docs/reference.md) | Detailed CLI, API, editor, and example usage |
 | [Execution Cases](docs/execution-cases.md) | Capture, replay, scenario generation, and comparison contracts |
 | [Design principles](docs/design-principles.md) | Language scope and guardrails |

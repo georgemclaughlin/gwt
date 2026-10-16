@@ -1,0 +1,189 @@
+[
+  {
+    "id": "old-limit",
+    "label": "Old 1,000g boundary",
+    "input": {
+      "parcel": {
+        "weight_grams": 1000,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 5
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 5
+      }
+    }
+  },
+  {
+    "id": "new-band",
+    "label": "1,001g enters the low-fee band",
+    "input": {
+      "parcel": {
+        "weight_grams": 1001,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 5
+      }
+    }
+  },
+  {
+    "id": "new-limit",
+    "label": "New 1,500g boundary",
+    "input": {
+      "parcel": {
+        "weight_grams": 1500,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 5
+      }
+    }
+  },
+  {
+    "id": "above-limit",
+    "label": "1,501g stays in the higher-fee band",
+    "input": {
+      "parcel": {
+        "weight_grams": 1501,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    }
+  },
+  {
+    "id": "member",
+    "label": "Membership still waives the fee",
+    "input": {
+      "parcel": {
+        "weight_grams": 1500,
+        "member": true
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 0
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 0
+      }
+    }
+  },
+  {
+    "id": "maximum",
+    "label": "5,000g still uses standard handling",
+    "input": {
+      "parcel": {
+        "weight_grams": 5000,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "standard",
+        "fee": 9
+      }
+    }
+  },
+  {
+    "id": "heavy",
+    "label": "Overweight nonmember still needs manual handling",
+    "input": {
+      "parcel": {
+        "weight_grams": 5001,
+        "member": false
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "manual",
+        "fee": 0
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "manual",
+        "fee": 0
+      }
+    }
+  },
+  {
+    "id": "heavy-member",
+    "label": "Overweight handling still precedes membership",
+    "input": {
+      "parcel": {
+        "weight_grams": 5001,
+        "member": true
+      }
+    },
+    "baseline": {
+      "quote": {
+        "status": "manual",
+        "fee": 0
+      }
+    },
+    "candidate": {
+      "quote": {
+        "status": "manual",
+        "fee": 0
+      }
+    }
+  },
+  {
+    "id": "invalid-weight",
+    "label": "Zero weight is still rejected",
+    "input": {
+      "parcel": {
+        "weight_grams": 0,
+        "member": false
+      }
+    },
+    "failure": "assertion_failed"
+  }
+]

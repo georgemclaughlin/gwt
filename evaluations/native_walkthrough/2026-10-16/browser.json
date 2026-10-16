@@ -1,0 +1,17 @@
+{
+  "cases": 9,
+  "outcomeChanges": 2,
+  "preservedFailure": 1,
+  "operandNavigation": true,
+  "allChoicesPending": true,
+  "downloadedPendingDecisions": true,
+  "desktopWidth": 1440,
+  "mobileWidth": 390,
+  "horizontalOverflow": false,
+  "browser": "Chromium 1243 through Playwright CLI",
+  "consoleErrors": 0,
+  "consoleWarnings": 0,
+  "downloadMatchesPendingTemplate": true,
+  "reviewHtmlSha256": "90459b4ae8fb2bb39897db8b932dc79056b009e78f6dff5a846b009f6dde7e42",
+  "humanParticipants": 0
+}

@@ -1,5 +1,8 @@
 # GWT native foundation
 
+Start with the [native language draft](../../docs/spec/native-draft.md) and the
+[delivery review walkthrough](../../docs/native-review-walkthrough.md).
+
 Use `gwt-native version --json` or the Rust `version_info()` API to identify the
 package, experimental language profile, and engine fingerprint. The language
 release version remains null. See the [support and transition contract](../../docs/native-language-transition.md)

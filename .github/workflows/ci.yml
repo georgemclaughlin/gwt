@@ -61,6 +61,12 @@ jobs:
           export GWT_NATIVE_PATH
           GWT_NODE_EVIDENCE="$GWT_PACKAGE_EVIDENCE/node-host" node --test tests/native_node_host.test.mjs
 
+      - name: Exercise native review walkthrough
+        if: matrix.rust == '1.96.0' && matrix.profile == 'dev'
+        run: |
+          python examples/native_review_walkthrough/prepare.py "$RUNNER_TEMP/gwt-delivery-walkthrough" \
+            --native "target/${{ matrix.target }}/debug/gwt-native"
+
   validate:
     runs-on: ubuntu-latest
 

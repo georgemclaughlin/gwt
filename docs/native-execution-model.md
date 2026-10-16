@@ -1,5 +1,9 @@
 # How native GWT executes behavior
 
+For a runnable introduction, use [Read, change, explain, review](native-review-walkthrough.md).
+The [native draft specification](spec/native-draft.md) is the consolidated language
+reference; this guide explains the execution model in narrative form.
+
 GWT describes behavior over explicit domain state. A program declares the shapes
 of that state, names the actions that change it, exposes requests to a host, and
 uses scenarios to show expected outcomes. The Rust engine checks this source
