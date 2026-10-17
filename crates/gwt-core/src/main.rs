@@ -6,6 +6,7 @@ use gwt_core::{
 };
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, fs, io::Read, path::Path, process::ExitCode};
+mod cli_options;
 mod corpus_migration_cli;
 mod editor_cli;
 mod formatter_cli;
@@ -143,14 +144,11 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
                     .into(),
             );
         }
-        let mut options = BTreeMap::new();
-        for pair in args[2..].chunks_exact(2) {
-            if !matches!(pair[0].as_str(), "--name" | "--output")
-                || options.insert(pair[0].as_str(), pair[1].as_str()).is_some()
-            {
-                return Err("unknown or duplicate scenario option".into());
-            }
-        }
+        let options = cli_options::paired(
+            &args[2..],
+            |option| matches!(option, "--name" | "--output"),
+            "unknown or duplicate scenario option",
+        )?;
         let case = match ExecutionCase::from_json(&read_bounded(&args[1], MAX_CASE_BYTES)?) {
             Ok(case) => case,
             Err(error) => {
@@ -214,16 +212,20 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         if args.len() < 4 || args.len() % 2 != 0 {
             return Err("usage: gwt review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--import-root DIRECTORY]".into());
         }
-        let mut options = BTreeMap::new();
-        for pair in args[2..].chunks_exact(2) {
-            if !matches!(
-                pair[0].as_str(),
-                "--candidate" | "--html" | "--import-root" | "--decisions" | "--decisions-template"
-            ) || options.insert(pair[0].as_str(), pair[1].as_str()).is_some()
-            {
-                return Err("unknown or duplicate review option".into());
-            }
-        }
+        let options = cli_options::paired(
+            &args[2..],
+            |option| {
+                matches!(
+                    option,
+                    "--candidate"
+                        | "--html"
+                        | "--import-root"
+                        | "--decisions"
+                        | "--decisions-template"
+                )
+            },
+            "unknown or duplicate review option",
+        )?;
         if (args[0] == "review" && options.contains_key("--decisions"))
             || (args[0] == "assess-review"
                 && (!options.contains_key("--decisions")

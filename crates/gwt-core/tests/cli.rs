@@ -76,3 +76,83 @@ fn native_program_commands_check_test_and_run_source_files() {
     let payload: Value = serde_json::from_slice(&failed.stdout).unwrap();
     assert_eq!(payload["diagnostic"]["code"], "unknown_request");
 }
+
+#[test]
+fn paired_options_reject_unknown_duplicate_and_unpaired_flags_before_loading_files() {
+    let groups = [
+        (
+            "scenario-from-case",
+            "--name",
+            "unknown or duplicate scenario option",
+        ),
+        (
+            "review",
+            "--candidate",
+            "unknown or duplicate review option",
+        ),
+        (
+            "assess-review",
+            "--decisions",
+            "unknown or duplicate review option",
+        ),
+        (
+            "migrate",
+            "--previous-engine",
+            "unknown or duplicate migration option",
+        ),
+        (
+            "assess-migration",
+            "--decision",
+            "unknown or duplicate migration option",
+        ),
+        (
+            "export-migration",
+            "--output",
+            "unknown or duplicate migration option",
+        ),
+        (
+            "migrate-corpus",
+            "--engines",
+            "unknown or duplicate corpus migration option",
+        ),
+        (
+            "assess-corpus-migration",
+            "--decisions",
+            "unknown or duplicate corpus migration option",
+        ),
+        (
+            "export-corpus-migration",
+            "--output",
+            "unknown or duplicate corpus migration option",
+        ),
+        ("test-cases", "--candidate", "usage: gwt test-cases"),
+    ];
+    for (command, flag, error) in groups {
+        for options in [
+            vec![flag, "unused", "--unknown", "unused"],
+            vec![flag, "unused", flag, "unused"],
+        ] {
+            let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
+                .args([command, "missing-file.json"])
+                .args(options)
+                .output()
+                .unwrap();
+            assert!(!output.status.success(), "{command}");
+            assert!(output.stdout.is_empty(), "{command}");
+            assert!(
+                String::from_utf8_lossy(&output.stderr).starts_with(error),
+                "{command}"
+            );
+        }
+        let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
+            .args([command, "missing-file.json", flag])
+            .output()
+            .unwrap();
+        assert!(!output.status.success(), "{command}");
+        let message = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            message.contains("usage:") || message.contains("paired options"),
+            "{command}: {message}"
+        );
+    }
+}

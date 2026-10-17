@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 1,
+  "revision": "52f56d34b117f2bccd8e3f70bde4381d3a3d2b8b",
+  "repository": "https://github.com/georgemclaughlin/gwt",
+  "description": "Exact historical bytes archived in Git history; no observations or decisions rewritten. Restore the complete evaluations tree at this revision to audit reports with their original relative paths.",
+  "files": [
+    {
+      "path": "evaluations/feature_flags/2026-10-16/review/comparison.json",
+      "bytes": 99268,
+      "sha256": "e4a1675d8b496d5d474b60fb39920022727e602f9392f897ed8e7331d6544711"
+    },
+    {
+      "path": "evaluations/input_normalization/2026-10-16/review/comparison.json",
+      "bytes": 133023,
+      "sha256": "1b96c4746a81a904f60b6d1beb49e6d1831b66f162f7ca87aa5fc193e7e55fc5"
+    },
+    {
+      "path": "evaluations/input_normalization/2026-10-16/runtime-before.py",
+      "bytes": 153306,
+      "sha256": "4e4ce8dd9e6a1bd968a630eada8cebc65aab0b56e3587cc1ac999fcdb001c4fa"
+    },
+    {
+      "path": "evaluations/local-artifacts.json",
+      "bytes": 1694231,
+      "sha256": "a86c48523f4c31b5e37b65d5aa2262d2c86efde9404ecb64a5dd20d366acfd72"
+    },
+    {
+      "path": "evaluations/native_language/2026-10-16/runtime-before.py",
+      "bytes": 153474,
+      "sha256": "55587e78e12cc91bc8ba93ecab2223973967d92c896721c1a8f0cff3bbf92fbb"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-gwt-1-1.json",
+      "bytes": 3070,
+      "sha256": "4ea4eced4e172ba58fbf0b605c8cbf3026b1ff998063aaf317b99f2bf94f8fc6"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-gwt-2-1.json",
+      "bytes": 3070,
+      "sha256": "dde14ab4305add178cef394741674eac9e36dfb5bf88128d3322afa55281db8c"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-gwt-3-1.json",
+      "bytes": 3069,
+      "sha256": "d626de0f894dc71b7fee7a7c7deaa7497482d8f71b0cd5e66dc14375ce79fd28"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-python-1-1.json",
+      "bytes": 3073,
+      "sha256": "2963c1761e06596075b519cafce6976cd2744436e2b9bb656b17e7cd8fddeab5"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-python-2-1.json",
+      "bytes": 3073,
+      "sha256": "7e31ff69bda35bd712f11e0f4454db796fa39ab734291587ff0ca10b675dd395"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-allocation-python-3-1.json",
+      "bytes": 3073,
+      "sha256": "addb80cfd205640251758705c2a002462a970452afa3d55fcc02ac32192658df"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-gwt-1-1.json",
+      "bytes": 1564,
+      "sha256": "064aae89dd267cb1a67a2cb93a3b3fb274b23d3fd5e8f408e49ce91d8175ffe8"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-gwt-2-1.json",
+      "bytes": 1564,
+      "sha256": "f7df71b8a0115458ef4db5e7936420c85513d8bd682759011282b9314646410e"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-gwt-3-1.json",
+      "bytes": 1563,
+      "sha256": "57b3927907cd85f65cd01c2cd5087b2bd25f1a46d5ddc38efc4f8d8bcc44b205"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-python-1-1.json",
+      "bytes": 1566,
+      "sha256": "e2a524a5215ec260abe6262b0c78ee9661ebdd04b9f0abae49bf5373371d00ff"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-python-2-1.json",
+      "bytes": 1567,
+      "sha256": "331cd4753dea6a75b2504f1ea89c9e954c476e125bb7824814c6e80659f466a6"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-delivery-python-3-1.json",
+      "bytes": 1567,
+      "sha256": "275a37b0808368f0514d09404cffd916123e7d0e358209998f3526dbe23ac75b"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-gwt-1-1.json",
+      "bytes": 1684,
+      "sha256": "c28d0c58bff835214c946e17d5e5cbf657d4faa57cfb9875d18df010d8904b96"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-gwt-2-1.json",
+      "bytes": 1684,
+      "sha256": "d4b213be32093bc509cb0d45a91d7cdab98c85f42771afa92d4b3fd8377576ae"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-gwt-3-1.json",
+      "bytes": 1684,
+      "sha256": "2126438c59774cddfbbbacb45c540eca901756a09be77f6c8a08530d010b3731"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-python-1-1.json",
+      "bytes": 1686,
+      "sha256": "4f0906ae04c1d5ee56f8833d9c3c8ceea3de0d25a59ec2fad6dc0dae4ecea300"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-python-2-1.json",
+      "bytes": 1687,
+      "sha256": "992ccbf2a1dadfd1605fcbd7318ec927a795e3b96f88f606ebd58cc1526567e7"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-expenses-python-3-1.json",
+      "bytes": 1687,
+      "sha256": "68fa54e6d5ac9366073dfdf1eb63282bba52b0bcc8e41f9a6030ce9e977ddeee"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-gwt-1-1.json",
+      "bytes": 1670,
+      "sha256": "772b749aa2d934a8cab4f90779bdc1f38c29e0d58a57f12c1a11ff0c882bccc6"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-gwt-2-1.json",
+      "bytes": 1670,
+      "sha256": "140ae8e864eacf7188858a0134d5a9dd4ab5cd181f42b9c52bd6353470b74bf2"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-gwt-3-1.json",
+      "bytes": 1670,
+      "sha256": "4ae39a852e6235d826e9c16ef42b4a85654b5d157e245be9bfaf6337b62ae99c"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-python-1-1.json",
+      "bytes": 1673,
+      "sha256": "c0ee505bbe38174d32d10da130a0c7bb2a12f830fb36b011a49cd2f5f83219ac"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-python-2-1.json",
+      "bytes": 1673,
+      "sha256": "234c5d3de043349516dee134a7aec240bba26ae8011bd3853172cdb597698f56"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-inventory-python-3-1.json",
+      "bytes": 1673,
+      "sha256": "0553b0ecd27a302ba4ff649e801a6eabc29801d869a7caba80607ac0d1a80e7e"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-gwt-1-1.json",
+      "bytes": 1602,
+      "sha256": "38f389d38865daaef549e12e71bbda623b9dcffa846a7b181ef08bdde4ec6346"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-gwt-2-1.json",
+      "bytes": 1602,
+      "sha256": "b6473030ec29142dc1531bb9a123992c943fc67422976d011812250075cbf10d"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-gwt-3-1.json",
+      "bytes": 1602,
+      "sha256": "232d5e65c48f379e1c31ec15d18bff2e64a0c7706836dc0d11f1502bc056a7c9"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-python-1-1.json",
+      "bytes": 1605,
+      "sha256": "389495296dc6175cb3ef0b7033f44e1709d6e19fc0c78a131399f324156807a0"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-python-2-1.json",
+      "bytes": 1605,
+      "sha256": "8858ce8120bf0148c2b4dca1ab845a6c52fd4558d1d019a23ed629153468523a"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/public-native-maintenance-refund-python-3-1.json",
+      "bytes": 1605,
+      "sha256": "38b4e11cabf7ef6eb1db7c8845d6fdf09067230a6456ebbeae73253a63c15b3d"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-gwt-1-1.json",
+      "bytes": 1157321,
+      "sha256": "ad4a16878018e6275f5a4a5a93816fdc4fce48ca594aad0c994e700f9b7c2885"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-gwt-2-1.json",
+      "bytes": 1157322,
+      "sha256": "a348e45a2bbacaf30155d1c09f835ff2538b81bd3e7538894082c9dd38bf5a8b"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-gwt-3-1.json",
+      "bytes": 1157322,
+      "sha256": "26c42c880e6e09e91854c8ce08034778d4292efdd9966d174111871a821ad00b"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-python-1-1.json",
+      "bytes": 1157324,
+      "sha256": "836c51d36d067d067e4dc576851d939602167a9c5e6b2b92bb80192f3141f76a"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-python-2-1.json",
+      "bytes": 1157325,
+      "sha256": "27e06d7e9dbed8c2aea7b207fe09cbe8ee5f5c09844d745ce6c8f42df5a766c5"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-allocation-python-3-1.json",
+      "bytes": 1157325,
+      "sha256": "b1ff75b536e7f3e342fe0c85948ad7b483544853d9bf070c4c04604f211600c2"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-gwt-1-1.json",
+      "bytes": 3048,
+      "sha256": "f2dc8c8723e35db7f007487825bf7a725e4ebfc0a9499e8bd8063142bae334fc"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-gwt-2-1.json",
+      "bytes": 3048,
+      "sha256": "474114ea3b3821f44637336e969d700936e11d2ff50f804db61941f520413ec2"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-gwt-3-1.json",
+      "bytes": 3048,
+      "sha256": "8a7e97d2438c67d3565c229df83429dc634c02938353d544c616f731ddfea281"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-python-1-1.json",
+      "bytes": 3051,
+      "sha256": "06590ede46d1c9557eae70c292bb59694d48ecd9ab53b484539d073e9612a6df"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-python-2-1.json",
+      "bytes": 3051,
+      "sha256": "2131c8a0c50d3f1c7900c9db3b2054e8b11f23b8b5ffb2cf6fc76e64f68b15ce"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-delivery-python-3-1.json",
+      "bytes": 3051,
+      "sha256": "8b704203bb9019090d9b075d8cc2a78b857c1d37a0dea27e3b47f95b04f83692"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-gwt-1-1.json",
+      "bytes": 15774,
+      "sha256": "a6c5180fa88bb41c6b45603321f05b87328f059256e12d846c9207046b29abf4"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-gwt-2-1.json",
+      "bytes": 15774,
+      "sha256": "ca938efc67277acaa24a9f487ac83e3ac72ddc5e1aeded1c5563115f109d2a6c"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-gwt-3-1.json",
+      "bytes": 15774,
+      "sha256": "1f1412a17c2de57450d6928cbc9f6b91a9ac09eb90022fd0d975ca7fe8fa1191"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-python-1-1.json",
+      "bytes": 15777,
+      "sha256": "924771c78f46da0971feaf991301add336e1d9fd63c8e65e1573ac56833a1de3"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-python-2-1.json",
+      "bytes": 15777,
+      "sha256": "6b63b46bb4c573f69c0f9c8b1a961aca28a79139346960f3cda56c9024506f7f"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-expenses-python-3-1.json",
+      "bytes": 15777,
+      "sha256": "93559dd1b74f2722eef6b3ac5174e50f9286d17d1228ae146c18ff427ea1ac83"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-gwt-1-1.json",
+      "bytes": 5053,
+      "sha256": "5117ae6d483275586a6ade1daccabc6994cdf78fd44770d8df28b831e4b2031e"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-gwt-2-1.json",
+      "bytes": 5053,
+      "sha256": "57b3a46e8259e9959faa6b19598019aa335e2046a5a60d86060789b049d18ab6"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-gwt-3-1.json",
+      "bytes": 5054,
+      "sha256": "7e8f3880a4a18e34c29957ed7fa5ba5e527e5168794df540fb8de41bf352a590"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-python-1-1.json",
+      "bytes": 5057,
+      "sha256": "005f1cee385c4eceb50e68e079e87c8bbf8e24b076a77ed709f3025866b99583"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-python-2-1.json",
+      "bytes": 5057,
+      "sha256": "0281891dccb2b8b892e5d11e325897cdb5f24262a27a72074b3b9741f8743489"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-inventory-python-3-1.json",
+      "bytes": 5057,
+      "sha256": "f5b50619ca18edd14618e678921e144190610cfbed043edba3f49785480a5e19"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-gwt-1-1.json",
+      "bytes": 6410,
+      "sha256": "05a47a577f5e28b49288a32e78f0e8c237ff4cb40816ad5e039af806319bd2cc"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-gwt-2-1.json",
+      "bytes": 6410,
+      "sha256": "895a75795ceab71b749a7fe9e95ca0cc63c8f963ba251f986911655d8b277e27"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-gwt-3-1.json",
+      "bytes": 6410,
+      "sha256": "8d35b6facc8f02611ebfc35c278da05e9c057f573a0b83f3ba7822722892c704"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-python-1-1.json",
+      "bytes": 6413,
+      "sha256": "0d97f5ea4e229bb8c426e3660d20043380199c2992b1f01ff09e387e763e216f"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-python-2-1.json",
+      "bytes": 6413,
+      "sha256": "2caf7d7788eed59ed1f35342dfdab3a81039a4a629fd28cafe686f504fdbaa33"
+    },
+    {
+      "path": "evaluations/native_maintenance/2026-10-16-codex-cli/live/executions/withheld-native-maintenance-refund-python-3-1.json",
+      "bytes": 6413,
+      "sha256": "068aba2a804023055bb983eb908d49dbe15105f37e13a27d61d51b1814b9b4d2"
+    },
+    {
+      "path": "evaluations/subscription/2026-10-16/review/comparison.json",
+      "bytes": 144806,
+      "sha256": "05407a6ed5fdabd23fecbd53623511a3f90d7138cce371bf7d0763dfb3e5f755"
+    }
+  ]
+}
