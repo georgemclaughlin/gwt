@@ -1,0 +1,138 @@
+PROGRAM reimbursement review
+
+RECORD Policy
+  limit: integer
+
+RECORD Receipt
+  verified: boolean
+  reference: optional<text>
+
+RECORD Facts
+  amount: integer
+  policy: optional<Policy>
+  receipt: optional<Receipt>
+
+RECORD Decision
+  status: "approved" | "denied" | "review"
+  reason: text
+  payable: integer
+  reference: text
+
+REQUEST review reimbursement
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    status: "review"
+    reason: "unreviewed"
+    payable: 0
+    reference: "not recorded"
+  WHEN review facts into decision
+  OUTPUT decision is Decision
+
+WHEN review <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  REQUIRE facts.amount >= 0
+  IF facts.policy is present
+    REQUIRE facts.policy.limit >= 0
+  DECIDE
+    WHEN facts.policy is absent
+      set decision.reason to "missing_policy"
+    WHEN facts.receipt is absent
+      set decision.reason to "missing_receipt"
+    WHEN not facts.receipt.verified
+      set decision.status to "denied"
+      set decision.reason to "unverified_receipt"
+    WHEN facts.amount >= facts.policy.limit
+      set decision.status to "denied"
+      set decision.reason to "over_limit"
+    ELSE
+      set decision.status to "approved"
+      set decision.reason to "within_limit"
+      set decision.payable to facts.amount
+  IF facts.receipt is present and facts.receipt.reference is present
+    set decision.reference to facts.receipt.reference
+
+BACKGROUND
+GIVEN policy is Policy
+  limit: 100
+
+GIVEN receipt is Receipt
+  verified: true
+  reference: "R-1"
+
+SCENARIO a verified receipt within the policy limit
+GIVEN facts is Facts
+  amount: 100
+  policy: policy
+  receipt: receipt
+
+REQUEST review reimbursement
+
+THEN decision.status == "approved"
+AND decision.payable == 100
+AND decision.reference == "R-1"
+
+SCENARIO the policy limit is exceeded
+GIVEN facts is Facts
+  amount: 101
+  policy: policy
+  receipt: receipt
+
+REQUEST review reimbursement
+
+THEN decision.status == "denied"
+AND decision.reason == "over_limit"
+AND decision.payable == 0
+
+SCENARIO a missing policy requires review
+GIVEN facts is Facts
+  amount: 10
+  receipt: receipt
+
+REQUEST review reimbursement
+
+THEN decision.status == "review"
+AND decision.reason == "missing_policy"
+AND decision.reference == "R-1"
+
+SCENARIO a missing receipt requires review
+GIVEN facts is Facts
+  amount: 10
+  policy: policy
+
+REQUEST review reimbursement
+
+THEN decision.status == "review"
+AND decision.reason == "missing_receipt"
+AND decision.reference == "not recorded"
+
+SCENARIO a receipt reference is optional
+GIVEN unreferenced is Receipt
+  verified: true
+
+GIVEN facts is Facts
+  amount: 0
+  policy: policy
+  receipt: unreferenced
+
+REQUEST review reimbursement
+
+THEN decision.status == "approved"
+AND decision.payable == 0
+AND decision.reference == "not recorded"
+
+SCENARIO a false verification flag is present but not verified
+GIVEN unverified is Receipt
+  verified: false
+  reference: ""
+
+GIVEN facts is Facts
+  amount: 10
+  policy: policy
+  receipt: unverified
+
+REQUEST review reimbursement
+
+THEN decision.status == "denied"
+AND decision.reason == "unverified_receipt"
+AND decision.reference == ""

@@ -1,5 +1,7 @@
 # Vendor Onboarding Review
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding).
+
 This is the flagship GWT demo. It shows a practical vendor review workflow as
 one executable spec module: readable rules, embedded scenarios, a named JSON
 request boundary, generated host types, and Python/TypeScript host calls.
@@ -194,15 +196,15 @@ promoting GWT as the source of truth.
 ## Host Examples
 
 - Python host app:
-  [`examples/vendor_onboarding/host_app.py`](host_app.py)
+  [`examples/vendor_onboarding/host_app.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/host_app.py)
 - Python shadow-mode comparison:
-  [`examples/vendor_onboarding/shadow_mode.py`](shadow_mode.py)
+  [`examples/vendor_onboarding/shadow_mode.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/shadow_mode.py)
 - Generated Python helpers:
-  [`examples/vendor_onboarding/rules_types.py`](rules_types.py)
+  [`examples/vendor_onboarding/rules_types.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/rules_types.py)
 - TypeScript host app:
-  [`clients/typescript/examples/vendor-onboarding.ts`](../../clients/typescript/examples/vendor-onboarding.ts)
+  [`clients/typescript/examples/vendor-onboarding.ts`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/clients/typescript/examples/vendor-onboarding.ts)
 - Generated TypeScript declarations:
-  [`clients/typescript/examples/vendor-onboarding.generated.d.ts`](../../clients/typescript/examples/vendor-onboarding.generated.d.ts)
+  [`clients/typescript/examples/vendor-onboarding.generated.d.ts`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/clients/typescript/examples/vendor-onboarding.generated.d.ts)
 
 ## What This Demonstrates
 

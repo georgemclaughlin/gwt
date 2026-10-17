@@ -1,0 +1,35 @@
+{
+  "rustTestsPerToolchain": 391,
+  "toolchains": [
+    "1.85.0",
+    "1.96.0"
+  ],
+  "pythonTests": 664,
+  "scenarioExecutionsPerEngine": 13,
+  "independentInputs": 3276,
+  "crossEngineExecutions": 9828,
+  "unchangedEngineInputs": 56,
+  "comparison": {
+    "baselineMismatch": 0,
+    "cases": 10,
+    "failureChanged": 0,
+    "incompatible": 0,
+    "newFailure": 0,
+    "outputChanged": 0,
+    "pathChanged": 10,
+    "resolvedFailure": 0,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "browserValidation": "pending",
+  "humanParticipants": 0,
+  "sourceHashes": {
+    "examples/pressure_tests/subscription_entitlements.gwt": "80bd1dfe85d93539633d7543377ed055862d22f677552b57adaa03d389c99193",
+    "examples/pressure_tests/subscription-entitlements.md": "e7e38da057af20e1bf07c39bcce0d4d5fc98ab30307ee2380147861dc12d47df",
+    "crates/gwt-core/tests/subscription.rs": "93e1b5ef7fe7f77218360be4f474c89fe4ffe4f44a2e381ed0fb5eef47376c4d",
+    "evaluations/subscription/qualify.py": "65aaffebcc5c69c3d652e9a0d9f931181be71cedc10209b2b014e1e8c23cd0ae",
+    "docs/native-existence-decisions.md": "27abed47fbbf5146cafc8893bd872ac5f02a4595b21788031142f945939b0b07",
+    "docs/deferred-language-ideas.md": "5f1dc0119437e6c82360b5b082ecde66ca3bfa78e6de0d4bd147cb262ed96030",
+    "evaluations/subscription/2026-10-16/README.md": "f922dc91a4c4e361b9a95f981aaf6c3ad24cb12bae1296b9e07681523bf465e3"
+  }
+}

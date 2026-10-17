@@ -1,0 +1,78 @@
+{
+  "browsers": [
+    {
+      "checks": 542,
+      "engine": "chromium",
+      "executionComparisons": 526,
+      "version": "153.0.8010.12"
+    },
+    {
+      "checks": 542,
+      "engine": "firefox",
+      "executionComparisons": 526,
+      "version": "151.0"
+    },
+    {
+      "checks": 542,
+      "engine": "webkit",
+      "executionComparisons": 526,
+      "version": "26.4"
+    }
+  ],
+  "builds": [
+    {
+      "bytes": 1116981,
+      "memory": {
+        "maximumBytes": 67108864,
+        "maximumPages": 1024,
+        "minimumPages": 17
+      },
+      "sha256": "17dc282695cd1cfb27ed095e5a6698c0217537ac804959c3901097032ecc174d",
+      "toolchain": "1.96.0"
+    },
+    {
+      "bytes": 1184420,
+      "memory": {
+        "maximumBytes": 67108864,
+        "maximumPages": 1024,
+        "minimumPages": 18
+      },
+      "sha256": "91d173fddb3a7bda3f55a3422f139ac5405f8232948edd4f08883ce3fe57e8e8",
+      "toolchain": "1.85.0"
+    }
+  ],
+  "caseCount": 263,
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:79444fc4a87f366006de4d4be90ac3bf3fb81a8789bea9e01071e0a2adb8d42b"
+  },
+  "engineInputsUnchanged": 60,
+  "hashes": {
+    "evaluations/native_browser/2026-10-16-finite/chromium-check.js": "62276aa1472f6fe9b9980bcf9cb50b6ea43995b49ad7d418cf9aafe321d8ce61",
+    "evaluations/native_browser/2026-10-16-finite/chromium/browser-result.json": "3e80863f76a0a67a345fcc578e9f3477a66c8cb8838eaf42b58cee49df371c0c",
+    "evaluations/native_browser/2026-10-16-finite/chromium/desktop.png": "2321f5af60349871974b2a2a2bf82859d3fbffe3e8b8dcdcb70b07e014061a6c",
+    "evaluations/native_browser/2026-10-16-finite/chromium/mobile.png": "9a622a747b3c8a1ad13ab511ad3dfad87e13715d62fc9b490277edcadc1e2b8a",
+    "evaluations/native_browser/2026-10-16-finite/corpus/cases.json": "00be81a6dc8eaefa3975bcac632065648639ae607bbd7f5229c1717ef78435f8",
+    "evaluations/native_browser/2026-10-16-finite/corpus/origins.json": "b970320363b3a0674cdbc4cc6c6445af90ce1a1d00c34741968cb6353474f53b",
+    "evaluations/native_browser/2026-10-16-finite/corpus/preparation.json": "616187886e7d8ac781cd313fc684b12c535ed963f6cf10da4e72072f00335103",
+    "evaluations/native_browser/2026-10-16-finite/firefox-check.js": "51f7131ac1cb342bee8a6bb0e84ed6f8e58a71d9c1094f6df7e82b056a60c7a6",
+    "evaluations/native_browser/2026-10-16-finite/firefox/browser-result.json": "910725bc834ef721d2876e4907afc44f95d9b823a02ccf948b1028283e6b910e",
+    "evaluations/native_browser/2026-10-16-finite/firefox/desktop.png": "4f643827e0edc874f06a47534803cd179717eb64f936a8714741eafa0dd30729",
+    "evaluations/native_browser/2026-10-16-finite/firefox/mobile.png": "1d4dd30a7e3717822a5ce2e48993b33aab27e2f8030e65bc57cf23eab1c30d9b",
+    "evaluations/native_browser/2026-10-16-finite/webkit-check.js": "f9877cede4aa7f3ada60c559342a84a74479c05d07a435d3a40c89be441dc32e",
+    "evaluations/native_browser/2026-10-16-finite/webkit/browser-result.json": "bbd4c115b75af4452e5360c95ae9235141fe0836d7460626e4e856c70fb57a91",
+    "evaluations/native_browser/2026-10-16-finite/webkit/desktop.png": "bb7a791e0daf8167da7f5561e2737d75a7e700ef7f102863330b788b84eeeb91",
+    "evaluations/native_browser/2026-10-16-finite/webkit/mobile.png": "4d4391812c62bf0fd2ee255183f5f28f8a651af5879e41ca885cdf3bffd8076c",
+    "evaluations/native_browser/prepare_finite.py": "4eac1d9b0e1eb4af07ca0e8dd5ea7a46e7ec085cf89588f6b76b3bacbbdb3bb5",
+    "examples/native_browser_host/build.py": "fd98dd91b0fda433b174b2057b50c4ad9f15b01edf5fde17af460d6e87e45ab0",
+    "examples/native_browser_host/index.html": "41225df2569afa68c134ff5083c9b53cf685536003809760312c0741c72428a1",
+    "examples/native_browser_host/preview.mjs": "3aed459cb4c1ea3b85be40a2d746e02dfffeb798921d6f196374fdbb71fcd915",
+    "examples/native_browser_host/worker.mjs": "6ba89e54cdd02d37250921ffb2728d48688cc457342d2d771080023fbfc47fbd"
+  },
+  "previousObservationsPreserved": 97,
+  "scope": "Local Linux browser engines; no Safari/mobile-device, production, hosted CI, or human-benefit qualification.",
+  "screenshotsInspected": 6,
+  "totalBrowserChecks": 1626,
+  "totalExecutionComparisons": 1578,
+  "unapprovedMigrations": 97
+}

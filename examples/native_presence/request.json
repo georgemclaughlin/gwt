@@ -1,0 +1,7 @@
+{
+  "facts": {
+    "amount": 100,
+    "policy": {"limit": 100},
+    "receipt": {"verified": true, "reference": "R-1"}
+  }
+}

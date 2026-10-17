@@ -1,0 +1,13 @@
+{
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:c214be931c574a8fe850fd657c1b68e64e5d9222170557c3dde8ef7b9a3a10c5"
+  },
+  "kind": "gwt.native-version",
+  "languageProfile": "gwt-native-experimental",
+  "languageVersion": null,
+  "packageName": "gwt-core",
+  "packageVersion": "0.1.0",
+  "schemaVersion": 1,
+  "status": "experimental"
+}

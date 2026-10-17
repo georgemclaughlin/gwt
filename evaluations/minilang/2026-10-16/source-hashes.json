@@ -1,0 +1,14 @@
+{
+  "crates/gwt-core/tests/minilang.rs": "7498cd601a62c01e06813c6d3f946b32ba2c2e6a7a37a628b39d452a9ab760f8",
+  "docs/native-conformance.md": "890d8c3474d6a960bb1a7d0a35ea2305878a6c24b33b32b1cbbbb34c9e41ae1a",
+  "docs/native-minilang-adaptation.md": "d1aba024e12fdfa71c12b36e06eef7717e885a55b3fefd398131875f1ab2af84",
+  "evaluations/minilang/build_reviews.py": "c8a232464bed57873af15b976a4031ad9da66386eb7e5c145299a717c8d7354c",
+  "evaluations/minilang/check_browser.py": "aff557c7f5a6866eb772aea2c96176e606740c3d887d4b7f0bc0b1b0af6c3941",
+  "evaluations/minilang/qualify.py": "59f21f663baa319c0a0c6b8b395d1a806aad2cb1ebbdbc448c93ab39ac05c4ba",
+  "examples/minilang_spec/README.md": "73e8450c1d1127c6b0780c51702eac794e261a15a9e8b9acf21144b80fd7bb4a",
+  "examples/minilang_spec/engine.gwt": "52efed8a6abae34a624e6edf6ff13a7c29f7c1d05e79c7be73befb764ea455ea",
+  "examples/minilang_spec/native_scenarios.gwt": "d9982c624c8e5078c1084d6ebc0497af2ff84fea9e5a3ee06b3f1a5c138b1407",
+  "examples/minilang_spec/request.json": "b14568c8cf4e6ad03d1fe5bbc50c651dff0c4106a125d7ae07f3c63feb590552",
+  "examples/minilang_spec/rules.gwt": "26df7c3eb5ade8f322ea0e27ccf92703699ee1e2fdf0fc0369b733cd40f0e820",
+  "tests/test_examples.py": "340688779f9dcecc8fda23e181cf2c494185e464a71638b233ced0b5fdfd930a"
+}

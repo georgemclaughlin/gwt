@@ -1,0 +1,14 @@
+{
+  "crates/gwt-core/src/formatter.rs": "d7e4d2e8e1e826f7a8447348a79131214e006e38e4423510edff27f9661b2ab0",
+  "crates/gwt-core/src/formatter_cli.rs": "95e39266678a82321e1facf1d63240f036a5da8e4bf047468fb178cae3fd689c",
+  "crates/gwt-core/src/main.rs": "7f3dd328796e749caef55541c36e3b19ef4969ff71bfe91cb625681fb12ecadc",
+  "crates/gwt-core/src/lib.rs": "2d0465f4a089ac1288692cb7ac8a0640815b7947818a78ae764a714c0ebdad03",
+  "crates/gwt-core/src/program_source.rs": "6d91d99750808671c780e3847c000cf9bb45801b71c4460ba2a7188c4af00b06",
+  "crates/gwt-core/src/scenario_source.rs": "4a421f889c01c88ac5616f9853ecd03fc60da875d60ba68333d920ddb0abd889",
+  "crates/gwt-core/tests/formatter.rs": "5b59c3f7688770f709d468126ded73592896f618c3f1da0fba8d4ada59afad4c",
+  "vscode-gwt/native-editor.js": "b7664cb694da75fdd3ca57acafcf767ecfb4fc9af55a1ac67080e7e3cb7bb36f",
+  "vscode-gwt/extension.js": "fa11245e90da005223460528197e49244c791b46e8b99b7791370a7c0803d1ae",
+  "vscode-gwt/package.json": "d257cc12ce5ef1975a89bef2819328eca400557cb04f549aed687dfb16444d8d",
+  "vscode-gwt/tests/extension-host.js": "6234c577c247e8d492aa1350d59c2389be43f745bf7a0aea7f23c0a5a32f3a28",
+  "evaluations/native_editor/qualify.py": "166a706ffe055041e15f1b77c65d1d2293859f8d8044d42f61906ffc9910b98a"
+}

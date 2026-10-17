@@ -1,0 +1,150 @@
+{
+  "toolchain": "1.96.0",
+  "profile": "release",
+  "packageVerificationProfile": "dev",
+  "packageVerificationTarget": "x86_64-unknown-linux-musl",
+  "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-unknown-linux-gnu\nrelease: 1.96.0\nLLVM version: 22.1.2\n",
+  "target": "x86_64-unknown-linux-musl",
+  "installedExecutableSha256": "ca5be108eda81fd2c4a165d89f7016347ffee256e80f42bb5861e0349718a54e",
+  "relocatedExecutableSha256": "ca5be108eda81fd2c4a165d89f7016347ffee256e80f42bb5861e0349718a54e",
+  "packageSha256": "67bd047f2bd34741b831a8afee06362d222c64b5eb191b83298d1c5214112313",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:3fc3fc04f9aad3ec5420d12606a85f7a6d4d49f41b4e2bc00d146b7cd0ea0265"
+  },
+  "independentFingerprintVerified": true,
+  "packageAndHostDependencyGraphsMatch": true,
+  "packagedUnitTestsPassed": 3,
+  "embeddedScenariosPassed": 2,
+  "sharedProgramThreads": 4,
+  "concurrentExecutions": 288,
+  "checks": [
+    {
+      "id": "normal",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "three-units",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "small-decimal",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "integer-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "beyond-js-integer",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "beyond-machine-integer",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "negative-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "missing-invoice",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "boolean-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "fractional-json-number",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "extra-field",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "missing-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-steps",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": false
+    },
+    {
+      "id": "zero-evidence",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": false
+    },
+    {
+      "id": "three taxable units",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    }
+  ],
+  "relocatedCaseReplays": 18,
+  "previousEngineTransitionVerified": true,
+  "binaryBundle": {
+    "archive": "gwt-native-0.1.0-x86_64-unknown-linux-musl.tar.gz",
+    "archiveSha256": "1261b42a348fed9cf16497405c0b4e7875bf10cc332fc9136a7a6fd5b703190d",
+    "extractedRoot": "/home/g/.cache/gwt-qualifications/gwt-package-host-hzspl0s_/binary-only/gwt-native-0.1.0-x86_64-unknown-linux-musl",
+    "pathCleared": true,
+    "exampleScenarios": 2,
+    "exampleRequest": true,
+    "caseReplays": 18,
+    "executableBytes": 4184136,
+    "linkage": {
+      "interpreter": null,
+      "neededLibraries": [],
+      "glibcVersionSymbols": []
+    }
+  },
+  "workspace": "/home/g/.cache/gwt-qualifications/gwt-package-host-hzspl0s_",
+  "commandCount": 105
+}

@@ -1,0 +1,307 @@
+{
+  "checks": [
+    {
+      "name": "boundaries",
+      "error": null,
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "allocation-correct-gwt",
+      "error": null,
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "allocation-correct-python",
+      "error": null,
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "noisy-output",
+      "error": null,
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "syntax-error",
+      "error": "process_error",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "wrong-count",
+      "error": "invalid_worker_response",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "duplicate-key",
+      "error": "invalid_worker_response",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "nonfinite",
+      "error": "invalid_worker_response",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "false-rejection",
+      "error": "invalid_worker_response",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 120,
+        "stdoutBytes": 16777216,
+        "stderrBytes": 262144,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "timeout",
+      "error": "timeout",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 2,
+        "stdoutBytes": 1024,
+        "stderrBytes": 1024,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "stdout-limit",
+      "error": "stdout_limit",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 2,
+        "stdoutBytes": 1024,
+        "stderrBytes": 1024,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    },
+    {
+      "name": "stderr-limit",
+      "error": "stderr_limit",
+      "containerRemovedVerified": true,
+      "environment": {
+        "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+        "repoDigests": [
+          "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+        "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+        "timeoutSeconds": 2,
+        "stdoutBytes": 1024,
+        "stderrBytes": 1024,
+        "network": "none",
+        "readOnlyRoot": true,
+        "user": "65534:65534",
+        "memoryBytes": 268435456,
+        "cpus": 1,
+        "pids": 64,
+        "temporaryBytes": 33554432
+      }
+    }
+  ],
+  "correctAllocationExecutions": 1996,
+  "liveModelCalls": 0,
+  "humanParticipants": 0
+}

@@ -1,0 +1,14 @@
+{
+  "README.md": "3183efce7eb5ee8e7032505eab38ee273c8ed59f97bba0154d32caf4f8c2f64e",
+  "docs/native-conformance.md": "aaaeedb444497841676c25e8eecadcef490c8e856754e97b80c554bcbb6ed903",
+  "docs/project-goal-progress.md": "06cfaa9bf7ed9de7ebb33eb853060cb2d7febaf39cc947ef31c956aa11f09c44",
+  "tests/test_examples.py": "615321dcfe0a6ba53e9fdc9f9a4fe9af66872eaca30e52f7b112b143f8ecd0f5",
+  "examples/native_weighted_allocation/rules.gwt": "1bc3ab577aca5d8e03f77a00b2920cff726e203c60388e498f5c54735a886808",
+  "examples/native_weighted_allocation/request.json": "fb38e08eec297b9b6876aef25e3a92306aeb7a16626a80501d2cbfdb367d53bd",
+  "examples/native_weighted_allocation/README.md": "e4954326f6d7838e3b4eb0beb5cad40ccca4d3234fd8d20464dc45dbe260e3e3",
+  "crates/gwt-core/tests/weighted_allocation.rs": "40b46a981b19ca9f524a6443b2cfb1c4937a57ceb2985ac109a73addb0ee7ed1",
+  "crates/gwt-core/tests/fixtures/weighted_allocation.json": "4616acc7c8b5947a05bf0efce878d70da2eb13696dbc85e0c4ca704942f21ea3",
+  "evaluations/native_editor/weighted_allocation_oracle.py": "630abbe0bd9fc8e974634d403baea90a19ba6c818bae0b6a25d8ed40b5015c32",
+  "evaluations/native_editor/qualify_weighted_allocation.py": "32553af96fb04d5dc4edd81382a15a33040f2074bc266ff9452eb0f8458e193e",
+  "evaluations/native_editor/2026-10-16-weighted-allocation/README.md": "f86f88257bed81b7c8b9d06fabc5d9bef8380706a1a4ac06b96ff015774714e5"
+}

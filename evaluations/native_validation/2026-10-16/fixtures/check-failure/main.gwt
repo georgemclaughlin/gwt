@@ -1,0 +1,2 @@
+SCENARIO invalid
+THEN unknown == 1

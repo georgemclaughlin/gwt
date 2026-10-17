@@ -1,0 +1,99 @@
+PROGRAM bank transfer preparation
+
+RECORD Method is one of
+  bank:
+    account: text
+    verified: boolean
+  cash:
+    desk: text
+
+RECORD Facts
+  amount: integer
+  method: optional<Method>
+
+RECORD Transfer
+  account: text
+  amount: integer
+
+REQUEST prepare transfer
+  GIVEN facts is Facts
+  GIVEN transfer is Transfer
+    account: ""
+    amount: 0
+  WHEN prepare facts into transfer
+  OUTPUT transfer is Transfer
+
+WHEN prepare <facts> into <transfer>
+  GIVEN facts is Facts
+  AND transfer is Transfer
+  REQUIRE facts.amount > 0
+  REQUIRE facts.method is present
+  REQUIRE facts.method.kind == "bank"
+  REQUIRE facts.method.verified
+  REQUIRE facts.method.account != ""
+  set transfer.account to facts.method.account
+  set transfer.amount to facts.amount
+
+SCENARIO verified bank transfer
+GIVEN facts is Facts
+  amount: 100
+  method:
+    kind: "bank"
+    account: "bank-reference-1"
+    verified: true
+REQUEST prepare transfer
+THEN transfer.account == "bank-reference-1"
+AND transfer.amount == 100
+
+SCENARIO method is required
+GIVEN facts is Facts
+  amount: 100
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.amount == 100
+
+SCENARIO cash cannot be transferred
+GIVEN facts is Facts
+  amount: 100
+  method:
+    kind: "cash"
+    desk: "North"
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.method is present and facts.method.kind == "cash"
+
+SCENARIO bank verification is required
+GIVEN facts is Facts
+  amount: 100
+  method:
+    kind: "bank"
+    account: "bank-reference-1"
+    verified: false
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.method is present and facts.method.kind == "bank" and not facts.method.verified
+
+SCENARIO account reference is required
+GIVEN facts is Facts
+  amount: 100
+  method:
+    kind: "bank"
+    account: ""
+    verified: true
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.amount == 100
+
+SCENARIO zero amount is rejected
+GIVEN facts is Facts
+  amount: 0
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.amount == 0
+
+SCENARIO negative amount is rejected
+GIVEN facts is Facts
+  amount: -1
+REQUEST prepare transfer
+THEN fails with "assertion_failed"
+AND facts.amount == -1

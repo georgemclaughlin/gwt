@@ -1,0 +1,96 @@
+PROGRAM typed expression evaluation
+
+RECORD Expression is one of
+  literal:
+    value: integer
+  addition:
+    left: integer
+    right: integer
+  comparison:
+    left: integer
+    right: integer
+    threshold: integer
+    then_text: text
+    else_text: text
+
+TYPE Addition is Expression of kind addition
+TYPE Comparison is Expression of kind comparison
+
+RECORD Result
+  total: integer
+  text: text
+
+REQUEST evaluate expression
+  GIVEN expression is Expression
+  GIVEN result is Result
+    total: 0
+    text: ""
+  WHEN evaluate expression into result
+  OUTPUT result is Result
+
+WHEN evaluate <expression> into <result>
+  GIVEN expression is Expression
+  AND result is Result
+  DEPENDING ON expression
+    WHEN the kind is literal
+      set result.total to expression.value
+    WHEN the kind is addition
+      combine operands expression into result
+    WHEN the kind is comparison
+      compare sum expression into result
+
+WHEN combine operands <expression> into <result>
+  GIVEN expression is Addition
+  AND result is Result
+  set result.total to expression.left + expression.right
+
+WHEN compare sum <expression> into <result>
+  GIVEN expression is Comparison
+  AND result is Result
+  set result.total to expression.left + expression.right
+  IF result.total > expression.threshold
+    set result.text to expression.then_text
+  ELSE
+    set result.text to expression.else_text
+
+SCENARIO literal preserves a negative value
+GIVEN expression is Expression
+  kind: "literal"
+  value: -3
+
+REQUEST evaluate expression
+THEN result.total == -3
+AND result.text == ""
+
+SCENARIO addition combines the operands
+GIVEN expression is Addition
+  kind: "addition"
+  left: 10
+  right: 20
+
+GIVEN result is Result
+  total: 0
+  text: ""
+
+WHEN combine operands expression into result
+THEN result.total == 30
+AND expression.kind == "addition"
+
+SCENARIO comparison <threshold> prints <expected>
+GIVEN expression is Expression
+  kind: "comparison"
+  left: 10
+  right: 20
+  threshold: <threshold>
+  then_text: "above"
+  else_text: "not above"
+
+REQUEST evaluate expression
+THEN result.total == 30
+AND result.text == <expected>
+
+EXAMPLES
+  | threshold | expected    |
+  | 29        | "above"     |
+  | 30        | "not above" |
+  | 31        | "not above" |

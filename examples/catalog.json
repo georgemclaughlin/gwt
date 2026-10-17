@@ -1,0 +1,119 @@
+{
+  "kind": "gwt.example-catalog",
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "path": "examples/hello.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/inventory_allocation_spike/native_scenarios.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/language_tour/native_request.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/loan_underwriting/native_rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/minilang_spec/native_scenarios.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_branch_proofs/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_delivery/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_early_returns/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_expected_failures/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_filter_proofs/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_finite_codes/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_kind_conditions/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_kind_contracts/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_kind_dispatch/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_lookup/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_one_of/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_presence/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_print_expectations/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_require/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_reservation/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_return_values/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_review_walkthrough/candidate.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_rounded_division/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_setup_tables/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_value_arguments/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_value_dispatch/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/native_weighted_allocation/rules.gwt",
+      "command": "validate"
+    },
+    {
+      "path": "examples/order_fulfillment/native_request.gwt",
+      "command": "validate"
+    }
+  ],
+  "otherSources": "Historical comparison fixtures retained for tests; not a promise of language support. See docs/python-retirement.md."
+}

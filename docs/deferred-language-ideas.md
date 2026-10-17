@@ -5,6 +5,13 @@ they become language syntax.
 
 ## Explicit Initialization Helpers
 
+The native [typed local record form](native-local-records.md) now addresses
+the template-passing problem demonstrated by weighted allocation. A returning
+domain behavior can construct its result using `LET name be RecordType:` with
+visible fields. This does not introduce implicit defaults or eliminate repeated
+policy-specific initialization; those broader ideas remain subject to the
+criteria below.
+
 Large decision records often require the same initialized fields in a named
 `REQUEST` and in a reset behavior. Examples such as vendor onboarding and the
 MiniLang VM make this visible through repeated zero, false, empty-list, and
@@ -26,20 +33,26 @@ docs, and at least one public example that becomes clearer after the change.
 
 ## First-Match Collection
 
-Some workflows need to scan a collection and apply only the first matching
-domain rule. Today this can require guard booleans inside `FOR` loops. That is
-awkward, but broad query syntax would violate GWT's design principles.
+`FIND ... ELSE` now provides a first matching item and an explicit missing case
+in both toolchains. The [expense adaptation](native-source-adaptation.md) replaces
+an existence check followed by a second search. The
+[subscription adaptation](native-existence-decisions.md) uses the same primitive
+inside a named boolean-returning behavior for a standalone existence question.
+These implemented paths no longer require a loop flag just to stop at a match.
 
 Do not add SQL-like filtering, joins, ordering, projection pipelines, or
 implicit set-based mutation. If this feature becomes necessary, keep it narrow
 and step-shaped.
 
-Possible directions:
+Remaining questions:
 
-- a focused first-match behavior over a list with an explicit missing case
-- better predicate support for existing `FIND` / `FIND ... ELSE` forms
-- example-specific refactors that prove the need before syntax is added
+- broader migration of mandatory lowercase `find`, beyond the
+  [required inventory inspection](native-failure-exits.md), and optional lookup's
+  unchanged-on-missing behavior; check failure semantics and destination sharing;
+- predicate needs that the existing expression and flow-proof rules cannot
+  express clearly;
+- example-specific evidence that justifies another primitive.
 
-This should now wait for v0.3 pilot evidence. If multiple realistic examples
-still show repeated guard-state patterns, write a design note with pressure-test
-before/after code before implementing syntax.
+External pilots remain deferred by the owner. Further local examples can expose
+design needs, but cannot establish human benefit. Require a concrete before/after
+workflow and independent behavior checks before extending syntax.

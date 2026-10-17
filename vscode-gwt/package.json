@@ -13,12 +13,13 @@
   ],
   "activationEvents": [
     "onLanguage:gwt",
-    "onDebug:gwt",
-    "onCommand:gwt.debugCurrentFile",
     "onCommand:gwt.validateCurrentFile",
     "onCommand:gwt.testCurrentFile",
     "onCommand:gwt.runCurrentFile",
-    "onCommand:gwt.formatCurrentFile"
+    "onCommand:gwt.formatCurrentFile",
+    "onCommand:gwt.checkCurrentFile",
+    "onCommand:gwt.profileCurrentFile",
+    "onCommand:gwt.showEngineInfo"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -44,10 +45,6 @@
     ],
     "commands": [
       {
-        "command": "gwt.debugCurrentFile",
-        "title": "GWT: Debug Current File"
-      },
-      {
         "command": "gwt.validateCurrentFile",
         "title": "GWT: Validate Current File"
       },
@@ -62,6 +59,18 @@
       {
         "command": "gwt.formatCurrentFile",
         "title": "GWT: Format Current File"
+      },
+      {
+        "command": "gwt.checkCurrentFile",
+        "title": "GWT: Check Current File"
+      },
+      {
+        "command": "gwt.profileCurrentFile",
+        "title": "GWT: Profile Execution Evidence"
+      },
+      {
+        "command": "gwt.showEngineInfo",
+        "title": "GWT: Show Engine Information"
       }
     ],
     "breakpoints": [
@@ -69,94 +78,57 @@
         "language": "gwt"
       }
     ],
-    "debuggers": [
-      {
-        "type": "gwt",
-        "label": "GWT",
-        "languages": [
-          "gwt"
-        ],
-        "initialConfigurations": [
-          {
-            "type": "gwt",
-            "request": "launch",
-            "name": "Debug Current GWT File",
-            "program": "${file}",
-            "mode": "test",
-            "json": false
-          }
-        ],
-        "configurationSnippets": [
-          {
-            "label": "GWT: Debug Current File",
-            "description": "Run the current GWT file through the GWT debugger.",
-            "body": {
-              "type": "gwt",
-              "request": "launch",
-              "name": "Debug Current GWT File",
-              "program": "${file}",
-              "mode": "test",
-              "json": false
-            }
-          }
-        ],
-        "configurationAttributes": {
-          "launch": {
-            "required": [
-              "program"
-            ],
-            "properties": {
-              "program": {
-                "type": "string",
-                "description": "Path to the GWT file to run.",
-                "default": "${file}"
-              },
-              "mode": {
-                "type": "string",
-                "enum": [
-                  "test",
-                  "run"
-                ],
-                "default": "test",
-                "description": "Run with gwt test or gwt run."
-              },
-              "json": {
-                "type": "boolean",
-                "default": false,
-                "description": "Pass --json to the GWT command."
-              },
-              "cwd": {
-                "type": "string",
-                "description": "Working directory for the debug run."
-              }
-            }
-          }
-        }
-      }
-    ],
     "configuration": {
       "title": "GWT",
       "properties": {
-        "gwt.server.command": {
+        "gwt.command": {
           "type": "string",
-          "default": "",
-          "description": "Optional command override used to start the GWT language server. Empty uses the repo-local Python server during development, falling back to gwt lsp."
+          "scope": "resource",
+          "default": "gwt",
+          "description": "Installed GWT executable or explicit path. Must identify the Rust engine; no fallback is used."
         },
-        "gwt.server.args": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "Arguments passed to the GWT language server command when gwt.server.command is set."
+        "gwt.importRoot": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Native import root, absolute or relative to the workspace folder. Empty uses the workspace folder, or the file parent outside a workspace."
+        },
+        "gwt.limitsFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Execution limit JSON file for GWT run, profile, test, and validate. Absolute or relative to the workspace folder (file parent outside a workspace). Empty uses GWT defaults. Dirty open limit files are saved before execution; requires a GWT executable with --limits support."
+        },
+        "gwt.native.command": {
+          "type": "string",
+          "scope": "resource",
+          "deprecationMessage": "Use gwt.command. This preview setting is retained only to migrate existing configurations."
+        },
+        "gwt.native.importRoot": {
+          "type": "string",
+          "scope": "resource",
+          "deprecationMessage": "Use gwt.importRoot. This preview setting is retained only to migrate existing configurations."
+        },
+        "gwt.native.limitsFile": {
+          "type": "string",
+          "scope": "resource",
+          "deprecationMessage": "Use gwt.limitsFile. This preview setting is retained only to migrate existing configurations."
         }
       }
     }
   },
   "scripts": {
-    "check": "node --check extension.js"
+    "check": "node --check extension.js && node --check native-editor.js && node --check native-tools.js",
+    "test": "node --test tests/*.test.js"
   },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "GWT checks and commands execute a configured local language tool."
+    }
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
   }
 }

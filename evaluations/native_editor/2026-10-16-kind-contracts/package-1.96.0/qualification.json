@@ -1,0 +1,132 @@
+{
+  "toolchain": "1.96.0",
+  "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-unknown-linux-gnu\nrelease: 1.96.0\nLLVM version: 22.1.2\n",
+  "target": "x86_64-unknown-linux-gnu",
+  "installedExecutableSha256": "b70d8bd3caaae1819dd488537f7351546f874a8ffbcf1b43cf7aaac17b4a1e1d",
+  "relocatedExecutableSha256": "a7b954687b23f2badd0aa12bd6b76acf5bfeaee7f53c2d95f183e4c47a4ca048",
+  "packageSha256": "60eb224b8b18a341b17ce81c15bfba9a2fa7b88e3b30c62d3ab6357af30f7c57",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:b494556ae237d8188ce2cf470c3eca6b1e8d32faa6c0bb4dd3938905ef838da3"
+  },
+  "independentFingerprintVerified": true,
+  "packageAndHostDependencyGraphsMatch": true,
+  "packagedUnitTestsPassed": 3,
+  "embeddedScenariosPassed": 2,
+  "sharedProgramThreads": 4,
+  "concurrentExecutions": 288,
+  "checks": [
+    {
+      "id": "normal",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "three-units",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "small-decimal",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "integer-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "beyond-js-integer",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "beyond-machine-integer",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "negative-price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "missing-invoice",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "boolean-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "fractional-json-number",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "extra-field",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "missing-quantity",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero-steps",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": false
+    },
+    {
+      "id": "zero-evidence",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": false
+    },
+    {
+      "id": "three taxable units",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    },
+    {
+      "id": "zero price",
+      "libraryIndependentExpectation": true,
+      "installedCliReplay": true,
+      "directCliRunAndCapture": true
+    }
+  ],
+  "relocatedCaseReplays": 18,
+  "previousEngineTransitionVerified": false,
+  "workspace": "/tmp/gwt-package-host-r4xiuq1n",
+  "commandCount": 79
+}

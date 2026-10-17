@@ -10,7 +10,7 @@
     >
     <meta name="color-scheme" content="dark light">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="assets/site.css">
+    <link rel="stylesheet" href="assets/site.css?v=syntax-3">
   </head>
   <body>
     <main id="top">
@@ -19,21 +19,22 @@
           <p class="eyebrow">Specs you can run</p>
           <h1>GWT</h1>
           <p class="lede">
-            In GWT, the spec is the program. Define the input contract, run
-            named behavior, and return typed results from the same executable
-            file.
+            In GWT, the spec is the program. Read the rules, run them, and
+            trace each result back to the behavior that produced it.
+            Built for people to understand and review as AI helps write the code.
           </p>
           <p class="value-line">
             The same file can also carry <strong>GIVEN</strong> /
             <strong>WHEN</strong> / <strong>THEN</strong> scenarios for tests.
             Capture real runs and compare behavior changes without creating a
-            second implementation of the rules.
+            second implementation of the rules. GWT runs directly, with exact numbers and source-backed explanations.
           </p>
           <div class="actions" aria-label="Primary links">
-            <a class="button primary" href="getting-started.html">Getting Started</a>
-            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/vendor_onboarding">Flagship Demo</a>
+            <a class="button primary" href="demo/delivery-review.html">Explore A Change</a>
+            <a class="button secondary" href="getting-started.html">Get Started</a>
+            <a class="button secondary" href="getting-started.html#review">Review Walkthrough</a>
             <a class="button secondary" href="#run">Run The Examples</a>
-            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">Read The Guide</a>
+            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec-is-code.md">Spec Is Code</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/dsl-and-llms.md">DSLs And LLMs</a>
             <a class="button secondary icon-button" href="https://github.com/georgemclaughlin/gwt" aria-label="View GWT on GitHub" title="View GWT on GitHub">
@@ -44,43 +45,44 @@
           </div>
         </div>
 
-        <div class="execution-visual" aria-label="GWT code and JSON result example">
-          <div class="visual-tabs" aria-hidden="true">
-            <span>input.json</span>
-            <span>rules.gwt</span>
-            <span>result.json</span>
-          </div>
-          <div class="visual-grid">
-            <pre data-title="input.json"><code>{
-  <span class="tok-key">"account"</span>: {
-    <span class="tok-key">"balance"</span>: <span class="tok-number">100</span>,
-    <span class="tok-key">"status"</span>: <span class="tok-string">"open"</span>
-  },
-  <span class="tok-key">"amount"</span>: <span class="tok-number">30</span>
-}</code></pre>
-            <pre data-title="rules.gwt"><code><span class="tok-kw">RECORD</span> <span class="tok-type">Account</span>
-  <span class="tok-key">balance</span>: <span class="tok-type">number</span>
-  <span class="tok-key">status</span>: <span class="tok-string">"open"</span> | <span class="tok-string">"closed"</span>
-<span class="tok-kw">REQUEST</span> withdraw from account
-  <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
-  <span class="tok-kw">AND</span> amount <span class="tok-word">is</span> <span class="tok-type">number</span>
-  <span class="tok-kw">WHEN</span> withdraw amount from account
-  <span class="tok-kw">OUTPUT</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
-<span class="tok-kw">WHEN</span> withdraw <span class="tok-param">&lt;amount&gt;</span> from <span class="tok-param">&lt;account&gt;</span>
-  <span class="tok-kw">GIVEN</span> account <span class="tok-word">is</span> <span class="tok-type">Account</span>
-  <span class="tok-kw">REQUIRE</span> account.status <span class="tok-word">is</span> <span class="tok-string">"open"</span>
-  <span class="tok-kw">AND</span> account.balance <span class="tok-word">is at least</span> amount
-  <span class="tok-action">subtract</span> amount from account.balance</code></pre>
-            <pre data-title="result.json"><code>{
-  <span class="tok-key">"ok"</span>: <span class="tok-bool">true</span>,
-  <span class="tok-key">"result"</span>: {
-    <span class="tok-key">"account"</span>: {
-      <span class="tok-key">"balance"</span>: <span class="tok-number">70</span>,
-      <span class="tok-key">"status"</span>: <span class="tok-string">"open"</span>
-    }
-  }
-}</code></pre>
-          </div>
+        <div class="execution-visual policy-preview" aria-label="Delivery policy and example execution">
+          <section class="policy-rules" aria-labelledby="rules-heading">
+            <h2 id="rules-heading" class="policy-heading">Readable rules</h2>
+<pre><code data-language="gwt" data-selected-lines="12-14"><span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-word">into</span> <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">AND</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">0</span>
+  <span class="tok-kw">DECIDE</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"manual"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.member
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+<span class="policy-selected">    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&lt;=</span> <span class="tok-number">1500</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">5</span></span>
+    <span class="tok-kw">ELSE</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">9</span></code></pre>
+          </section>
+          <section class="policy-decisions" aria-labelledby="decisions-heading">
+            <h2 id="decisions-heading" class="policy-heading">Traceable decisions</h2>
+            <div class="policy-trace">
+              <p class="policy-input"><span class="eyebrow">Example input</span><strong>1,500g parcel · Nonmember</strong></p>
+              <ol class="policy-steps" aria-label="Execution path">
+                <li><span>Positive weight required</span><strong>Passed</strong></li>
+                <li><span>Heavier than 5,000g?</span><strong>No</strong></li>
+                <li><span>Member?</span><strong>No</strong></li>
+                <li class="policy-match"><span>At or below 1,500g?</span><strong>Matched</strong></li>
+              </ol>
+              <div class="policy-result" aria-label="Execution result">
+                <span class="eyebrow">Selected branch writes</span>
+                <dl><div><dt>Status</dt><dd>standard</dd></div><div><dt>Fee</dt><dd>5</dd></div></dl>
+              </div>
+              <a class="text-link" href="demo/delivery-review.html">Explore the full execution evidence →</a>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -142,33 +144,16 @@
 
       <section id="workflow" class="section split">
         <div class="section-heading">
-          <p class="eyebrow">Real example</p>
-          <h2>Vendor Onboarding Review</h2>
-          <p>
-            This example reviews one vendor request and returns a clear
-            decision with the reasons that caused it.
-          </p>
-          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/vendor_onboarding">
-            View vendor onboarding
-          </a>
+          <p class="eyebrow">Try a real change</p><h2>Extend A Delivery Fee Band</h2>
+          <p>Raise the low-fee weight limit from 1,000g to 1,500g. Check which customers pay less,
+          and whether membership benefits, heavy-parcel handling, and invalid-input rejection still hold.</p>
+          <a class="text-link" href="getting-started.html">Run the walkthrough</a>
         </div>
-        <div class="trace" aria-label="Vendor onboarding trace">
-          <div class="trace-row">
-            <span class="trace-label">Request</span>
-            <span>Cloud Ledger, $125k spend, handles customer data</span>
-          </div>
-          <div class="trace-row warning">
-            <span class="trace-label">Checks</span>
-            <span>Insurance is expired; security questionnaire is missing</span>
-          </div>
-          <div class="trace-row">
-            <span class="trace-label">Reasons</span>
-            <span>high_annual_spend, handles_customer_data, missing documents</span>
-          </div>
-          <div class="trace-row decision">
-            <span class="trace-label">Decision</span>
-            <span>needs_review, 10 risk points, critical tier</span>
-          </div>
+        <div class="trace" aria-label="Delivery change trace">
+          <div class="trace-row"><span class="trace-label">Input</span><span>1,500g parcel, nonmember</span></div>
+          <div class="trace-row"><span class="trace-label">Before</span><span>Above 1,000g: fee 9</span></div>
+          <div class="trace-row decision"><span class="trace-label">After</span><span>At or below 1,500g: fee 5</span></div>
+          <div class="trace-row"><span class="trace-label">Evidence</span><span>Compare the conditions and writes in both source revisions</span></div>
         </div>
       </section>
 
@@ -181,7 +166,7 @@
             domain names, replay them against two real program versions, and
             open a self-contained review dossier.
           </p>
-          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/execution-cases.md">
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-review-walkthrough.md">
             Read the evidence workflow
           </a>
         </div>
@@ -189,29 +174,20 @@
           <li>capture an Execution Case</li>
           <li>group named cases in a corpus</li>
           <li>compare baseline and candidate behavior</li>
-          <li>review evidence in the local workbench</li>
+          <li>review source-backed evidence in an offline page</li>
         </ol>
       </section>
 
-      <section id="stress" class="section split reverse">
+      <section id="foundation" class="section split reverse">
         <div class="section-heading">
-          <p class="eyebrow">Stress test</p>
-          <h2>MiniLang 2 VM</h2>
-          <p>
-            The MiniLang 2 example uses GWT to describe a tiny language VM:
-            lexer, parser, bytecode, closures, modules, debugger state, and
-            runtime errors.
-          </p>
-          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/minilang2_vm">
-            View MiniLang 2
-          </a>
+          <p class="eyebrow">Rust foundation</p><h2>Readable Behavior, Native Execution</h2>
+          <p>The Rust engine checks and executes GWT source. Use the command line, embed it in a Rust application,
+          or run the WebAssembly build in a browser. The language has its own explicit semantics.</p>
+          <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-embedding.md">Explore host integration</a>
         </div>
-        <ol class="pipeline" aria-label="MiniLang2 pipeline">
-          <li>source program</li>
-          <li>lexer and parser</li>
-          <li>scope and closures</li>
-          <li>bytecode compiler</li>
-          <li>VM, debugger, and REPL</li>
+        <ol class="pipeline" aria-label="Native execution pipeline">
+          <li>check typed contracts and behavior</li><li>execute with exact numbers and explicit limits</li>
+          <li>capture inputs, source, and execution evidence</li><li>compare revisions and record review decisions</li>
         </ol>
       </section>
 
@@ -220,73 +196,24 @@
           <p class="eyebrow">Try it</p>
           <h2>Run It Locally</h2>
         </div>
+        <p>Use GWT to check a policy, run a request, and review a proposed change.</p>
+        <a class="text-link" href="getting-started.html">Get GWT and follow the example</a>
         <div class="command-grid">
           <article class="command-item">
-            <div class="command-copy">
-              <h3>Validate The Module</h3>
-              <p>Check syntax, contracts, formatting, and embedded scenarios before host code runs.</p>
-            </div>
-            <pre><code>python -m gwtlang validate \
-  examples/vendor_onboarding/rules.gwt \
-  --import-root examples/vendor_onboarding \
-  --no-absolute-imports</code></pre>
+            <div class="command-copy"><h3>Check Your Rules</h3><p>Validate the policy and run its embedded scenarios.</p></div>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> validate delivery.gwt</code></pre>
           </article>
           <article class="command-item">
-            <div class="command-copy">
-              <h3>Call It Like An App</h3>
-              <p>Send JSON state to a named request and receive the stable result envelope.</p>
-            </div>
-            <pre><code>python -m gwtlang run \
-  examples/vendor_onboarding/rules.gwt \
-  --json-input examples/vendor_onboarding/request.json \
-  --request "review vendor" \
-  --json</code></pre>
+            <div class="command-copy"><h3>Run A Request</h3><p>Send a parcel’s weight and membership status to the delivery policy.</p></div>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> run delivery.gwt \
+  <span class="tok-key">--request</span> <span class="tok-string">"quote delivery"</span> \
+  <span class="tok-key">--input</span> parcel.json</code></pre>
           </article>
           <article class="command-item">
-            <div class="command-copy">
-              <h3>Generate Host Types</h3>
-              <p>Create TypeScript declarations or Python helpers from checked request and output contracts.</p>
-            </div>
-            <pre><code>python -m gwtlang types \
-  examples/vendor_onboarding/rules.gwt \
-  --language typescript \
-  --output vendor-onboarding.d.ts</code></pre>
-          </article>
-          <article class="command-item">
-            <div class="command-copy">
-              <h3>Run A Typed Host</h3>
-              <p>Use the generated Python client wrapper to call the same named request.</p>
-            </div>
-            <pre><code>python examples/vendor_onboarding/host_app.py</code></pre>
-          </article>
-          <article class="command-item">
-            <div class="command-copy">
-              <h3>Serve A Standard HTTP Boundary</h3>
-              <p>Use OpenAPI and <code>gwt serve</code> as the primary cross-language integration path.</p>
-            </div>
-            <pre><code>python -m gwtlang openapi \
-  examples/deployable_api/rules.gwt \
-  --output openapi.json
-
-python -m gwtlang serve \
-  examples/deployable_api/rules.gwt \
-  --port 8080</code></pre>
-          </article>
-          <article class="command-item">
-            <div class="command-copy">
-              <h3>Capture Review Evidence</h3>
-              <p>Record a real request as an Execution Case, then render a replay-verified local dossier.</p>
-            </div>
-            <pre><code>python -m gwtlang capture \
-  examples/vendor_onboarding/rules.gwt \
-  --json-input examples/vendor_onboarding/request.json \
-  --request "review vendor" \
-  --output vendor-review.execution-case.json
-
-python -m gwtlang workbench \
-  vendor-review.execution-case.json \
-  --program examples/vendor_onboarding/rules.gwt \
-  --output vendor-review.html</code></pre>
+            <div class="command-copy"><h3>Review A Change</h3><p>Compare captured requests with the proposed policy and explore the evidence in your browser.</p></div>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> review delivery.corpus.json \
+  <span class="tok-key">--candidate</span> proposed.gwt \
+  <span class="tok-key">--html</span> delivery-review.html</code></pre>
           </article>
         </div>
       </section>
@@ -294,11 +221,12 @@ python -m gwtlang workbench \
       <section class="section principles">
         <div class="section-heading">
           <p class="eyebrow">Boundaries</p>
-          <h2>What GWT Is Not</h2>
+          <h2>Current Status</h2>
           <p>
-            GWT is not SQL, not OPA, and not a replacement for a general-purpose
-            language. It is for workflows where the steps and checks should stay
-            readable and runnable.
+            GWT is experimental. GWT is aimed
+            at workflows whose rules need to stay readable, executable, and reviewable.
+            Whether it improves human understanding is still to be measured.
+
           </p>
           <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/design-principles.md">Read the principles</a>
         </div>
@@ -306,10 +234,10 @@ python -m gwtlang workbench \
     </main>
 
     <footer class="footer">
-      <span>Language spec v0.2</span>
+      <span>GWT · Experimental language</span>
       <a href="getting-started.html">Getting Started</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-grammar.md">Grammar</a>
       <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
     </footer>
   </body>

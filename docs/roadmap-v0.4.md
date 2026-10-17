@@ -1,14 +1,22 @@
 # GWT v0.4 Behavior Review Roadmap
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Status: core implementation candidate complete; release gates remain open.
+
+See the [October development checkpoint](development-checkpoint.md) for the
+maintenance benchmark, adoption rehearsal, review usability, and measured
+runtime work completed after this roadmap's July checkpoint. Those additions
+do not satisfy the external-pilot or owner publication gates below.
 
 Current checkpoint (July 2026): the bounded runtime, frozen dependency-closure
 loader, Execution Case profiles, factual explanation, verified scenario
 generation, old/new comparison (including failure transitions), and static
 local workbench are implemented behind versioned v1 schemas. Wheel and sdist
 candidates are buildable without a publish step. Release remains blocked on
-reviewed checked-in compatibility fixtures, two external pilots, the owner
-name decision, and the owner license/publication decision. The static HTML
+reviewed checked-in compatibility fixtures, two external pilots, and the owner
+publication decision. The owner chose to retain GWT and use MIT on 2026-10-15.
+The static HTML
 workbench displays source locations but does not provide editor navigation;
 that remains an integrated-surface follow-up rather than a hidden claim.
 

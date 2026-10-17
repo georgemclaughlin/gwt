@@ -1,5 +1,7 @@
 # Inventory Allocation Spike
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/inventory_allocation_spike).
+
 This example pressure-tests GWT against a more realistic inventory shape than
 `examples/order_fulfillment`.
 
@@ -61,3 +63,25 @@ python -m gwtlang run examples/inventory_allocation_spike/rules.gwt \
 - unknown-SKU handling
 - explicit missing-case behavior
 - JSON host input using realistic nested records and lists
+
+## Native required-lookup inspection
+
+The Rust entry imports these same rules and uses a returning domain helper to
+inspect allocated inventory:
+
+```sh
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/inventory_allocation_spike/native_scenarios.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/inventory_allocation_spike/native_scenarios.gwt --request "fulfill order" --input examples/inventory_allocation_spike/request.json
+```
+
+`inventory item for <sku> in <inventory>` returns a snapshot of the first match
+or explicitly fails with `REQUIRE false`. The native entry includes the three
+existing fulfillment scenarios plus duplicate-match/snapshot inspection and
+missing-match failure. Python retains its original scenario entry because its
+checker does not support scenario-level `WHEN LET` or native failure assertions.
+
+Returning a record does not retain the legacy lowercase lookup's mutable alias.
+Use `FIND ... ELSE` for mutations of selected inventory; the new helper is for
+inspection. See [failure exits and migration](../../docs/native-failure-exits.md)
+for error, sharing, and guard differences. The public fulfillment policy and
+request/output contracts are unchanged.

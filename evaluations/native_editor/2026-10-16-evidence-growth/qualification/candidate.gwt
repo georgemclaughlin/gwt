@@ -1,0 +1,13 @@
+RECORD Labels
+  values: list<text>
+REQUEST collect labels
+  GIVEN labels is list<text>
+  GIVEN result is Labels
+    values: []
+  WHEN collect labels into result
+  OUTPUT result is Labels
+WHEN collect <labels> into <result>
+  GIVEN labels is list<text>
+  AND result is Labels
+  FOR label in labels
+    append (label + "!") to result.values

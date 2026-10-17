@@ -1,0 +1,19 @@
+{
+  "cases": 54,
+  "independentOutcomeChanges": 4,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 9,
+    "compared": 54,
+    "evidenceChanged": 54,
+    "outcomeChanged": 4,
+    "sourceChanged": 54,
+    "stateChanged": 4,
+    "total": 54,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "reservedVerbMigration": "candidate_unavailable",
+  "legacyCaseSha256": "9d2d02a32376e8f7f403303c425228791974c8b06af525bd69af6722aef594bf",
+  "reviewApproved": false
+}

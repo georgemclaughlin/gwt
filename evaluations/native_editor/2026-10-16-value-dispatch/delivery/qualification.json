@@ -1,0 +1,175 @@
+{
+  "native": "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+  "nativeSha256": "1d0846a2a6045edaa93f0bd5fae22dc91511715bc64840eb38ce3dd7ebd45b3c",
+  "cases": 6,
+  "verifiedReplays": 6,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 0,
+    "compared": 6,
+    "evidenceChanged": 6,
+    "outcomeChanged": 2,
+    "sourceChanged": 6,
+    "stateChanged": 2,
+    "total": 6,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "commands": [
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "validate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/validation.html"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-1.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-1.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-2.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-2.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-3.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-3.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-4.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-4.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-5.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-5.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/rules.gwt",
+        "--request",
+        "review delivery",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/input-6.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-6.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "corpus",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-1.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-2.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-3.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-4.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-5.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/case-6.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-90cj1m_b/installed/bin/gwt-native",
+        "review",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/corpus.json",
+        "--candidate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/candidate.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-value-dispatch/delivery/delivery-review.html"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

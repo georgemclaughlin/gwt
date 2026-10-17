@@ -1,0 +1,21 @@
+{
+  "probes": 30,
+  "nativeAccepted": 18,
+  "nativeExecuted": 18,
+  "nativeSuccessful": 16,
+  "pythonChecked": 28,
+  "pythonSuccessful": 26,
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/finite-literals-79444fc4/gwt-native",
+  "nativeSha256": "3f5e08d4fcfc56f1ce80c954b2152361c059a7088db78533d4f0d9e5eb61bf7c",
+  "fixtureSha256": "99c8a7e7ac4944fbb1338417219a8df0af59a92051f98191b69316ccf88ef6e5",
+  "expectationOverrides": {
+    "numeric-literal-union": {
+      "nativeCheckDiagnostic": "argument_type"
+    },
+    "boolean-literal-union": {
+      "nativeCheck": true
+    }
+  },
+  "expectationSha256": "76d7cc7cb855f5adce53dcdb47e5c2e2b9e5d9674bb0860ae68d3aa60a515b53",
+  "humanParticipants": 0
+}

@@ -1,0 +1,5131 @@
+{
+  "cases": [
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:a635ef86e8b368254aca62e1e8a1360ca8236a7d5e75757be8ed0e53f6b1d3e0",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0001-decide-entitlement",
+      "index": 1,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./subscription_entitlements.gwt",
+            "line": 141,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./subscription_entitlements.gwt",
+            "line": 146,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:bc6e0ed5352282a1f691fa90ef277889fe3ae3ca1254ca9643e8c0302212e7cf",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:a635ef86e8b368254aca62e1e8a1360ca8236a7d5e75757be8ed0e53f6b1d3e0",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 71,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:b225a8f888db65b962f5b37b28c933062c1b39470370c8135dd0e6d2e9909d1f",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0002-decide-entitlement",
+      "index": 2,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 73,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./subscription_entitlements.gwt",
+            "line": 141,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 14,
+            "file": "./subscription_entitlements.gwt",
+            "line": 146,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:58b697f09813de6af4e944f55bc1035ea517ec8cb2e4e8f5b20f14d7d91ba8a7",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "automations",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 71,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 2,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:b225a8f888db65b962f5b37b28c933062c1b39470370c8135dd0e6d2e9909d1f",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 71,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "feature == \"audit_log\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 74,
+            "text": "feature == \"audit_log\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 99,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:2f737d16cb9efa6ac6c47ce4c7a4e413def4266d02543ef9b19b677d86db2e81",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0003-decide-entitlement",
+      "index": 3,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 73,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "feature == \"audit_log\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 76,
+            "text": "feature == \"audit_log\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 99,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 12,
+            "file": "./subscription_entitlements.gwt",
+            "line": 141,
+            "text": "decision.required_plan_rank == 99"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:9f3216f7624387c3b4419dacfbfb7d3410b4e229713ef0a2ef9c042aa739169d",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "feature == \"automations\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 71,
+            "text": "feature == \"automations\""
+          }
+        },
+        {
+          "expression": "feature == \"audit_log\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "unknown",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 74,
+            "text": "feature == \"audit_log\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 99,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:2f737d16cb9efa6ac6c47ce4c7a4e413def4266d02543ef9b19b677d86db2e81",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:756dd97435e7f9c63afdd1e1237c444a7fb409b48ad7de06a2dacc158ac86187",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0004-decide-entitlement",
+      "index": 4,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 34,
+            "file": "./subscription_entitlements.gwt",
+            "line": 96,
+            "text": "invoice.status == \"past_due\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:1018847a794e4f3e9f00b1de6273739cb3c0416bc1bda1eb39899db11ad147d7",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:756dd97435e7f9c63afdd1e1237c444a7fb409b48ad7de06a2dacc158ac86187",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:026b4bf1184544ecc5f8ef2d32b782d1f41612b4735454aa8d883b5e0342c3c3",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0005-decide-entitlement",
+      "index": 5,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:23f305c235683c83479f008f5e334234cbd3a5539ba384a1e5f274a0b774dfef",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:026b4bf1184544ecc5f8ef2d32b782d1f41612b4735454aa8d883b5e0342c3c3",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:a8dc44c64f5851c5cd3c75d54478fffa87270b0b252c8eff09bed395f7027814",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0006-decide-entitlement",
+      "index": 6,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./subscription_entitlements.gwt",
+            "line": 116,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 117,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:d7cd4f636e69697d8b8d65bb0bc27ff8d48c6e611aea2abc0432cc02f51ddc1e",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:a8dc44c64f5851c5cd3c75d54478fffa87270b0b252c8eff09bed395f7027814",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:c3ff7c45c20463164e58f3e4e14bf7768b0137ed0944cf949c7c61373e9910c1",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0007-decide-entitlement",
+      "index": 7,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 34,
+            "file": "./subscription_entitlements.gwt",
+            "line": 96,
+            "text": "invoice.status == \"past_due\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./subscription_entitlements.gwt",
+            "line": 116,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 117,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:76bcd6ed8c391047b351aae7c295da968de45f0a80ac81b3b56300b135eb095a",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 2,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:c3ff7c45c20463164e58f3e4e14bf7768b0137ed0944cf949c7c61373e9910c1",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:b9c13d903bda099eb9e83c97c20f2a46b806653a1684a047cf91e50322819acc",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0008-decide-entitlement",
+      "index": 8,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./subscription_entitlements.gwt",
+            "line": 116,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 117,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./subscription_entitlements.gwt",
+            "line": 141,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./subscription_entitlements.gwt",
+            "line": 146,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:c691d229b6f826734a1c376fa4a66fae588d64a94cefc28fdedc90ebe3640487",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "override.feature == account.requested_feature",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.feature",
+                "value": "projects",
+                "valueType": "text"
+              },
+              {
+                "name": "account.requested_feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 44,
+            "file": "./before.gwt",
+            "line": 105,
+            "text": "override.feature == account.requested_feature"
+          }
+        },
+        {
+          "expression": "override.active",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "override.active",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 106,
+            "text": "override.active"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:b9c13d903bda099eb9e83c97c20f2a46b806653a1684a047cf91e50322819acc",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "paid",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:1d5c337da6dce794e5432eb111f849a217b5a4e404f48046ae7e09914fbfa453",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0009-decide-entitlement",
+      "index": 9,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "paid",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 34,
+            "file": "./subscription_entitlements.gwt",
+            "line": 96,
+            "text": "invoice.status == \"past_due\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 34,
+            "file": "./subscription_entitlements.gwt",
+            "line": 96,
+            "text": "invoice.status == \"past_due\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:53c8f6a7eb1df1f318e6c3ce454367eab786a367bda3d75f2a75dce7846a301b",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "paid",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "past_due",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": true,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:1d5c337da6dce794e5432eb111f849a217b5a4e404f48046ae7e09914fbfa453",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    },
+    {
+      "capturedEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "void",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "capturedEvidenceDigest": "sha256:da41bbcc94d4302fdaec3f1228b63a3872201cad108641fe626d6e25857a5eec",
+      "capturedSelectedDecision": null,
+      "classification": "path_changed",
+      "detail": "material execution evidence changed with identical output",
+      "id": "case-0010-decide-entitlement",
+      "index": 10,
+      "newError": null,
+      "newEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 59,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 70,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "void",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 34,
+            "file": "./subscription_entitlements.gwt",
+            "line": 96,
+            "text": "invoice.status == \"past_due\""
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 110,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./subscription_entitlements.gwt",
+            "line": 126,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./subscription_entitlements.gwt",
+            "line": 131,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./subscription_entitlements.gwt",
+            "line": 136,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./subscription_entitlements.gwt",
+            "line": 141,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./subscription_entitlements.gwt",
+            "line": 146,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "newEvidenceDigest": "sha256:7fd5207f95d81e4d9c5d32b77cdc60ac3944724c887d0b5e93f67e5f52ec398f",
+      "newSelectedDecision": null,
+      "oldError": null,
+      "oldEvaluatedConditions": [
+        {
+          "expression": "plan == \"free\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "plan",
+                "value": "free",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 57,
+            "text": "plan == \"free\""
+          }
+        },
+        {
+          "expression": "feature == \"projects\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "feature",
+                "value": "projects",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 68,
+            "text": "feature == \"projects\""
+          }
+        },
+        {
+          "expression": "invoice.status == \"past_due\"",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "invoice.status",
+                "value": "void",
+                "valueType": "text"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 3,
+            "file": "./before.gwt",
+            "line": 98,
+            "text": "exists invoice in account.invoices where invoice.status == \"past_due\" into decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "account.active_users > account.seat_limit",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "account.active_users",
+                "value": 0,
+                "valueType": "integer"
+              },
+              {
+                "name": "account.seat_limit",
+                "value": 0,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 99,
+            "text": "account.active_users > account.seat_limit"
+          }
+        },
+        {
+          "expression": "decision.matched_override",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.matched_override",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 6,
+            "file": "./before.gwt",
+            "line": 115,
+            "text": "decision.matched_override"
+          }
+        },
+        {
+          "expression": "decision.has_past_due_invoice",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.has_past_due_invoice",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 8,
+            "file": "./before.gwt",
+            "line": 120,
+            "text": "decision.has_past_due_invoice"
+          }
+        },
+        {
+          "expression": "decision.seat_limit_exceeded",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.seat_limit_exceeded",
+                "value": false,
+                "valueType": "boolean"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 10,
+            "file": "./before.gwt",
+            "line": 125,
+            "text": "decision.seat_limit_exceeded"
+          }
+        },
+        {
+          "expression": "decision.required_plan_rank == 99",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": false,
+          "source": {
+            "column": 12,
+            "file": "./before.gwt",
+            "line": 130,
+            "text": "decision.required_plan_rank == 99"
+          }
+        },
+        {
+          "expression": "decision.plan_rank >= decision.required_plan_rank",
+          "operands": {
+            "availability": "available",
+            "values": [
+              {
+                "name": "decision.plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              },
+              {
+                "name": "decision.required_plan_rank",
+                "value": 1,
+                "valueType": "integer"
+              }
+            ]
+          },
+          "result": true,
+          "source": {
+            "column": 14,
+            "file": "./before.gwt",
+            "line": 135,
+            "text": "decision.plan_rank >= decision.required_plan_rank"
+          }
+        }
+      ],
+      "oldEvidenceDigest": "sha256:da41bbcc94d4302fdaec3f1228b63a3872201cad108641fe626d6e25857a5eec",
+      "oldSelectedDecision": null,
+      "outputDifferences": [],
+      "recordedProgramHash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4",
+      "request": "decide entitlement"
+    }
+  ],
+  "kind": "gwt.comparison",
+  "newProgram": {
+    "entry": "./subscription_entitlements.gwt",
+    "hash": "sha256:1911d1a0377123e6da54a64d16cdeabbd04794807fde7e382a65afa8253f64db"
+  },
+  "oldProgram": {
+    "entry": "./before.gwt",
+    "hash": "sha256:6f62ebad131aab9a4ba82deff62ec6f29e71ea71796603bd33b3e317194edde4"
+  },
+  "schemaVersion": 1,
+  "totals": {
+    "baselineMismatch": 0,
+    "cases": 10,
+    "failureChanged": 0,
+    "incompatible": 0,
+    "newFailure": 0,
+    "outputChanged": 0,
+    "pathChanged": 10,
+    "resolvedFailure": 0,
+    "unavailable": 0,
+    "unchanged": 0
+  }
+}

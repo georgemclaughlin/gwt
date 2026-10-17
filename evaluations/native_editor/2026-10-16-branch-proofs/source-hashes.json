@@ -1,0 +1,10 @@
+{
+  "crates/gwt-core/tests/branch_proofs.rs": "5af3859701629db6ec4cbaacce2f1bc8c208231a3c3aa0737eddbcbb973679e0",
+  "crates/gwt-core/tests/early_returns.rs": "3888f082a4c14230104233703520d278d20edcaf949216083c2a18065ec8a367",
+  "evaluations/native_editor/qualify_branch_proofs.py": "fa657463e544e5343e10a586f16f18d1becbfba5e43aca20f9fe3cdf8ea2d5be",
+  "examples/native_branch_proofs/rules.gwt": "1b035424de0f270a3f82da215fdd7762cdd5ee50db244c77757d7003aaea3afd",
+  "vscode-gwt/tests/extension-host.js": "bf5de5a8e8c157c0eb506cf57a26419f090292e8d5ae1f90d88b1f72a2fecf31",
+  "docs/native-branch-proofs.md": "fb6aeb56b8ff79224d60aeb73fcd73e28526291155a219dca064676950615b75",
+  "examples/native_branch_proofs/README.md": "26b4f4951e65e1165e1ecd5999c80f0c8769f846cd52eba07d9fcc799596a578",
+  "evaluations/native_editor/2026-10-16-branch-proofs/README.md": "931035922234bd724e7b2d72c55879a35649b005b695681ddf9379ce9691bc3d"
+}

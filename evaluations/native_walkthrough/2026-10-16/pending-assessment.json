@@ -1,0 +1,15 @@
+{
+  "accepted": 0,
+  "allAccepted": false,
+  "kind": "gwt.native-review-assessment",
+  "needsInformation": 0,
+  "pending": 9,
+  "rejected": 0,
+  "reportIdentity": {
+    "algorithm": "gwt-native-review-sha256-v1",
+    "digest": "sha256:ff510fca722ee4854b58c477fe6dfa53c7492b7fb77273dbc7ba7a83dc083734"
+  },
+  "reviewer": "",
+  "schemaVersion": 1,
+  "total": 9
+}

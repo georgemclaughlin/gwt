@@ -1,0 +1,16 @@
+{
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "repeats": 3,
+  "maximumPublicRepairRounds": 2,
+  "sampling": "CLI defaults; no explicit seed or temperature",
+  "taskOrder": "paired, alternating language order",
+  "baseCommit": "835ec41020aaf60b06315a15b26926a3dbf39e59",
+  "workingTreeIncludesUncommittedImplementation": true,
+  "sourceDigests": {
+    "evaluations/maintenance/manifest.json": "sha256:76435537d6fe6721c31a3ec28a2a7991ffdc82e19345c7376d32c212a6082615",
+    "gwtlang/agent_matrix.py": "sha256:2137f11e76a4acfb53488f3463def1460a102abbec53b6d560def7cdb380b1ce",
+    "gwtlang/maintenance_evaluation.py": "sha256:c1a43669d72474e743a84328211749e7536cef8394b98a7efd01ae1e8483d022",
+    "gwtlang/maintenance_worker.py": "sha256:22c5a8158b8e7bdd3abff4eae669c4ffe9cfe0c9bf436e65e153bfe021183fc3"
+  }
+}

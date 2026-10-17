@@ -1,0 +1,25 @@
+USE "rules.gwt"
+
+GIVEN report is ExpenseReport
+  employee: "Ada"
+  policy_limit: 100
+  lines: []
+
+GIVEN report.lines are ExpenseLine
+  | description    | amount | category    | reimbursable |
+  | "airport taxi" | 42     | "transport" | true         |
+  | "team lunch"   | 18     | "meals"     | true         |
+  | "monitor"      | 225    | "equipment" | true         |
+  | "gift card"    | 12     | "gift"      | false        |
+
+REQUEST review expense report
+
+THEN decision.line_count == 4
+AND decision.submitted_total == 297
+AND decision.approved_total == 60
+AND decision.approved_descriptions == ["airport taxi", "team lunch"]
+AND decision.has_violation == true
+AND decision.violation_description == "monitor"
+AND decision.violation_amount == 225
+AND decision.status == "needs_review"
+AND decision.reason == "line_over_policy_limit"

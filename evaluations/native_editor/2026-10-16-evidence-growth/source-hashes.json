@@ -1,0 +1,17 @@
+{
+  "crates/gwt-core/src/program_runtime.rs": "3e65270bfcc3bf0f753ef814d7c8f5c30721f6c2b7e2c8d7dba258efb4f54852",
+  "crates/gwt-core/src/explanation.rs": "2c418140c0ebf72d63316e34db8c9b820e833d3bc118631dfcbf78747c07f68c",
+  "crates/gwt-core/src/review/html.rs": "740fd15a7001d684d8a1531a1f0f7a80c117e25a2f4c9545a0da571bc3ab65d2",
+  "crates/gwt-core/tests/append_evidence.rs": "73b79bc03c134ce6d69acd42bb4f30f6c48b9c1b214f3f68385d204b4cdce62a",
+  "crates/gwt-core/tests/arguments.rs": "2c940ba3e571f7ad94c335702a6faf47b433a1b0f3f2a5bcc82065cf3fb70e32",
+  "crates/gwt-core/tests/collections.rs": "2251bf74714548c0afda212cc848a66ff1c4884037819e75530dc2e2a0179818",
+  "evaluations/native_editor/qualify_append_evidence.py": "92381fefffa985413b3e95befaf7b94ffd249a93de6a4bd1c2c7e1371fa1bd6d",
+  "docs/native-append-evidence.md": "09a857735de03e6f88c5ea385e6cfd4a86c10e55e7fdc44b149f45f7d21b660b",
+  "docs/native-review.md": "ab8e1780ba478e5af58984b5286b2d49b2c5d1d855f78b527f49c392deafdf20",
+  "docs/native-semantics.md": "7f985c5b2febe24210a376700227f79efedbf757640717d1b8e2f1b012f1628e",
+  "docs/native-conformance.md": "0110fd18d2d3384b4d5230eb16123093b1984a5cd14fb38f0d4b554717d80421",
+  "docs/project-goal-progress.md": "c5876fbbf1da4b815eb24ad4794270ad4b88c59da7e00543af0a47ba0c382a61",
+  "README.md": "844911bfc5d07b134ee42d9d3f82d9c113a778d771aa39d917f38e041bf55aff",
+  "examples/native_weighted_allocation/README.md": "0502f968a9bfc6c151540cfc6fd32a9d7408e7f30dca9c8abf236cadfa39383f",
+  "evaluations/native_editor/2026-10-16-evidence-growth/README.md": "3c9e7cd60ec5e810840ab1a5607038601749cd95c2cba4385d3819ddfb61084b"
+}

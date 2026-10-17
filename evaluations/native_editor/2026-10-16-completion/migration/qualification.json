@@ -1,0 +1,387 @@
+{
+  "cases": 63,
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-_dh3fx6u/installed/bin/gwt-native",
+  "nativeSha256": "644170197d8376ff40022b1a53c97cc9f1857d452b6082dd443195c93018654d",
+  "previousEngine": "/home/g/.cache/gwt-qualifications/gwt-package-host-axbdwpjw/installed/bin/gwt-native",
+  "previousSha256": "dc37feafaeec5fd6854254c2eae73ccb600e594ed264f7115a455304cb40874d",
+  "checks": [
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-0.json",
+      "baselineSha256": "4fce65c8e36c431d28f3624c3147723122dee547f9c47d5613fcaea499b6bd4c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-1.json",
+      "baselineSha256": "5181b0d89b1b7547df57ed7e86e4ad842a5f76ff41ce794db4340acf769e99f8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-10.json",
+      "baselineSha256": "2c8d187b34ed37810b2fa7aec1fa2815161eddcef6d4b08a58399329ed74d0c9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-11.json",
+      "baselineSha256": "a92b6fb894405084b8a48c3e0df56c6ebef979ce5d101e7a8e24274b7807fa5c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-12.json",
+      "baselineSha256": "e931b05383190eb703a801aa9424ce953dfa7826afad7539d0d2902cb814b223",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-13.json",
+      "baselineSha256": "dd3e0048eb3f7871801f48625e0cb09a5d4e5a08a174c697a8b1aaa8469db17b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-14.json",
+      "baselineSha256": "1dbea6988cd68fd678d273e9036c3b7f95efa75c315da3feecf91746dec59b8a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-15.json",
+      "baselineSha256": "26e3f61c99dd80f0014137e0a4f46d2407691461fbac27c086450a71cd657af8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-16.json",
+      "baselineSha256": "6f10316017689e819cacce9255c05589fd333b1e76b1ff9c3ffcf66f1012b87a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-17.json",
+      "baselineSha256": "f1fb50ba58b2c057330b2ebbd300c40e6d066116048fd550c7f67346af83f549",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-18.json",
+      "baselineSha256": "6df72285dd5034fcfee183ccb5c229572d27ffbead4691f225aa3c85bc430486",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-19.json",
+      "baselineSha256": "4e2287cf793a5dcf360cf4517f64efc984c356f75070cf06fa1127555b74cf0e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-2.json",
+      "baselineSha256": "f580e9cbcb678cc848b53e39e55afd785ee4560d97b536dc2781560c66239530",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-20.json",
+      "baselineSha256": "d85ef46a2a1430181b17dfa7f33d200c1b378bafbee480f70be6b382e7100145",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-21.json",
+      "baselineSha256": "e616eca9cfe3b435802f2dac176dc058c6e8ae63f8d6c0de2ef23add47bcc391",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-22.json",
+      "baselineSha256": "de1eb7b348ad65d3eafcfe4e49b6fceb8d562db5e0c42c11f743bd663f88c8dd",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-23.json",
+      "baselineSha256": "0166a8ca83be323a294eff3f334a9183df17ea54604298f102fde148624d7989",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-24.json",
+      "baselineSha256": "07e147f3081edbf184d7c0546e9a36e042ed8a964f6fd2980027824bc0285090",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-25.json",
+      "baselineSha256": "8ce12393bc24abd773865c629534238175aacd89757654ee116506ed5db5b841",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-26.json",
+      "baselineSha256": "0007d931761d62dd86a7fa21d301dd085ef7afd74ff04625a7846f4b99412b0f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-27.json",
+      "baselineSha256": "19106ef14d2baa0c421a034f67deda6d95ac75e7cfa35d1e3c8ffb107b81fce6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-28.json",
+      "baselineSha256": "8f5c7273202eb6acb6ad25366f8be6ab684ae31df704f92324144146f7604ab7",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-29.json",
+      "baselineSha256": "47fae5ef13df1e3adaf8a8689156b1917fbf9653c28f9356b2d95a1cf07ffb9b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-3.json",
+      "baselineSha256": "6cdb1c6f10a36e58811b252eaa424cca19e888f7b3448077bbf5a6c651ee2b24",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-30.json",
+      "baselineSha256": "21103ded4a3111961be1a2d9400e170f945cac32bf6acb41a3f8fff0f65f92a0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-31.json",
+      "baselineSha256": "daa54823240bd58293a6d3b8e31211dac4bd78b22a97e3aa7394bdac431e7a87",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-32.json",
+      "baselineSha256": "099eb93ad71fb8f800babe4623ec8ff2efd1b1051e1d95fb6bbd1e6ec5797608",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-33.json",
+      "baselineSha256": "47a3cc05882607dce9685ba7dec2f6d7c69bb79c80e8eab3b72b00c10220df76",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-34.json",
+      "baselineSha256": "ed2606c92e876f14052582d8f71ec2e43553027976ea20717a593468f7af9ed9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-35.json",
+      "baselineSha256": "d15cb6c5678fc1cae58bc4e74b72300514a9fbfe28c004200710858cc258e28e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-36.json",
+      "baselineSha256": "7d81008727b31609c982b159c5ab2afe20bff8a16e7fb424845c11b4e33562da",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-37.json",
+      "baselineSha256": "f09220c7cff71441d7b9d9c7a06eed6759bad7ad2bb133606730f67754a228ee",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-38.json",
+      "baselineSha256": "b33123baab8dbe0076d93d5b8c69e05666ec780b991ed81a664b56f7c57dc44b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-39.json",
+      "baselineSha256": "ccd822c5f8794eaccd437f6740946106129578b4d57c0991637f1b0654468241",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-4.json",
+      "baselineSha256": "058e822ff084aebe9296c0ff81fe315313cbb6acb9ddb53b6d26602063dc521d",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-40.json",
+      "baselineSha256": "b71d94fc15d7c0f09f58824d1d9d007e28afd9c7bd1cf587d0be89d50b4d9025",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-41.json",
+      "baselineSha256": "605837d66f66687cde80c94d28927151339e152bab8b96aa0649aa88e54110d1",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-42.json",
+      "baselineSha256": "59c1188d672752029bf58c0856618d30ea4a662ab1e398208377cc42dee6496f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-43.json",
+      "baselineSha256": "e08221d4225267d0129d50cf8662212d0804b20db50525f3fef508170dd5c534",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-44.json",
+      "baselineSha256": "02cb4f0b7f903a41914dd54a3d07b073a28a4e404017a42f696ce0c30818bc69",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-45.json",
+      "baselineSha256": "7bcbcbc361ac3a3da0b7aa84faee2f7d0916631c6c3a8e308389b8c43ab46ee8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-46.json",
+      "baselineSha256": "bfdae76bc3c77d23f4556bf0d45b1e11de16257f3b8afd23814814d559376dc7",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-47.json",
+      "baselineSha256": "f6b53bea2515c0fba57784ea11913a32e00b9f3034fde2a719daeb0e4452a030",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-48.json",
+      "baselineSha256": "d326ad46556975d6302d33f7c582563a86e4fc9e35210bf87598fb2ef0c3eca1",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-49.json",
+      "baselineSha256": "fef8352e5e123c4534b6e3b8931b5d6e920d687e60a454d6171574ec6f3ec8d8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-5.json",
+      "baselineSha256": "c8776135394b5ec0163d6ab598610179d7e5a842c133f2c8439ece1ce4f72d65",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-50.json",
+      "baselineSha256": "68b662964540503cd6055827cb49842ae34e46fd57314d085d867282cb646697",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-51.json",
+      "baselineSha256": "59e0b3e6c3953f980b8ecf949594997d1a7674418f571657bfaf39a3211426fa",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-52.json",
+      "baselineSha256": "a8a9809164afe4ed6934f285ecb77dc0ff0df529238633098b5b1c2639459db3",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-53.json",
+      "baselineSha256": "ee747c82e6cdb9a9bf287782450d81eb89df10f78a52d16feb0c43a82b46da57",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-54.json",
+      "baselineSha256": "3f3086940b3e74a1a0b79351d98fe51bf65ff7a991417b71c5f6248f049d6a61",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-55.json",
+      "baselineSha256": "f31c6a914af8eb7d5a5234b1b31c6d9b407ce8ae62d7171bf6c2b160bda23545",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-56.json",
+      "baselineSha256": "ac3a6e416d9c73a3460451ecd6e9df9337162136952cfdcdeff142237a83db90",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-6.json",
+      "baselineSha256": "f7701785ad58edde7e79f49a0950988c5627ccf78d59f4914f678b627a094f91",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-7.json",
+      "baselineSha256": "3579b9375471b85318ccc728bdb3f9275b12cbb26d15df2518c1942598fe51d7",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-8.json",
+      "baselineSha256": "58fc8120e6b46be6aecfc465b4008909b196b1b2ae3fc84b8fed007c6e95e7d1",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_editor/2026-10-16-failure-exits/workflow/portfolio-candidate-9.json",
+      "baselineSha256": "333c51e5220e270aa43d2cc28d13c9adddec7c90b85678c14fb7a8090b8f9660",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/boundary-0.case.json",
+      "baselineSha256": "c54f07f7f6d486021204e527546fe10da1531d7971ee5db927150f8c6a6af02c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/boundary-2.case.json",
+      "baselineSha256": "531dc18d43e381d21b52b3ef0051866f83ee8150adbd6c1019bebd40610b2d5b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/boundary-3.case.json",
+      "baselineSha256": "cdf1164cf16a33a7422cc3f07764b7429bad4bb6e631def73e7d12c347eb62e9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/boundary-8.case.json",
+      "baselineSha256": "717a1b5627e843311d7676c79fb1a5dea8d11d2808de96b12c7e218d27f78a03",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/precedence-8.case.json",
+      "baselineSha256": "c5f81e6a9c5a63adf762a316318fe17fa1dca881749a15666b4d1c1c971b87df",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/underwriting/2026-10-16/comparison-verified/recurring-0.case.json",
+      "baselineSha256": "4b0538a8ce57364dad13bf5cd888252c06ca5c30a93ff88c6c0f4e5a254f3897",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    }
+  ]
+}

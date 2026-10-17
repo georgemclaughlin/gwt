@@ -1,0 +1,252 @@
+PROGRAM MiniLang executable spec
+
+RECORD MiniSource
+  name: text
+  text: text
+
+RECORD MiniToken
+  index: number
+  kind: "keyword" | "identifier" | "number" | "symbol" | "string"
+  lexeme: text
+
+RECORD MiniStatement is one of
+  let_number:
+    index: number
+    name: text
+    number_value: number
+  fn_add:
+    index: number
+    name: text
+  if_add_gt_print:
+    index: number
+    left_name: text
+    right_name: text
+    threshold: number
+    then_text: text
+    else_text: text
+  let_number_list:
+    index: number
+    name: text
+  print_map_double:
+    index: number
+    list_name: text
+
+TYPE NumberStatement is MiniStatement of kind let_number
+TYPE ListStatement is MiniStatement of kind let_number_list
+TYPE ThresholdStatement is MiniStatement of kind if_add_gt_print
+TYPE MapStatement is MiniStatement of kind print_map_double
+
+RECORD MiniNumberList
+  name: text
+  values: list<number>
+
+RECORD MiniFrontEnd
+  tokens: list<MiniToken>
+  statements: list<MiniStatement>
+  lists: list<MiniNumberList>
+  token_count: number
+  statement_count: number
+  lexed: boolean
+  parsed: boolean
+  errors: list<text>
+
+RECORD MiniBinding
+  name: text
+  kind: "unset" | "number" | "number_list"
+  number_value: number
+  list_values: list<number>
+
+RECORD MiniRuntime
+  bindings: list<MiniBinding>
+  add_defined: boolean
+  outputs: list<text>
+  mapped_numbers: list<number>
+  errors: list<text>
+  status: "new" | "passed" | "failed"
+
+REQUEST run mini source
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+
+  WHEN run source through front_end into runtime
+
+  OUTPUT front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+
+  THEN runtime.status != "new"
+
+WHEN reset <front_end>
+  GIVEN front_end is MiniFrontEnd
+  set front_end.token_count to 0
+  set front_end.statement_count to 0
+  set front_end.lexed to false
+  set front_end.parsed to false
+  set front_end.errors to []
+
+WHEN reset_runtime <runtime>
+  GIVEN runtime is MiniRuntime
+  set runtime.add_defined to false
+  set runtime.outputs to []
+  set runtime.mapped_numbers to []
+  set runtime.errors to []
+  set runtime.status to "new"
+  FOR binding in runtime.bindings
+    set binding.kind to "unset"
+    set binding.number_value to 0
+    set binding.list_values to []
+
+WHEN expect <tokens> has token <lexeme> into <front_end>
+  GIVEN tokens is list<MiniToken>
+  AND lexeme is text
+  AND front_end is MiniFrontEnd
+  FIND token in tokens WHERE token.lexeme == lexeme
+    PASS
+  ELSE
+    append "missing_token_" + lexeme to front_end.errors
+
+WHEN expect <front_end> has statement <kind>
+  GIVEN front_end is MiniFrontEnd
+  AND kind is text
+  FIND statement in front_end.statements WHERE statement.kind == kind
+    PASS
+  ELSE
+    append "missing_" + kind to front_end.errors
+
+WHEN lex <source> into <front_end>
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  count front_end.tokens into front_end.token_count
+  IF source.name == "map sample"
+    expect front_end.tokens has token "let" into front_end
+    expect front_end.tokens has token "fn" into front_end
+    expect front_end.tokens has token "return" into front_end
+    expect front_end.tokens has token "if" into front_end
+    expect front_end.tokens has token "else" into front_end
+    expect front_end.tokens has token "map" into front_end
+    IF front_end.token_count == 73
+      set front_end.lexed to true
+    ELSE
+      append "unexpected_token_count" to front_end.errors
+  ELSE
+    append "unknown_source" to front_end.errors
+
+WHEN parse <raw_front_end> into <checked_front_end>
+  GIVEN raw_front_end is MiniFrontEnd
+  AND checked_front_end is MiniFrontEnd
+  count raw_front_end.statements into checked_front_end.statement_count
+  expect checked_front_end has statement "let_number"
+  expect checked_front_end has statement "fn_add"
+  expect checked_front_end has statement "if_add_gt_print"
+  expect checked_front_end has statement "let_number_list"
+  expect checked_front_end has statement "print_map_double"
+  IF checked_front_end.statement_count == 6
+    set checked_front_end.parsed to true
+  ELSE
+    append "unexpected_statement_count" to checked_front_end.errors
+
+WHEN evaluate <front_end> into <runtime>
+  GIVEN front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  FOR statement in front_end.statements
+    evaluate_statement statement using front_end into runtime
+
+WHEN evaluate_statement <statement> using <front_end> into <runtime>
+  GIVEN statement is MiniStatement
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  DEPENDING ON statement
+    WHEN the kind is let_number
+      store number statement into runtime
+    WHEN the kind is fn_add
+      set runtime.add_defined to true
+    WHEN the kind is if_add_gt_print
+      compare sum statement into runtime
+    WHEN the kind is let_number_list
+      store list statement using front_end into runtime
+    WHEN the kind is print_map_double
+      double list statement into runtime
+
+WHEN store number <statement> into <runtime>
+  GIVEN statement is NumberStatement
+  AND runtime is MiniRuntime
+  FIND binding in runtime.bindings WHERE binding.name == statement.name
+    set binding.kind to "number"
+    set binding.number_value to statement.number_value
+  ELSE
+    append "missing_binding_" + statement.name to runtime.errors
+
+WHEN store list <statement> using <front_end> into <runtime>
+  GIVEN statement is ListStatement
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  FIND literal in front_end.lists WHERE literal.name == statement.name
+    FIND binding in runtime.bindings WHERE binding.name == statement.name
+      set binding.kind to "number_list"
+      set binding.list_values to literal.values
+    ELSE
+      append "missing_binding_" + statement.name to runtime.errors
+  ELSE
+    append "missing_list_literal_" + statement.name to runtime.errors
+
+WHEN compare sum <statement> into <runtime>
+  GIVEN statement is ThresholdStatement
+  AND runtime is MiniRuntime
+  IF runtime.add_defined
+    FIND left in runtime.bindings WHERE left.name == statement.left_name
+      FIND right in runtime.bindings WHERE right.name == statement.right_name
+        IF left.kind != "number" or right.kind != "number"
+          append "add_expected_numbers" to runtime.errors
+        ELSE
+          IF left.number_value + right.number_value > statement.threshold
+            append statement.then_text to runtime.outputs
+          ELSE
+            append statement.else_text to runtime.outputs
+      ELSE
+        append "missing_binding_" + statement.right_name to runtime.errors
+    ELSE
+      append "missing_binding_" + statement.left_name to runtime.errors
+  ELSE
+    append "missing_function_add" to runtime.errors
+
+WHEN double list <statement> into <runtime>
+  GIVEN statement is MapStatement
+  AND runtime is MiniRuntime
+  FIND binding in runtime.bindings WHERE binding.name == statement.list_name
+    IF binding.kind == "number_list"
+      set runtime.mapped_numbers to []
+      FOR value in binding.list_values
+        append value * 2 to runtime.mapped_numbers
+    ELSE
+      append "map_expected_number_list" to runtime.errors
+  ELSE
+    append "missing_binding_" + statement.list_name to runtime.errors
+
+WHEN classify <front_end> and <runtime>
+  GIVEN front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  LET front_error_count be 0
+  LET runtime_error_count be 0
+  count front_end.errors into front_error_count
+  count runtime.errors into runtime_error_count
+  IF front_error_count > 0
+    set runtime.status to "failed"
+  ELSE
+    IF runtime_error_count > 0
+      set runtime.status to "failed"
+    ELSE
+      set runtime.status to "passed"
+
+WHEN run <source> through <front_end> into <runtime>
+  GIVEN source is MiniSource
+  AND front_end is MiniFrontEnd
+  AND runtime is MiniRuntime
+  reset front_end
+  reset_runtime runtime
+  lex source into front_end
+  parse front_end into front_end
+  IF front_end.parsed
+    evaluate front_end into runtime
+  ELSE
+    append "parse_failed" to runtime.errors
+  classify front_end and runtime

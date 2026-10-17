@@ -1,0 +1,25 @@
+{
+  "nativeEngineInputsUnchanged": 56,
+  "grammarLinkTargetsAndAnchorsChecked": 16,
+  "acceptedProbes": 12,
+  "rejectedProbes": 11,
+  "acceptedProbesExecuted": 12,
+  "existingScenariosExecuted": 13,
+  "fullSuitesRerun": false,
+  "sourceAndArtifactHashes": {
+    "docs/native-grammar.md": "a2b1846a7ca257f1be8ae22d282296f162314975e34f04c19a938b27b6108fee",
+    "docs/grammar.md": "df3fcd5076754bdf59ed06aee80c9af88dbe4c58901378b3f63baaca79abe177",
+    "docs/native-semantics.md": "94ac510ee3aca0752d714156ee12a23f3f96361e6265a54b3eda65748277780c",
+    "docs/native-execution-model.md": "e40b01c0f1233abf2231d6a13d88af6e15b112be9193553d10b137f0b7359dbb",
+    "AGENTS.md": "39959d932e523b382fa01c9bc9690dd27c966a8fa41a9a6e38883c5ef0dabdb8",
+    "README.md": "10f8d41ee97a87d43d0eaafac614508818e59cb34a75620249518751cba29f10",
+    "crates/gwt-core/README.md": "837911aafce2c42a53b92c8071b950c5c644dc0a2133f3a87f02cce85fb5aaef",
+    "docs/project-goal-progress.md": "b93e63bce72b72d0113c8d2a0920c5b5e8d0991c7b27365d434b5b5c1de8bea4",
+    "docs/crash-recovery.md": "7722ae585b64c08273746078f69177e79610f077a14b178324b6300cbd90c6c9",
+    "evaluations/native_documentation/2026-10-16-grammar/README.md": "6b8ee017a92dc02943cb1b4611422feb43718d12fcc7aac3f4a7b07047d2571e",
+    "evaluations/native_documentation/2026-10-16-grammar/native_return_values.json": "e0c1b237653082eca018c04f595089034e773487f1084ecb087050c1f48fc132",
+    "evaluations/native_documentation/2026-10-16-grammar/native_setup_tables.json": "94ef4f8e59e7305f1b5ccf6154cc299393b40428b95eb0f819943296db2883fa",
+    "evaluations/native_documentation/2026-10-16-grammar/native_value_dispatch.json": "bddf6a3566c908ecb7e7aa8a25a5f9e528965ca836d1d6ff1b58fdb792c6d6ee",
+    "evaluations/native_documentation/2026-10-16-grammar/probes.json": "ccb33fcb800787d83c3e6dd5e081ce606bfc39ff885b9e9ce83802f61520d75f"
+  }
+}

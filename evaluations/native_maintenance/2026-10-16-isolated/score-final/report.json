@@ -1,0 +1,735 @@
+{
+  "kind": "native-maintenance-score",
+  "schemaVersion": 1,
+  "publicOnly": false,
+  "maximumAttempts": 3,
+  "metrics": {
+    "gwt": {
+      "trials": 15,
+      "missing": 10,
+      "firstPassSucceeded": 3,
+      "finalSucceeded": 4,
+      "repairedTrials": 1,
+      "recoveredTrials": 1
+    },
+    "python": {
+      "trials": 15,
+      "missing": 10,
+      "firstPassSucceeded": 3,
+      "finalSucceeded": 4,
+      "repairedTrials": 1,
+      "recoveredTrials": 1
+    }
+  },
+  "cases": [
+    {
+      "caseId": "native-maintenance-refund-gwt-1",
+      "pairId": "refund",
+      "trial": 1,
+      "language": "gwt",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 30,
+              "total": 33
+            },
+            "changed": {
+              "passed": 0,
+              "total": 3
+            },
+            "preserved": {
+              "passed": 30,
+              "total": 30
+            },
+            "public": {
+              "passed": 1,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 29,
+              "total": 31
+            }
+          },
+          "sourceSha256": "0e9bb41a359636bb2faca906532cea5aadeac2556ad4caec818917cb3face276"
+        },
+        {
+          "attempt": 2,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 33,
+              "total": 33
+            },
+            "changed": {
+              "passed": 3,
+              "total": 3
+            },
+            "preserved": {
+              "passed": 30,
+              "total": 30
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 31,
+              "total": 31
+            }
+          },
+          "sourceSha256": "e42b37bb6c4278c15716e8868d9b3a6c4127c19ca3e0919d7180d46e6ea31b81"
+        }
+      ],
+      "firstPassSuccess": false,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-1",
+      "pairId": "refund",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 30,
+              "total": 33
+            },
+            "changed": {
+              "passed": 0,
+              "total": 3
+            },
+            "preserved": {
+              "passed": 30,
+              "total": 30
+            },
+            "public": {
+              "passed": 1,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 29,
+              "total": 31
+            }
+          },
+          "sourceSha256": "e449cfb81c03695656e842843e78291e6c339f970912ac88e451381d9c7430a0"
+        },
+        {
+          "attempt": 2,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 33,
+              "total": 33
+            },
+            "changed": {
+              "passed": 3,
+              "total": 3
+            },
+            "preserved": {
+              "passed": 30,
+              "total": 30
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 31,
+              "total": 31
+            }
+          },
+          "sourceSha256": "5adff10112d48dbcbbbb5f85624ad5fc44e2dc6b3c1a59df8f0893d0c6497ab6"
+        }
+      ],
+      "firstPassSuccess": false,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-1",
+      "pairId": "delivery",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 13,
+              "total": 13
+            },
+            "changed": {
+              "passed": 5,
+              "total": 5
+            },
+            "preserved": {
+              "passed": 8,
+              "total": 8
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 11,
+              "total": 11
+            }
+          },
+          "sourceSha256": "aeffe5d8184dc59c5209e7f2c3a5a44645a4df4b656894aad06ead2861bbc04c"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-1",
+      "pairId": "delivery",
+      "trial": 1,
+      "language": "gwt",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 13,
+              "total": 13
+            },
+            "changed": {
+              "passed": 5,
+              "total": 5
+            },
+            "preserved": {
+              "passed": 8,
+              "total": 8
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 11,
+              "total": 11
+            }
+          },
+          "sourceSha256": "5d95f37f3d1105a298d93d5fa8b40b7f6e3d521def2ce883e2f76a4c77e12a09"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-1",
+      "pairId": "expenses",
+      "trial": 1,
+      "language": "gwt",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 74,
+              "total": 74
+            },
+            "changed": {
+              "passed": 14,
+              "total": 14
+            },
+            "preserved": {
+              "passed": 60,
+              "total": 60
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 72,
+              "total": 72
+            }
+          },
+          "sourceSha256": "32980b7e51e94dbac23d2bd257f01d31554dce9d0f401eddf6304fd6c58369cd"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-1",
+      "pairId": "expenses",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 74,
+              "total": 74
+            },
+            "changed": {
+              "passed": 14,
+              "total": 14
+            },
+            "preserved": {
+              "passed": 60,
+              "total": 60
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 72,
+              "total": 72
+            }
+          },
+          "sourceSha256": "5a29e57f84dc0139b875e2fc5fc97513ee2a8c5aece24593beb51d1e34d3d5c9"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-1",
+      "pairId": "inventory",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 20,
+              "total": 20
+            },
+            "changed": {
+              "passed": 6,
+              "total": 6
+            },
+            "preserved": {
+              "passed": 14,
+              "total": 14
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 18,
+              "total": 18
+            }
+          },
+          "sourceSha256": "56b0cf19e210a7b6c4867bdfcac30b5d724562dbc073e4061ee957e7305c3511"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-1",
+      "pairId": "inventory",
+      "trial": 1,
+      "language": "gwt",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 20,
+              "total": 20
+            },
+            "changed": {
+              "passed": 6,
+              "total": 6
+            },
+            "preserved": {
+              "passed": 14,
+              "total": 14
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 18,
+              "total": 18
+            }
+          },
+          "sourceSha256": "e80e05565b4d3f29c3f33775f956a90116571f1b9da18733fc4b990e6e40c8e4"
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-1",
+      "pairId": "allocation",
+      "trial": 1,
+      "language": "gwt",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 618,
+              "total": 998
+            },
+            "changed": {
+              "passed": 158,
+              "total": 158
+            },
+            "preserved": {
+              "passed": 460,
+              "total": 840
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 616,
+              "total": 996
+            }
+          },
+          "sourceSha256": "b2338719a9afdae1c1431996b7300157470608787aee1721a5faf316ecf1ae03"
+        }
+      ],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-1",
+      "pairId": "allocation",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "error": null,
+          "scores": {
+            "all": {
+              "passed": 618,
+              "total": 998
+            },
+            "changed": {
+              "passed": 158,
+              "total": 158
+            },
+            "preserved": {
+              "passed": 460,
+              "total": 840
+            },
+            "public": {
+              "passed": 2,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 616,
+              "total": 996
+            }
+          },
+          "sourceSha256": "bd159c18741a5a8d8ca99a500ca670297b7156e845d18c46bfb0307aebf8c317"
+        }
+      ],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-2",
+      "pairId": "refund",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-2",
+      "pairId": "refund",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-2",
+      "pairId": "delivery",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-2",
+      "pairId": "delivery",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-2",
+      "pairId": "expenses",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-2",
+      "pairId": "expenses",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-2",
+      "pairId": "inventory",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-2",
+      "pairId": "inventory",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-2",
+      "pairId": "allocation",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-2",
+      "pairId": "allocation",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-3",
+      "pairId": "refund",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-refund-python-3",
+      "pairId": "refund",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-3",
+      "pairId": "delivery",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-3",
+      "pairId": "delivery",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-3",
+      "pairId": "expenses",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-3",
+      "pairId": "expenses",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-3",
+      "pairId": "inventory",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-3",
+      "pairId": "inventory",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-3",
+      "pairId": "allocation",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-3",
+      "pairId": "allocation",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": false,
+      "finalSuccess": false,
+      "nextAttempt": null
+    }
+  ],
+  "identities": {
+    "taskSha256": "dae8b5c0561211c3e6b388605f90aa9095b1335f88611115f9a472057988b659",
+    "corpusSha256": "368b460142da5bf4388237d793b650d9c586adb830b6e33d5bb44285cbb47441",
+    "qualificationSha256": "19f1fef8c752b17ee7c6c554afaaca9ad2bf9246e150c85addd8b41d8b2972aa",
+    "qualifiedNativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+    "qualifiedWorkerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "responsesSha256": "a0f89795e30d8c4449029167c267915fd156459a7bef1de734dd9bd04711e020"
+  },
+  "executionEnvironment": {
+    "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+    "repoDigests": [
+      "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+    ],
+    "architecture": "amd64",
+    "os": "linux",
+    "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+    "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "timeoutSeconds": 120,
+    "stdoutBytes": 16777216,
+    "stderrBytes": 262144,
+    "network": "none",
+    "readOnlyRoot": true,
+    "user": "65534:65534",
+    "memoryBytes": 268435456,
+    "cpus": 1,
+    "pids": 64,
+    "temporaryBytes": 33554432
+  },
+  "scorerSourceSha256": {
+    "/home/g/code/gwt/evaluations/native_maintenance/scorer.py": "649749d2e8afcf77f309fba876f033c0f07e25243229e82ae8e5b2284fcb5b1b",
+    "/home/g/code/gwt/evaluations/native_maintenance/isolated.py": "f71b01f8b887c8c2cd613206c2a225fd06691d40f32c42efbddbd24e15bac84b",
+    "/home/g/code/gwt/evaluations/native_maintenance/study.py": "7cf958795385836360c56ad2b5bfc0dfb1345c217dcc2aa6ae036a27d11606cb"
+  }
+}

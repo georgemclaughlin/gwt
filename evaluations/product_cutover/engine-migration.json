@@ -1,0 +1,8 @@
+{
+  "status": "observation_preserved",
+  "approved": false,
+  "originalCaseSha256": "c566d842f4851b0fa86002c917ceb587d3edb19b766a9cebfb9d815cc810808b",
+  "previousExecutableSha256": "02e232f9450a7032feaf5424c563084286a44e6be9c44853ec3e002037a2820a",
+  "currentExecutableSha256": "4e5c39970e19fccd686dde1d2f550cdb304fa54028d765234630dbe98fe014f8",
+  "originalUnmodified": true
+}

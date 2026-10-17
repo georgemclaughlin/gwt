@@ -1,5 +1,7 @@
 # Local Behavior Review
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/behavior_review).
+
 This example shows the complete local review loop with a compact library hold
 routing rule. The baseline promotes a waiting hold after seven days. The
 candidate promotes it after five days. Two captured inputs make the impact

@@ -1,0 +1,73 @@
+PROGRAM contact routing
+
+RECORD Contact is one of
+  email:
+    label: text
+    address: text
+    note: optional<text>
+  phone:
+    label: text
+    number: text
+
+TYPE Recipient is Contact
+
+RECORD Plan
+  channel: text
+  label: text
+
+REQUEST plan contact
+  GIVEN contact is Recipient
+  GIVEN plan is Plan
+    channel: ""
+    label: ""
+  WHEN plan contact into plan
+  OUTPUT contact is Recipient
+  AND plan is Plan
+  THEN plan.channel != ""
+
+WHEN plan <contact> into <plan>
+  GIVEN contact is Recipient
+  AND plan is Plan
+  IF contact.kind == "email"
+    set plan.channel to "email"
+  ELSE
+    set plan.channel to "phone"
+  set plan.label to contact.label
+
+SCENARIO email has only email fields
+GIVEN contact is Recipient
+  kind: "email"
+  label: "Accounts"
+  address: "accounts@example.test"
+
+REQUEST plan contact
+THEN plan.channel == "email"
+AND plan.label == "Accounts"
+AND contact.kind == "email"
+
+SCENARIO phone has only phone fields
+GIVEN contact is Recipient
+  kind: "phone"
+  label: "Reception"
+  number: "+1-555-0100"
+
+REQUEST plan contact
+THEN plan.channel == "phone"
+AND plan.label == "Reception"
+AND contact.kind == "phone"
+
+SCENARIO changing kind replaces the complete value
+GIVEN contact is Recipient
+  kind: "email"
+  label: "Accounts"
+  address: "accounts@example.test"
+
+GIVEN replacement is Recipient
+  kind: "phone"
+  label: "Reception"
+  number: "+1-555-0100"
+
+WHEN set contact to replacement
+REQUEST plan contact
+THEN plan.channel == "phone"
+AND contact == replacement

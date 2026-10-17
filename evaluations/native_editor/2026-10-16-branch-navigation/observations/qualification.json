@@ -1,0 +1,339 @@
+{
+  "ok": true,
+  "native": "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+  "previousEngine": "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+  "nativeSha256": "e46378539d8dc88a5412ed3ea9cb574225462a75661a1abfd759dd9da07b20a0",
+  "previousEngineSha256": "ad7d6158de3987b60e0cbde49fb41c74bfb1a786924427c77226af2798689cbd",
+  "requestCases": 9,
+  "scenarioCases": 7,
+  "checks": [
+    {
+      "case": "missing.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "confirmed-email.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "unconfirmed-email.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "sms-consent.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "sms-no-consent.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "pickup-allowed.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "pickup-disabled.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "sms-empty-number.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "guarded-alias-case.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-0.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-1.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-2.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-3.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-4.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-5.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    },
+    {
+      "case": "scenario-6.json",
+      "status": "observation_preserved",
+      "fullObservationEqual": true,
+      "originalUnchanged": true
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "no contact needs review"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "confirmed email is ready"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "unconfirmed email needs review"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "opted in sms is ready"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "sms without consent is blocked"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "pickup is ready"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--scenario",
+        "pickup is disabled"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/missing.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/confirmed-email.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/unconfirmed-email.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/sms-consent.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/sms-no-consent.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/pickup-allowed.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/pickup-disabled.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/sms-empty-number.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/guarded-alias-case.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-0.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-1.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-2.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-3.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-4.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-5.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-4geqibtc/installed/bin/gwt-native",
+        "migrate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-branch-navigation/observations/scenario-6.json",
+        "--previous-engine",
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

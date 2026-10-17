@@ -1,0 +1,77 @@
+PROGRAM delivery quote
+
+RECORD Parcel
+  weight_grams: integer
+  member: boolean
+
+RECORD Quote
+  status: "standard" | "manual"
+  fee: integer
+
+REQUEST quote delivery
+  GIVEN parcel is Parcel
+  GIVEN quote is Quote
+    status: "standard"
+    fee: 0
+  WHEN quote delivery for parcel into quote
+  OUTPUT quote is Quote
+  THEN quote.fee >= 0
+
+WHEN quote delivery for <parcel> into <quote>
+  GIVEN parcel is Parcel
+  AND quote is Quote
+  REQUIRE parcel.weight_grams > 0
+  DECIDE
+    WHEN parcel.weight_grams > 5000
+      set quote.status to "manual"
+      set quote.fee to 0
+    WHEN parcel.member
+      set quote.status to "standard"
+      set quote.fee to 0
+    WHEN parcel.weight_grams <= 1500
+      set quote.status to "standard"
+      set quote.fee to 5
+    ELSE
+      set quote.status to "standard"
+      set quote.fee to 9
+
+BACKGROUND
+GIVEN quote is Quote
+  status: "standard"
+  fee: 0
+
+SCENARIO weight and membership determine the quote
+GIVEN parcel is Parcel
+  weight_grams: <weight>
+  member: <member>
+
+WHEN quote delivery for parcel into quote
+
+THEN quote.status == <status>
+AND quote.fee == <fee>
+
+EXAMPLES
+  | weight | member | status     | fee |
+  | 1      | false  | "standard" | 5   |
+  | 1000   | false  | "standard" | 5   |
+  | 1001   | false  | "standard" | 5   |
+  | 1499   | false  | "standard" | 5   |
+  | 1500   | false  | "standard" | 5   |
+  | 1501   | false  | "standard" | 9   |
+  | 5000   | false  | "standard" | 9   |
+  | 5001   | false  | "manual"   | 0   |
+  | 1      | true   | "standard" | 0   |
+  | 1000   | true   | "standard" | 0   |
+  | 1001   | true   | "standard" | 0   |
+  | 5000   | true   | "standard" | 0   |
+  | 5001   | true   | "manual"   | 0   |
+
+SCENARIO zero weight is rejected before changing the quote
+GIVEN parcel is Parcel
+  weight_grams: 0
+  member: false
+
+WHEN quote delivery for parcel into quote
+THEN fails with "assertion_failed"
+AND quote.status == "standard"
+AND quote.fee == 0

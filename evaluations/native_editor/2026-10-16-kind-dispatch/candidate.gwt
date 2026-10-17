@@ -1,0 +1,63 @@
+PROGRAM delivery routing
+
+RECORD Destination is one of
+  email:
+    address: text
+  sms:
+    number: text
+  pickup:
+    location: text
+
+RECORD Route
+  channel: text
+  destination: text
+
+REQUEST route delivery
+  GIVEN destination is Destination
+  GIVEN route is Route
+    channel: ""
+    destination: ""
+  WHEN route destination into route
+  OUTPUT route is Route
+  THEN route.channel != ""
+
+WHEN route <destination> into <route>
+  GIVEN destination is Destination
+  AND route is Route
+  DEPENDING ON destination
+    WHEN the kind is email
+      set route.channel to "email"
+      set route.destination to "incorrect@example.test"
+    WHEN the kind is sms
+      set route.channel to "sms"
+      set route.destination to destination.number
+    WHEN the kind is pickup
+      set route.channel to "pickup"
+      set route.destination to destination.location
+
+SCENARIO send by email
+GIVEN destination is Destination
+  kind: "email"
+  address: "orders@example.test"
+
+REQUEST route delivery
+THEN route.channel == "email"
+AND route.destination == "orders@example.test"
+
+SCENARIO send by text
+GIVEN destination is Destination
+  kind: "sms"
+  number: "+1-555-0100"
+
+REQUEST route delivery
+THEN route.channel == "sms"
+AND route.destination == "+1-555-0100"
+
+SCENARIO collect in person
+GIVEN destination is Destination
+  kind: "pickup"
+  location: "West counter"
+
+REQUEST route delivery
+THEN route.channel == "pickup"
+AND route.destination == "West counter"

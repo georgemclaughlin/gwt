@@ -1,0 +1,9 @@
+WHEN allocate <value> into <result>
+  GIVEN value is decimal
+  AND result is decimal
+  set result to value
+REQUEST copy
+  GIVEN value is decimal
+  GIVEN result is 0.0
+  WHEN allocate value into result
+  OUTPUT result is decimal

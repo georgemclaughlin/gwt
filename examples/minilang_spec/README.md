@@ -1,5 +1,7 @@
 # MiniLang Executable Spec
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/minilang_spec).
+
 This example uses GWT to drive a tiny scripting-language pipeline. It is not a
 full self-hosted interpreter; the source has fixture-provided tokens and AST
 records so GWT can focus on executable specification:
@@ -33,7 +35,7 @@ let nums = [1, 2, 3, 4]
 print(map(nums, fn(n) { return n * 2 }))
 ```
 
-`rules.gwt` models tokens, one-of AST statements, list literals, runtime
+`engine.gwt` models tokens, one-of AST statements, list literals, runtime
 bindings, outputs, and errors as records. The evaluator handles the sample's
 specific statement kinds, mutates bindings, and produces:
 
@@ -52,6 +54,11 @@ runtime.errors == ["parse_failed"]
 ```
 
 ## Commands
+
+`rules.gwt` imports the shared engine and supplies Python-profile scenarios.
+`native_scenarios.gwt` imports the same engine with explicit native `kind:` setup.
+Both entries assert the same successful and missing-node outcomes. The engine is
+a reusable module; its scenario coverage lives in these entry files.
 
 Static check only:
 
@@ -73,6 +80,27 @@ python -m gwtlang run examples/minilang_spec/rules.gwt \
   --request "run mini source" \
   --json
 ```
+
+## Native execution
+
+With the native executable built, validate its scenarios and run the same JSON
+request against the shared engine:
+
+```sh
+target/debug/gwt validate examples/minilang_spec/native_scenarios.gwt
+target/debug/gwt run examples/minilang_spec/engine.gwt \
+  --request "run mini source" --input examples/minilang_spec/request.json
+```
+
+The dispatcher narrows each statement kind, then passes the required payload
+fields to typed helpers. Helpers no longer accept a generic statement while
+assuming a particular kind. The public request and output contracts are retained.
+Native `number` uses exact decimal values, serialized as decimal strings; Python
+retains its numeric JSON representation. The comparison evidence checks numeric
+value at numeric fields, not byte-identical JSON across engines.
+
+See [the adaptation and its limits](../../docs/native-minilang-adaptation.md)
+and [943 independent comparison probes](../../evaluations/minilang/2026-10-16/README.md).
 
 ## What This Stresses
 

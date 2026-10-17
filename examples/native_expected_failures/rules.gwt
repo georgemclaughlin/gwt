@@ -1,0 +1,60 @@
+PROGRAM reserve stock with explicit rejection
+
+RECORD Stock
+  available: integer
+
+RECORD Order
+  quantity: integer
+
+REQUEST reserve stock
+  GIVEN stock is Stock
+  GIVEN order is Order
+  WHEN reserve order from stock
+  OUTPUT stock is Stock
+
+WHEN reserve <order> from <stock>
+  GIVEN order is Order
+  AND stock is Stock
+  REQUIRE order.quantity > 0
+  print "checking stock"
+  REQUIRE stock.available >= order.quantity
+  subtract order.quantity from stock.available
+  print "reserved"
+
+SCENARIO insufficient stock rejects without reserving
+GIVEN stock is Stock
+  available: 2
+AND order is Order
+  quantity: 3
+
+REQUEST reserve stock
+THEN fails with "assertion_failed"
+AND stock.available == 2
+AND prints ["checking stock"]
+
+SCENARIO valid order reserves its quantity
+GIVEN stock is Stock
+  available: 3
+AND order is Order
+  quantity: 2
+
+REQUEST reserve stock
+
+THEN stock.available == 1
+AND prints ["checking stock", "reserved"]
+
+SCENARIO nonpositive quantity rejects before checking stock
+GIVEN stock is Stock
+  available: 3
+AND order is Order
+  quantity: <quantity>
+
+REQUEST reserve stock
+THEN fails with "assertion_failed"
+AND stock.available == 3
+AND prints []
+
+EXAMPLES
+  | quantity |
+  | 0        |
+  | -1       |

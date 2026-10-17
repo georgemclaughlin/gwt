@@ -1,0 +1,863 @@
+{
+  "kind": "native-maintenance-fixture-qualification",
+  "schemaVersion": 1,
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-wmvct45n/installed/bin/gwt-native",
+  "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+  "domains": 5,
+  "uniqueProbesPerRevision": 1138,
+  "fixtureExecutions": 6828,
+  "preparedTrials": 30,
+  "repeatsPerLanguage": 3,
+  "liveModelCalls": 0,
+  "humanParticipants": 0,
+  "checks": [
+    {
+      "domain": "refund",
+      "language": "gwt",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 30,
+          "total": 33
+        },
+        "changed": {
+          "passed": 0,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 29,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "refund",
+      "language": "gwt",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 33,
+          "total": 33
+        },
+        "changed": {
+          "passed": 3,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 31,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "refund",
+      "language": "gwt",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 32,
+          "total": 33
+        },
+        "changed": {
+          "passed": 2,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 31,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "refund",
+      "language": "python",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 30,
+          "total": 33
+        },
+        "changed": {
+          "passed": 0,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 29,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "refund",
+      "language": "python",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 33,
+          "total": 33
+        },
+        "changed": {
+          "passed": 3,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 31,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "refund",
+      "language": "python",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 32,
+          "total": 33
+        },
+        "changed": {
+          "passed": 2,
+          "total": 3
+        },
+        "preserved": {
+          "passed": 30,
+          "total": 30
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 31,
+          "total": 31
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "gwt",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 8,
+          "total": 13
+        },
+        "changed": {
+          "passed": 0,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 8,
+          "total": 8
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 7,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "gwt",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 13,
+          "total": 13
+        },
+        "changed": {
+          "passed": 5,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 8,
+          "total": 8
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 11,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "gwt",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 11,
+          "total": 13
+        },
+        "changed": {
+          "passed": 5,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 6,
+          "total": 8
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 10,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "python",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 8,
+          "total": 13
+        },
+        "changed": {
+          "passed": 0,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 8,
+          "total": 8
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 7,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "python",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 13,
+          "total": 13
+        },
+        "changed": {
+          "passed": 5,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 8,
+          "total": 8
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 11,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "delivery",
+      "language": "python",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 11,
+          "total": 13
+        },
+        "changed": {
+          "passed": 5,
+          "total": 5
+        },
+        "preserved": {
+          "passed": 6,
+          "total": 8
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 10,
+          "total": 11
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "gwt",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 60,
+          "total": 74
+        },
+        "changed": {
+          "passed": 0,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 60,
+          "total": 60
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 59,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "gwt",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 74,
+          "total": 74
+        },
+        "changed": {
+          "passed": 14,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 60,
+          "total": 60
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 72,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "gwt",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 43,
+          "total": 74
+        },
+        "changed": {
+          "passed": 10,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 33,
+          "total": 60
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 42,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "python",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 60,
+          "total": 74
+        },
+        "changed": {
+          "passed": 0,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 60,
+          "total": 60
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 59,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "python",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 74,
+          "total": 74
+        },
+        "changed": {
+          "passed": 14,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 60,
+          "total": 60
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 72,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "expenses",
+      "language": "python",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 43,
+          "total": 74
+        },
+        "changed": {
+          "passed": 10,
+          "total": 14
+        },
+        "preserved": {
+          "passed": 33,
+          "total": 60
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 42,
+          "total": 72
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "gwt",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 14,
+          "total": 20
+        },
+        "changed": {
+          "passed": 0,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 14,
+          "total": 14
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 13,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "gwt",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 20,
+          "total": 20
+        },
+        "changed": {
+          "passed": 6,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 14,
+          "total": 14
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 18,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "gwt",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 10,
+          "total": 20
+        },
+        "changed": {
+          "passed": 0,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 10,
+          "total": 14
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 9,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "python",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 14,
+          "total": 20
+        },
+        "changed": {
+          "passed": 0,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 14,
+          "total": 14
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 13,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "python",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 20,
+          "total": 20
+        },
+        "changed": {
+          "passed": 6,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 14,
+          "total": 14
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 18,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "inventory",
+      "language": "python",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 10,
+          "total": 20
+        },
+        "changed": {
+          "passed": 0,
+          "total": 6
+        },
+        "preserved": {
+          "passed": 10,
+          "total": 14
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 9,
+          "total": 18
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "gwt",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 840,
+          "total": 998
+        },
+        "changed": {
+          "passed": 0,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 840,
+          "total": 840
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 839,
+          "total": 996
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "gwt",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 998,
+          "total": 998
+        },
+        "changed": {
+          "passed": 158,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 840,
+          "total": 840
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 996,
+          "total": 996
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "gwt",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 618,
+          "total": 998
+        },
+        "changed": {
+          "passed": 158,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 460,
+          "total": 840
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 616,
+          "total": 996
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "python",
+      "revision": "baseline",
+      "scores": {
+        "all": {
+          "passed": 840,
+          "total": 998
+        },
+        "changed": {
+          "passed": 0,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 840,
+          "total": 840
+        },
+        "public": {
+          "passed": 1,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 839,
+          "total": 996
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "python",
+      "revision": "correct",
+      "scores": {
+        "all": {
+          "passed": 998,
+          "total": 998
+        },
+        "changed": {
+          "passed": 158,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 840,
+          "total": 840
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 996,
+          "total": 996
+        }
+      }
+    },
+    {
+      "domain": "allocation",
+      "language": "python",
+      "revision": "faulty",
+      "scores": {
+        "all": {
+          "passed": 618,
+          "total": 998
+        },
+        "changed": {
+          "passed": 158,
+          "total": 158
+        },
+        "preserved": {
+          "passed": 460,
+          "total": 840
+        },
+        "public": {
+          "passed": 2,
+          "total": 2
+        },
+        "withheld": {
+          "passed": 616,
+          "total": 996
+        }
+      }
+    }
+  ],
+  "sourceSha256": {
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/baseline.gwt": "0e9bb41a359636bb2faca906532cea5aadeac2556ad4caec818917cb3face276",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/correct.gwt": "e42b37bb6c4278c15716e8868d9b3a6c4127c19ca3e0919d7180d46e6ea31b81",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/faulty.gwt": "81906e69d9a195166a1656fb8407f4c37410fa3324e7ccbcf5c854aeb391194e",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/baseline.py": "e449cfb81c03695656e842843e78291e6c339f970912ac88e451381d9c7430a0",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/correct.py": "5adff10112d48dbcbbbb5f85624ad5fc44e2dc6b3c1a59df8f0893d0c6497ab6",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/refund/faulty.py": "1300607a85da84cfd90c53169df0574fe09fc241b0c034ab6e358968e8dcac1f",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/baseline.gwt": "cb088eda253230c6833c524ebbb54b8761c97d3162493047f19b88c4e69b2248",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/correct.gwt": "5d95f37f3d1105a298d93d5fa8b40b7f6e3d521def2ce883e2f76a4c77e12a09",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/faulty.gwt": "0ef72b9198e8eccb2a4df653ff69ae1732e90d3d725a727ae65c52ea79af4aab",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/baseline.py": "7531809ac268f0cc5bdb54f2f99067b0ea4bacab34ee62fe34af3c6cc032dc8f",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/correct.py": "aeffe5d8184dc59c5209e7f2c3a5a44645a4df4b656894aad06ead2861bbc04c",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/delivery/faulty.py": "a504c9cf2717075f616e72e9d41076b8ec18dcdc344ca22851d931b41e4cccca",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/baseline.gwt": "003b57f1029cb0e9c57ed83b428025583d7be20e0417aad1ad7914824e369ce5",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/correct.gwt": "32980b7e51e94dbac23d2bd257f01d31554dce9d0f401eddf6304fd6c58369cd",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/faulty.gwt": "432d9c76b281cbbb0048db0fad7361fcfd64082826e41d1f522e2d672ccbcd36",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/baseline.py": "80fe161f05e3fb3b9d60d801694df662d23a3269ee0c4fecf14b170c3cffd4bb",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/correct.py": "5a29e57f84dc0139b875e2fc5fc97513ee2a8c5aece24593beb51d1e34d3d5c9",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/expenses/faulty.py": "0b31d83a027a3701cb087c2763002317be98ee9d259d7d390f5605d0ae012635",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/baseline.gwt": "d594d2ce66d28540a7b23cf73a7f70e82118bd4a03494ad7ecaf7c47046c4d15",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/correct.gwt": "e80e05565b4d3f29c3f33775f956a90116571f1b9da18733fc4b990e6e40c8e4",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/faulty.gwt": "4a3dc8f8fb135d9c32edf1416d45289f25549824ccf4b72f16db29800d417061",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/baseline.py": "792b8db018fbd1b0eec8258c6820f35c657a799fc84d4adf01bec8972dfdc5ca",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/correct.py": "56b0cf19e210a7b6c4867bdfcac30b5d724562dbc073e4061ee957e7305c3511",
+    "/home/g/code/gwt/evaluations/human_review/fixtures/inventory/faulty.py": "52c1d10fc1e9841488cb457de9003ad64ecd3dd51f702e320f609b9e0f90a844",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/baseline.gwt": "77e173b412337d359a4a94ae5d5d0981a43bb9f13edce64e9f90ae746716c60d",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/correct.gwt": "885c8273a9c81501f4e4addf92edb511d5ff6efa8ef3bc89314e62d11e65be55",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/faulty.gwt": "b2338719a9afdae1c1431996b7300157470608787aee1721a5faf316ecf1ae03",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/baseline.py": "a8b25ad5d326ce4f8bd4999291e4499614484a5ec06482610f1c673de238653d",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/correct.py": "ca4a73b36301da12a545e2744e677dc9dea9b37a0eacbaf3584de526645bfa3d",
+    "/home/g/code/gwt/evaluations/native_maintenance/fixtures/allocation/faulty.py": "bd159c18741a5a8d8ca99a500ca670297b7156e845d18c46bfb0307aebf8c317",
+    "/home/g/code/gwt/evaluations/native_maintenance/study.py": "927752c7251c84024518412b6479a2e492a9926323512a15b596895a23e85baf",
+    "/home/g/code/gwt/evaluations/native_maintenance/corpus.py": "9868884c1113c2ce00d960a2b69e8c535ee61fdbf2a3b5d5585d139d3055868b",
+    "/home/g/code/gwt/evaluations/native_maintenance/worker.py": "0be54a4199c83bd98c687073cb8e1e23bccddb092403abf6d8679715fb501680",
+    "evaluations/human_review/corpus.py": "45952a98e6b674a5689289c9a2e7ed43e142f838c4b649ca397c21bcf8dcdfcf",
+    "evaluations/native_editor/weighted_allocation_oracle.py": "630abbe0bd9fc8e974634d403baea90a19ba6c818bae0b6a25d8ed40b5015c32"
+  },
+  "taskFileSha256": "dae8b5c0561211c3e6b388605f90aa9095b1335f88611115f9a472057988b659"
+}

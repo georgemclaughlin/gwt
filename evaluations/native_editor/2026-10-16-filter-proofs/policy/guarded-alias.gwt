@@ -1,0 +1,15 @@
+RECORD Box
+  value: optional<integer>
+REQUEST inspect
+  GIVEN items is list<Box>
+  GIVEN replacement is Box
+  WHEN inspect items with replacement
+  OUTPUT items is list<Box>
+WHEN inspect <items> with <replacement>
+  GIVEN items is list<Box>
+  AND replacement is Box
+  FOR selected in items WHERE selected.value is present
+    FIND alias in items WHERE true
+      set alias to replacement
+    ELSE
+      PASS

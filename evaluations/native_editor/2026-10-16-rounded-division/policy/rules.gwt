@@ -1,0 +1,63 @@
+PROGRAM quoted unit price
+
+REQUEST quote unit price
+  GIVEN total is decimal
+  AND units is integer
+  GIVEN price is 0.0
+  WHEN quote total across units into price
+  OUTPUT price is decimal
+
+WHEN quote <total> across <units> into <price>
+  GIVEN total is decimal
+  AND units is integer
+  AND price is decimal
+  REQUIRE units > 0
+  divide total by units rounded to 2 places using half_even into price
+
+SCENARIO recurring quotient rounds down
+GIVEN total is 1.0
+AND units is 3
+REQUEST quote unit price
+THEN price == 0.33
+
+SCENARIO recurring quotient rounds up
+GIVEN total is 2.0
+AND units is 3
+REQUEST quote unit price
+THEN price == 0.67
+
+SCENARIO midpoint retains even cent
+GIVEN total is 10.05
+AND units is 2
+REQUEST quote unit price
+THEN price == 5.02
+
+SCENARIO midpoint advances odd cent
+GIVEN total is 10.15
+AND units is 2
+REQUEST quote unit price
+THEN price == 5.08
+
+SCENARIO negative midpoint retains even cent
+GIVEN total is -10.05
+AND units is 2
+REQUEST quote unit price
+THEN price == -5.02
+
+SCENARIO exact quotient is unchanged
+GIVEN total is 1.0
+AND units is 4
+REQUEST quote unit price
+THEN price == 0.25
+
+SCENARIO zero total
+GIVEN total is 0.0
+AND units is 3
+REQUEST quote unit price
+THEN price == 0
+
+SCENARIO unit count must be positive
+GIVEN total is 1.0
+AND units is 0
+REQUEST quote unit price
+THEN fails with "assertion_failed"

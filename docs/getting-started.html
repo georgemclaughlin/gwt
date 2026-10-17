@@ -1,418 +1,104 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Getting Started With GWT</title>
-    <meta
-      name="description"
-      content="A step-by-step introduction to executable GWT behavior, records, scenarios, JSON requests, host contracts, and review evidence."
-    >
-    <meta name="color-scheme" content="dark light">
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="assets/site.css">
-  </head>
-  <body>
-    <header class="site-header">
-      <a class="wordmark" href="index.html">GWT</a>
-      <nav aria-label="Documentation links">
-        <a href="getting-started.html">Getting Started</a>
-        <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">Guide</a>
-        <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
-        <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
-      </nav>
-    </header>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting Started With GWT</title>
+  <meta name="description" content="Read, run, change, and review an executable delivery policy with GWT's experimental Rust engine.">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/site.css?v=syntax-3">
+</head>
+<body>
+<header class="site-header"><a class="wordmark" href="index.html">GWT</a>
+<nav aria-label="Documentation links"><a href="index.html">Home</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a></nav></header>
+<main class="doc-page">
+<section class="doc-hero"><p class="eyebrow">Getting started</p>
+<h1>Read. Run. Change. Review.</h1>
+<p class="lede">Follow one delivery policy from executable rules to a review of a real change.
+GWT records the evidence behind each decision, so you can check the effect of the change.</p></section>
+<div class="doc-layout"><aside class="doc-nav" aria-label="Walkthrough steps">
+<a href="#setup">Get ready</a><a href="#read">Read the policy</a><a href="#run">Run and validate</a>
+<a href="#review">Compare and review</a><a href="#next">Next steps</a></aside><article class="doc-article">
+<section id="setup" class="walk-step"><h2>Try A Delivery Policy</h2>
+<p>Start with the <a href="demo/delivery-review.html">interactive review</a> in your browser, or
+<a href="downloads/delivery-example.zip" download>download the example</a> to run it yourself.
+The download includes the rules, a proposed change, input facts, nine captured cases, and matching engine information.</p>
+<p>For local execution, <a href="installation.html">install GWT</a>, unzip the example,
+and open a terminal in its <code>delivery-example</code> directory.</p>
+<pre><code data-language="sh"><span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
+<p>You’ll use <code>delivery.gwt</code> for the current policy,
+<code>proposed.gwt</code> for the change, and <code>parcel.json</code> for a customer’s request.</p>
+</section>
+<section id="read" class="walk-step"><h2>Read The Executable Policy</h2>
+<p>The baseline charges nonmembers 5 up to 1,000g and 9 above that. Members pay zero.
+Parcels above 5,000g require manual handling, even for members; nonpositive weights fail.</p>
+<p><code>REQUEST</code> describes the input and output. A named <code>WHEN</code> block implements the behavior.
+<code>DECIDE</code> executes its first matching arm, so the order expresses policy precedence.</p><pre><code data-language="gwt"><span class="tok-kw">PROGRAM</span> delivery quote
 
-    <main class="doc-page">
-      <section class="doc-hero">
-        <p class="eyebrow">Getting started</p>
-        <h1>Build A GWT Program In Small Steps</h1>
-        <p class="lede">
-          Start with one executable example, then add behavior, structured
-          state, record contracts, scenarios, and a host-facing request. Finish
-          by validating, projecting, and capturing the same program.
-        </p>
-        <div class="actions" aria-label="Getting started actions">
-          <a class="button primary" href="#first-program">Start The Walkthrough</a>
-          <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/tree/main/examples/checkout">
-            View Checkout Example
-          </a>
-        </div>
-      </section>
+<span class="tok-kw">RECORD</span> <span class="tok-type">Parcel</span>
+  <span class="tok-key">weight_grams</span>: <span class="tok-type">integer</span>
+  <span class="tok-key">member</span>: <span class="tok-type">boolean</span>
 
-      <div class="doc-layout">
-        <aside class="doc-nav" aria-label="Walkthrough steps">
-          <a href="#setup">Before You Begin</a>
-          <a href="#first-program">1. First Program</a>
-          <a href="#behavior">2. Behavior</a>
-          <a href="#record-state">3. Record State</a>
-          <a href="#record-contract">4. Record Contract</a>
-          <a href="#scenarios">5. Scenarios</a>
-          <a href="#request">6. Request Boundary</a>
-          <a href="#json">7. JSON Input</a>
-          <a href="#toolchain">8. Tooling And Evidence</a>
-          <a href="#next">Next Steps</a>
-        </aside>
+<span class="tok-kw">RECORD</span> <span class="tok-type">Quote</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"standard"</span> <span class="tok-operator">|</span> <span class="tok-string">"manual"</span>
+  <span class="tok-key">fee</span>: <span class="tok-type">integer</span>
 
-        <article class="doc-article">
-          <section id="setup" class="walk-step">
-            <p class="step-kicker">Before you begin</p>
-            <h2>Run The Walkthrough From A Checkout</h2>
-            <p>
-              GWT currently requires Python 3.11 or newer. Clone the repository
-              and run the examples from its root. Module invocation works
-              without installation; an editable install also provides the
-              shorter <code>gwt</code> command.
-            </p>
-            <pre><code>git clone https://github.com/georgemclaughlin/gwt.git
-cd gwt
+<span class="tok-kw">REQUEST</span> quote delivery
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">GIVEN</span> quote <span class="tok-operator">is</span> Quote
+    <span class="tok-key">status</span>: <span class="tok-string">"standard"</span>
+    <span class="tok-key">fee</span>: <span class="tok-number">0</span>
+  <span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> parcel <span class="tok-word">into</span> quote
+  <span class="tok-kw">OUTPUT</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">THEN</span> quote.fee <span class="tok-operator">&gt;=</span> <span class="tok-number">0</span>
 
-python -m gwtlang version --json
+<span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-word">into</span> <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">AND</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">0</span>
+  <span class="tok-kw">DECIDE</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"manual"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.member
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&lt;=</span> <span class="tok-number">1000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">5</span>
+    <span class="tok-kw">ELSE</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">9</span></code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
+</section>
+<section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
+<p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.
+It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code data-language="sh"><span class="tok-kw">gwt</span> validate proposed.gwt
 
-# Optional: install the shorter `gwt` command.
-python -m pip install -e .</code></pre>
-          </section>
-
-          <section id="first-program" class="walk-step">
-            <p class="step-kicker">Step 1</p>
-            <h2>Start With State, Action, And Assertion</h2>
-            <p>
-              A GWT file is executable. This smallest program creates one value,
-              prints it, and checks that it has the expected value.
-            </p>
-            <pre><code>PROGRAM hello
-
-GIVEN greeting is "hello world"
-
-WHEN print greeting
-
-THEN greeting == "hello world"</code></pre>
-            <p>Run the checked-in copy:</p>
-            <pre><code>python -m gwtlang run examples/hello.gwt --json</code></pre>
-            <p>
-              <code>GIVEN</code> creates state, <code>WHEN</code> executes a
-              step, and <code>THEN</code> asserts the result. The JSON payload
-              includes the final state and any printed output.
-            </p>
-          </section>
-
-          <section id="behavior" class="walk-step">
-            <p class="step-kicker">Step 2</p>
-            <h2>Add Fields And Reusable Behavior</h2>
-            <p>
-              Dot paths let you build nested state directly. A block-form
-              <code>WHEN</code> defines reusable behavior; a single-line
-              <code>WHEN</code> runs it.
-            </p>
-            <pre><code>PROGRAM bank
-
-GIVEN account.balance is 100
-AND account.status is "open"
-
-WHEN withdraw &lt;amount&gt; from &lt;account&gt;
-  REQUIRE account.status == "open"
-  AND account.balance &gt;= amount
-  subtract amount from account.balance
-
-WHEN withdraw 30 from account
-
-THEN account.balance == 70
-AND account.status == "open"</code></pre>
-            <p>
-              The signature names the behavior in readable words and marks
-              parameters with angle brackets. Inside the behavior body, use the
-              bare parameter names.
-            </p>
-          </section>
-
-          <section id="record-state" class="walk-step">
-            <p class="step-kicker">Step 3</p>
-            <h2>Group Related State Into A Nested Value</h2>
-            <p>
-              When values belong together, use an indented key/value block
-              instead of setting every path separately. This creates unnamed
-              structured state; it does not declare a <code>RECORD</code>
-              contract yet.
-            </p>
-            <pre><code>PROGRAM nested state
-
-WHEN withdraw &lt;amount&gt; from &lt;account&gt;
-  REQUIRE account.status == "open"
-  AND account.balance &gt;= amount
-  subtract amount from account.balance
-
-GIVEN account is
-  balance: 100
-  status: "open"
-  owner:
-    name: "Ada"
-
-WHEN withdraw 30 from account
-
-THEN account is
-  balance: 70
-  status: "open"
-  owner:
-    name: "Ada"</code></pre>
-            <p>
-              Nested assertions keep examples readable as the state grows. In
-              the next step, <code>RECORD</code> gives this shape a name and a
-              checked contract.
-            </p>
-          </section>
-
-          <section id="record-contract" class="walk-step">
-            <p class="step-kicker">Step 4</p>
-            <h2>Name The Shape With A Record Contract</h2>
-            <p>
-              <code>RECORD</code> declares the expected shape of state that
-              behavior reads or writes. The checker and runtime use it to catch
-              missing fields, unknown fields, and wrong value types.
-            </p>
-            <pre><code>PROGRAM typed bank
-
-RECORD Account
-  balance: number
-  status: "open" | "closed"
-  owner:
-    name: text
-
-WHEN withdraw &lt;amount&gt; from &lt;account&gt;
-  GIVEN account is Account
-  REQUIRE account.status == "open"
-  AND account.balance &gt;= amount
-  subtract amount from account.balance
-
-GIVEN account is Account
-  balance: 100
-  status: "open"
-  owner:
-    name: "Ada"
-
-WHEN withdraw 30 from account
-
-THEN account.balance == 70</code></pre>
-            <p>
-              Contracts are not classes or methods. They describe the data shape
-              that executable behavior depends on.
-            </p>
-          </section>
-
-          <section id="scenarios" class="walk-step">
-            <p class="step-kicker">Step 5</p>
-            <h2>Add Scenarios As Regression Coverage</h2>
-            <p>
-              <code>SCENARIO</code> starts an independent run with fresh state.
-              <code>BACKGROUND</code> provides setup shared by every scenario.
-            </p>
-            <pre><code>PROGRAM bank scenarios
-
-WHEN withdraw &lt;amount&gt; from &lt;account&gt;
-  REQUIRE account.status == "open"
-  AND account.balance &gt;= amount + fee
-  subtract amount + fee from account.balance
-
-BACKGROUND
-GIVEN account.status is "open"
-AND fee is 3
-
-SCENARIO successful withdrawal
-GIVEN account.balance is 100
-WHEN withdraw 30 from account
-THEN account.balance == 67
-AND account.status == "open"
-
-SCENARIO smaller withdrawal
-GIVEN account.balance is 50
-WHEN withdraw 10 from account
-THEN account.balance == 37
-AND account.status == "open"</code></pre>
-            <p>Run the checked-in scenario example:</p>
-            <pre><code>python -m gwtlang test examples/scenarios.gwt</code></pre>
-            <p>
-              This is the spec-as-code loop: examples are readable enough to
-              review and precise enough to run in CI.
-            </p>
-          </section>
-
-          <section id="request" class="walk-step">
-            <p class="step-kicker">Step 6</p>
-            <h2>Expose A Named Request</h2>
-            <p>
-              A <code>REQUEST</code> is the public entry point a host
-              application can call. Its body declares caller input, request-local
-              setup, execution steps, output shape, and optional postconditions.
-            </p>
-            <pre><code>PROGRAM cart pricing
-
-RECORD Cart
-  subtotal: number
-  shipping: number
-  total: number
-
-REQUEST price cart
-  GIVEN cart is Cart
-
-  WHEN price cart
-
-  OUTPUT cart is Cart
-
-  THEN cart.total &gt;= cart.subtotal
-
-WHEN price &lt;cart&gt;
-  GIVEN cart is Cart
-  IF cart.subtotal &gt;= 100
-    set cart.shipping to 0
-  ELSE
-    set cart.shipping to 8
-  set cart.total to cart.subtotal + cart.shipping</code></pre>
-            <p>
-              A GWT request file can provide input state, invoke the public
-              request, and make assertions about the result.
-            </p>
-            <pre><code>GIVEN cart is Cart
-  subtotal: 84
-  shipping: 0
-  total: 0
-
-REQUEST price cart
-
-THEN cart.total == 92</code></pre>
-            <pre><code>python -m gwtlang run pricing.gwt --input request.gwt --json</code></pre>
-            <p>
-              Save the program as <code>pricing.gwt</code> and the request block
-              as <code>request.gwt</code> before running that command. Request
-              files do not redeclare the program: the program owns records and
-              behavior, while the request file supplies state and calls the
-              named request.
-            </p>
-          </section>
-
-          <section id="json" class="walk-step">
-            <p class="step-kicker">Step 7</p>
-            <h2>Call The Same Request With JSON</h2>
-            <p>
-              Host applications usually send JSON instead of a GWT request file.
-              The same <code>REQUEST</code> contract validates that input before
-              behavior runs.
-            </p>
-            <pre><code>{
-  "cart": {
-    "subtotal": 84,
-    "shipping": 0,
-    "total": 0
-  }
-}</code></pre>
-            <pre><code>python -m gwtlang run pricing.gwt \
-  --json-input request.json \
-  --request "price cart" \
-  --json</code></pre>
-            <p>
-              The stable JSON envelope puts declared outputs under
-              <code>result</code> and keeps the complete final state under
-              <code>state</code>. The excerpt below focuses on those two fields;
-              the complete payload also reports the source file, request file,
-              printed output, and scenario metadata.
-            </p>
-            <pre><code>{
-  "ok": true,
-  "result": {
-    "cart": {
-      "subtotal": 84,
-      "shipping": 8,
-      "total": 92
-    }
-  },
-  "state": {
-    "cart": {
-      "subtotal": 84,
-      "shipping": 8,
-      "total": 92
-    }
-  }
-}</code></pre>
-          </section>
-
-          <section id="toolchain" class="walk-step">
-            <p class="step-kicker">Step 8</p>
-            <h2>Validate, Project, And Capture The Program</h2>
-            <p>
-              The same checked source drives local validation, generated host
-              contracts, and review evidence. No second step-definition or
-              handwritten API model becomes the real implementation.
-            </p>
-            <pre><code>python -m gwtlang validate pricing.gwt
-
-python -m gwtlang schema pricing.gwt \
-  --output pricing.schema.json
-
-python -m gwtlang openapi pricing.gwt \
-  --output openapi.json
-
-python -m gwtlang serve pricing.gwt \
-  --port 8080</code></pre>
-            <p>
-              The served <code>REQUEST</code> boundary is the recommended path
-              for non-Python hosts; they can use ordinary HTTP and OpenAPI
-              tooling while GWT remains the only evaluator.
-            </p>
-            <p>
-              Capture one JSON request as an integrity-checked Execution Case,
-              then build a self-contained local review page that verifies the
-              case still replays against the program.
-            </p>
-            <pre><code>python -m gwtlang capture pricing.gwt \
-  --json-input request.json \
-  --request "price cart" \
-  --output price-cart.execution-case.json
-
-python -m gwtlang workbench \
-  price-cart.execution-case.json \
-  --program pricing.gwt \
-  --output price-cart-review.html</code></pre>
-            <p>
-              For repeated old/new review, group named Execution Cases with
-              <code>gwt corpus create</code>, then pass the corpus to
-              <code>gwt compare</code> or <code>gwt workbench</code>.
-            </p>
-          </section>
-
-          <section id="next" class="walk-step next-steps">
-            <p class="step-kicker">Next</p>
-            <h2>Where To Go After This</h2>
-            <p>
-              The checkout example is the same idea with customer membership,
-              subtotal calculation, shipping, discounts, scenario coverage, a
-              GWT request file, and JSON input.
-            </p>
-            <div class="link-list">
-              <a href="https://github.com/georgemclaughlin/gwt/tree/main/examples/checkout">
-                Read the checkout example
-              </a>
-              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/language.md">
-                Continue to the language guide
-              </a>
-              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/adoption-modes.md">
-                Choose an adoption mode
-              </a>
-              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/execution-cases.md">
-                Review Execution Cases and corpora
-              </a>
-              <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">
-                Open the v0.2 spec
-              </a>
-            </div>
-          </section>
-        </article>
-      </div>
-    </main>
-
-    <footer class="footer">
-      <span>Language spec v0.2</span>
+<span class="tok-kw">gwt</span> run proposed.gwt \
+  <span class="tok-key">--request</span> <span class="tok-string">"quote delivery"</span> \
+  <span class="tok-key">--input</span> parcel.json</code></pre><p>The declared <code>result</code> is:</p><pre><code data-language="json">{<span class="tok-key">"quote"</span>:{<span class="tok-key">"status"</span>:<span class="tok-string">"standard"</span>,<span class="tok-key">"fee"</span>:<span class="tok-number">5</span>}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
+</section>
+<section id="review" class="walk-step"><h2>Compare The Same Input</h2>
+<p>The example includes nine captured baseline requests. Compare them with the proposed policy:</p>
+<pre><code data-language="sh"><span class="tok-kw">gwt</span> review delivery.corpus.json \
+  <span class="tok-key">--candidate</span> proposed.gwt \
+  <span class="tok-key">--html</span> delivery-review.html</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
+<strong>9 → 5</strong>. Follow the branch and write events to the source conditions:
+<code>1500 &lt;= 1000</code> was false; <code>1500 &lt;= 1500</code> is true.</p>
+<p>The page lets you record Pending, Accept, Reject, or Needs information, add notes, and download your decisions.
+The generated review starts pending. Execution evidence explains what happened; the reviewer decides whether it matches the intended policy.</p>
+<p>Only two outcomes change. The zero-weight rejection remains a failure in both revisions; the other cases check unchanged policy boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-review-walkthrough.md">Continue to the nine-case walkthrough</a>
+</section>
+<section id="next" class="walk-step"><h2>Continue Exploring</h2>
+<p>Use the language reference for the rules of GWT, or explore integration with your application.</p><div class="link-list"><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Native language reference</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-embedding.md">Embed the Rust engine</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_browser_host/README.md">Run GWT through WebAssembly</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/project-goal.md">Project goal</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/python-retirement.md">Upgrading from the earlier implementation</a></div>
+</section>
+</article></div></main>
+<footer class="footer">
+      <span>GWT · Experimental language</span>
       <a href="getting-started.html">Getting Started</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/v0.2.md">Spec</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-grammar.md">Grammar</a>
       <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
     </footer>
-  </body>
+</body>
 </html>

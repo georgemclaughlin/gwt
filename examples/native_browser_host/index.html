@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GWT local invoice preview</title>
+<style>
+  body { font:16px/1.5 system-ui,sans-serif; max-width:960px; margin:32px auto; padding:0 20px; color:#173d35; background:#f6f5ef; }
+  textarea,pre { box-sizing:border-box; width:100%; font:14px/1.5 monospace; padding:16px; background:white; border:1px solid #a8bbb4; border-radius:8px; }
+  pre { overflow:auto; } textarea { min-height:180px; } button { padding:12px 18px; font:inherit; margin:8px 8px 8px 0; }
+  button:focus-visible,textarea:focus-visible,summary:focus-visible { outline:3px solid #b87312; outline-offset:3px; }
+</style>
+<h1>Preview an invoice decision</h1>
+<p>Change the invoice facts and run the saved rules locally. This preview makes no inventory, payment, or account changes.</p>
+<details><summary>Saved rules</summary><pre id="source" tabindex="0"></pre></details>
+<form id="form">
+<p><label for="input">Invoice facts · use quoted text for decimal amounts</label></p>
+<textarea id="input" spellcheck="false">{"invoice":{"unit_price":"0.01","quantity":9007199254740993}}</textarea>
+<button id="run" disabled>Run preview</button><button id="cancel" type="button" disabled>Cancel</button>
+</form>
+<p id="status" role="status">Loading the local preview engine…</p>
+<p><strong id="outcome"></strong></p>
+<details id="evidence" hidden><summary>Full execution evidence</summary><pre id="result" tabindex="0" hidden></pre></details>
+<script type="module">
+  import {createPreview} from './preview.mjs';
+  const $ = id => document.getElementById(id);
+  let controller;
+  try {
+    const [wasm, bundle] = await Promise.all([
+      fetch('./gwt_browser_preview.wasm').then(response => {if(!response.ok) throw new Error('Could not load engine.'); return response.arrayBuffer();}),
+      fetch('./bundle.json').then(response => {if(!response.ok) throw new Error('Could not load saved rules.'); return response.json();}),
+    ]);
+    const preview = await createPreview(wasm);
+    window.addEventListener('pagehide', event => {if (!event.persisted) preview.dispose();});
+    $('source').textContent = bundle.modules[bundle.entry];
+    $('run').disabled = false;
+    $('status').textContent = 'Ready. Results and execution evidence stay in this page.';
+    $('cancel').onclick = () => controller?.abort();
+    $('form').onsubmit = async event => {
+      event.preventDefault();
+      controller = new AbortController();
+      $('run').disabled = true; $('cancel').disabled = false; $('result').hidden = true;
+      $('evidence').hidden = true; $('outcome').textContent = '';
+      $('status').textContent = 'Running preview…';
+      // Keep numeric input tokens intact; Rust parses the raw input JSON.
+      const request = '{"bundle":' + JSON.stringify(bundle) + ',"request":"price invoice","input":' + $('input').value + ',"limits":{"execution":{"steps":100000,"evidenceBytes":1048576,"textBytes":1048576},"callDepth":64}}';
+      try {
+        const text = await preview.run(request, {signal:controller.signal});
+        $('result').textContent = text; $('result').hidden = false;
+        $('evidence').hidden = false;
+        const payload = JSON.parse(text, (_key,value,context) => typeof value === 'number' && !Number.isSafeInteger(value) ? BigInt(context.source) : value);
+        if (payload.kind === 'gwt.browser-error') {
+          $('status').textContent = 'Preview could not run: ' + (payload.message || payload.diagnostic?.message || payload.phase);
+        } else if (!payload.execution.ok) {
+          $('status').textContent = 'Invoice was not priced: ' + payload.execution.diagnostic.message;
+        } else {
+          $('status').textContent = 'Invoice priced by the saved rules.';
+          $('outcome').textContent = 'Total: ' + payload.execution.result.decision.total;
+        }
+      } catch (error) { $('status').textContent = error.message; }
+      finally { $('run').disabled = false; $('cancel').disabled = true; }
+    };
+  } catch (error) { $('status').textContent = error.message; }
+</script>
+</html>

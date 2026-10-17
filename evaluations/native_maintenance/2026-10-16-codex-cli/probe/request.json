@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Return action code, source exactly \"qualification\", and an empty clarifications array. Do not use tools.",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

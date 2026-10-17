@@ -1,0 +1,31 @@
+{
+  "engine": "python",
+  "command": [
+    "code",
+    "--new-window",
+    "--user-data-dir",
+    "/tmp/gwt-editor-qualification-c5kv83xp/profile",
+    "--extensions-dir",
+    "/tmp/gwt-editor-qualification-c5kv83xp/extensions",
+    "--extensionDevelopmentPath=/home/g/code/gwt/vscode-gwt",
+    "--extensionTestsPath=/home/g/code/gwt/vscode-gwt/tests/extension-host.js",
+    "--skip-welcome",
+    "--skip-release-notes",
+    "--disable-workspace-trust",
+    "--disable-extensions",
+    "--no-sandbox",
+    "--wait",
+    "/tmp/gwt-editor-qualification-c5kv83xp/workspace"
+  ],
+  "temporaryDirectory": "/tmp/gwt-editor-qualification-c5kv83xp",
+  "extensionSourceSha256": {
+    "extension.js": "1287f44a8b7cfdc4274479a4aed217ffe83b21dddbf37cf182bb8b858bda7208",
+    "native-editor.js": "b4ab2efdac75fef598300913e6271732ee2542ef42a0a7a9bfa37582019e4d46",
+    "native-tools.js": "9f56d3e1d7ddecbeb8fc1a0fe1adb2bd6a29d215b4448dae53033efa2b8b4c26",
+    "package.json": "37986c58c817c725bb63471396d1e348b4f99eede54d44d14875c7c0cfe034e6",
+    "language-configuration.json": "4206c81659dff4341dfb1a382ed36ed0b3bf0a968176f094b325fa88ae5521f1",
+    "syntaxes/gwt.tmLanguage.json": "06a35dc8cbc3d19a444390d22f040c498f0edc9078a6a4c6b4bbeac0d0ff1e33",
+    "tests/extension-host.js": "6e7cb09780dbdd4b6a81a885584380810fe5b863ce4a542805d44e2cc4255936"
+  },
+  "launcherExitCode": 0
+}
