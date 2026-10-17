@@ -12,6 +12,13 @@ moving a workflow to native GWT. It also specifies the work needed to make a
 versioned native language release. It does not assign that release a number,
 change the default engine, or publish a package.
 
+## Planned product cutover
+
+The [post-merge product plan](post-merge-product-plan.md) targets one Rust engine
+under the public `gwt` command and retirement of the active Python runtime.
+That coordinated transition is not implemented yet. The identities below
+describe the current checkout; the plan describes the intended merged product.
+
 ## Select and identify the implementation
 
 | Surface | Current identity | What it identifies |
