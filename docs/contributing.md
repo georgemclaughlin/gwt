@@ -55,3 +55,12 @@ python evaluations/native_editor/qualify.py --native target/debug/gwt --output /
 
 This uses an isolated profile/workspace and checks actual extension behavior.
 It does not install or modify extensions in your ordinary editor profile.
+
+## Repository maintenance
+
+Read the [architecture map](architecture.md) before changing execution or evidence
+boundaries. Keep [project status](project-goal-progress.md) concise and link dated
+results through the [evaluation index](../evaluations/README.md).
+Independent regression cases stay in the test suite; bulky raw run outputs do
+not belong in normal source PRs. The [fixture guide](../crates/gwt-core/tests/fixtures/README.md)
+explains the large exact-arithmetic corpora and their storage format.

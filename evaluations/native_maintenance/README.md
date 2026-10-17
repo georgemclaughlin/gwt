@@ -7,6 +7,11 @@ and qualifies trusted references against independent expectations. The
 model experiment separately from fixture qualification. Human sessions remain
 pending; there are no participant results.
 
+The original live execution captures are now in the
+[verified evidence archive](../README.md#archived-raw-evidence). Restore that
+historical tree before auditing the dated run; its frozen README describes the
+original layout. The summary and scoring reports remain in this checkout.
+
 Four smaller tasks reuse the human-review kit's refund, delivery, expenses, and
 inventory policies. The new allocation task changes a larger policy involving
 exact decimals, eligibility, fallback, ordering, rejections, and output metadata.

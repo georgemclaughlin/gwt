@@ -14,7 +14,7 @@ not yet been demonstrated.
 
 ## Try it
 
-Open the [project site](docs/index.html) by serving `docs/` locally. The site includes an interactive delivery-policy review
+Open the [project site](https://georgemclaughlin.github.io/gwt/). The site includes an interactive delivery-policy review
 and a standalone example download. See [Getting Started](docs/getting-started.html)
 and [installation](docs/installation.html). Public binary releases remain pending.
 
@@ -41,6 +41,7 @@ nine captured cases and leaves reviewer decisions pending.
 | [Editor](vscode-gwt/README.md) | Checking, navigation, formatting, and execution in VS Code |
 | [Embed GWT](docs/native-embedding.md) | Rust library and host boundaries |
 | [Upgrade guide](docs/python-retirement.md) | Retired Python implementation and command conflicts |
+| [Documentation index](docs/README.md) | Current guides and historical context |
 | [Contributor guide](docs/contributing.md) | Source builds, checks, site generation, and packaging |
 | [Release checklist](docs/release-checklist.md) | Distribution qualification and publication gates |
 | [Project goal](docs/project-goal.md) | Human understanding and the evidence still needed |
