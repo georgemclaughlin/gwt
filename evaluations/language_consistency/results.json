@@ -1,0 +1,837 @@
+{
+  "kind": "gwt.language-consistency-review",
+  "schemaVersion": 1,
+  "reviewedRevision": "d81235e2177b754e62978f76048e4a33ea514eee",
+  "engine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:23000dac2fc04d506dcbba27a197bb7530d689fc5d917cba72195902269b8444"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "sources": {
+    "docs/native-grammar.md": "bfc2dd5dddbf2fc982f738e604e83bc931ba98a436d6784a7ed95642172c1a3d",
+    "docs/spec/native-draft.md": "58c4dc8d1eb1e89dcca72b2499cad2cb5a69985dc5d7b2a7ce984419cc84adc2",
+    "crates/gwt-core/src/program.rs": "13ad0116d779057a8cb82132696a04f72b216a8ae3fe3719f1a395359b12002b",
+    "crates/gwt-core/src/program_source.rs": "6d91d99750808671c780e3847c000cf9bb45801b71c4460ba2a7188c4af00b06",
+    "crates/gwt-core/src/formatter.rs": "e2ac585ac088d6f5a05412d9439d11292a3609409ad33f9f2bbbbc0c1534fc58",
+    "crates/gwt-core/src/editor_completion.rs": "083a416b8c76d5dde88268c12c4f92490bc683bbe557f1d57a5ffed6e4762ba3",
+    "vscode-gwt/syntaxes/gwt.tmLanguage.json": "06a35dc8cbc3d19a444390d22f040c498f0edc9078a6a4c6b4bbeac0d0ff1e33",
+    "tools/highlight_site.py": "8b83764c72b92e4b3f660f9b6eb89d618127812ba6c7bf0922669ce79d3fa5b5",
+    "examples/catalog.json": "43983fb24703597952b0f6dc8a4ad6248760baf8fdc818c12a198372575f63f2"
+  },
+  "catalogEntryCount": 28,
+  "catalogLineHeads": {
+    "AND": 222,
+    "BACKGROUND": 4,
+    "DECIDE": 10,
+    "DEPENDING": 6,
+    "ELSE": 25,
+    "EXAMPLES": 13,
+    "FIND": 6,
+    "FOR": 11,
+    "GIVEN": 274,
+    "IF": 21,
+    "LET": 25,
+    "OUTPUT": 26,
+    "PASS": 3,
+    "PROGRAM": 24,
+    "RECORD": 59,
+    "REQUEST": 121,
+    "REQUIRE": 45,
+    "RETURN": 33,
+    "SCENARIO": 102,
+    "THEN": 129,
+    "TYPE": 8,
+    "USE": 4,
+    "WHEN": 152,
+    "account:": 6,
+    "action:": 4,
+    "add": 10,
+    "add_defined:": 2,
+    "addition:": 1,
+    "address:": 8,
+    "age_days:": 6,
+    "allow_exchanges:": 9,
+    "allow_pickup:": 8,
+    "amount:": 19,
+    "annual_income:": 4,
+    "append": 4,
+    "attempt:": 2,
+    "available:": 16,
+    "available_cash:": 4,
+    "award": 1,
+    "bank:": 1,
+    "bankruptcies:": 4,
+    "bindings:": 2,
+    "cable_available:": 1,
+    "cable_reserved:": 1,
+    "cash:": 1,
+    "channel:": 6,
+    "classify": 1,
+    "code:": 9,
+    "codes:": 2,
+    "collections:": 4,
+    "combine": 1,
+    "compare": 1,
+    "comparison:": 1,
+    "confirmed:": 5,
+    "contact:": 7,
+    "count": 1,
+    "counter:": 1,
+    "courier:": 1,
+    "credit_score:": 4,
+    "delay:": 2,
+    "delay_minutes:": 2,
+    "denominator:": 4,
+    "desk:": 2,
+    "destination:": 4,
+    "divide": 3,
+    "down_payment:": 4,
+    "dti:": 2,
+    "eligible:": 1,
+    "else_text:": 4,
+    "email:": 3,
+    "employee:": 1,
+    "employment_years:": 4,
+    "errors:": 4,
+    "expedited:": 4,
+    "fee:": 6,
+    "first_code:": 2,
+    "fraud_score:": 4,
+    "gadget_available:": 1,
+    "gadget_reserved:": 1,
+    "gift:": 2,
+    "history": 1,
+    "home_price:": 4,
+    "index:": 11,
+    "interest_rate:": 2,
+    "item:": 3,
+    "items:": 15,
+    "kind:": 49,
+    "label": 2,
+    "label:": 22,
+    "late_payments:": 4,
+    "left:": 4,
+    "left_name:": 2,
+    "lexed:": 2,
+    "limit:": 2,
+    "line_count:": 2,
+    "lines:": 9,
+    "list_name:": 1,
+    "lists:": 2,
+    "literal:": 1,
+    "location:": 5,
+    "locker_checked:": 7,
+    "ltv:": 2,
+    "mapped_numbers:": 2,
+    "matched:": 2,
+    "member:": 10,
+    "message:": 2,
+    "method:": 5,
+    "missing:": 2,
+    "mode:": 7,
+    "monthly_debt:": 4,
+    "name:": 10,
+    "note:": 3,
+    "notice:": 2,
+    "notify:": 2,
+    "number:": 8,
+    "number_value:": 4,
+    "numerator:": 4,
+    "opted_in:": 3,
+    "order_id:": 4,
+    "outputs:": 2,
+    "parcels:": 6,
+    "parsed:": 2,
+    "participates:": 2,
+    "payable:": 2,
+    "payment_status:": 4,
+    "phone:": 1,
+    "pickup:": 2,
+    "policy:": 6,
+    "policy_limit:": 1,
+    "prepared:": 9,
+    "price": 1,
+    "principal:": 2,
+    "print": 5,
+    "proof:": 13,
+    "quantity:": 17,
+    "ratios": 1,
+    "ready:": 7,
+    "reason:": 4,
+    "receipt:": 8,
+    "received_extra_cent:": 2,
+    "recipients:": 11,
+    "reference:": 12,
+    "remainder_score:": 2,
+    "remaining:": 2,
+    "requested:": 2,
+    "reserve_months:": 2,
+    "reserved:": 2,
+    "retry_factor:": 2,
+    "right:": 4,
+    "right_name:": 2,
+    "risk_points:": 2,
+    "risks": 1,
+    "route:": 8,
+    "set": 116,
+    "shares:": 2,
+    "shortages:": 2,
+    "sku:": 22,
+    "sms:": 2,
+    "staff_checked:": 7,
+    "statement_count:": 2,
+    "statements:": 2,
+    "status:": 16,
+    "subtract": 4,
+    "sum": 5,
+    "text:": 5,
+    "then_text:": 4,
+    "threshold:": 4,
+    "token_count:": 2,
+    "tokens:": 2,
+    "total:": 24,
+    "tracking:": 2,
+    "unit_price:": 5,
+    "value:": 2,
+    "verified:": 14,
+    "weight:": 1,
+    "weight_grams:": 5,
+    "widget_available:": 1,
+    "widget_reserved:": 1,
+    "|": 313
+  },
+  "catalogFilterSpellings": {
+    "WHERE": 8
+  },
+  "websiteTokenSamples": {
+    "PROGRAM": "<span class=\"tok-kw\">PROGRAM</span>",
+    "USE": "<span class=\"tok-type\">USE</span>",
+    "TYPE": "<span class=\"tok-type\">TYPE</span>",
+    "FIND": "<span class=\"tok-type\">FIND</span>",
+    "DEPENDING": "<span class=\"tok-type\">DEPENDING</span>",
+    "ON": "<span class=\"tok-type\">ON</span>",
+    "WHERE": "<span class=\"tok-type\">WHERE</span>",
+    "where": "where",
+    "LET": "<span class=\"tok-kw\">LET</span>",
+    "RETURN": "<span class=\"tok-kw\">RETURN</span>",
+    "set": "<span class=\"tok-action\">set</span>",
+    "add": "add",
+    "subtract": "subtract",
+    "append": "append",
+    "count": "count",
+    "sum": "sum",
+    "divide": "divide",
+    "print": "print",
+    "optional": "optional",
+    "number": "number",
+    "text": "<span class=\"tok-type\">text</span>",
+    "string": "<span class=\"tok-type\">string</span>",
+    "table": "<span class=\"tok-type\">table</span>",
+    "null": "<span class=\"tok-bool\">null</span>",
+    "SET": "<span class=\"tok-type\">SET</span>",
+    "Parcel": "<span class=\"tok-type\">Parcel</span>"
+  },
+  "probes": [
+    {
+      "name": "set_lowercase",
+      "source": "SCENARIO mutation\nGIVEN total is 0\nWHEN set total to 2\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "total": 2
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO mutation\nGIVEN total is 0\nWHEN set total to 2\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "SET_uppercase",
+      "source": "SCENARIO mutation\nGIVEN total is 0\nWHEN SET total to 2\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unknown_behavior",
+          "message": "unknown or unsupported behavior step 'SET total to 2'",
+          "span": {
+            "column": 6,
+            "end": 54,
+            "file": "probe.gwt",
+            "line": 3,
+            "start": 40
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO mutation\nGIVEN total is 0\nWHEN SET total to 2\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "Set_titlecase",
+      "source": "SCENARIO mutation\nGIVEN total is 0\nWHEN Set total to 2\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unknown_behavior",
+          "message": "unknown or unsupported behavior step 'Set total to 2'",
+          "span": {
+            "column": 6,
+            "end": 54,
+            "file": "probe.gwt",
+            "line": 3,
+            "start": 40
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO mutation\nGIVEN total is 0\nWHEN Set total to 2\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "when_lowercase",
+      "source": "SCENARIO mutation\nGIVEN total is 0\nwhen set total to 2\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unsupported_statement",
+          "message": "unsupported top-level statement 'when set total to 2'",
+          "span": {
+            "column": 1,
+            "end": 54,
+            "file": "probe.gwt",
+            "line": 3,
+            "start": 35
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO mutation\nGIVEN total is 0\nwhen set total to 2\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "IS_uppercase",
+      "source": "SCENARIO mutation\nGIVEN total IS 0\nWHEN set total to 2\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "given_syntax",
+          "message": "expected GIVEN name is expression or Type",
+          "span": {
+            "column": 1,
+            "end": 34,
+            "file": "probe.gwt",
+            "line": 2,
+            "start": 18
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO mutation\nGIVEN total IS 0\nWHEN set total to 2\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "LET_RETURN_uppercase",
+      "source": "WHEN compute\n  THEN returns integer\n  LET value be 2\n  RETURN value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "total": 2
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN compute\n  THEN returns integer\n  LET value be 2\n  RETURN value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "let_lowercase",
+      "source": "WHEN compute\n  THEN returns integer\n  let value be 2\n  RETURN value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unknown_behavior",
+          "message": "unknown or unsupported behavior step 'let value be 2'",
+          "span": {
+            "column": 3,
+            "end": 52,
+            "file": "probe.gwt",
+            "line": 3,
+            "start": 38
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN compute\n  THEN returns integer\n  let value be 2\n  RETURN value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "return_lowercase",
+      "source": "WHEN compute\n  THEN returns integer\n  LET value be 2\n  return value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unknown_behavior",
+          "message": "unknown or unsupported behavior step 'return value'",
+          "span": {
+            "column": 3,
+            "end": 67,
+            "file": "probe.gwt",
+            "line": 4,
+            "start": 55
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN compute\n  THEN returns integer\n  LET value be 2\n  return value\nSCENARIO binding\nWHEN LET total be compute\nTHEN total == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "WHERE_uppercase",
+      "source": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items WHERE item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "items": [
+            1,
+            -1,
+            2
+          ],
+          "total": 3
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items WHERE item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "where_lowercase",
+      "source": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items where item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "items": [
+            1,
+            -1,
+            2
+          ],
+          "total": 3
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items where item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "Where_titlecase",
+      "source": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items Where item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unexpected_token",
+          "message": "unexpected token after expression",
+          "span": {
+            "column": 21,
+            "end": 113,
+            "file": "probe.gwt",
+            "line": 4,
+            "start": 108
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN collect <items> into <total>\n  GIVEN items is list<integer>\n  AND total is integer\n  FOR item in items Where item > 0\n    add item to total\nSCENARIO collection\nGIVEN items is [1, -1, 2]\nGIVEN total is 0\nWHEN collect items into total\nTHEN total == 3\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "DEPENDING_ON_uppercase",
+      "source": "WHEN choose <flag> into <total>\n  GIVEN flag is boolean\n  AND total is integer\n  DEPENDING ON flag\n    WHEN the value is true\n      set total to 1\n    WHEN the value is false\n      set total to 2\nSCENARIO dispatch\nGIVEN total is 0\nWHEN choose true into total\nTHEN total == 1\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "total": 1
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN choose <flag> into <total>\n  GIVEN flag is boolean\n  AND total is integer\n  DEPENDING ON flag\n    WHEN the value is true\n      set total to 1\n    WHEN the value is false\n      set total to 2\nSCENARIO dispatch\nGIVEN total is 0\nWHEN choose true into total\nTHEN total == 1\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "DEPENDING_on_lowercase",
+      "source": "WHEN choose <flag> into <total>\n  GIVEN flag is boolean\n  AND total is integer\n  DEPENDING on flag\n    WHEN the value is true\n      set total to 1\n    WHEN the value is false\n      set total to 2\nSCENARIO dispatch\nGIVEN total is 0\nWHEN choose true into total\nTHEN total == 1\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unexpected_block",
+          "message": "this statement does not accept an indented block",
+          "span": {
+            "column": 3,
+            "end": 98,
+            "file": "probe.gwt",
+            "line": 4,
+            "start": 81
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN choose <flag> into <total>\n  GIVEN flag is boolean\n  AND total is integer\n  DEPENDING on flag\n    WHEN the value is true\n      set total to 1\n    WHEN the value is false\n      set total to 2\nSCENARIO dispatch\nGIVEN total is 0\nWHEN choose true into total\nTHEN total == 1\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "true_lowercase",
+      "source": "SCENARIO boolean\nTHEN true\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {}
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO boolean\nTHEN true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "TRUE_uppercase",
+      "source": "SCENARIO boolean\nTHEN TRUE\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unknown_name",
+          "message": "unknown input 'TRUE'",
+          "span": {
+            "column": 6,
+            "end": 26,
+            "file": "probe.gwt",
+            "line": 2,
+            "start": 22
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO boolean\nTHEN TRUE\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "custom_SET_distinct_from_set",
+      "source": "WHEN SET <target> to <value>\n  GIVEN target is integer\n  AND value is integer\n  set target to value + 100\nSCENARIO mutation\nGIVEN total is 0\nWHEN SET total to 2\nTHEN total == 102\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "total": 102
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN SET <target> to <value>\n  GIVEN target is integer\n  AND value is integer\n  set target to value + 100\nSCENARIO mutation\nGIVEN total is 0\nWHEN SET total to 2\nTHEN total == 102\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "custom_set_reserved",
+      "source": "WHEN set <target> to <value>\n  GIVEN target is integer\n  AND value is integer\n  PASS\nSCENARIO name\nTHEN true\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "behavior_name",
+          "message": "behavior must start with a non-reserved domain name",
+          "span": {
+            "column": 1,
+            "end": 28,
+            "file": "probe.gwt",
+            "line": 1,
+            "start": 0
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN set <target> to <value>\n  GIVEN target is integer\n  AND value is integer\n  PASS\nSCENARIO name\nTHEN true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "custom_find_reserved",
+      "source": "WHEN find value\n  PASS\nSCENARIO name\nWHEN find value\nTHEN true\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "behavior_name",
+          "message": "behavior must start with a non-reserved domain name",
+          "span": {
+            "column": 1,
+            "end": 15,
+            "file": "probe.gwt",
+            "line": 1,
+            "start": 0
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN find value\n  PASS\nSCENARIO name\nWHEN find value\nTHEN true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "custom_Find_allowed",
+      "source": "WHEN Find value\n  PASS\nSCENARIO name\nWHEN Find value\nTHEN true\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {}
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "WHEN Find value\n  PASS\nSCENARIO name\nWHEN Find value\nTHEN true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "lowercase_record_type",
+      "source": "RECORD parcel\n  weight: integer\nSCENARIO type\nGIVEN item is parcel\n  weight: 1\nTHEN item.weight == 1\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "item": {
+            "weight": 1
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "RECORD parcel\n  weight: integer\nSCENARIO type\nGIVEN item is parcel\n  weight: 1\nTHEN item.weight == 1\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "uppercase_binding",
+      "source": "SCENARIO binding\nGIVEN SET is 1\nWHEN set SET to 2\nTHEN SET == 2\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "SET": 2
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO binding\nGIVEN SET is 1\nWHEN set SET to 2\nTHEN SET == 2\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "keyword_field",
+      "source": "RECORD Parcel\n  WHEN: integer\nSCENARIO field\nGIVEN item is Parcel\n  WHEN: 1\nTHEN item.WHEN == 1\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "item": {
+            "WHEN": 1
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "RECORD Parcel\n  WHEN: integer\nSCENARIO field\nGIVEN item is Parcel\n  WHEN: 1\nTHEN item.WHEN == 1\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "AND_expression",
+      "source": "SCENARIO expression\nTHEN true AND true\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "unexpected_token",
+          "message": "unexpected token after expression",
+          "span": {
+            "column": 11,
+            "end": 33,
+            "file": "probe.gwt",
+            "line": 2,
+            "start": 30
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO expression\nTHEN true AND true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "and_expression",
+      "source": "SCENARIO expression\nTHEN true and true\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {}
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO expression\nTHEN true and true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "and_identifier_reserved",
+      "source": "SCENARIO binding\nGIVEN and is 1\nTHEN true\n",
+      "run": {
+        "exitCode": 1,
+        "ok": false,
+        "diagnostic": {
+          "code": "invalid_name",
+          "message": "'and' is reserved",
+          "span": {
+            "column": 1,
+            "end": 31,
+            "file": "probe.gwt",
+            "line": 2,
+            "start": 17
+          }
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO binding\nGIVEN and is 1\nTHEN true\n",
+        "changed": false
+      }
+    },
+    {
+      "name": "AND_identifier_allowed",
+      "source": "SCENARIO binding\nGIVEN AND is 1\nTHEN AND == 1\n",
+      "run": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "state": {
+          "AND": 1
+        }
+      },
+      "format": {
+        "exitCode": 0,
+        "ok": true,
+        "diagnostic": null,
+        "text": "SCENARIO binding\nGIVEN AND is 1\nTHEN AND == 1\n",
+        "changed": false
+      }
+    }
+  ]
+}
