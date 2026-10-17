@@ -107,6 +107,7 @@ Python remains the default. Start here:
 | [Consolidated native draft](docs/spec/native-draft.md) | Current syntax, types, execution, contracts, failures, and conformance map |
 | [Execution model](docs/native-execution-model.md), [grammar](docs/native-grammar.md) | Narrative explanation and full source productions |
 | [Native CLI and library](crates/gwt-core/README.md), [editor](docs/native-editor.md) | Build, run, embed, and author with the selected engine |
+| [Post-merge product plan](docs/post-merge-product-plan.md) | One Rust engine, the public `gwt` command, Python retirement, and consumer onboarding |
 | [Support and transition](docs/native-language-transition.md) | Deliberate differences, source/artifact migration, and release preparation |
 | [Feature/evidence matrix](docs/native-conformance.md), [goal ledger](docs/project-goal-progress.md) | Detailed feature notes, tested scope, and remaining work |
 
