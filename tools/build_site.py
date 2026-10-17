@@ -57,16 +57,20 @@ These are illustrative fixtures, not participant responses or a public release.
             'files': {name: hashlib.sha256(data).hexdigest() for name, data in sorted(files.items())},
         }, indent=2) + '\n').encode()
         archive = destination / 'downloads/delivery-example.zip'
-        with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as bundle:
+        # Store this small example without compression: zlib versions can emit
+        # different bytes for identical input on development and CI machines.
+        with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_STORED) as bundle:
             for name, data in sorted(files.items()):
                 info = zipfile.ZipInfo('delivery-example/' + name, (2026, 1, 1, 0, 0, 0))
-                info.compress_type = zipfile.ZIP_DEFLATED
+                info.compress_type = zipfile.ZIP_STORED
+                info.create_system = 3
                 info.external_attr = 0o100644 << 16
                 bundle.writestr(info, data)
         checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
         archive.with_suffix('.zip.sha256').write_text(checksum + '  ' + archive.name + '\n')
         manifest = {'kind': 'gwt.site-build', 'schemaVersion': 1,
-                    'engine': json.loads(files['engine.json']), 'sources': summary['sourceSha256'],
+                    'engine': json.loads(files['engine.json']),
+                    'sources': {**summary['sourceSha256'], 'tools/build_site.py': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
                     'reviewTotals': summary['reviewTotals'],
                     'artifacts': {str(p.relative_to(destination)): hashlib.sha256(p.read_bytes()).hexdigest()
                                   for p in [destination / 'demo/delivery-review.html', archive]}}

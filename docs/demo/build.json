@@ -18,7 +18,8 @@
     "examples/native_delivery/rules.gwt": "ef06278f3621adca10beaa35cee18d70fa475bd35175a456d005f655d6018891",
     "examples/native_review_walkthrough/candidate.gwt": "64a5fc95908ba6dfebfdc20da677582f324d81e5238e52585214109ccf3693e2",
     "examples/native_review_walkthrough/cases.json": "1377ad634eb56d366c77b87665dab992d4ba887036e7c6910756206a9025cb2d",
-    "examples/native_review_walkthrough/prepare.py": "f0a9d32890ded85e0b9f83ce2c00181e41c2997f6e8496e93a7fa8bac7929f4e"
+    "examples/native_review_walkthrough/prepare.py": "f0a9d32890ded85e0b9f83ce2c00181e41c2997f6e8496e93a7fa8bac7929f4e",
+    "tools/build_site.py": "92eee5d3ebc0c070032899d98b81ba97ea2ae7a9ed3621ae3083da9c3332163f"
   },
   "reviewTotals": {
     "baselineMismatch": 0,
@@ -34,6 +35,6 @@
   },
   "artifacts": {
     "demo/delivery-review.html": "e7ad642db0eba59adaf36097d230b87b142347cb4cf62c8f1fecee528708f5d1",
-    "downloads/delivery-example.zip": "6944fb315e407a5c6fd69cb44222c9e68035464b6cb0807a952845de6fa5e445"
+    "downloads/delivery-example.zip": "0699d503af9b1bb5899aaf1b5b7e50df88122700953d19eebaac643b96cd5034"
   }
 }

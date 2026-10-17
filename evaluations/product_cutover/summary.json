@@ -35,5 +35,13 @@
   "historicalBinaryBundleVerified": true,
   "formatAndClippy": "passed",
   "browser": "desktop and mobile passed; download and 9-case review checked",
-  "wasm": "bridge tests/clippy/build and Chromium exact/offline requests passed"
+  "wasm": "bridge tests/clippy/build and Chromium exact/offline requests passed",
+  "siteReproducibility": {
+    "pythonVersions": [
+      "3.11",
+      "3.14"
+    ],
+    "byteIdentical": true,
+    "archiveCompression": "stored"
+  }
 }
