@@ -11,14 +11,14 @@ Build from the repository root, then preview or check a file:
 
 ```sh
 cargo +1.96.0 build --workspace --locked
-target/debug/gwt-native format examples/native_delivery/rules.gwt
-target/debug/gwt-native format examples/native_delivery/rules.gwt --check
+target/debug/gwt format examples/native_delivery/rules.gwt
+target/debug/gwt format examples/native_delivery/rules.gwt --check
 ```
 
 All commands emit JSON. The default previews formatted text without writing.
 `--check` exits zero only when the file already matches its formatted form;
 a needed change returns exit one with `changed: true`. To apply formatting,
-explicitly use `gwt-native format FILE.gwt --write`.
+explicitly use `gwt format FILE.gwt --write`.
 
 Write mode formats and validates first, writes a temporary file in the same
 directory, preserves file permissions, checks that source bytes still match,
@@ -50,7 +50,7 @@ table structure before and after formatting. It also checks that the parsed
 statement tree and table values remain equivalent under these layout rules.
 This is **layout validation**, not a complete grammar or semantic check. For
 example, formatting can retain an unfinished expression or an unresolved DTO;
-use `gwt-native check` and `gwt-native test` to assess executable programs.
+use `gwt check` and `gwt test` to assess executable programs.
 Empty and comment-only buffers can be formatted even though they are not runnable.
 
 Input and output are each limited to one MiB. Formatting permits at most 16,384
@@ -62,7 +62,7 @@ retain their frozen source; formatting does not rewrite them.
 
 ## VS Code
 
-With `gwt.engine: "native"`, **Format Document** and **GWT: Format Current File**
+In the GWT editor, **Format Document** and **GWT: Format Current File**
 use the Rust formatter. Edits stay in the buffer and support undo/redo. They do
 not save, compile imports, or execute scenarios. Untitled GWT buffers are also
 supported, using the first workspace folder's native settings when available.
@@ -71,7 +71,7 @@ returned; obsolete responses and invalid layout produce no replacement.
 
 ## Snapshot protocol
 
-`gwt-native format-editor` reads one stdin JSON request:
+`gwt format-editor` reads one stdin JSON request:
 
 ```json
 {"file": "rules.gwt", "text": "WHEN  print  9007199254740993\n"}

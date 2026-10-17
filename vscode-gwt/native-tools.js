@@ -48,3 +48,39 @@ function runNative(command, args, input, options = {}) {
   return { promise, cancel: () => child?.kill() };
 }
 module.exports = { inside, snapshot, digest, byteOffset, byteRange, runNative };
+
+// Preserve explicitly configured preview paths without keeping an engine selector.
+function setting(config, key, fallback) {
+  if (typeof config.inspect === 'function') {
+    const current = config.inspect(key), previous = config.inspect(`native.${key}`);
+    for (const level of ['workspaceFolderValue', 'workspaceValue', 'globalValue']) {
+      if (current?.[level] !== undefined) return current[level];
+      if (previous?.[level] !== undefined) return previous[level];
+    }
+    return fallback;
+  }
+  return config.get(key) ?? config.get(`native.${key}`) ?? fallback;
+}
+function assertGwtVersion(payload) {
+  if (payload?.kind !== 'gwt.native-version' || payload.schemaVersion !== 1 ||
+      payload.packageName !== 'gwt-core' || typeof payload.packageVersion !== 'string' ||
+      typeof payload.languageProfile !== 'string' || typeof payload.status !== 'string' ||
+      !(payload.languageVersion === null || typeof payload.languageVersion === 'string') ||
+      typeof payload.engine?.profile !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(payload.engine?.sourceDigest)) {
+    throw new Error('The selected gwt is not the Rust GWT engine. Remove the old gwtlang installation or set gwt.command to the installed Rust executable, then check gwt version --json.');
+  }
+}
+function runGwt(command, args, input, options = {}) {
+  let cancelled = false;
+  let job = runNative(command, ['version', '--json'], undefined, { ...options, maxBuffer: 64 * 1024 });
+  const promise = job.promise.then(version => {
+    if (cancelled) throw new Error('GWT command cancelled.');
+    assertGwtVersion(version.payload);
+    if (version.exitCode !== 0) throw new Error('GWT engine identity command failed.');
+    if (args[0] === 'version') return version;
+    job = runNative(command, args, input, options);
+    return job.promise;
+  });
+  return { promise, cancel() { cancelled = true; job.cancel(); } };
+}
+Object.assign(module.exports, { setting, assertGwtVersion, runGwt });

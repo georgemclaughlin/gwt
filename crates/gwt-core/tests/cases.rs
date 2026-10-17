@@ -354,7 +354,7 @@ fn cli_captures_imports_and_replays_after_original_sources_are_removed() {
     fs::write(&dependency, &source[start..end]).unwrap();
     let input_file = directory.0.join("input.json");
     fs::write(&input_file, input(2).to_string()).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("capture")
         .arg(&entry)
         .args(["--request", "price invoice", "--input"])
@@ -373,7 +373,7 @@ fn cli_captures_imports_and_replays_after_original_sources_are_removed() {
     fs::remove_file(entry).unwrap();
     fs::remove_file(dependency).unwrap();
     fs::remove_file(input_file).unwrap();
-    let replay = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let replay = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("replay")
         .arg(&case_file)
         .output()
@@ -388,7 +388,7 @@ fn cli_captures_imports_and_replays_after_original_sources_are_removed() {
         source.replace("subtotal * 0.2", "subtotal * 0.1"),
     )
     .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("compare")
         .arg(&case_file)
         .arg("--candidate")
@@ -402,7 +402,7 @@ fn cli_captures_imports_and_replays_after_original_sources_are_removed() {
     let mut changed = payload(&case);
     changed["record"]["observed"]["steps"] = json!(0);
     fs::write(&case_file, resign(changed)).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("replay")
         .arg(case_file)
         .output()
@@ -465,7 +465,7 @@ fn cli_distinguishes_capturing_and_replaying_failure_from_invalid_case_files() {
     let case_file = directory.0.join("failure.case.json");
     fs::write(&source, include_str!("fixtures/invoice.gwt")).unwrap();
     fs::write(&input_file, input(0).to_string()).unwrap();
-    let capture = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let capture = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("capture")
         .arg(&source)
         .args(["--request", "price invoice", "--input"])
@@ -476,7 +476,7 @@ fn cli_distinguishes_capturing_and_replaying_failure_from_invalid_case_files() {
     let captured: Json = serde_json::from_slice(&capture.stdout).unwrap();
     assert_eq!(captured["record"]["observed"]["ok"], false);
     fs::write(&case_file, capture.stdout).unwrap();
-    let replay = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let replay = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("replay")
         .arg(&case_file)
         .output()
@@ -485,7 +485,7 @@ fn cli_distinguishes_capturing_and_replaying_failure_from_invalid_case_files() {
     let report: Json = serde_json::from_slice(&replay.stdout).unwrap();
     assert_eq!(report["verified"], true);
     assert_eq!(report["actual"]["ok"], false);
-    let comparison = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let comparison = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("compare")
         .arg(&case_file)
         .arg("--candidate")
@@ -500,7 +500,7 @@ fn cli_distinguishes_capturing_and_replaying_failure_from_invalid_case_files() {
     let mut broken = captured;
     broken["record"]["input"]["invoice"]["quantity"] = json!(2);
     fs::write(&case_file, broken.to_string()).unwrap();
-    let replay = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let replay = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("replay")
         .arg(case_file)
         .output()

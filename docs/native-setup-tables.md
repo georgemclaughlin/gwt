@@ -81,8 +81,8 @@ optional-field, and resource rules are tested against explicit expectations.
 Python behavior is not the oracle for these native choices.
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_setup_tables/rules.gwt
-python -m gwtlang validate examples/native_setup_tables/rules.gwt --json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_setup_tables/rules.gwt
+gwt validate examples/native_setup_tables/rules.gwt
 ```
 
 `tests/setup_tables.rs` covers values, headers, failures, atomic field replacement,

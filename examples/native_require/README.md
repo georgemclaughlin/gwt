@@ -10,8 +10,8 @@ all output mutation. Missing, cash, unverified, empty-reference, zero-amount, an
 negative-amount cases stop with `assertion_failed`.
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- validate examples/native_require/rules.gwt
-cargo run -p gwt-core --bin gwt-native -- run examples/native_require/rules.gwt --request "prepare transfer" --input examples/native_require/request.json
+cargo run -p gwt-core --bin gwt -- validate examples/native_require/rules.gwt
+cargo run -p gwt-core --bin gwt -- run examples/native_require/rules.gwt --request "prepare transfer" --input examples/native_require/request.json
 ```
 
 The request returns account `bank-reference-1` and amount `100`. Seven embedded

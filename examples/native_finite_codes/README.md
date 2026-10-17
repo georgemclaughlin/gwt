@@ -13,9 +13,9 @@ where it came from. GWT performs no network operation, retry scheduling, or othe
 effect.
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- check examples/native_finite_codes/rules.gwt
-cargo run -p gwt-core --bin gwt-native -- test examples/native_finite_codes/rules.gwt
-cargo run -p gwt-core --bin gwt-native -- run examples/native_finite_codes/rules.gwt --request 'review receipt' --input examples/native_finite_codes/request.json
+cargo run -p gwt-core --bin gwt -- check examples/native_finite_codes/rules.gwt
+cargo run -p gwt-core --bin gwt -- test examples/native_finite_codes/rules.gwt
+cargo run -p gwt-core --bin gwt -- run examples/native_finite_codes/rules.gwt --request 'review receipt' --input examples/native_finite_codes/request.json
 ```
 
 The supplied request returns action `retry` and exact decimal delay `"5"`.

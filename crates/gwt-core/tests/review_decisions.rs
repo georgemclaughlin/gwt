@@ -362,7 +362,7 @@ fn cli_regenerates_the_report_before_assessing_decisions() {
     fs::write(root.join("corpus.json"), corpus.to_json()).unwrap();
     fs::write(root.join("rules.gwt"), SOURCE).unwrap();
     let invoke = |command: &str, tail: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .current_dir(&root)
             .args([command, "corpus.json", "--candidate", "rules.gwt"])
             .args(tail)

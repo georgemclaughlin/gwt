@@ -250,7 +250,7 @@ assessors are claimed by the synthetic qualification.
 ```sh
 python -m unittest tests.test_human_review
 python -m evaluations.human_review.qualify \
-  --native /path/to/gwt-native \
+  --native /path/to/gwt \
   --output /tmp/gwt-human-review-fixture-checks.json
 ```
 

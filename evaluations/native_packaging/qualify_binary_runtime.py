@@ -18,7 +18,7 @@ def main():
     report = json.loads((package / 'qualification.json').read_text())
     assert report['profile'] == 'release' and report['binaryBundle']['pathCleared']
     root = Path(report['binaryBundle']['extractedRoot'])
-    executable = root / 'bin/gwt-native'
+    executable = root / 'bin/gwt'
     assert hashlib.sha256(executable.read_bytes()).hexdigest() == report['installedExecutableSha256']
     host = json.loads((package / 'host-observations.json').read_text())
     cases = output / 'cases'
@@ -52,7 +52,7 @@ def main():
             libc_description = musl.stderr.strip()
         kernel = command([*common, '--entrypoint', '/bin/uname', identity, '-srmo'])
         assert kernel.returncode == 0, kernel.stderr
-        prefix = [*common, '--entrypoint', '/native/bin/gwt-native', identity]
+        prefix = [*common, '--entrypoint', '/native/bin/gwt', identity]
         smoke = command([*prefix, 'run', 'examples/invoice.gwt', '--request', 'price invoice', '--input', 'examples/invoice.json'])
         entry = {'requestedImage': requested, 'imageId': identity, 'repoDigests': image.get('RepoDigests', []),
                  'architecture': image['Architecture'], 'os': image['Os'], 'libc': libc_description, 'kernel': kernel.stdout.strip(),

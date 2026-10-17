@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { runNativeRequest, stringifyExact } from './native.mjs';
 
 const executable = process.argv[2];
-if (!executable) throw new Error('Usage: node quote.mjs /absolute/path/to/gwt-native');
+if (!executable) throw new Error('Usage: node quote.mjs /absolute/path/to/gwt');
 const {execution} = await runNativeRequest({
   executable,
   program: fileURLToPath(new URL('../../crates/gwt-core/tests/fixtures/invoice.gwt', import.meta.url)),

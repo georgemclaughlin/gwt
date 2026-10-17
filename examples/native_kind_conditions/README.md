@@ -14,9 +14,9 @@ access safe.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- validate examples/native_kind_conditions/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run examples/native_kind_conditions/rules.gwt --request "review contact" --input examples/native_kind_conditions/request.json
-python -m gwtlang format examples/native_kind_conditions/rules.gwt --check
+cargo run --locked -p gwt-core --bin gwt -- validate examples/native_kind_conditions/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run examples/native_kind_conditions/rules.gwt --request "review contact" --input examples/native_kind_conditions/request.json
+gwt format examples/native_kind_conditions/rules.gwt --check
 ```
 
 The request returns `ready`, channel `email`, and destination

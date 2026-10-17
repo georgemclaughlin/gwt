@@ -15,13 +15,13 @@ budgets. The public request separately initializes its own quote for host calls.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_delivery/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_delivery/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_delivery/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_delivery/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_delivery/rules.gwt --request 'quote delivery' \
   --input examples/native_delivery/input.json
-python -m gwtlang format examples/native_delivery/rules.gwt --check
-python -m gwtlang validate examples/native_delivery/rules.gwt
+gwt format examples/native_delivery/rules.gwt --check
+gwt validate examples/native_delivery/rules.gwt
 ```
 
 The supplied request produces `{"quote":{"status":"standard","fee":9}}`.

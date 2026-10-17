@@ -85,7 +85,7 @@ inspection, snapshot isolation, and a missing lookup.
 From the repository root:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/inventory_allocation_spike/native_scenarios.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/inventory_allocation_spike/native_scenarios.gwt
 cargo +1.96.0 test --locked --test failure_exits
 ```
 

@@ -259,7 +259,7 @@ fn cli_profiles_requests_scenarios_and_failures_with_the_same_selection_rules_as
     let input = root.join("input.json");
     fs::write(&source, SOURCE).unwrap();
     fs::write(&input, r#"{"values":["a","b"]}"#).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args([
             "profile",
             source.to_str().unwrap(),
@@ -279,7 +279,7 @@ fn cli_profiles_requests_scenarios_and_failures_with_the_same_selection_rules_as
     assert_eq!(payload["kind"], "gwt.native-profile");
     assert_eq!(payload["ok"], true);
     fs::write(&input, r#"{"values":false}"#).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args([
             "profile",
             source.to_str().unwrap(),
@@ -294,7 +294,7 @@ fn cli_profiles_requests_scenarios_and_failures_with_the_same_selection_rules_as
     let payload: Json = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(payload["evidence"]["events"], 0);
     fs::write(&source, "SCENARIO one\nWHEN print 1\nTHEN prints [1]\n").unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args(["profile", source.to_str().unwrap()])
         .output()
         .unwrap();
@@ -306,7 +306,7 @@ fn cli_profiles_requests_scenarios_and_failures_with_the_same_selection_rules_as
         "SCENARIO one\nTHEN true\nSCENARIO two\nTHEN true\n",
     )
     .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args(["profile", source.to_str().unwrap()])
         .output()
         .unwrap();

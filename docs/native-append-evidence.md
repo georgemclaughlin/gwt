@@ -80,7 +80,7 @@ benefit or production capacity.
 
 ```sh
 cargo test --locked --test append_evidence
-python evaluations/native_editor/qualify_append_evidence.py --native /path/to/new/gwt-native --previous-engine /path/to/previous/gwt-native --output /tmp/gwt-append-evidence
+python evaluations/native_editor/qualify_append_evidence.py --native /path/to/new/gwt --previous-engine /path/to/previous/gwt --output /tmp/gwt-append-evidence
 ```
 
 The qualifier requires a new output directory and the previous engine that owns

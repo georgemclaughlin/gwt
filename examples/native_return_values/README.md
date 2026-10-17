@@ -12,12 +12,12 @@ is exact; no rounding or currency policy is implied.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_return_values/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_return_values/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_return_values/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_return_values/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_return_values/rules.gwt --request 'quote order' \
   --input examples/native_return_values/input.json
-python -m gwtlang validate examples/native_return_values/rules.gwt
+gwt validate examples/native_return_values/rules.gwt
 ```
 
 The native request returns `{"quote":{"total":"35.91"}}`. Four scenario rows

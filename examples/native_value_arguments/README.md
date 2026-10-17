@@ -17,12 +17,12 @@ and positive quantities; it does not define rounding or a currency policy.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_value_arguments/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_value_arguments/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_value_arguments/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_value_arguments/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_value_arguments/rules.gwt --request 'quote basket' \
   --input examples/native_value_arguments/input.json
-python -m gwtlang format examples/native_value_arguments/rules.gwt --check
+gwt format examples/native_value_arguments/rules.gwt --check
 ```
 
 The request returns `{"quote":{"total":"35.91","note":"member # discount"}}`.

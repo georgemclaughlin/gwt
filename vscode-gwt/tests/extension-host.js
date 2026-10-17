@@ -23,7 +23,7 @@ async function stableDefinition(document, position) {
   }
 }
 
-const own = uri => vscode.languages.getDiagnostics(uri).filter(diagnostic => diagnostic.source === 'gwt-native');
+const own = uri => vscode.languages.getDiagnostics(uri).filter(diagnostic => diagnostic.source === 'gwt');
 
 async function run() {
   const folder = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -35,46 +35,16 @@ async function run() {
   await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   const identity = await vscode.commands.executeCommand('gwt.showEngineInfo');
   assert.equal(identity.ok, true);
-  assert.equal(identity.engine, process.env.GWT_EDITOR_ENGINE === 'python' ? 'python' : 'native');
-  if (identity.engine === 'native') {
-    const directVersion = await runNative(native, ['version', '--json']).promise;
-    assert.deepEqual(identity.payload, directVersion.payload);
-    assert.equal(identity.payload.languageProfile, 'gwt-native-experimental');
-    assert.equal(identity.payload.languageVersion, null);
-  } else {
-    assert.equal(identity.payload.packageName, 'gwtlang');
-    assert.equal(identity.payload.languageSpecVersion, 'v0.2');
-  }
+  assert.equal(identity.engine, 'native');
+  assert.equal(vscode.workspace.getConfiguration('gwt').get('engine'), undefined);
+  const directVersion = await runNative(native, ['version', '--json']).promise;
+  assert.deepEqual(identity.payload, directVersion.payload);
+  assert.equal(identity.payload.languageProfile, 'gwt-native-experimental');
+  assert.equal(identity.payload.languageVersion, null);
   results.push('selected engine identity works without an open source document');
   const main = await vscode.workspace.openTextDocument(path.join(folder, 'main.gwt'));
   await vscode.window.showTextDocument(main);
   const original = await fs.readFile(main.uri.fsPath, 'utf8');
-  if (process.env.GWT_EDITOR_ENGINE === 'python') {
-    assert.equal(vscode.workspace.getConfiguration('gwt').get('engine'), 'python');
-    const waitFor = async predicate => {
-      const deadline = Date.now() + 15000;
-      while (!predicate()) {
-        assert(Date.now() < deadline, 'Python language server did not publish expected diagnostics');
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-    };
-    const pythonDiagnostics = () => vscode.languages.getDiagnostics(main.uri).filter(item => item.source === 'gwt');
-    await replace(main, 'GIVEN amount is 1\nWHEN missing-behavior amount\n');
-    await waitFor(() => pythonDiagnostics().length > 0);
-    assert.equal(own(main.uri).length, 0);
-    assert.equal(await fs.readFile(main.uri.fsPath, 'utf8'), original);
-    await replace(main, original);
-    await waitFor(() => pythonDiagnostics().length === 0);
-    const hover = await vscode.commands.executeCommand('vscode.executeHoverProvider', main.uri, new vscode.Position(0, 6));
-    assert(hover.length > 0, 'Default Python hover remains available');
-    results.push('default engine remains Python; unsaved diagnostics, correction, and hover work');
-    assert.equal((await vscode.commands.executeCommand('gwt.profileCurrentFile')).ok, false);
-    assert.equal(vscode.workspace.getConfiguration('gwt').get('engine'), 'python');
-    results.push('native-only profiling fails explicitly in Python mode without switching the configured engine');
-    await fs.mkdir(evidence, { recursive: true });
-    await fs.writeFile(path.join(evidence, 'extension-host.json'), JSON.stringify({ vscodeVersion: vscode.version, engine: 'python', results, assertionsPassed: true }, null, 2)+'\n');
-    return;
-  }
   assert.equal((await check()).ok, true);
   assert.equal(own(main.uri).length, 0);
   results.push('native-only print assertion accepted');
@@ -113,7 +83,7 @@ async function run() {
   await fs.writeFile(delayed, '#!/usr/bin/env node\nsetTimeout(()=>{const r=require("child_process").spawnSync('+JSON.stringify(native)+',process.argv.slice(2),{input:require("fs").readFileSync(0)});process.stdout.write(r.stdout);process.stderr.write(r.stderr);process.exitCode=r.status;},500);\n');
   await fs.chmod(delayed, 0o700);
   const config = vscode.workspace.getConfiguration('gwt');
-  await config.update('native.command', delayed, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', delayed, vscode.ConfigurationTarget.Workspace);
   await replace(main, bad);
   const obsolete = check();
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -122,7 +92,7 @@ async function run() {
   assert.equal((await check()).ok, true);
   assert.equal(own(main.uri).length, 0);
   results.push('an obsolete delayed native diagnostic cannot replace a later valid edit');
-  await config.update('native.command', path.join(folder, 'not-an-executable'), vscode.ConfigurationTarget.Workspace);
+  await config.update('command', path.join(folder, 'not-an-executable'), vscode.ConfigurationTarget.Workspace);
   const unavailable = await check();
   assert.equal(unavailable.ok, false);
   assert(own(main.uri).some(diagnostic => diagnostic.code === 'native_tool'));
@@ -131,12 +101,25 @@ async function run() {
   const incompleteIdentity = path.join(folder, 'incomplete-identity');
   await fs.writeFile(incompleteIdentity, '#!/usr/bin/env node\nconsole.log(JSON.stringify({kind:"gwt.native-version",schemaVersion:1}));\n');
   await fs.chmod(incompleteIdentity, 0o700);
-  await config.update('native.command', incompleteIdentity, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', incompleteIdentity, vscode.ConfigurationTarget.Workspace);
   assert.deepEqual(await vscode.commands.executeCommand('gwt.showEngineInfo'), { ok: false, engine: 'native' });
   assert.equal(await fs.readFile(main.uri.fsPath, 'utf8'), original);
   results.push('missing executable and incomplete identity reports fail without Python fallback or source changes');
+  const oldPython = path.join(folder, 'old-python-gwt');
+  const unexpected = path.join(folder, 'old-python-executed');
+  await fs.writeFile(oldPython, '#!/usr/bin/env node\nif(process.argv[2]==="version")console.log(JSON.stringify({packageName:"gwtlang",packageVersion:"0.3.0"}));else require("fs").writeFileSync('+JSON.stringify(unexpected)+',"executed");\n');
+  await fs.chmod(oldPython, 0o700);
+  await config.update('command', oldPython, vscode.ConfigurationTarget.Workspace);
+  assert.equal((await check()).ok, false);
+  assert(own(main.uri).some(diagnostic => diagnostic.message.includes('Remove the old gwtlang installation')));
+  await assert.rejects(fs.stat(unexpected), {code: 'ENOENT'});
+  await config.update('command', undefined, vscode.ConfigurationTarget.Workspace);
   await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
   assert.equal((await check()).ok, true);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('native.command', undefined, vscode.ConfigurationTarget.Workspace);
+  assert.equal((await check()).ok, true);
+  results.push('old Python executable is refused before execution; explicit preview command settings migrate');
   assert.equal(await fs.readFile(main.uri.fsPath, 'utf8'), original);
   const executed = await vscode.commands.executeCommand('gwt.testCurrentFile');
   assert.equal(executed.ok, true);
@@ -155,7 +138,7 @@ async function run() {
   const limits = { execution: { steps: 100000, evidenceBytes: 1048576, textBytes: 1048576 }, callDepth: 64 };
   await fs.writeFile(limitsPath, JSON.stringify(limits));
   const limitsDocument = await vscode.workspace.openTextDocument(limitsPath);
-  await config.update('native.limitsFile', 'operating limits.json', vscode.ConfigurationTarget.Workspace);
+  await config.update('limitsFile', 'operating limits.json', vscode.ConfigurationTarget.Workspace);
   limits.execution.steps = 0;
   await replace(limitsDocument, JSON.stringify(limits));
   assert(limitsDocument.isDirty);
@@ -176,16 +159,16 @@ async function run() {
   results.push('relative budget path containing spaces is saved from its dirty JSON buffer and used identically by Run/Profile/Test/Validate; static checks remain independent');
   limits.execution.steps = 100000;
   await replace(limitsDocument, JSON.stringify(limits));
-  await config.update('native.limitsFile', limitsPath, vscode.ConfigurationTarget.Workspace);
+  await config.update('limitsFile', limitsPath, vscode.ConfigurationTarget.Workspace);
   assert.equal((await vscode.commands.executeCommand('gwt.profileCurrentFile')).ok, true);
   assert.equal(limitsDocument.isDirty, false);
   await replace(limitsDocument, '{"execution":{"typo":0}}');
   assert.equal((await vscode.commands.executeCommand('gwt.validateCurrentFile')).ok, false);
   assert.equal(limitsDocument.isDirty, false);
   assert.equal((await check()).ok, true);
-  await config.update('native.limitsFile', 'missing-limits.json', vscode.ConfigurationTarget.Workspace);
+  await config.update('limitsFile', 'missing-limits.json', vscode.ConfigurationTarget.Workspace);
   assert.equal((await vscode.commands.executeCommand('gwt.testCurrentFile')).ok, false);
-  await config.update('native.limitsFile', '', vscode.ConfigurationTarget.Workspace);
+  await config.update('limitsFile', '', vscode.ConfigurationTarget.Workspace);
   assert.equal((await vscode.commands.executeCommand('gwt.testCurrentFile')).ok, true);
   results.push('absolute budget paths work without reload; malformed or missing settings fail without fallback; clearing the setting restores defaults');
   const requestModule = 'TYPE Amount is integer\nREQUEST echo\n  GIVEN amount is Amount\n  WHEN print amount\n  OUTPUT amount is Amount\n';
@@ -194,14 +177,14 @@ async function run() {
   await replace(main, requestEntry);
   // Hold Run's preflight open while save watchers schedule diagnostics. An
   // explicit Run must not be cancelled as if it were a stale background check.
-  await config.update('native.command', delayed, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', delayed, vscode.ConfigurationTarget.Workspace);
   const entryRun = await vscode.commands.executeCommand('gwt.runCurrentFile');
   assert.equal(entryRun.ok, true);
   assert.match(entryRun.stdout, /9007199254740993/);
   assert.equal(JSON.parse(entryRun.stdout).programIdentity.entry, 'main.gwt');
   assert.equal(await fs.readFile(main.uri.fsPath, 'utf8'), main.getText());
   assert.equal(await fs.readFile(imported.uri.fsPath, 'utf8'), imported.getText());
-  await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
   await replace(imported, 'TYPE Amount is integer\n');
   await replace(main, original);
   assert.equal(await imported.save(), true);
@@ -688,7 +671,7 @@ async function run() {
   const outlineStarted = path.join(folder, 'outline-started');
   await fs.writeFile(delayedOutline, '#!/usr/bin/env node\nconst fs=require("fs"); if(process.argv[2]==="outline-editor") fs.writeFileSync('+JSON.stringify(outlineStarted)+', "started"); setTimeout(()=>{const r=require("child_process").spawnSync('+JSON.stringify(native)+',process.argv.slice(2),{input:fs.readFileSync(0)});process.stdout.write(r.stdout);process.stderr.write(r.stderr);process.exitCode=r.status;},700);\n');
   await fs.chmod(delayedOutline, 0o700);
-  await config.update('native.command', delayedOutline, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', delayedOutline, vscode.ConfigurationTarget.Workspace);
   // Force a fresh snapshot; VS Code can serve a previous symbol request from cache.
   await replace(main, outlineSource + '# fresh snapshot\n');
   const obsoleteOutline = vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', main.uri);
@@ -699,11 +682,11 @@ async function run() {
   }
   await replace(main, 'SCENARIO newer\nTHEN true\n');
   assert.deepEqual((await obsoleteOutline) ?? [], []);
-  await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
   await replace(main, 'RECORD Facts\n field: integer\n');
   assert.deepEqual((await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', main.uri)) ?? [], []);
   // Declaration completion reads the current closure even when the call is incomplete.
-  await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
   const completionTypes = 'RECORD Facts\n  amount: decimal\nWHEN review <facts> into <decision>\n  GIVEN facts is Facts\n  AND decision is decimal\n  set decision to facts.amount\nWHEN review score for <facts>\n  GIVEN facts is Facts\n  THEN returns decimal\n  RETURN facts.amount\n';
   await replace(imported, completionTypes);
   const callEdit = '# 😀 café\r\nUSE "types.gwt"\r\nSCENARIO edit\r\nWHEN rev\r\n';
@@ -741,7 +724,7 @@ async function run() {
   const completionStarted = path.join(folder, 'completion-started');
   await fs.writeFile(delayedCompletion, '#!/usr/bin/env node\nconst fs=require("fs"); if(process.argv[2]==="complete-editor") fs.writeFileSync('+JSON.stringify(completionStarted)+', "started"); setTimeout(()=>{const r=require("child_process").spawnSync('+JSON.stringify(native)+',process.argv.slice(2),{input:fs.readFileSync(0)});process.stdout.write(r.stdout);process.stderr.write(r.stderr);process.exitCode=r.status;},700);\n');
   await fs.chmod(delayedCompletion, 0o700);
-  await config.update('native.command', delayedCompletion, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', delayedCompletion, vscode.ConfigurationTarget.Workspace);
   const obsoleteCompletion = completions();
   const completionStartedDeadline = Date.now() + 10000;
   while (!(await fs.stat(completionStarted).catch(() => null))) {
@@ -750,7 +733,7 @@ async function run() {
   }
   await replace(imported, completionTypes.replaceAll('review', 'assess'));
   assert(!(await obsoleteCompletion)?.items.some(item => String(item.label).startsWith('review')));
-  await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
   suggested = await completions();
   assert(!suggested?.items.some(item => String(item.label).startsWith('review')));
   await replace(main, 'USE "types.gwt"\nSCENARIO edit\nGIVEN facts is optional<Fac>\n');
@@ -780,14 +763,14 @@ async function run() {
   assert.equal(main.getText(), formatted);
   assert.deepEqual((await vscode.commands.executeCommand('vscode.executeFormatDocumentProvider', main.uri, { tabSize: 2, insertSpaces: true })) ?? [], []);
   results.push('native Format Document preserves literals, does not save, is idempotent, and supports undo/redo');
-  await config.update('native.command', delayed, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', delayed, vscode.ConfigurationTarget.Workspace);
   await replace(main, 'WHEN  print  "old"\n');
   const obsoleteFormat = vscode.commands.executeCommand('vscode.executeFormatDocumentProvider', main.uri, { tabSize: 2, insertSpaces: true });
   await new Promise(resolve => setTimeout(resolve, 50));
   await replace(main, 'WHEN  print  "new"\n');
   assert.deepEqual((await obsoleteFormat) ?? [], []);
   assert.equal(main.getText().replace(/\r\n/g, '\n'), 'WHEN  print  "new"\n');
-  await config.update('native.command', native, vscode.ConfigurationTarget.Workspace);
+  await config.update('command', native, vscode.ConfigurationTarget.Workspace);
   await replace(main, ' THEN true\n');
   const invalidBefore = main.getText();
   await vscode.commands.executeCommand('gwt.formatCurrentFile');

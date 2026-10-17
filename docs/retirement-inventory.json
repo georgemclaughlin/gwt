@@ -1,0 +1,1103 @@
+{
+  "referenceCommit": "4f403dc51eda5382c6a12c0757cb26deac34012a",
+  "retired": [
+    {
+      "path": ".github/workflows/build-distribution.yml",
+      "sha256": "27dbffe821055624014e05a850c9dbfb8ea01bc2bb44ec4332b59f1adf27dd83",
+      "action": "retire",
+      "reason": "retired Python distribution or tooling"
+    },
+    {
+      "path": "MANIFEST.in",
+      "sha256": "d0735629addfab4e74bcec7748c071603a208fc59e3a05e3107c87f363c71ed0",
+      "action": "retire",
+      "reason": "retired Python distribution or tooling"
+    },
+    {
+      "path": "clients/typescript/README.md",
+      "sha256": "73d014f3271a33dea14fd555cc9d5cf67ad0c5bdfb7b9bc56fa2d2e7d486a5b6",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/examples/README.md",
+      "sha256": "4f1df473afacbca6e10712e5bf1282d14566d51b95ab86b29401212e20c6f473",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/examples/vendor-onboarding.generated.d.ts",
+      "sha256": "4d36bb4dbc67153703fbe8c21a76b8af50d568fad75cf701914b7099906db760",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/examples/vendor-onboarding.ts",
+      "sha256": "76de81eb0d2d133e0229dcc9212535e3ce712e7edfbba4e0d4c11fc055f0ab06",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/package.json",
+      "sha256": "32f000886a587d212f1611d0ada4ca622332385671eae2a392b66e713036c9fb",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/src/index.d.ts",
+      "sha256": "b59823a97840c3c5b853c9a398718e9360795c6b9ef7e8b2f750effba2d72d8c",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/src/index.mjs",
+      "sha256": "989e5d175ab72ed315061412357e0e9ee6671b231ae67cf45ff642cc85d3e2a4",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/test/client.test.mjs",
+      "sha256": "8347489c30e11688708ad34b4f350986a899b7535c3f65240fa894abbabe0fe4",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/tsconfig.json",
+      "sha256": "84e5e01cb0bce87f36a73ca8f335ff22ee98df07a44399f6acd2691f4a8ffa52",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "clients/typescript/typecheck/client.ts",
+      "sha256": "37432b89f1e57ea883675e7610a1eaf48f22d2b180e5193370718c5a1d9312c0",
+      "action": "retire",
+      "reason": "retired Python HTTP service client; not a Rust runtime API"
+    },
+    {
+      "path": "evaluations/feature_flags/qualify.py",
+      "sha256": "8bbae61062c2f4455f2a92ef84d036432ea8bf87695a31852cdf4f52d8ae350d",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/input_normalization/qualify.py",
+      "sha256": "7349a610260ba6d13853e86c93f500a846779a64c7716a73559705f69cdd4bb6",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/language_tour/check_browser.py",
+      "sha256": "e4c3b7ba6b8046e29dd03cac91a5dad89c11444aac4f52e9a4dbd7a06a27c970",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/language_tour/qualify.py",
+      "sha256": "71c39a32fd6e69e3ca62f96c38f5d3b70e7fda36c11d3251906900320eb38f28",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/minilang/build_reviews.py",
+      "sha256": "c8a232464bed57873af15b976a4031ad9da66386eb7e5c145299a717c8d7354c",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/minilang/check_browser.py",
+      "sha256": "aff557c7f5a6866eb772aea2c96176e606740c3d887d4b7f0bc0b1b0af6c3941",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/minilang/kind_contracts.py",
+      "sha256": "061558e3a13fa797ae217587bcf9aa511394658526b37015270d1ade515586b4",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/minilang/qualify.py",
+      "sha256": "59f21f663baa319c0a0c6b8b395d1a806aad2cb1ebbdbc448c93ab39ac05c4ba",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/native_performance/compare_python_cli.py",
+      "sha256": "1a20e128f04dde408e0221376918fa22793d7078a629dcd466a3694c521ecf57",
+      "action": "retire",
+      "reason": "historical cross-engine comparison; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/subscription/qualify.py",
+      "sha256": "65aaffebcc5c69c3d652e9a0d9f931181be71cedc10209b2b014e1e8c23cd0ae",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/underwriting/fixtures.py",
+      "sha256": "ccc3e2aa5b52d1eb96b500b789977f29651100e0993c30b69d670bce423fa4d2",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "evaluations/underwriting/qualify.py",
+      "sha256": "ec12b0aad9b59d526bc3f0d7280d72c03cda282668bfd82f1f434928564adf6d",
+      "action": "retire",
+      "reason": "historical Python-runtime qualification; reproduce from reference checkout"
+    },
+    {
+      "path": "examples/deployable_api/Dockerfile",
+      "sha256": "e86d6114c183ba577d2bf9563545a90a03f27b788b87906c65bfaa20a980d332",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/README.md",
+      "sha256": "bbd0294cdb7c1a3347f285a4a55e348f986b4502d05423ea7e18d34da61371de",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/docker-compose.yml",
+      "sha256": "8fe732d0f556819e1a3570f9f8b45c4f321a966d5e35b1815b8b1cce5ca40a97",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/json_schema_client_demo.py",
+      "sha256": "ff8e38fcc5e7486511e2b32d7cde1a381a2daf35336075cdbc294a40775dac1e",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/deployable_api/observability/otel-collector.yml",
+      "sha256": "c63cf705eb9b6189fc91fffdb1deba5306594e23dd3db13aef44baf4be587f63",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/observability/prometheus.yml",
+      "sha256": "5f8f1ab7bd45b0726cef1ee7270d420ea22c6d72ad502fedf1263974d018b888",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/openapi_generator_client_demo.mjs",
+      "sha256": "c1c23af011c2891ada690a1702609155f927e5758ca7eb5f1a030688ff719880",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/deployable_api/otel_client_demo.py",
+      "sha256": "4e9ccbe1ec0e17068e5b9a547b9901d67f1984c6ab2cf32989c3de1c78c88a13",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/deployable_api/otel_trace_playback.py",
+      "sha256": "947642840d3d0f4b3875e1470b1ff0d70d817bc75ea852c181da8b0a56a4c9ce",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/deployable_api/qualify_container.py",
+      "sha256": "e31acd7dd3b676592788029296a3d3dca8ca504f8f62c4b4264fedc53dd9a899",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/exact_pricing/host_app.py",
+      "sha256": "9346ebb94a23ecf925bbf2a8cc3f529aab2fec8609078deb96d356e49e7e48b2",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/exact_pricing/rules_types.py",
+      "sha256": "9498ed837f2a0761c80968a45622e84e4adea422e26ffdc2f073ac8d2a08ddac",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/README.md",
+      "sha256": "e60e98f6f04a5ef1246af0c9fd9014f690c4ea09e75b5574117bd0bd98a2bac8",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/UPSTREAM-LICENCE.md",
+      "sha256": "7dd8e6f4790917df0b6e14fd5fec93391f2483505e5296b81ab7e3d8d45b31e0",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/compare_corpus.py",
+      "sha256": "942444e4e4373bd6ff03546c53bb9e5b0731560d5a91895aad8a65990a48fe8c",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/exact_status_slice.json",
+      "sha256": "2798bd17f52ed10c54c26eef54117f58956435ef5dc8da67d7e9e4ba33b60974",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/fact-provenance.json",
+      "sha256": "57caced5fc91384c80d68d456a42b42bcd6da114356413e4ae7410dbfd32ffa3",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/request.json",
+      "sha256": "6f7ac378a800c9439cc6de3995a1a46456bf28eef1075832d5fa11031f565864",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/review_zero.py",
+      "sha256": "8c686af2a32540912eb34b9f5cab2c6943bf4456ea3358230df4fe4e01f8c8f8",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/ruby_oracle.rb",
+      "sha256": "fdc4a31062ab21e9ae555eb6917b50792eec43feb2fe51a5c8bc3cfc2c8d5c79",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/dfe_npq_funding_eligibility/rules.gwt",
+      "sha256": "6003181897c570e7dca9a10e656e4852baad79604aedb3606623e6f071e1aa54",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/README.md",
+      "sha256": "146b380e49ec08f567f3dfa53d828e085dd5e00b812989aa19c70d456ef22020",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/conformance_cases.json",
+      "sha256": "7ed6e069f0a5f32e7da839abc965069a98a5763a378fe985083ada46d0007398",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/evaluated-fact-provenance.json",
+      "sha256": "cd06101412d94aa8d32dff5a7badfa38fa2a2ed6ab98b1395d801a1aa4f9defe",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/evaluated-request.json",
+      "sha256": "dd18a353828ce9e61b5e13b3afd0fc18afe3dd7ee0d4e0e091a3c1260219c09c",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/fact-provenance.json",
+      "sha256": "9ee736aa93769157c0194315f815a0ad5ba5fe920ec3db2ec77a2b9bc2633096",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/host_match_adapter.mjs",
+      "sha256": "b7616a6bcc90aef0400ad08080afd690755a046846195c407b0c5592dfe9bd36",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/host_match_core.mjs",
+      "sha256": "89e6139981d82104747f20cfd21bb149b17ada32e1daa1d467980adc580f4795",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/openapi_client_demo.mjs",
+      "sha256": "cc8a0879e7e45d46fedd9fad63d6e56656085620402f667e8f4b346c0347e380",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/request.json",
+      "sha256": "f4d31014a42d5a2c435fa17eb3d6fa1d687f18321cf9e549dcbfaaa811f5f1e7",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/rules.gwt",
+      "sha256": "1b34df53323ca8ed2a958db959365d6e9ccf27bf357dabd2a992b0d8681bdb36",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/run_conformance.py",
+      "sha256": "c0faf742dd2c665d56acdc749b3ffa840ed1a3ba091e1594c9d8273eb44ef274",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py",
+      "sha256": "d2567cef23b934ff0629fa9bd73e755506628bce9cce87807be2f34474a92cdf",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/semantic_release_commit_analyzer/upstream_oracle.mjs",
+      "sha256": "4666ef7440e272a8017307337501641659783995d03dca42aa87cf0efd02fc76",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/README.md",
+      "sha256": "321eede32079acfe133b265c32634487394c22b9f8a27bb9e2ab99e191ed92df",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/UPSTREAM-LICENCE.md",
+      "sha256": "4cbb5ab51a4fc6e0b9158152b08edd5dacdd6b17491bff5461bf6fad039148e4",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/fact-provenance.json",
+      "sha256": "34e5ee9796c00f278e304a39b61250a9100d56fa5a27143e8d9ab885fd583c4a",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/openapi_client_demo.py",
+      "sha256": "51aed940e34a3a88c6be4ab3f6a569d5e09d0d80b45e2061063070971dd7cd71",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/openapi_ruby_client.rb",
+      "sha256": "1293eed1956d7875e0600b612addac74293d6b67692d21741b4712193600868e",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/oracle_slice.json",
+      "sha256": "0ced3e451b314e7e9672bae239efcfc8c03a3cfa2c6284395280bdd94ad3c695",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/request.json",
+      "sha256": "b65ff2e955e499064196a06d65d6c7df56a303cca8e2aa2f5e24c6865aba87aa",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/ruby_oracle.rb",
+      "sha256": "4ae2acfb12a27137a36570378fc251a53d8e87a278492c24d043aa9c145a6ca3",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/rules.gwt",
+      "sha256": "b494c7018d53f10d621b87d243cf620443235ec69c643473fc3c240b930683a4",
+      "action": "retire",
+      "reason": "retired Python service/pilot example; pilots remain deferred"
+    },
+    {
+      "path": "examples/external_pilots/spree_item_total/run_pilot.py",
+      "sha256": "f0a90711a2762fee32ef5e4f3ea3adbb0f85ef3ab7e780f5b1ce4bbbb9572177",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/incident_triage/host_app.py",
+      "sha256": "8e1133924cbb183c21fb3965c4ce297e54d5368ac70166431fb72b56bf36d2b0",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/incident_triage/rules_types.py",
+      "sha256": "3d65dc65fd2e6f48d9334b44d080371f0f918d3c9e8c2f8c0c45fcf2f5879fa6",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/refund_review/run_trial.py",
+      "sha256": "5f7e83dfd118e34f55e703fc5e070db4715ccc7742af7aa250a073405ff7a0ed",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/refund_review/stage0.py",
+      "sha256": "c39b5091d818d17a6e42bd7758cb3d23eff94fd86b1f09e4c34bd8b98830ec76",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/refund_review/stage1.py",
+      "sha256": "4ee74fdf41e5911bc0009a13103e4f920456db795b3aa284bc844282108fd925",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/refund_review/stage2.py",
+      "sha256": "9de15dd231ebbce0127f0d597018a6ca08a83be6801408d1e38fdf06c12c29d6",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/refund_review/stage3.py",
+      "sha256": "2ef2e6971c3ae04ff41566595ac3f905974a719436b07677ff5a84ba65db44b6",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/release_readiness/host_app.py",
+      "sha256": "f1e3fdde90c037fcaf0fcb1d22f3138d2c2627e5328a89f4c3face8c6b98bab3",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/release_readiness/release_gate.py",
+      "sha256": "cc89169042f4cb5a777b8d54bceadcf54834e7adfc243d30da7c2db324ef1a7d",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/release_readiness/rules_types.py",
+      "sha256": "dbd938649e2783f6d3820ea96df660d03ceafdc92e4dd6cd681503d06b87d38b",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/vendor_onboarding/host_app.py",
+      "sha256": "00c7eae42e6e4744224115f0f8ed3a710bad51f5dc7f275ec705b0b8c2ae018a",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/vendor_onboarding/rules_types.py",
+      "sha256": "05dd840b0f216ed1d74b50396f05c0a00c837848ef969368a7fe7b5abf1ae5b6",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "examples/vendor_onboarding/shadow_mode.py",
+      "sha256": "51cd894e8b53e4101622e3a3d0c52919f080200d4feda00fbae0a65b96aff0bb",
+      "action": "retire",
+      "reason": "retired Python host or evaluation integration"
+    },
+    {
+      "path": "gwtlang/__init__.py",
+      "sha256": "fbf57a690bedd13e8e8e76a1c8bc749dbaac4778f94af9e4a9be3e96e3542dbc",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/__main__.py",
+      "sha256": "197cb9eec55b7ac3152f709749ae42da11e7590f72d94c43d490c478aaf36265",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/agent_evaluation.py",
+      "sha256": "c6fbbb8d7a684bb4fc09da9b840557801023dff3faa35ee8f5f4d375d1718fd8",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/agent_matrix.py",
+      "sha256": "2137f11e76a4acfb53488f3463def1460a102abbec53b6d560def7cdb380b1ce",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/api.py",
+      "sha256": "2ba6f6117eabf25a311c95dad1cda74a95ec61de23a6c98952f6535cde9dafb4",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/asgi.py",
+      "sha256": "ae1c49b996729ab63a06d07fda2e64f8ca9caa9743346fe452ced85560653bdc",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/case_corpus.py",
+      "sha256": "a7953ea1eebe7cc08c160bf2300d3401536cee7ddb7166f73348eee339e7569b",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/checker.py",
+      "sha256": "e2f6b369894d79aaac6c1e4fec02d370880ca63576acd01f63f4fa031ac55c1b",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/comparison.py",
+      "sha256": "e439d34d62c0cd752facdfa49ae5e68c3d75e462a1fb7e297cc729b86f334654",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/debugger.py",
+      "sha256": "b95d45b551c194b4449cc6e11e0e4e97c94da310152bac41bca1bcc02f1b73d1",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/errors.py",
+      "sha256": "9f16fbbd8318b125fb021aab1247c64d765a0c10e8958d54824c841e6270eb96",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/execution_case.py",
+      "sha256": "66eadc3400b26cb5cf87b56503b3986310a4125e2701df26f48fb48e18c2f19a",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/explain.py",
+      "sha256": "7d22bb55147dca2fcdd72582d3af575a943ef9b84e539d321228ba689e5236d0",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/expressions.py",
+      "sha256": "39fb2bbee0ce52c9e51c957f6e6d8e715ecd755953612b826ddb1fe741c11161",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/formatter.py",
+      "sha256": "f0af0699a0bee6c3b072018c71a04c9d63377b5d1974715329196f38f18a3471",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/host.py",
+      "sha256": "f654b61b160470cc690cfd367c3a4a2913cf6d9342abc81ac691c31459811e28",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/http_server.py",
+      "sha256": "74345b47c3ce150bca5370bf937e7258591b318142d7186c0f0da57234132064",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/inspection.py",
+      "sha256": "ac22e016c7410c2dfa322f9cd7324c5bc353dc1034262d3e755b2a8b1e35ecee",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/jsonschema.py",
+      "sha256": "3cc2bbdadaaa3b45286fb1905a0396cd555ffd33b9c9a31fb956fe31c11aaff7",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/lsp.py",
+      "sha256": "f0cee2fbd98f1b48183ea27e4cf1606005daad478c77c5b94d49b2aaea2d08b8",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/maintenance_evaluation.py",
+      "sha256": "c1a43669d72474e743a84328211749e7536cef8394b98a7efd01ae1e8483d022",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/maintenance_worker.py",
+      "sha256": "22c5a8158b8e7bdd3abff4eae669c4ffe9cfe0c9bf436e65e153bfe021183fc3",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/openapi.py",
+      "sha256": "b2631a72a14ef0d9954e18d2cb3bc31f452e775bc98c524434ba777cf22a82e4",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/payloads.py",
+      "sha256": "22e82d5c9242838d592ec3fdb37be26282de8cabfac66b8165265ac0affe4447",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/program_identity.py",
+      "sha256": "896e4edcf4da0e8d93112ee432357278478f3047fede5edb14f72a8480baebd0",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/py.typed",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/runtime.py",
+      "sha256": "c7c43969753b441e67d2cec7138b826e2804ea54df41bec889ccbeacc7e45d49",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/scenario_generation.py",
+      "sha256": "8a210e63ba51a498c689eb3896a295c9731d41aee1870497ce09895d8b561ee0",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/serve_qualification.py",
+      "sha256": "bcd1180b094c2e2979cb9dc8c1c90c56d04fb365ee26f425d128c9271e451e40",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/serve_qualification_probe.py",
+      "sha256": "f9a68696b576cdda260fcebba7eb133edb881601a6f29bf4b4da0b2f26595dbc",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/service.py",
+      "sha256": "9190348d673c5798335083df4eac75182f4ddf0821b5e41ce4e69617f17da268",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/symbols.py",
+      "sha256": "288de3028d3701301f06a8736fe79e8d1b24e9190d667a4d6c8e6729f1e87707",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/tracing.py",
+      "sha256": "1c9f30442cfa6b6b9b1a72fe87e8c089950e4a129890e31a03fd1050b272244c",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/typegen.py",
+      "sha256": "ca49a12f1ffcacb539b950b1fa938c2a185bed6a7420db61c9d0621f47873160",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/validation.py",
+      "sha256": "bea2c0bb31fb6adb1c68ecea4946f4e2120122405cc2def60a96b9df25a38ecf",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/version.py",
+      "sha256": "1e619c786f744338438c64e8917bfe7408d3353a846e14cc9ac7b70a0bbf792e",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "gwtlang/workbench.py",
+      "sha256": "9940332618723370522a933ebbfecc5850e598ec93d09cfcf605faaf91f9e058",
+      "action": "retire",
+      "reason": "retired Python language implementation"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "1cb7db90c6288c321ddbcad3111f00a0a006131e0d2ee7af439826e323943ba4",
+      "action": "retire",
+      "reason": "retired Python distribution or tooling"
+    },
+    {
+      "path": "pyrightconfig.json",
+      "sha256": "941d9df08baa548cb5fd758b4f0c5e1d1f40b222b224966ed24b52a9c00e4c6c",
+      "action": "retire",
+      "reason": "retired Python distribution or tooling"
+    },
+    {
+      "path": "tests/asgi_fixture.py",
+      "sha256": "637bda94c3221184f6e7840cf94bb19ca2f55a98657000279f765e95a27fdec9",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_agent_authoring.py",
+      "sha256": "74d5ed45f06a6641fa4d37c5ac1702f9b911032466b07d0d70eb36f3ef991991",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_agent_matrix.py",
+      "sha256": "36c8fe3764139e0ce4c1477858359f7a2954c982cdcb893b8672f90eca645f43",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_analysis_cli.py",
+      "sha256": "0879b5e98f1dcd5df121936e003b72352f41c8e092da637e020b3abc67e85ae1",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_api.py",
+      "sha256": "c7d3363bc1f0443b60230e93f336da8eb59ba7f2a1349a4365e5e4cc23052522",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_case_corpus.py",
+      "sha256": "42ee00adda41acef8d1388a7d2a5fbccde300ad5b635436ddf6a348944eafbc0",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_checker.py",
+      "sha256": "3b25b9e727f6616040554e21bb334739d92b9c4bb1e901550685602fc25d63d7",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "sha256": "c865d3cc9e6f6a31d142d70669d7d19546b6465ef5532aca56bedeb6e2c733a7",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_comparison.py",
+      "sha256": "d845bf1f92643b8b3a2f9afd783afe0148c7d98dd97ab6c24610ab65467bf884",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_container_qualification.py",
+      "sha256": "9b6587e7f8c455a49a137280380c15674482c3b362d4adde2703ad35936e10c0",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_debugger.py",
+      "sha256": "5e6a082b4c17a0c04d4d7973c0608f859feee6856534fcbd0036449b10cfe933",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_diagnostics_ux.py",
+      "sha256": "a97b5bd5dd2cdfeec10bcb5c4448926d91b23591ba4254881f609cd7605f2ebb",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_examples.py",
+      "sha256": "64acbe6815fa0ec6cfc195cdc824e7f0a9209e2ac09939fe7a8a87c4cbb82a53",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_execution_case.py",
+      "sha256": "7b0d01356719e4762b4299d308c642bcf9a27c6263c180fcbe6989aef2c5781b",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_execution_case_profiles.py",
+      "sha256": "e1a81f90fb8a1e7a88d4507ed5653e44a59c19734961bbbfa4c6f5f20a2fddf3",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_external_pilots.py",
+      "sha256": "ecc36615fe77f3f5a3472dcc55a595d9df7ef7116ee8160579d138c37af71796",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_formatter.py",
+      "sha256": "64b412d84058cd4acae22ddb241cf55eaa09c590f948afb6115d7a91aa0ba1ae",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_host.py",
+      "sha256": "16e6ebffe20e96b6c5c43d90c4386710c83520582421dea6406b254500ef7908",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_http_server.py",
+      "sha256": "b95d3cda9158cfc6e39c4c7a99fe354ba25a8c6947b8219a1da6aea74e36489b",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_jsonschema.py",
+      "sha256": "32e36806d3d62152df563f1c31e5a308cd5392fa39621433d878db51538752ff",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_lsp.py",
+      "sha256": "c8c9beda3f22bcc1fb91dd1d1709c2f60e7bb8544c3b6ace08ac2f7a51b617e6",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_maintenance_evaluation.py",
+      "sha256": "c48f6000def35d11170a7794e12c86a6e097e6ddff7cf2661de7f4dc11b1a108",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_openapi.py",
+      "sha256": "8c1d21c7025224136bb71050a664c4135062caef0c598a149bb8f3a3732c1642",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_program_identity.py",
+      "sha256": "a7088693e181ed1b0c96cefad954e163c2d42f495cb82db9aea6afd5b8b0a20d",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_refund_trial.py",
+      "sha256": "51afaee315a88b331284e40e2e59140af54600a4cfe7dde31999119618bd8cc5",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_runtime.py",
+      "sha256": "140b3da72d0cb74400b34e036cba8495c8dd59e6e114a9b40b6a09f6562dae86",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_scenario_generation.py",
+      "sha256": "53bbffc66c275c8cb5cd5ac611c17be56c097b2491a15d65677fda8feff9610d",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_semantic_invariants.py",
+      "sha256": "548082424c78ec951e3e63e6c06515ee346bfad1d28825060cac784c5a08a578",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_serve_qualification.py",
+      "sha256": "513beed1aae6d2e52c8fa9ad87140881c3e0fe1479392bb3c4a44f0b95042748",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_service.py",
+      "sha256": "447f3afb7821f353c826a1145d22da320756c2b88d9d5ace00612054df2845b5",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_spec_v01.py",
+      "sha256": "6a895a32452acc55d8c0fc0bb8c930764b0e374cc2c9edc4ac2e48907ed29433",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_spec_v02.py",
+      "sha256": "8eb859fbfbda4b9a4df8c9a92685bd885f3375d708cbb40632c54e2b3e8ec605",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_tracing.py",
+      "sha256": "50966918c06a1101cf33a64fc340d47fe8729c7e20a95dfff224ddfba75d9274",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_typegen.py",
+      "sha256": "2d1b699fb340edc5f2be15193c6c61cddf3a16c71e3292c02b7b1760f4d7fae1",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_v04_artifact_fixtures.py",
+      "sha256": "3a2405b59de10f0a8023b115e4e2b5840575aa2eeaff1a0a9c6686ee2d86ecb0",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_version.py",
+      "sha256": "cf77a8d589959b09abb4f7f61d481b76a84c343c57fad821b18872605c0c9f63",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_workbench.py",
+      "sha256": "7f22b1aae59dbee31ac31bd60b62f92186d5ad52aa29da0e6db29043905161c3",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_workbench_cli.py",
+      "sha256": "64c85636e3f973dabb48cfc46871afc1f67d269ebd8068f8a87889dd1068cbf4",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    },
+    {
+      "path": "tests/test_workbench_interactions.py",
+      "sha256": "31cd0e8c7d64d3287baf4a396fe8549943e6abf7e3ecdd91b4ff320c62ace596",
+      "action": "retire",
+      "reason": "retired Python runtime test; preserved at reference commit"
+    }
+  ],
+  "commandSurfaceUpdated": [
+    ".github/workflows/ci.yml",
+    "crates/gwt-core/Cargo.toml",
+    "crates/gwt-core/PACKAGE.md",
+    "crates/gwt-core/README.md",
+    "crates/gwt-core/src/formatter_cli.rs",
+    "crates/gwt-core/src/main.rs",
+    "crates/gwt-core/src/regression_cli.rs",
+    "crates/gwt-core/src/validation_cli.rs",
+    "crates/gwt-core/tests/bundles.rs",
+    "crates/gwt-core/tests/cases.rs",
+    "crates/gwt-core/tests/cli.rs",
+    "crates/gwt-core/tests/cli_limits.rs",
+    "crates/gwt-core/tests/corpus_migration.rs",
+    "crates/gwt-core/tests/corpus_regressions.rs",
+    "crates/gwt-core/tests/editor.rs",
+    "crates/gwt-core/tests/editor_completion.rs",
+    "crates/gwt-core/tests/editor_outline.rs",
+    "crates/gwt-core/tests/entry_files.rs",
+    "crates/gwt-core/tests/formatter.rs",
+    "crates/gwt-core/tests/inspection.rs",
+    "crates/gwt-core/tests/migration.rs",
+    "crates/gwt-core/tests/profiling.rs",
+    "crates/gwt-core/tests/review.rs",
+    "crates/gwt-core/tests/review_decisions.rs",
+    "crates/gwt-core/tests/scenario_cases.rs",
+    "crates/gwt-core/tests/scenario_generation.rs",
+    "crates/gwt-core/tests/scenarios.rs",
+    "crates/gwt-core/tests/validation.rs",
+    "crates/gwt-core/tests/validation_document.rs",
+    "crates/gwt-core/tests/version.rs",
+    "docs/agent-authoring.md",
+    "docs/crash-recovery.md",
+    "docs/getting-started.html",
+    "docs/human-review-study.md",
+    "docs/index.html",
+    "docs/native-append-evidence.md",
+    "docs/native-cases.md",
+    "docs/native-corpus-migration.md",
+    "docs/native-editor.md",
+    "docs/native-embedding.md",
+    "docs/native-execution-limits.md",
+    "docs/native-execution-model.md",
+    "docs/native-failure-exits.md",
+    "docs/native-formatting.md",
+    "docs/native-grammar.md",
+    "docs/native-inspection.md",
+    "docs/native-language-transition.md",
+    "docs/native-migration.md",
+    "docs/native-one-of.md",
+    "docs/native-profiling.md",
+    "docs/native-regressions.md",
+    "docs/native-request-entries.md",
+    "docs/native-review-decisions.md",
+    "docs/native-review-walkthrough.md",
+    "docs/native-review.md",
+    "docs/native-scenarios.md",
+    "docs/native-setup-tables.md",
+    "docs/native-validation.md",
+    "docs/post-merge-product-plan.md",
+    "docs/project-goal-progress.md",
+    "evaluations/native_editor/qualify.py",
+    "evaluations/native_maintenance/README.md",
+    "evaluations/native_maintenance/experiment.md",
+    "evaluations/native_maintenance/scoring.md",
+    "evaluations/native_migration/assess_corpus_choices.py",
+    "evaluations/native_migration/assess_review_choices.py",
+    "evaluations/native_migration/corpus_fixtures.py",
+    "evaluations/native_migration/qualify.py",
+    "evaluations/native_migration/review_fixtures.py",
+    "evaluations/native_packaging/binary_artifact.py",
+    "evaluations/native_packaging/qualify.py",
+    "evaluations/native_packaging/qualify_binary_runtime.py",
+    "evaluations/native_performance/measure_process.py",
+    "evaluations/native_review/check_decisions.py",
+    "evaluations/native_review/generate.py",
+    "evaluations/native_review/generate_failures.py",
+    "evaluations/native_review/generate_prints.py",
+    "evaluations/native_review/generate_returns.py",
+    "evaluations/native_review/generate_scenarios.py",
+    "evaluations/native_validation/generate.py",
+    "examples/input_normalization/README.md",
+    "examples/inventory_allocation_spike/README.md",
+    "examples/language_tour/README.md",
+    "examples/loan_underwriting/README.md",
+    "examples/minilang_spec/README.md",
+    "examples/native_branch_proofs/README.md",
+    "examples/native_delivery/README.md",
+    "examples/native_early_returns/README.md",
+    "examples/native_expected_failures/README.md",
+    "examples/native_filter_proofs/README.md",
+    "examples/native_finite_codes/README.md",
+    "examples/native_kind_conditions/README.md",
+    "examples/native_kind_contracts/README.md",
+    "examples/native_kind_dispatch/README.md",
+    "examples/native_lookup/README.md",
+    "examples/native_node_host/README.md",
+    "examples/native_node_host/native.mjs",
+    "examples/native_node_host/quote.mjs",
+    "examples/native_one_of/README.md",
+    "examples/native_presence/README.md",
+    "examples/native_print_expectations/README.md",
+    "examples/native_require/README.md",
+    "examples/native_reservation/README.md",
+    "examples/native_return_values/README.md",
+    "examples/native_review_walkthrough/README.md",
+    "examples/native_review_walkthrough/prepare.py",
+    "examples/native_rounded_division/README.md",
+    "examples/native_value_arguments/README.md",
+    "examples/native_value_dispatch/README.md",
+    "examples/native_weighted_allocation/README.md",
+    "examples/order_fulfillment/README.md",
+    "examples/pressure_tests/feature-flag-rollout.md",
+    "examples/pressure_tests/subscription-entitlements.md",
+    "tests/test_native_binary_artifact.py",
+    "vscode-gwt/README.md",
+    "vscode-gwt/extension.js",
+    "vscode-gwt/native-editor.js",
+    "vscode-gwt/package.json",
+    "vscode-gwt/tests/extension-host.js"
+  ],
+  "retainedHistoricalFixtures": [
+    {
+      "path": "examples/deployable_api/rules.gwt",
+      "reason": "Rust program conformance includes this source; the Python HTTP service is retired"
+    }
+  ],
+  "adaptedTools": [
+    {
+      "path": "evaluations/human_review/qualify.py",
+      "action": "remove Python GWT runtime dependency; retain independent expectations"
+    },
+    {
+      "path": "evaluations/native_language/qualify_choices.py",
+      "action": "remove Python GWT runtime dependency; retain independent expectations"
+    },
+    {
+      "path": "evaluations/native_editor/qualify_failure_exits.py",
+      "action": "remove Python GWT runtime dependency; retain independent expectations"
+    }
+  ],
+  "activeExamples": "examples/catalog.json",
+  "historicalEvidence": "All previously tracked dated evaluation artifacts are retained unchanged.",
+  "distributionWorkflow": "The retired Python distribution workflow is replaced by a manual Rust artifact-only workflow at the same path."
+}

@@ -1,4 +1,4 @@
-// Reference process boundary for a trusted gwt-native executable; Node 22+.
+// Reference process boundary for a trusted gwt executable; Node 22+.
 import { execFile } from 'node:child_process';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -66,6 +66,21 @@ export async function runNativeRequest({
   positiveInteger(timeoutMs, 'timeoutMs');
   if (timeoutMs > 2147483647) throw new TypeError('timeoutMs exceeds the Node timer range.');
   positiveInteger(maxOutputBytes, 'maxOutputBytes');
+  const identity = await new Promise((resolveIdentity, reject) => {
+    const child = execFile(executable, ['version', '--json'], {
+      shell: false, encoding: 'utf8', windowsHide: true, timeout: timeoutMs,
+      maxBuffer: Math.min(maxOutputBytes, 65536), killSignal: 'SIGKILL',
+    }, (error, stdout, stderr) => {
+      if (error) reject(new NativeHostError('GWT identity process failed.', {kind: 'process', cause: error, stdout, stderr}));
+      else { try { resolveIdentity(parseExact(stdout)); }
+        catch (cause) { reject(new NativeHostError('GWT identity was not JSON.', {kind: 'protocol', cause, stdout, stderr})); } }
+    });
+    child.stdin.on('error', () => {}); child.stdin.end();
+  });
+  if (identity?.kind !== 'gwt.native-version' || identity.schemaVersion !== 1 || identity.packageName !== 'gwt-core'
+      || typeof identity.engine?.profile !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(identity.engine?.sourceDigest)) {
+    throw new NativeHostError('Expected the Rust GWT engine. Remove the old gwtlang installation or supply the correct gwt executable; verify with gwt version --json.', {kind: 'protocol'});
+  }
   const inputText = stringifyExact(input);
   if (Buffer.byteLength(inputText) > 1048576) throw new TypeError('Host input exceeds the native 1 MiB file limit.');
   const limitsText = limits === undefined ? undefined : stringifyExact(limits);

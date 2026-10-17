@@ -13,9 +13,9 @@ both the receipt and its optional reference present before copying the text.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- validate examples/native_presence/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run examples/native_presence/rules.gwt --request "review reimbursement" --input examples/native_presence/request.json
-python -m gwtlang format examples/native_presence/rules.gwt --check
+cargo run --locked -p gwt-core --bin gwt -- validate examples/native_presence/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run examples/native_presence/rules.gwt --request "review reimbursement" --input examples/native_presence/request.json
+gwt format examples/native_presence/rules.gwt --check
 ```
 
 The request returns an approved decision with reason `within_limit`, payable

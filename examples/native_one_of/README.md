@@ -8,9 +8,9 @@ and returns the complete contact for the host to use.
 Build and validate from the repository root:
 
 ```sh
-cargo build --locked -p gwt-core --bin gwt-native
-target/debug/gwt-native validate examples/native_one_of/rules.gwt
-target/debug/gwt-native test examples/native_one_of/rules.gwt
+cargo build --locked -p gwt-core --bin gwt
+target/debug/gwt validate examples/native_one_of/rules.gwt
+target/debug/gwt test examples/native_one_of/rules.gwt
 ```
 
 The three scenarios check email routing, phone routing, and changing kind by

@@ -5,7 +5,7 @@ to reject a different engine fingerprint. `migrate` prepares a separate proposal
 by running a trusted previous executable first, then the current engine:
 
 ```sh
-gwt-native migrate saved.case.json --previous-engine /path/to/previous/gwt-native \
+gwt migrate saved.case.json --previous-engine /path/to/previous/gwt \
   > proposed-migration.json
 ```
 
@@ -107,7 +107,7 @@ candidate cases and its integrity digest. Ordinary `replay_case` is unchanged.
 Generate a self-contained offline review alongside the proposal:
 
 ```sh
-gwt-native migrate saved.case.json --previous-engine /path/to/previous/gwt-native \
+gwt migrate saved.case.json --previous-engine /path/to/previous/gwt \
   --html migration-review.html --decision-template migration-decision.json \
   > proposed-migration.json
 ```
@@ -130,8 +130,8 @@ accepted. Reviewer names are self-reported, not authenticated identities.
 Assess a saved choice against a newly verified proposal:
 
 ```sh
-gwt-native assess-migration saved.case.json \
-  --previous-engine /path/to/previous/gwt-native --decision migration-decision.json
+gwt assess-migration saved.case.json \
+  --previous-engine /path/to/previous/gwt --decision migration-decision.json
 ```
 
 Assessment reruns the selected previous executable, verifies the entire old
@@ -145,10 +145,10 @@ and `status` to distinguish acceptance from pending, rejection, or questions.
 Export requires acceptance and repeats the same fresh verification:
 
 ```sh
-gwt-native export-migration saved.case.json \
-  --previous-engine /path/to/previous/gwt-native --decision migration-decision.json \
+gwt export-migration saved.case.json \
+  --previous-engine /path/to/previous/gwt --decision migration-decision.json \
   --output migrated.case.json > migration-export.json
-gwt-native replay migrated.case.json
+gwt replay migrated.case.json
 ```
 
 Export creates one new case file, with exact values and parent provenance.

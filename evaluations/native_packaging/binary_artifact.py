@@ -23,19 +23,25 @@ def create_bundle(archive, executable, license_text, source, build):
             raise ValueError('invalid build ' + key)
     if build.get('profile') != 'release':
         raise ValueError('binary bundles require an explicit release build')
-    prefix = 'gwt-native-' + build['version'] + '-' + build['target']
-    readme = f'''# GWT native executable (experimental)
+    prefix = 'gwt-' + build['version'] + '-' + build['target']
+    readme = f'''# GWT (experimental)
 
 This local bundle contains a release build for {build['target']}.
-It implements the experimental native GWT profile, not the complete Python
-language. It is unpublished and is not a production-readiness certification.
+It runs the experimental GWT language directly. This locally built artifact
+has not been published as a release.
 
 From this extracted directory:
 
 ```sh
-./bin/gwt-native test examples/invoice.gwt
-./bin/gwt-native run examples/invoice.gwt --request "price invoice" --input examples/invoice.json
+sh install.sh --prefix "$HOME/.local"
+export PATH="$HOME/.local/bin:$PATH"
+gwt version --json
+gwt test examples/invoice.gwt
+gwt run examples/invoice.gwt --request "price invoice" --input examples/invoice.json
 ```
+
+To remove this installation, run `sh install.sh --prefix "$HOME/.local" --uninstall`.
+The installer refuses to overwrite another program, including the old Python CLI.
 
 The request returns a priced decision with exact decimal total "47.88".
 The executable needs no Rust or Python installation. It still requires the OS,
@@ -51,14 +57,15 @@ Existing cases still require full replay verification with their recorded engine
 The host owns persistence, networking, and other effects around the rules.
 '''.encode()
     files = {
-        'bin/gwt-native': (executable, 0o755),
+        'bin/gwt': (executable, 0o755),
         'LICENSE': (license_text, 0o644),
+        'install.sh': ((Path(__file__).resolve().parents[2] / 'packaging/install.sh').read_bytes(), 0o644),
         'README.md': (readme, 0o644),
         'examples/invoice.gwt': (source, 0o644),
         'examples/invoice.json': (encode({'invoice': {'unit_price': '19.95', 'quantity': 2}}), 0o644),
     }
     manifest = {'kind': 'gwt.native-binary-artifact', 'schemaVersion': 1, 'build': build,
-                'executable': 'bin/gwt-native', 'files': {
+                'executable': 'bin/gwt', 'files': {
                     name: {'sha256': hashlib.sha256(data).hexdigest(), 'size': len(data), 'mode': mode}
                     for name, (data, mode) in files.items()}}
     files['manifest.json'] = (encode(manifest), 0o644)
@@ -114,22 +121,22 @@ def verify_and_extract(archive, destination):
     manifest_bytes, mode = files.pop(root + '/manifest.json')
     manifest = json.loads(manifest_bytes, object_pairs_hook=unique_object)
     if (not isinstance(manifest, dict) or mode != 0o644 or manifest.get('kind') != 'gwt.native-binary-artifact' or
-            manifest.get('schemaVersion') != 1 or manifest.get('executable') != 'bin/gwt-native'):
+            manifest.get('schemaVersion') != 1 or manifest.get('executable') not in ('bin/gwt', 'bin/gwt-native')):
         raise ValueError('invalid manifest')
     build = manifest.get('build')
     if (not isinstance(build, dict) or build.get('profile') != 'release' or
             not all(isinstance(build.get(key), str) and re.fullmatch(r'[A-Za-z0-9_.+-]+', build[key]) for key in ['version', 'target']) or
-            root != 'gwt-native-' + build['version'] + '-' + build['target']):
+            root != ('gwt-' if manifest['executable'] == 'bin/gwt' else 'gwt-native-') + build['version'] + '-' + build['target']):
         raise ValueError('invalid build identity')
     expected = manifest.get('files')
     if not isinstance(expected, dict) or {root + '/' + name for name in expected} != set(files):
         raise ValueError('manifest does not cover archive contents')
     for name, item in expected.items():
         data, mode = files[root + '/' + name]
-        required_mode = 0o755 if name == 'bin/gwt-native' else 0o644
+        required_mode = 0o755 if name == manifest['executable'] else 0o644
         if item != {'sha256': hashlib.sha256(data).hexdigest(), 'size': len(data), 'mode': required_mode} or mode != required_mode:
             raise ValueError('file identity or mode mismatch: ' + name)
-    if 'bin/gwt-native' not in expected:
+    if manifest['executable'] not in expected:
         raise ValueError('missing executable')
     destination.mkdir(parents=True, exist_ok=False)
     files[root + '/manifest.json'] = (manifest_bytes, 0o644)

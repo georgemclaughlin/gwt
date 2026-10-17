@@ -430,7 +430,7 @@ fn cli_review_emits_an_incomplete_report_instead_of_dropping_invalid_entries() {
     fs::write(&good, captured(BEFORE, &facts(true, false)).to_string()).unwrap();
     fs::write(&bad, "not valid JSON").unwrap();
     fs::write(&candidate, AFTER).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("corpus")
         .arg(&good)
         .arg(&bad)
@@ -438,7 +438,7 @@ fn cli_review_emits_an_incomplete_report_instead_of_dropping_invalid_entries() {
         .unwrap();
     assert!(output.status.success());
     fs::write(&corpus_path, output.stdout).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("review")
         .arg(&corpus_path)
         .arg("--candidate")
@@ -455,7 +455,7 @@ fn cli_review_emits_an_incomplete_report_instead_of_dropping_invalid_entries() {
     let html = fs::read_to_string(html_path).unwrap();
     assert!(html.contains("Review coverage is incomplete"));
     assert!(html.contains("Comparison unavailable"));
-    let duplicate = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let duplicate = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("corpus")
         .arg(&good)
         .arg(&good)

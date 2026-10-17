@@ -15,13 +15,13 @@ inputs and resource/engine failures remain available for exact case replay.
 From the repository root, choose an output directory that does not exist:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   examples/native_delivery/rules.gwt --request 'quote delivery' \
   --input examples/native_delivery/input.json > /tmp/gwt-delivery.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- scenario-from-case \
+cargo run --locked -p gwt-core --bin gwt -- scenario-from-case \
   /tmp/gwt-delivery.case.json --name 'recorded delivery quote' \
   --output /tmp/gwt-delivery-regression > /tmp/gwt-delivery-generation.json
-cargo run --locked -p gwt-core --bin gwt-native -- test \
+cargo run --locked -p gwt-core --bin gwt -- test \
   /tmp/gwt-delivery-regression/captured_scenario_1.gwt \
   --import-root /tmp/gwt-delivery-regression
 ```
@@ -113,13 +113,13 @@ For a concrete failed request, use the stock-rejection example and a fresh outpu
 directory:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   examples/native_expected_failures/rules.gwt --request 'reserve stock' \
   --input examples/native_expected_failures/input.json > /tmp/gwt-rejection.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- scenario-from-case \
+cargo run --locked -p gwt-core --bin gwt -- scenario-from-case \
   /tmp/gwt-rejection.case.json --name 'insufficient stock stays rejected' \
   --output /tmp/gwt-rejection-regression
-cargo run --locked -p gwt-core --bin gwt-native -- test \
+cargo run --locked -p gwt-core --bin gwt -- test \
   /tmp/gwt-rejection-regression/captured_scenario_1.gwt \
   --import-root /tmp/gwt-rejection-regression
 ```

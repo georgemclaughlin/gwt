@@ -32,7 +32,7 @@ From the repository root:
 
 ```sh
 python -m gwtlang validate examples/pressure_tests/feature_flag_rollout.gwt --json
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/pressure_tests/feature_flag_rollout.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/pressure_tests/feature_flag_rollout.gwt
 ```
 
 The ten scenario executions include first-match override handling, enabled-rule

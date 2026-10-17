@@ -7,9 +7,9 @@ specific allocation policy in existing GWT syntax. The host supplies only a
 in [rules.gwt](rules.gwt).
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- inspect examples/native_weighted_allocation/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- validate examples/native_weighted_allocation/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json
+cargo run --locked -p gwt-core --bin gwt -- inspect examples/native_weighted_allocation/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- validate examples/native_weighted_allocation/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json
 ```
 
 The supplied one-unit budget produces shares `0.34`, `0.33`, and `0.33`.
@@ -101,7 +101,7 @@ is a local correctness exercise, with no human approval or comprehension result.
 ```sh
 cargo test --locked --test weighted_allocation
 python evaluations/native_editor/weighted_allocation_oracle.py --output /tmp/gwt-allocation-oracle.json
-python evaluations/native_editor/qualify_weighted_allocation.py --native /path/to/gwt-native --output /tmp/gwt-allocation-review
+python evaluations/native_editor/qualify_weighted_allocation.py --native /path/to/gwt --output /tmp/gwt-allocation-review
 ```
 
 The review destination must be new. Python formats the example, but its runtime

@@ -313,7 +313,7 @@ fn cli_captures_replays_compares_and_reviews_failed_scenarios() {
     fs::write(&source, SOURCE).unwrap();
     let source = source.to_str().unwrap();
     let run = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .args(args)
             .output()
             .unwrap()

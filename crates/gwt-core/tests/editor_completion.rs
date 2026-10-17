@@ -196,7 +196,7 @@ fn bad_closures_and_queries_fail_without_stale_items_and_cli_requires_query() {
         assert_eq!(r.diagnostic.unwrap().code, "editor_query");
         assert!(r.items.is_empty());
     }
-    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("complete-editor")
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())

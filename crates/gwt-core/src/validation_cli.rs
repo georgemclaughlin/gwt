@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::path::Path;
 
 pub fn run(args: &[String]) -> Result<(bool, Value), Box<dyn std::error::Error>> {
-    let usage = "usage: gwt-native validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]";
+    let usage = "usage: gwt validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]";
     let Some(entry) = args.first().filter(|entry| !entry.starts_with("--")) else {
         return Err(usage.into());
     };

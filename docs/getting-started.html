@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Getting Started With GWT — Rust Engine</title>
+  <title>Getting Started With GWT</title>
   <meta name="description" content="Read, run, change, and review an executable delivery policy with GWT's experimental Rust engine.">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -10,37 +10,24 @@
 </head>
 <body>
 <header class="site-header"><a class="wordmark" href="index.html">GWT</a>
-<nav aria-label="Documentation links"><a href="index.html">Home</a><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/spec/native-draft.md">Language Reference</a></nav></header>
+<nav aria-label="Documentation links"><a href="index.html">Home</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a></nav></header>
 <main class="doc-page">
-<section class="doc-hero"><p class="eyebrow">Getting started · Experimental Rust engine</p>
+<section class="doc-hero"><p class="eyebrow">Getting started</p>
 <h1>Read. Run. Change. Review.</h1>
 <p class="lede">Follow one delivery policy from executable rules to a review of a real change.
-The Rust engine runs the GWT program and records the evidence behind its decisions.</p></section>
+GWT records the evidence behind each decision, so you can check the effect of the change.</p></section>
 <div class="doc-layout"><aside class="doc-nav" aria-label="Walkthrough steps">
 <a href="#setup">Get ready</a><a href="#read">Read the policy</a><a href="#run">Run and validate</a>
 <a href="#review">Compare and review</a><a href="#next">Next steps</a></aside><article class="doc-article">
-<section id="setup" class="walk-step"><h2>Get Ready</h2>
-<p>You’ll use three files: <code>delivery.gwt</code> for the current policy,
+<section id="setup" class="walk-step"><h2>Try A Delivery Policy</h2>
+<p>Start with the <a href="demo/delivery-review.html">interactive review</a> in your browser, or
+<a href="downloads/delivery-example.zip" download>download the example</a> to run it yourself.
+The download includes the rules, a proposed change, input facts, nine captured cases, and matching engine information.</p>
+<p>For local execution, <a href="installation.html">install GWT</a>, unzip the example,
+and open a terminal in its <code>delivery-example</code> directory.</p>
+<pre><code>gwt version --json</code></pre>
+<p>You’ll use <code>delivery.gwt</code> for the current policy,
 <code>proposed.gwt</code> for the change, and <code>parcel.json</code> for a customer’s request.</p>
-<p>Run the commands below in the directory containing those files, with <code>gwt-native</code> installed.
-The current preview is available from source; a public installer is not available yet.</p>
-<details><summary>Developer preview: install from source and prepare the example</summary>
-<p>With Git and rustup installed, run the following in a terminal. Cargo installs the optimized executable
-in its bin directory, which must be on your <code>PATH</code> (normally configured by rustup).
-Use a fresh directory for this checkout and example.</p><pre><code>git clone --branch work/native-foundation-checkpoint https://github.com/georgemclaughlin/gwt.git
-cd gwt
-rustup toolchain install 1.96.0
-cargo +1.96.0 install --path crates/gwt-core --locked
-
-mkdir delivery-demo
-cp examples/native_delivery/rules.gwt delivery-demo/delivery.gwt
-cp examples/native_review_walkthrough/candidate.gwt delivery-demo/proposed.gwt
-cp examples/native_review_walkthrough/input.json delivery-demo/parcel.json
-cd delivery-demo
-
-gwt-native version --json</code></pre>
-<p>The command is currently named <code>gwt-native</code> to distinguish this engine from the earlier toolchain.
-The native language remains experimental.</p></details>
 </section>
 <section id="read" class="walk-step"><h2>Read The Executable Policy</h2>
 <p>The baseline charges nonmembers 5 up to 1,000g and 9 above that. Members pay zero.
@@ -81,43 +68,36 @@ WHEN quote delivery for &lt;parcel&gt; into &lt;quote&gt;
       set quote.fee to 5
     ELSE
       set quote.status to &quot;standard&quot;
-      set quote.fee to 9</code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/examples/native_delivery/rules.gwt">Read the complete baseline</a>
+      set quote.fee to 9</code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
 </section>
 <section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
 <p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.
-It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code>gwt-native validate proposed.gwt
+It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code>gwt validate proposed.gwt
 
-gwt-native run proposed.gwt \
+gwt run proposed.gwt \
   --request &quot;quote delivery&quot; \
   --input parcel.json</code></pre><p>The declared <code>result</code> is:</p><pre><code>{&quot;quote&quot;:{&quot;status&quot;:&quot;standard&quot;,&quot;fee&quot;:5}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
 </section>
 <section id="review" class="walk-step"><h2>Compare The Same Input</h2>
-<p>Capture that same input against the baseline, then compare it with the candidate.
-These commands write four files in your example directory; use fresh filenames when preserving earlier reviews.</p><pre><code>gwt-native capture delivery.gwt \
-  --request &quot;quote delivery&quot; \
-  --input parcel.json &gt; delivery.case.json
-
-gwt-native corpus delivery.case.json &gt; delivery.corpus.json
-
-gwt-native review delivery.corpus.json \
+<p>The example includes nine captured baseline requests. Compare them with the proposed policy:</p>
+<pre><code>gwt review delivery.corpus.json \
   --candidate proposed.gwt \
-  --html delivery-review.html &gt; delivery-review.json</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select the case and compare the fee:
+  --html delivery-review.html</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
 <strong>9 → 5</strong>. Follow the branch and write events to the source conditions:
 <code>1500 &lt;= 1000</code> was false; <code>1500 &lt;= 1500</code> is true.</p>
 <p>The page lets you record Pending, Accept, Reject, or Needs information, add notes, and download your decisions.
 The generated review starts pending. Execution evidence explains what happened; the reviewer decides whether it matches the intended policy.</p>
-<p>The longer walkthrough captures nine cases to check the changed band alongside preserved behavior and invalid-input rejection.</p><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-review-walkthrough.md">Continue to the nine-case walkthrough</a>
+<p>Only two outcomes change. The zero-weight rejection remains a failure in both revisions; the other cases check unchanged policy boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-review-walkthrough.md">Continue to the nine-case walkthrough</a>
 </section>
 <section id="next" class="walk-step"><h2>Continue Exploring</h2>
-<p>Use the native draft for the rules of this engine. The earlier Python implementation has its own v0.2 reference;
-its commands and supported forms differ.</p><div class="link-list"><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/spec/native-draft.md">Native language reference</a><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-embedding.md">Embed the Rust engine</a><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/examples/native_browser_host/README.md">Run GWT through WebAssembly</a><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/project-goal.md">Project goal</a><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/language.md">Earlier Python v0.2 language guide</a></div>
+<p>Use the language reference for the rules of GWT, or explore integration with your application.</p><div class="link-list"><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Native language reference</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-embedding.md">Embed the Rust engine</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_browser_host/README.md">Run GWT through WebAssembly</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/project-goal.md">Project goal</a><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/python-retirement.md">Upgrading from the earlier implementation</a></div>
 </section>
 </article></div></main>
 <footer class="footer">
-      <span>Experimental Rust engine · Native language draft</span>
+      <span>GWT · Experimental language</span>
       <a href="getting-started.html">Getting Started</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/spec/native-draft.md">Language Reference</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-grammar.md">Grammar</a>
       <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
     </footer>
 </body>

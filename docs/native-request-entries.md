@@ -28,8 +28,8 @@ an expedited shipping fee of 19.5.
 ## Execute the entry
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/order_fulfillment/native_request.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/order_fulfillment/native_request.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/order_fulfillment/native_request.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/order_fulfillment/native_request.gwt
 ```
 
 `run ENTRY.gwt` executes its sole scenario. Top-level setup and calls form the
@@ -57,7 +57,7 @@ complete state in `result` and `state`, including setup bindings. Its top-level
 only one request's declared outputs, keep using the JSON boundary:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/order_fulfillment/rules.gwt --request "fulfill order" --input examples/order_fulfillment/request.json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/order_fulfillment/rules.gwt --request "fulfill order" --input examples/order_fulfillment/request.json
 ```
 
 `USE` paths resolve relative to the importing module. The default filesystem
@@ -68,8 +68,8 @@ path, symlink, depth, module, and source-size limits apply.
 ## Capture, compare, and review
 
 ```sh
-target/debug/gwt-native capture examples/order_fulfillment/native_request.gwt > /tmp/gwt-order-entry.case.json
-target/debug/gwt-native replay /tmp/gwt-order-entry.case.json
+target/debug/gwt capture examples/order_fulfillment/native_request.gwt > /tmp/gwt-order-entry.case.json
+target/debug/gwt replay /tmp/gwt-order-entry.case.json
 ```
 
 A captured entry uses the existing scenario-case format. It freezes the exact

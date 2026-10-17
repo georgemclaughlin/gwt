@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('fixtures', type=Path)
 parser.add_argument('choices', type=Path)
 parser.add_argument('output', type=Path)
-parser.add_argument('--native', default='target/debug/gwt-native')
+parser.add_argument('--native', default='target/debug/gwt')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 results = []

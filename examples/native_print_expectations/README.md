@@ -10,12 +10,12 @@ tests exact JSON preservation; it does not impose a real shipping policy.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_print_expectations/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_print_expectations/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_print_expectations/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_print_expectations/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_print_expectations/rules.gwt --request 'print receipt' \
   --input examples/native_print_expectations/input.json
-python -m gwtlang format examples/native_print_expectations/rules.gwt --check
+gwt format examples/native_print_expectations/rules.gwt --check
 ```
 
 The request has no declared outputs, so its result is `{}`. Its captured output is:

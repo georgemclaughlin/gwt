@@ -82,6 +82,6 @@ def prepare(native, output):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path, help='new output directory')
-    parser.add_argument('--native', type=Path, default=ROOT / 'target/debug/gwt-native')
+    parser.add_argument('--native', type=Path, default=ROOT / 'target/debug/gwt')
     args = parser.parse_args()
     print(json.dumps(prepare(args.native, args.output), indent=2))

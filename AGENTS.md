@@ -2,129 +2,78 @@
 
 Guidance for coding agents working in this repository.
 
-## Project Shape
+## Project shape
 
-GWT is an experimental programming language built around executable
-`GIVEN / WHEN / THEN` programs.
+GWT is an experimental executable GIVEN / WHEN / THEN language. The Rust engine
+in `crates/gwt-core/` is the only active implementation and installs `gwt`.
+The Python runtime is retired; see `docs/python-retirement.md` and the file-level
+`docs/retirement-inventory.json` for its immutable reference.
 
-- Runtime/parser/checker code lives in `gwtlang/`.
-- The experimental Rust foundation lives in `crates/gwt-core/`. Its current
-  language reference is `docs/spec/native-draft.md`; the short executable review
-  walkthrough is `docs/native-review-walkthrough.md`. Detailed semantic choices
-  are retained in `docs/native-semantics.md`; full-goal progress is in
-  `docs/project-goal-progress.md`.
-- The VS Code extension lives in `vscode-gwt/`.
-- Language examples live in `examples/`.
-- The current versioned spec is `docs/spec/v0.2.md`.
-- The Python v0.2 EBNF grammar is `docs/grammar.md`; the experimental Rust
-  profile's grammar and context rules are in `docs/native-grammar.md`.
-- The longer language guide is `docs/language.md`.
-- Design principles and language-shape guardrails are in
-  `docs/design-principles.md`.
-- DSL/LLM concepts and the canonical agent authoring loop are in
-  `docs/dsl-and-llms.md` and `docs/agent-authoring.md`.
+- Current contract: `docs/spec/native-draft.md`, `docs/native-grammar.md`, and
+  `docs/native-semantics.md`.
+- Product goal and evidence: `docs/project-goal.md`, `docs/project-goal-progress.md`.
+- Editor: `vscode-gwt/`.
+- Validated examples: `examples/catalog.json`; other retained examples may be
+  historical comparison fixtures and are not promised language support.
+- Authoring: `docs/agent-authoring.md` and `.agents/skills/gwt-authoring/SKILL.md`.
 
-## Core Commands
-
-Use module invocation while developing, because it does not require installing
-the package first:
+## Commands
 
 ```sh
-python -m gwtlang run examples/hello.gwt --json
-python -m gwtlang test examples/language_tour/rules.gwt
-python -m gwtlang check examples/language_tour/rules.gwt
-python -m gwtlang format examples/language_tour/rules.gwt --check
-python -m unittest tests.test_agent_authoring
+cargo +1.96.0 build --locked -p gwt-core --bin gwt
+target/debug/gwt validate examples/native_delivery/rules.gwt
+target/debug/gwt run examples/native_review_walkthrough/candidate.gwt --request "quote delivery" --input examples/native_review_walkthrough/input.json
 ```
 
-After `python -m pip install -e .`, the equivalent `gwt` command is available.
+Public instructions should use installed `gwt`, not a build-directory path.
 
 ## Verification
 
-Before committing language/runtime/checker changes, run:
+For Rust changes, run:
+
+```sh
+cargo +1.96.0 fmt --all -- --check
+cargo +1.96.0 clippy --workspace --all-targets --locked -- -D warnings
+cargo +1.96.0 test --workspace --locked
+```
+
+CI also tests the minimum Rust version and optimized GNU/static Linux builds.
+For a product cutover, packaging, or tooling change also run:
 
 ```sh
 python -m unittest discover
-find examples -name '*.gwt' -print0 | while IFS= read -r -d '' file; do python -m gwtlang format "$file" --check >/dev/null || exit 1; done
-for file in examples/*.gwt; do python -m gwtlang check "$file" >/dev/null || exit 1; done
-python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/order_fulfillment/request.gwt --json >/tmp/gwt-order.json
-python -m gwtlang run examples/language_tour/rules.gwt --input examples/language_tour/request.gwt --json >/tmp/gwt-tour.json
-(cd vscode-gwt && npm run check)
+npm --prefix vscode-gwt run check
+npm --prefix vscode-gwt test
+GWT_NATIVE_PATH="$PWD/target/debug/gwt" node --test tests/native_node_host.test.mjs
+python tools/verify_product.py --gwt target/debug/gwt
 git diff --check
 ```
 
-For doc-only changes, run the relevant example commands from the changed docs
-plus `git diff --check`.
+Python here orchestrates independent research and package tests; it does not
+implement or validate GWT semantics. For doc-only changes, exercise changed
+commands and check links/whitespace. Regenerate site artifacts after engine or
+walkthrough changes with `python tools/build_site.py --gwt target/debug/gwt`.
 
-For Rust foundation changes, run `cargo fmt --all -- --check`,
-`cargo clippy --workspace --all-targets --locked -- -D warnings`, and
-`cargo test --workspace --locked`. CI tests the declared minimum Rust version
-as well as the pinned current toolchain. Keep the native semantic decisions
-and conformance expectations aligned; Python behavior is a comparison oracle
-only where that behavior is intentionally retained.
+## Language design
 
-## Language Design Rules
+Preserve the spec-as-code shape: named executable behavior over state, not SQL
+or general query pipelines. Prefer explicit behavior signatures such as
+`WHEN review <report> into <decision>`.
 
-- Preserve the language's spec-as-code shape. OpenSpec's persistent-spec idea
-  was an original inspiration, but GWT does not use or depend on OpenSpec. GWT
-  takes the collaboration artifact further by making the spec executable rather
-  than treating it as a prompt or handoff document for separate code. Cucumber,
-  SpecFlow/Reqnroll, and BDD examples also shape the language. New features
-  should read like executable behavior steps over state, not like SQL or a
-  general query language.
-- Prefer explicit behavior signatures: `WHEN review <report> into <decision>`.
-- Keep parser/runtime/checker behavior aligned. If one changes, look for tests
-  in `tests/test_runtime.py`, `tests/test_checker.py`, and
-  `tests/test_spec_v01.py`.
-- Keep docs aligned with implementation. Syntax or semantic changes usually
-  require updates to the current `docs/spec/v*.md`, `docs/grammar.md`,
-  `docs/language.md`, and often `README.md`.
-- Do not add new syntax without at least one runtime test, checker coverage
-  when applicable, and an example or spec note.
-- For collection features, prefer narrow step-like operations with explicit
-  missing/failure cases. Avoid `SELECT` / `UPDATE` / `JOIN` style vocabulary,
-  general query pipelines, or implicit set-based mutation unless the design
-  principles are intentionally revised first.
-- Behavior names cannot use built-ins or behavior-body keywords such as `set`,
-  `count`, `sum`, native `divide`, `find`, `exists`, `LET`, `RETURN`, `PASS`, `IF`, `FOR`, or
-  `FIND`.
-- `REQUEST` contracts validate after `GIVEN` setup and before `WHEN`
-  execution. `OUTPUT` contracts validate after execution.
-- Stable run payloads use the envelope returned by `ExecutionResult.as_payload`;
-  keep single-scenario and multi-scenario shapes stable.
+Keep parser, checker, executor, formatter, reference, grammar, and evidence
+aligned. Add independent runtime/checker cases and a focused executable example
+for new syntax. Prefer narrow collection operations with explicit missing and
+failure cases. Do not carry forward Python conventions without a domain reason.
 
-## Formatter Expectations
+Substantial examples need embedded scenarios and THEN assertions. Format active
+examples with the native formatter. JSON host input does not replace scenarios.
 
-`gwt format` is the canonical source formatter for the current language.
+Preserve artifact schemas, digest domains, and historical evidence. Changing the
+CLI name is not permission to rewrite captured cases or reviewer decisions.
 
-- Keep all example `.gwt` files formatted.
-- Formatter validation is syntax-oriented and permits request files whose DTOs
-  are supplied by a paired rules file.
-- If the grammar changes, update the formatter or add a test proving the
-  formatter preserves the new syntax.
+## Git hygiene
 
-## Examples
-
-Use examples to teach new language features:
-
-- `examples/hello.gwt`: smallest runnable program.
-- `examples/language_tour/`: compact current-language tour.
-- `examples/order_fulfillment/`: larger state-transition workflow.
-- `examples/loan_underwriting/`: larger rules/workflow sample.
-- `examples/minilang_spec/`: executable spec pressure test for tokens, AST
-  records, evaluator state, errors, and JSON host input.
-
-When adding a substantial feature, prefer a focused example over expanding
-large examples unless the feature specifically belongs there.
-
-Substantial public examples should include embedded `SCENARIO` blocks with
-top-level `THEN` assertions. JSON request files are useful for host-facing
-execution, but they do not replace executable scenario coverage. Reusable
-modules and request-only files may be exceptions.
-
-## Git Hygiene
-
-- Do not revert unrelated user changes.
-- Keep commits focused and include tests/docs/examples with behavior changes.
-- Avoid generated metadata churn unless it is required.
-- Run verification before pushing.
+Do not revert unrelated changes. Keep commits focused and include relevant tests,
+docs, and examples. Run verification before pushing. Preserve dated evaluation
+artifacts unchanged; new checks are new evidence. Merge and publication remain
+separate from preparing and pushing a development branch.

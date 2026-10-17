@@ -12,7 +12,7 @@ before executing it and records the steps that actually ran.
 This guide describes the **current experimental native profile**. It is a
 reading path through the [detailed semantic decisions](native-semantics.md),
 not a new language release. The published [v0.2 specification](spec/v0.2.md)
-and [Python reference](reference.md) describe the existing Python toolchain.
+and [Python reference](reference.md) describe the retired Python toolchain.
 The profiles share substantial syntax but differ intentionally in arithmetic,
 calls, checking, and some source forms. Select the engine explicitly when
 authoring, validating, or reviewing a program.
@@ -44,8 +44,8 @@ quantity.
 From the repository root:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_return_values/rules.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/native_return_values/rules.gwt --request "quote order" --input examples/native_return_values/input.json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_return_values/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/native_return_values/rules.gwt --request "quote order" --input examples/native_return_values/input.json
 ```
 
 The input is `{"order":{"unit_price":"19.95","quantity":2,"member":true}}`.

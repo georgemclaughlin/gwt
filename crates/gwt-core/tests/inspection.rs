@@ -176,7 +176,7 @@ fn cli_supports_import_root_and_preserves_source_while_refusing_invalid_programs
     let source = "USE \"types.gwt\"\nREQUEST echo\n  GIVEN value is Count\n  WHEN print value\n  OUTPUT value is Count\nSCENARIO fail\nTHEN false\n";
     fs::write(root.join("main.gwt"), source).unwrap();
     fs::write(root.join("types.gwt"), "TYPE Count is integer\n").unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args(["inspect"])
         .arg(root.join("main.gwt"))
         .arg("--import-root")
@@ -202,7 +202,7 @@ fn cli_supports_import_root_and_preserves_source_while_refusing_invalid_programs
             .unwrap()
     );
     fs::write(root.join("types.gwt"), "TYPE Count is Missing\n").unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("inspect")
         .arg(root.join("main.gwt"))
         .output()
@@ -211,7 +211,7 @@ fn cli_supports_import_root_and_preserves_source_while_refusing_invalid_programs
     let error: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(error["phase"], "check");
     assert!(error.get("requests").is_none());
-    let bad = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let bad = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args(["inspect", "ignored", "--request", "echo"])
         .output()
         .unwrap();

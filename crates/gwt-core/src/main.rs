@@ -62,7 +62,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| matches!(command.as_str(), "version" | "--version" | "-V"))
     {
         if args.len() != 1 && !(args.len() == 2 && args[0] == "version" && args[1] == "--json") {
-            return Err("usage: gwt-native version [--json] | --version | -V".into());
+            return Err("usage: gwt version [--json] | --version | -V".into());
         }
         return Ok((true, serde_json::to_value(gwt_core::version_info())?));
     }
@@ -74,7 +74,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| command == "complete-editor")
     {
         if args.len() != 1 {
-            return Err("usage: gwt-native complete-editor < snapshot.json".into());
+            return Err("usage: gwt complete-editor < snapshot.json".into());
         }
         return editor_cli::complete();
     }
@@ -83,7 +83,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| command == "outline-editor")
     {
         if args.len() != 1 {
-            return Err("usage: gwt-native outline-editor < snapshot.json".into());
+            return Err("usage: gwt outline-editor < snapshot.json".into());
         }
         return outline_cli::run();
     }
@@ -95,7 +95,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| command == "format-editor")
     {
         if args.len() != 1 {
-            return Err("usage: gwt-native format-editor < snapshot.json".into());
+            return Err("usage: gwt format-editor < snapshot.json".into());
         }
         return formatter_cli::editor();
     }
@@ -107,7 +107,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| command == "check-editor")
     {
         if args.len() != 1 {
-            return Err("usage: gwt-native check-editor < snapshot.json".into());
+            return Err("usage: gwt check-editor < snapshot.json".into());
         }
         return editor_cli::run();
     }
@@ -130,7 +130,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
     if args.len() == 1 && matches!(args[0].as_str(), "--help" | "-h") {
         return Ok((
             true,
-            json!({"usage": ["gwt-native version [--json] | --version | -V", "gwt-native run|capture|profile ENTRY.gwt [--import-root DIRECTORY] [--limits FILE.json] (exactly one entry scenario)", "gwt-native validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]", "gwt-native format FILE.gwt [--check | --write]", "gwt-native format-editor < snapshot.json", "gwt-native outline-editor < snapshot.json", "gwt-native check-editor < snapshot.json", "gwt-native complete-editor < snapshot.json","gwt-native expression EXPRESSION TYPES.json INPUT.json", "gwt-native check FILE.gwt [--import-root DIRECTORY]", "gwt-native inspect FILE.gwt [--import-root DIRECTORY]", "gwt-native test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native run FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native capture FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native run FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native capture FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt-native replay CASE.json", "gwt-native migrate CASE.json --previous-engine EXECUTABLE [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decision-template NEW_FILE.json]", "gwt-native assess-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json [--timeout-ms MILLISECONDS]", "gwt-native export-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json --output NEW_CASE.json [--timeout-ms MILLISECONDS]", "gwt-native scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]", "gwt-native compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]", "gwt-native corpus CASE.json ...", "gwt-native test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]", "gwt-native migrate-corpus CORPUS.json --engines ENGINES.json [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decisions-template NEW_FILE.json]", "gwt-native assess-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json [--timeout-ms MILLISECONDS]", "gwt-native export-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json --output NEW_CORPUS.json [--timeout-ms MILLISECONDS]", "gwt-native review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--decisions-template NEW_FILE.json] [--import-root DIRECTORY]", "gwt-native assess-review CORPUS.json --candidate FILE.gwt --decisions DECISIONS.json [--import-root DIRECTORY]"], "status": "experimental native language subset; see docs/native-semantics.md"}),
+            json!({"usage": ["gwt version [--json] | --version | -V", "gwt run|capture|profile ENTRY.gwt [--import-root DIRECTORY] [--limits FILE.json] (exactly one entry scenario)", "gwt validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]", "gwt format FILE.gwt [--check | --write]", "gwt format-editor < snapshot.json", "gwt outline-editor < snapshot.json", "gwt check-editor < snapshot.json", "gwt complete-editor < snapshot.json","gwt expression EXPRESSION TYPES.json INPUT.json", "gwt check FILE.gwt [--import-root DIRECTORY]", "gwt inspect FILE.gwt [--import-root DIRECTORY]", "gwt test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]", "gwt profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt replay CASE.json", "gwt migrate CASE.json --previous-engine EXECUTABLE [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decision-template NEW_FILE.json]", "gwt assess-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json [--timeout-ms MILLISECONDS]", "gwt export-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json --output NEW_CASE.json [--timeout-ms MILLISECONDS]", "gwt scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]", "gwt compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]", "gwt corpus CASE.json ...", "gwt test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]", "gwt migrate-corpus CORPUS.json --engines ENGINES.json [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decisions-template NEW_FILE.json]", "gwt assess-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json [--timeout-ms MILLISECONDS]", "gwt export-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json --output NEW_CORPUS.json [--timeout-ms MILLISECONDS]", "gwt review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--decisions-template NEW_FILE.json] [--import-root DIRECTORY]", "gwt assess-review CORPUS.json --candidate FILE.gwt --decisions DECISIONS.json [--import-root DIRECTORY]"], "status": "experimental native language subset; see docs/native-semantics.md"}),
         ));
     }
     if args
@@ -138,7 +138,10 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| command == "scenario-from-case")
     {
         if args.len() < 2 || args.len() % 2 != 0 {
-            return Err("usage: gwt-native scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]".into());
+            return Err(
+                "usage: gwt scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]"
+                    .into(),
+            );
         }
         let mut options = BTreeMap::new();
         for pair in args[2..].chunks_exact(2) {
@@ -179,7 +182,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
     }
     if args.first().is_some_and(|command| command == "corpus") {
         if args.len() < 2 || args.len() > 257 {
-            return Err("usage: gwt-native corpus CASE.json ... (1 to 256 files)".into());
+            return Err("usage: gwt corpus CASE.json ... (1 to 256 files)".into());
         }
         let mut entries = Vec::new();
         let mut bytes = 0;
@@ -209,7 +212,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         .is_some_and(|command| matches!(command.as_str(), "review" | "assess-review"))
     {
         if args.len() < 4 || args.len() % 2 != 0 {
-            return Err("usage: gwt-native review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--import-root DIRECTORY]".into());
+            return Err("usage: gwt review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--import-root DIRECTORY]".into());
         }
         let mut options = BTreeMap::new();
         for pair in args[2..].chunks_exact(2) {
@@ -319,7 +322,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         if (args[0] == "replay" && (args.len() != 2 || root.is_some()))
             || (args[0] == "compare" && (args.len() != 4 || args[2] != "--candidate"))
         {
-            return Err("usage: gwt-native replay CASE.json; or gwt-native compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]".into());
+            return Err("usage: gwt replay CASE.json; or gwt compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]".into());
         }
         let case = match ExecutionCase::from_json(&read_bounded(&args[1], MAX_CASE_BYTES)?) {
             Ok(case) => case,
@@ -385,7 +388,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
             || (!selected_run && args.len() != 2)
             || (limits_path.is_some() && matches!(args[0].as_str(), "check" | "inspect"))
         {
-            return Err("usage: gwt-native inspect|check FILE.gwt [--import-root DIRECTORY]; test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]; or run|capture|profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]; omitting a target requires exactly one entry scenario".into());
+            return Err("usage: gwt inspect|check FILE.gwt [--import-root DIRECTORY]; test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]; or run|capture|profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]; omitting a target requires exactly one entry scenario".into());
         }
         let limits = limits_path
             .as_deref()
@@ -472,7 +475,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
         };
     }
     if args.len() != 4 || args[0] != "expression" {
-        return Err("use gwt-native --help for supported commands".into());
+        return Err("use gwt --help for supported commands".into());
     }
     let types: BTreeMap<String, Type> = serde_json::from_str(&fs::read_to_string(&args[2])?)?;
     let inputs: Value = serde_json::from_str(&fs::read_to_string(&args[3])?)?;

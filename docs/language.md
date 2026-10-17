@@ -1,5 +1,7 @@
 # GWT Language Draft
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 GWT is an executable behavior language. A program describes public named
 requests, reusable behavior, execution examples, and expected results.
 
@@ -564,7 +566,7 @@ With NodeNext-style ESM, import the generated `rules.d.ts` declarations through
 the runtime-style `./rules.js` specifier.
 
 For a complete host example, see
-[`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
+[`clients/typescript/examples/vendor-onboarding.ts`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/clients/typescript/examples/vendor-onboarding.ts).
 
 For Python:
 

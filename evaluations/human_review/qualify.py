@@ -7,7 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from gwtlang.maintenance_evaluation import evaluate_candidate
+from copy import deepcopy
+import runpy
 from .corpus import DOMAINS, FIXTURES, REVISIONS, TASKS, expected, probes
 from .study import write_json
 
@@ -39,13 +40,13 @@ def qualify(native):
                 raise AssertionError("corpus must expose both changed/preserved behavior and each defect")
             for revision in REVISIONS:
                 acceptance = [{"input": {"facts": f}, "expected": expected(domain, revision, f)} for f in facts]
-                for language, suffix in (("gwt", "gwt"), ("python", "py")):
-                    path = FIXTURES / domain / f"{revision}.{suffix}"
-                    result = evaluate_candidate(path.read_text(), language, "assess", acceptance)
-                    checks.append({"domain": domain, "revision": revision, "engine": f"python-{language}",
-                                   "probes": len(acceptance), **result})
-                    if result["error"] or not all(result["passed"]):
-                        raise AssertionError(checks[-1])
+                # Trusted ordinary-Python comparison fixtures, not the retired GWT runtime.
+                decide = runpy.run_path(str(FIXTURES / domain / f"{revision}.py"))["decide"]
+                passed = [matches(decide(deepcopy(probe["input"])), probe["expected"]) for probe in acceptance]
+                checks.append({"domain": domain, "revision": revision, "engine": "python",
+                               "probes": len(acceptance), "passed": passed, "error": None})
+                if not all(passed):
+                    raise AssertionError(checks[-1])
                 path = FIXTURES / domain / f"{revision}.gwt"
                 for probe_index, probe in enumerate(acceptance):
                     input_path.write_text(json.dumps(probe["input"]))

@@ -10,7 +10,7 @@ existing ChatGPT login; a missing API key does not block that path.
 ## Codex CLI transport
 
 ```sh
-python -m evaluations.native_maintenance.experiment --provider codex-cli --qualification /path/to/qualification --native /path/to/gwt-native --image python:3.12-slim --model gpt-6-astra --reasoning-effort medium --maximum-attempts 3 --output /path/to/new-cli-experiment
+python -m evaluations.native_maintenance.experiment --provider codex-cli --qualification /path/to/qualification --native /path/to/gwt --image python:3.12-slim --model gpt-6-astra --reasoning-effort medium --maximum-attempts 3 --output /path/to/new-cli-experiment
 python -m unittest tests.test_native_maintenance_codex tests.test_native_maintenance_experiment
 ```
 
@@ -62,7 +62,7 @@ Use a previously qualified native executable and an existing local Docker image
 as described in [scoring](scoring.md).
 
 ```sh
-python -m evaluations.native_maintenance.experiment --qualification /path/to/qualification --native /path/to/gwt-native --image python:3.12-slim --model MODEL_ID --reasoning-effort medium --maximum-attempts 3 --maximum-output-tokens 16000 --output /path/to/new-experiment
+python -m evaluations.native_maintenance.experiment --qualification /path/to/qualification --native /path/to/gwt --image python:3.12-slim --model MODEL_ID --reasoning-effort medium --maximum-attempts 3 --maximum-output-tokens 16000 --output /path/to/new-experiment
 python -m unittest tests.test_native_maintenance_experiment
 ```
 
@@ -137,7 +137,7 @@ but does not establish a completed experiment.
 ## Qualification
 
 ```sh
-python -m evaluations.native_maintenance.qualify_experiment --qualification /path/to/qualification --native /path/to/gwt-native --image python:3.12-slim --output /path/to/new-rehearsal
+python -m evaluations.native_maintenance.qualify_experiment --qualification /path/to/qualification --native /path/to/gwt --image python:3.12-slim --output /path/to/new-rehearsal
 ```
 
 This uses a clearly labeled synthetic provider, not model calls. Refund starts

@@ -1,9 +1,9 @@
 const fs = require('fs/promises');
 const path = require('path');
-const { inside, snapshot, digest, byteOffset, byteRange, runNative } = require('./native-tools');
+const { inside, snapshot, digest, byteOffset, byteRange, runGwt: runNative, setting } = require('./native-tools');
 
 function activateNative(vscode, context, output) {
-  const collection = vscode.languages.createDiagnosticCollection('gwt-native');
+  const collection = vscode.languages.createDiagnosticCollection('gwt');
   const jobs = new Set();
   let timer, generation = 0, disposed = false;
   const documents = () => vscode.workspace.textDocuments.filter(document => document.languageId === 'gwt' && document.uri.scheme === 'file');
@@ -12,10 +12,10 @@ function activateNative(vscode, context, output) {
     const config = vscode.workspace.getConfiguration('gwt', document.uri.scheme === 'untitled' ? workspaceFolder?.uri : document.uri);
     const folder = workspaceFolder?.uri.fsPath;
     const base = folder || path.dirname(document.uri.fsPath);
-    const configuredRoot = config.get('native.importRoot', '');
-    const configuredLimits = execution ? config.get('native.limitsFile', '') : '';
-    if (typeof configuredLimits !== 'string') throw new Error('gwt.native.limitsFile must be a file path or an empty string.');
-    return { command: config.get('native.command', 'gwt-native'), root: configuredRoot ? path.resolve(base, configuredRoot) : base,
+    const configuredRoot = setting(config, 'importRoot', '');
+    const configuredLimits = execution ? setting(config, 'limitsFile', '') : '';
+    if (typeof configuredLimits !== 'string') throw new Error('gwt.limitsFile must be a file path or an empty string.');
+    return { command: setting(config, 'command', 'gwt'), root: configuredRoot ? path.resolve(base, configuredRoot) : base,
       limitsFile: configuredLimits ? path.resolve(base, configuredLimits) : undefined };
   }
   function invoke(command, args, input, root, timeout = 10000, background = true, token) {
@@ -59,7 +59,7 @@ function activateNative(vscode, context, output) {
     if (!inside(root, filename) || report.diagnosticSource === null) filename = document.uri.fsPath;
     const range = report.diagnosticSource === null ? { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } : byteRange(report.diagnosticSource, diagnostic.span);
     const item = new vscode.Diagnostic(new vscode.Range(range.start.line, range.start.character, range.end.line, range.end.character), diagnostic.message, vscode.DiagnosticSeverity.Error);
-    item.code = diagnostic.code; item.source = 'gwt-native';
+    item.code = diagnostic.code; item.source = 'gwt';
     return { report, diagnostics: [{ uri: vscode.Uri.file(filename), diagnostic: item }] };
   }
   async function navigation(document, position, token, definition) {
@@ -229,7 +229,7 @@ function activateNative(vscode, context, output) {
       } catch (error) {
         if (disposed || epoch !== generation) return;
         const diagnostic = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 0), error.message, vscode.DiagnosticSeverity.Error);
-        diagnostic.code = 'native_tool'; diagnostic.source = 'gwt-native';
+        diagnostic.code = 'native_tool'; diagnostic.source = 'gwt';
         byFile.set(document.uri.toString(), { uri: document.uri, diagnostics: [diagnostic] });
         output.appendLine(error.message);
       }

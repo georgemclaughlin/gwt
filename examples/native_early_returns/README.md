@@ -11,8 +11,8 @@ After the non-receipt guard returns, they can read receipt fields directly.
 The behavior returns text, and the named request exposes that result as decision.
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- validate examples/native_early_returns/rules.gwt
-cargo run -p gwt-core --bin gwt-native -- run examples/native_early_returns/rules.gwt --request "assess exchange" --input examples/native_early_returns/request.json
+cargo run -p gwt-core --bin gwt -- validate examples/native_early_returns/rules.gwt
+cargo run -p gwt-core --bin gwt -- run examples/native_early_returns/rules.gwt --request "assess exchange" --input examples/native_early_returns/request.json
 ```
 
 The sample returns `{"decision":"eligible"}`. Eight embedded scenarios check the

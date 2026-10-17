@@ -1,6 +1,6 @@
 # Test captured native observations
 
-`gwt-native test-cases` makes a saved corpus an explicit preservation gate for a
+`gwt test-cases` makes a saved corpus an explicit preservation gate for a
 candidate program. It covers successful requests, failed input contracts, domain
 rejections, resource failures, and named scenarios. Every frozen baseline must
 replay before its candidate executes. Inputs, entry names, and execution limits
@@ -38,13 +38,13 @@ when intentionally changing the implementation.
 From the repository root, capture and explicitly select a case for the corpus:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   crates/gwt-core/tests/fixtures/invoice.gwt --request 'price invoice' \
   --input crates/gwt-core/tests/fixtures/invoice-input.json \
   > /tmp/gwt-regression-invoice.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- corpus \
+cargo run --locked -p gwt-core --bin gwt -- corpus \
   /tmp/gwt-regression-invoice.case.json > /tmp/gwt-regression-corpus.json
-cargo run --locked -p gwt-core --bin gwt-native -- test-cases \
+cargo run --locked -p gwt-core --bin gwt -- test-cases \
   /tmp/gwt-regression-corpus.json \
   --candidate crates/gwt-core/tests/fixtures/invoice.gwt \
   --match outcomes-and-state > /tmp/gwt-regression-report.json

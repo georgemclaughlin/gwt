@@ -281,7 +281,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
     let case_path = root.join("case.json");
     fs::write(&case_path, case.to_json()).unwrap();
     let destination = root.join("generated");
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("scenario-from-case")
         .arg(&case_path)
         .arg("--output")
@@ -296,7 +296,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
     );
     let payload: Json = serde_json::from_slice(&output.stdout).unwrap();
     let entry = destination.join(payload["source"]["entry"].as_str().unwrap());
-    let result = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let result = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("test")
         .arg(entry)
         .arg("--import-root")
@@ -304,7 +304,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
         .output()
         .unwrap();
     assert!(result.status.success());
-    let again = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let again = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("scenario-from-case")
         .arg(&case_path)
         .arg("--output")
@@ -323,7 +323,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
     );
     fs::write(&case_path, bad.to_json()).unwrap();
     let expected_failure = root.join("expected-failure");
-    let result = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let result = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("scenario-from-case")
         .arg(&case_path)
         .arg("--output")
@@ -333,7 +333,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
     assert!(result.status.success());
     let generated: Json = serde_json::from_slice(&result.stdout).unwrap();
     assert_eq!(generated["capturedFailure"]["code"], "assertion_failed");
-    let result = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let result = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("test")
         .arg(expected_failure.join(generated["source"]["entry"].as_str().unwrap()))
         .arg("--import-root")
@@ -348,7 +348,7 @@ fn cli_exports_a_frozen_runnable_bundle_and_refuses_existing_destinations() {
     );
     fs::write(&case_path, unsupported.to_json()).unwrap();
     let rejected = root.join("rejected");
-    let result = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let result = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("scenario-from-case")
         .arg(&case_path)
         .arg("--output")

@@ -8,9 +8,9 @@ request requires a positive attempt number.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- validate examples/native_value_dispatch/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run examples/native_value_dispatch/rules.gwt --request "review delivery" --input examples/native_value_dispatch/request.json
-python -m gwtlang format examples/native_value_dispatch/rules.gwt --check
+cargo run --locked -p gwt-core --bin gwt -- validate examples/native_value_dispatch/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run examples/native_value_dispatch/rules.gwt --request "review delivery" --input examples/native_value_dispatch/request.json
+gwt format examples/native_value_dispatch/rules.gwt --check
 ```
 
 The request returns `{"decision":{"action":"retry","delay":15,"notice":"retry"}}`.

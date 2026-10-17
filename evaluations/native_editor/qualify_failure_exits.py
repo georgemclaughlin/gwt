@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 import subprocess
 
-from gwtlang.runtime import Runtime, parse_program, run_source
 
 
 def expected(data):
@@ -76,7 +75,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--native', type=Path, required=True)
     parser.add_argument('--previous-engine', type=Path, required=True)
-    parser.add_argument('--before', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     root = args.output.resolve()
@@ -97,10 +95,7 @@ def main():
         assert result.returncode == code, (arguments, result.stdout[:1500], result.stderr)
         return json.loads(result.stdout)
 
-    before = args.before.read_text()
-    source = Path('examples/inventory_allocation_spike/rules.gwt').read_text()
     entry = Path('examples/inventory_allocation_spike/native_scenarios.gwt')
-    old, new = [Runtime(parse_program(text)) for text in (before, source)]
     observations = []
     for paid, fraud, expedited, stock, quantity, shape, unknown in itertools.product(
             (False, True), (79, 80), (False, True), (0, 1, 2, 3, 7), (1, 2, 4),
@@ -114,31 +109,12 @@ def main():
                           'fraud_score': fraud, 'expedited': expedited, 'items': order_items},
                 'inventory': {'items': items}}
         oracle = expected(data)
-        for runtime in (old, new):
-            actual = runtime.run_json(deepcopy(data), 'fulfill order').scenarios[0].returned_state
-            assert python_matches(actual, oracle), (data, actual, oracle)
         input_path = save('current-input.json', data)
         run = call(native, 'run', entry, '--request', 'fulfill order', '--input', input_path)
         assert run['ok'] and run['result'] == canonical(oracle), (data, run)
-        observations.append({'input': data, 'expected': oracle, 'allThreeExecutionsMatch': True})
+        observations.append({'input': data, 'expected': oracle, 'matchesIndependentOracle': True})
     save('inventory-observations.json', observations)
     save('native-validation.json', call(native, 'validate', entry))
-
-    # Retain the real legacy sharing observation: a generic rewrite to a
-    # returned snapshot would change subsequent writes through the destination.
-    sharing = '''
-SCENARIO lookup destination sharing
-GIVEN inventory is InventoryState
-  items: []
-GIVEN inventory.items are InventoryItem
-  | sku | available | reserved |
-  | "widget" | 3 | 0 |
-WHEN find item in inventory.items WHERE item.sku == "widget" into selected
-WHEN set selected.available to 99
-'''
-    state = run_source(before + sharing).scenarios[-1].state
-    assert state['inventory']['items'][0]['available'] == 99
-    save('legacy-sharing.json', {'appendedSource': sharing, 'state': state, 'nativeSnapshotExpectedAvailable': 3})
 
     compatibility_source = 'RECORD Box\n  value: optional<integer>\nREQUEST choose\n  GIVEN box is Box\n  GIVEN replacement is Box\n  WHEN choose box through box with replacement\n  OUTPUT box is Box\nWHEN choose <box> through <alias> with <replacement>\n  GIVEN box is Box\n  AND alias is Box\n  AND replacement is Box\n  IF box.value is absent\n    REQUIRE false\n  set alias to replacement\n'
     compatibility = []
@@ -172,7 +148,7 @@ WHEN set selected.available to 99
         saved = save(f'portfolio-candidate-{index}.json', migration['candidate'])
         assert call(native, 'replay', saved)['verified']
     assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == digest for p, digest in hashes.items())
-    report = {'inventoryInputs': len(observations), 'inventoryExecutions': len(observations) * 3,
+    report = {'inventoryInputs': len(observations), 'inventoryExecutions': len(observations),
               'preservedPortfolioMigrations': 57, 'compatibility': compatibility,
               'executableHashes': hashes, 'proposalsApproved': False, 'humanParticipants': 0}
     save('qualification.json', report)

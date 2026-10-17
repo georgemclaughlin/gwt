@@ -382,7 +382,7 @@ fn cli_uses_explicit_import_root_and_reports_frozen_identity() {
     let bundle = invoice();
     let dir = Directory::new(&bundle);
     let entry = dir.0.join(&bundle.entry);
-    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("test")
         .arg(&entry)
         .arg("--import-root")
@@ -401,7 +401,7 @@ fn cli_uses_explicit_import_root_and_reports_frozen_identity() {
         payload["programIdentity"],
         payload["scenarios"][0]["execution"]["programIdentity"]
     );
-    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("check")
         .arg(entry)
         .output()

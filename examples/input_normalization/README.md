@@ -1,5 +1,7 @@
 # Input normalization with declared facts
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/input_normalization).
+
 This example accepts a known JSON shape and keeps normalization decisions in
 GWT. `RawContactInput` declares name, email, the explicit middle-name state,
 and an `optional<text>` middle name. It runs in Python and native GWT without
@@ -29,8 +31,8 @@ From the repository root:
 ```sh
 python -m gwtlang validate examples/input_normalization/rules.gwt
 python -m gwtlang run examples/input_normalization/rules.gwt --json-input examples/input_normalization/request.json --request "normalize contact profile" --json
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/input_normalization/rules.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/input_normalization/rules.gwt --request "normalize contact profile" --input examples/input_normalization/request.json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/input_normalization/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/input_normalization/rules.gwt --request "normalize contact profile" --input examples/input_normalization/request.json
 ```
 
 Both validation commands execute six scenarios. Native `error_count` serializes

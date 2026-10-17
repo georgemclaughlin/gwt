@@ -11,7 +11,7 @@ parser.add_argument('cases',type=Path)
 parser.add_argument('output',type=Path)
 parser.add_argument('--previous-engine',required=True)
 parser.add_argument('--changed-engine',required=True)
-parser.add_argument('--native',default='target/debug/gwt-native')
+parser.add_argument('--native',default='target/debug/gwt')
 args=parser.parse_args()
 args.output.mkdir(parents=True,exist_ok=True)
 def digest(domain,value):

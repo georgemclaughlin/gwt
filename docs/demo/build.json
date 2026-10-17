@@ -1,0 +1,39 @@
+{
+  "kind": "gwt.site-build",
+  "schemaVersion": 1,
+  "engine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:23000dac2fc04d506dcbba27a197bb7530d689fc5d917cba72195902269b8444"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "sources": {
+    "examples/native_delivery/rules.gwt": "ef06278f3621adca10beaa35cee18d70fa475bd35175a456d005f655d6018891",
+    "examples/native_review_walkthrough/candidate.gwt": "64a5fc95908ba6dfebfdc20da677582f324d81e5238e52585214109ccf3693e2",
+    "examples/native_review_walkthrough/cases.json": "1377ad634eb56d366c77b87665dab992d4ba887036e7c6910756206a9025cb2d",
+    "examples/native_review_walkthrough/prepare.py": "f0a9d32890ded85e0b9f83ce2c00181e41c2997f6e8496e93a7fa8bac7929f4e"
+  },
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 1,
+    "compared": 9,
+    "evidenceChanged": 9,
+    "outcomeChanged": 2,
+    "sourceChanged": 9,
+    "stateChanged": 2,
+    "total": 9,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "artifacts": {
+    "demo/delivery-review.html": "e7ad642db0eba59adaf36097d230b87b142347cb4cf62c8f1fecee528708f5d1",
+    "downloads/delivery-example.zip": "6944fb315e407a5c6fd69cb44222c9e68035464b6cb0807a952845de6fa5e445"
+  }
+}

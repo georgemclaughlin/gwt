@@ -180,7 +180,7 @@ fn cli_writes_failure_reports_without_overwriting_sources_or_existing_artifacts(
     let source = "SCENARIO bad\nTHEN false\n";
     fs::write(&file, source).unwrap();
     let invoke = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg("validate")
             .arg(&file)
             .args(args)

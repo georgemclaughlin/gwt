@@ -3,7 +3,7 @@
 Start with the [native language draft](../../docs/spec/native-draft.md) and the
 [delivery review walkthrough](../../docs/native-review-walkthrough.md).
 
-Use `gwt-native version --json` or the Rust `version_info()` API to identify the
+Use `gwt version --json` or the Rust `version_info()` API to identify the
 package, experimental language profile, and engine fingerprint. The language
 release version remains null. See the [support and transition contract](../../docs/native-language-transition.md)
 for the distinction between package versions, language releases, and saved cases.
@@ -11,7 +11,8 @@ for the distinction between package versions, language releases, and saved cases
 This experimental Rust crate runs typed requests, behaviors, decisions, state
 changes, collection workflows, and embedded scenarios directly from `.gwt` source. It implements a
 documented language subset toward the [project goal](../../docs/project-goal.md).
-The Python package and CLI remain the complete implemented v0.2 toolchain.
+This is the only active GWT engine. The earlier Python toolchain is
+[retired](../../docs/python-retirement.md).
 
 Start with [the native execution model](../../docs/native-execution-model.md)
 for requests, state, decisions, and failures, and the
@@ -32,9 +33,9 @@ identity. The package remains unpublished; no registry release is implied.
 From the repository root, with Rust 1.85 or newer:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/refund_review/stage3.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/refund_review/stage3.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/refund_review/stage3.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/refund_review/stage3.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   crates/gwt-core/tests/fixtures/invoice.gwt \
   --request 'price invoice' --input crates/gwt-core/tests/fixtures/invoice-input.json
 ```
@@ -134,7 +135,7 @@ separate new corpus can be exported.
 ## Inspect the expression boundary
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- expression \
+cargo run --locked -p gwt-core --bin gwt -- expression \
   'facts.days <= 30 or (facts.member and facts.days <= 45)' \
   crates/gwt-core/tests/fixtures/refund-types.json \
   crates/gwt-core/tests/fixtures/refund-input.json
