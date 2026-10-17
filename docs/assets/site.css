@@ -282,6 +282,15 @@ h3 {
   width: 100%;
 }
 
+.execution-visual > pre {
+  padding: 20px;
+  background: var(--code);
+}
+
+.visual-tabs.policy-tabs {
+  grid-template-columns: 1fr 1fr;
+}
+
 .visual-tabs {
   display: grid;
   grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.28fr) minmax(0, 0.9fr);
