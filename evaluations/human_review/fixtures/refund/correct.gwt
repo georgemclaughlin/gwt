@@ -1,0 +1,29 @@
+PROGRAM refund review
+
+RECORD Facts
+  days: integer
+  defective: boolean
+  receipt: boolean
+
+RECORD Decision
+  status: "review" | "refund" | "deny"
+
+REQUEST assess
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    status: "deny"
+  WHEN assess facts into decision
+  OUTPUT decision is Decision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  DECIDE
+    WHEN not facts.receipt
+      set decision.status to "review"
+    WHEN facts.defective and facts.days <= 45
+      set decision.status to "refund"
+    WHEN not facts.defective and facts.days <= 14
+      set decision.status to "refund"
+    ELSE
+      set decision.status to "deny"

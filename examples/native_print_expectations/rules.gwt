@@ -1,0 +1,31 @@
+PROGRAM packing receipt
+
+RECORD Parcel
+  label: text
+  quantity: integer
+
+REQUEST print receipt
+  GIVEN parcel is Parcel
+  WHEN issue receipt for parcel
+
+WHEN issue receipt for <parcel>
+  GIVEN parcel is Parcel
+  REQUIRE parcel.quantity > 0
+  print "Packing receipt"
+  print parcel
+  print parcel.quantity
+
+SCENARIO receipt preserves its label and exact quantity
+GIVEN parcel is Parcel
+  label: "fragile # café"
+  quantity: 9007199254740993
+
+REQUEST print receipt
+
+THEN prints ["Packing receipt", {"label": "fragile # café", "quantity": 9007199254740993}, 9007199254740993]
+AND parcel.quantity == 9007199254740993
+
+SCENARIO empty output is explicit
+WHEN PASS
+
+THEN prints []

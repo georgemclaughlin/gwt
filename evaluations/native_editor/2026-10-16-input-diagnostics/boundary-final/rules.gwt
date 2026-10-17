@@ -1,0 +1,16 @@
+RECORD Line
+  amount: decimal
+  count: integer
+  quality: "new" | "used"
+RECORD Contact is one of
+  email:
+    address: text
+  phone:
+    number: text
+RECORD Facts
+  lines: list<optional<Line>>
+  contact: optional<Contact>
+REQUEST inspect
+  GIVEN facts is Facts
+  WHEN print "accepted"
+  OUTPUT facts is Facts

@@ -1,0 +1,1023 @@
+{
+  "nativeTests": {
+    "1.85.0": 376,
+    "1.96.0": 376
+  },
+  "pythonTests": 629,
+  "javascriptTests": 5,
+  "javascriptSyntaxCheck": true,
+  "formatCheck": true,
+  "diffCheck": true,
+  "exampleChecks": {
+    "formatted": 73,
+    "checked": 16,
+    "commands": [
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/bank.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/behavior_review/baseline.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/behavior_review/candidate.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/checkout/request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/checkout/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/checkout/scenarios.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/collections.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/control_flow.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/counter.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/decide.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/deployable_api/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/exact_pricing/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/examples_table.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/expressions.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/external_pilots/dfe_npq_funding_eligibility/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/external_pilots/semantic_release_commit_analyzer/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/external_pilots/spree_item_total/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/hello.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/incident_triage/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/input_normalization/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/inventory_allocation_spike/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/language_tour/native_request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/language_tour/request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/language_tour/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/let.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/loan_underwriting/request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/loan_underwriting/request_with_assertions.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/loan_underwriting/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/minilang2_vm/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/minilang_spec/engine.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/minilang_spec/native_scenarios.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/minilang_spec/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_delivery/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_early_returns/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_expected_failures/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_filter_proofs/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_kind_conditions/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_kind_contracts/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_kind_dispatch/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_one_of/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_presence/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_print_expectations/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_require/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_reservation/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_return_values/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_rounded_division/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_setup_tables/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_value_arguments/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_value_dispatch/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/native_weighted_allocation/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/order_fulfillment/native_request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/order_fulfillment/request.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/order_fulfillment/request_with_assertions.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/order_fulfillment/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/pressure_tests/feature_flag_rollout.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/pressure_tests/fraud_review.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/pressure_tests/refund_eligibility.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/pressure_tests/subscription_entitlements.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/record_contracts.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/records.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/refund_review/stage0.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/refund_review/stage1.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/refund_review/stage2.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/refund_review/stage3.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/release_readiness/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/return_values.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/scenarios.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/type_aliases.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/typed_contracts.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/typed_tables.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/use_import/banking_module.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/use_import/use_import.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "format",
+          "examples/vendor_onboarding/rules.gwt",
+          "--check"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/bank.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/collections.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/control_flow.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/counter.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/decide.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/examples_table.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/expressions.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/hello.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/let.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/record_contracts.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/records.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/return_values.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/scenarios.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/type_aliases.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/typed_contracts.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "check",
+          "examples/typed_tables.gwt"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "run",
+          "examples/order_fulfillment/rules.gwt",
+          "--input",
+          "examples/order_fulfillment/request.gwt",
+          "--json"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "gwtlang",
+          "run",
+          "examples/language_tour/rules.gwt",
+          "--input",
+          "examples/language_tour/request.gwt",
+          "--json"
+        ],
+        "exitCode": 0
+      }
+    ]
+  },
+  "sourceSha256": {
+    "docs/native-profiling.md": "b581f85162013f540840f34def4b0e183ab24c27b9646534e1207350d46d129a",
+    "docs/native-embedding.md": "6dbda7b8b596733d5db385f2854f7093ec1781a0bf2ccd2c44b01d45b478ba16",
+    "docs/project-goal-progress.md": "72784174462809660bd2e9bf71de96dae5fc9a6e29bffbecb975c9b9e7114a12",
+    "docs/crash-recovery.md": "6a48e2149ac28eb5447eaaf37a3e9429c0fd426d8d18f4688b4c4330ed2691c1",
+    "README.md": "de806c03c311e748745e4167f06eb3df220d1d5fd1ca38d226fb1922fda9bdd8",
+    "crates/gwt-core/README.md": "e0e0d1b46375f84251272f66d623039e0fed9a282fee175ac68fcc16cce683a8",
+    "crates/gwt-core/src/profiling.rs": "252251717996d69fab1df315baa03619912c202ebef2176d48d9aca75c0a7e99",
+    "crates/gwt-core/src/main.rs": "d1bc37ac9ce4fe3faae11665fa7923f05581957e08e96fe56be5f390e93c6393",
+    "crates/gwt-core/src/lib.rs": "dfd0da9d8615fdb2db8d42b09e809775e326107179fae1cdb91d1ffb4f4fa514",
+    "crates/gwt-core/tests/profiling.rs": "81b2a4aa47bdc73d9a061aed6e9267de52a66f05f8c2da0bef985cc7a5accd70",
+    "evaluations/native_editor/qualify_profiling.py": "3faa94e6ef50e3dec8facc2c3adbb0bcc1d147e1588e71c5d0f64356a88639e0",
+    "evaluations/native_packaging/qualify.py": "e371e1ed99d9558f8f698884e1369326510c89399690445afdd3205a5835eed5",
+    "evaluations/native_packaging/host.rs": "1b5b8568a7c1c07ed10658fbef769718f89facbd0907ac35c8d51a228d228dd9",
+    "evaluations/native_packaging/qualify_binary_runtime.py": "5a52669aca02af548fbdfb9f8712c207f8f0c32783c3264cf246c44f1571155c",
+    "evaluations/native_editor/2026-10-16-profiling/README.md": "183a56972de019e90ccba4a4872a59b3db54e86670b631791e8d6fde98a6521c"
+  }
+}

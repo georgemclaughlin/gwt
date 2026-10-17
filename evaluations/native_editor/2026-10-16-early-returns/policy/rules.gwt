@@ -1,0 +1,105 @@
+PROGRAM exchange assessment
+
+RECORD Proof is one of
+  receipt:
+    age_days: integer
+    verified: boolean
+  gift:
+    reference: text
+
+RECORD Facts
+  allow_exchanges: boolean
+  proof: optional<Proof>
+
+REQUEST assess exchange
+  GIVEN facts is Facts
+  WHEN LET decision be classify facts
+  OUTPUT decision is text
+
+WHEN classify <facts>
+  GIVEN facts is Facts
+  THEN returns text
+  IF not facts.allow_exchanges
+    RETURN "disabled"
+  IF facts.proof is absent
+    RETURN "missing_proof"
+  IF facts.proof.kind != "receipt"
+    RETURN "gift_route"
+  IF not facts.proof.verified
+    RETURN "unverified"
+  IF facts.proof.age_days < 0
+    RETURN "invalid_age"
+  IF facts.proof.age_days > 30
+    RETURN "outside_window"
+  RETURN "eligible"
+
+SCENARIO disabled takes precedence
+GIVEN facts is Facts
+  allow_exchanges: false
+REQUEST assess exchange
+THEN decision == "disabled"
+
+SCENARIO proof is required
+GIVEN facts is Facts
+  allow_exchanges: true
+REQUEST assess exchange
+THEN decision == "missing_proof"
+
+SCENARIO gift uses a separate route
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "gift"
+    reference: "G-1"
+REQUEST assess exchange
+THEN decision == "gift_route"
+
+SCENARIO receipt verification precedes age
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "receipt"
+    age_days: -1
+    verified: false
+REQUEST assess exchange
+THEN decision == "unverified"
+
+SCENARIO negative age is invalid
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "receipt"
+    age_days: -1
+    verified: true
+REQUEST assess exchange
+THEN decision == "invalid_age"
+
+SCENARIO same day is eligible
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "receipt"
+    age_days: 0
+    verified: true
+REQUEST assess exchange
+THEN decision == "eligible"
+
+SCENARIO last day is eligible
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "receipt"
+    age_days: 30
+    verified: true
+REQUEST assess exchange
+THEN decision == "eligible"
+
+SCENARIO later receipt is outside the window
+GIVEN facts is Facts
+  allow_exchanges: true
+  proof:
+    kind: "receipt"
+    age_days: 31
+    verified: true
+REQUEST assess exchange
+THEN decision == "outside_window"

@@ -1,0 +1,29 @@
+{
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-jh_4ju09/installed/bin/gwt-native",
+  "nativeSha256": "6efafab2c6322db66d5939b4ccee32184977f3e74bca2adc940316d4b5b888ea",
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:8a09d0f137af4670f3efa17a0763a7c95fde71f910ac3d343e0cb7b860653db3"
+  },
+  "expectedBinding": "missing",
+  "identicalExecutionObservations": 5,
+  "changedBudgetAssessments": [
+    {
+      "budget": "steps",
+      "stale": false
+    },
+    {
+      "budget": "evidence",
+      "stale": false
+    },
+    {
+      "budget": "text",
+      "stale": false
+    },
+    {
+      "budget": "depth",
+      "stale": false
+    }
+  ],
+  "realHumanApprovals": 0
+}

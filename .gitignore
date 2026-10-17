@@ -5,3 +5,8 @@ dist/
 node_modules/
 *.vsix
 npm-debug.log
+target/
+/.playwright-cli/
+# Generated qualification runs stay local. Selected summaries, reproduction
+# scripts, and regression fixtures are explicitly versioned at checkpoints.
+/evaluations/**/20??-??-??*/

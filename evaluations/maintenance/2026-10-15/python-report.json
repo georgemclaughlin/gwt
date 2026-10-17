@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "kind": "gwt.maintenance-evaluation",
+  "language": "python",
+  "manifestDigest": "sha256:76435537d6fe6721c31a3ec28a2a7991ffdc82e19345c7376d32c212a6082615",
+  "taskDigest": "sha256:9159fea385e9e728f2e7081bc722176356a53493c1a3d46622b655fd956aeb2d",
+  "repeats": 3,
+  "caseCount": 12,
+  "attemptedCaseCount": 12,
+  "metrics": {
+    "firstPassSuccessRate": 1.0,
+    "finalSuccessRate": 1.0,
+    "clarificationRate": 1.0,
+    "repairRecoveryRate": null,
+    "medianSuccessfulRepairIterations": 0
+  },
+  "cases": [
+    {
+      "caseId": "damage-precedence-python-1",
+      "pairId": "damage-precedence",
+      "trial": 1,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 28,
+          "changedCount": 28,
+          "preservedPassed": 84,
+          "preservedCount": 84,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "clearance-exclusion-python-1",
+      "pairId": "clearance-exclusion",
+      "trial": 1,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 56,
+          "changedCount": 56,
+          "preservedPassed": 56,
+          "preservedCount": 56,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "member-window-python-1",
+      "pairId": "member-window",
+      "trial": 1,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 3,
+          "changedCount": 3,
+          "preservedPassed": 109,
+          "preservedCount": 109,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "goodwill-ambiguity-python-1",
+      "pairId": "goodwill-ambiguity",
+      "trial": 1,
+      "kind": "clarify",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "damage-precedence-python-2",
+      "pairId": "damage-precedence",
+      "trial": 2,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 28,
+          "changedCount": 28,
+          "preservedPassed": 84,
+          "preservedCount": 84,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "clearance-exclusion-python-2",
+      "pairId": "clearance-exclusion",
+      "trial": 2,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 56,
+          "changedCount": 56,
+          "preservedPassed": 56,
+          "preservedCount": 56,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "member-window-python-2",
+      "pairId": "member-window",
+      "trial": 2,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 3,
+          "changedCount": 3,
+          "preservedPassed": 109,
+          "preservedCount": 109,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "goodwill-ambiguity-python-2",
+      "pairId": "goodwill-ambiguity",
+      "trial": 2,
+      "kind": "clarify",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "damage-precedence-python-3",
+      "pairId": "damage-precedence",
+      "trial": 3,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 28,
+          "changedCount": 28,
+          "preservedPassed": 84,
+          "preservedCount": 84,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "clearance-exclusion-python-3",
+      "pairId": "clearance-exclusion",
+      "trial": 3,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 56,
+          "changedCount": 56,
+          "preservedPassed": 56,
+          "preservedCount": 56,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "member-window-python-3",
+      "pairId": "member-window",
+      "trial": 3,
+      "kind": "maintain",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "changedPassed": 3,
+          "changedCount": 3,
+          "preservedPassed": 109,
+          "preservedCount": 109,
+          "error": null
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    },
+    {
+      "caseId": "goodwill-ambiguity-python-3",
+      "pairId": "goodwill-ambiguity",
+      "trial": 3,
+      "kind": "clarify",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true
+        }
+      ],
+      "firstPassSuccess": true,
+      "finalSuccess": true
+    }
+  ]
+}

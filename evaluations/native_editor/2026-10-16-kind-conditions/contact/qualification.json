@@ -1,0 +1,237 @@
+{
+  "native": "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+  "nativeSha256": "ad7d6158de3987b60e0cbde49fb41c74bfb1a786924427c77226af2798689cbd",
+  "verifiedPolicyReplays": 8,
+  "guardFailureVerified": true,
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 0,
+    "compared": 8,
+    "evidenceChanged": 8,
+    "outcomeChanged": 3,
+    "sourceChanged": 8,
+    "stateChanged": 3,
+    "total": 8,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "commands": [
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "validate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/validation.html"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/missing-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/missing.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/confirmed-email-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/confirmed-email.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/unconfirmed-email-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/unconfirmed-email.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-consent-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-consent.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-no-consent-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-no-consent.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-allowed-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-allowed.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-disabled-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-disabled.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/rules.gwt",
+        "--request",
+        "review contact",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-empty-number-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-empty-number.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "corpus",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/missing.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/confirmed-email.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/unconfirmed-email.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-consent.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-no-consent.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-allowed.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/pickup-disabled.json",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/sms-empty-number.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "review",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/corpus.json",
+        "--candidate",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/candidate.gwt",
+        "--html",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/kind-review.html"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "capture",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/guarded-alias.gwt",
+        "--request",
+        "replace",
+        "--input",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/guarded-alias-input.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/tmp/gwt-package-host-tqtkekad/installed/bin/gwt-native",
+        "replay",
+        "/home/g/code/gwt/evaluations/native_editor/2026-10-16-kind-conditions/contact/guarded-alias-case.json"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

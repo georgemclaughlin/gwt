@@ -1,74 +1,54 @@
-# GWT VS Code Extension
+# GWT for VS Code
 
-This extension registers `.gwt` files, adds syntax highlighting, and starts the
-GWT language server with `gwt lsp`.
+Language support for `.gwt` files using the installed Rust GWT engine. The default
+command is `gwt`. Install the developer preview following the
+[installation guide](../docs/installation.html); no Python runtime is used.
 
-## Local Development
-
-Install the Python package from the repo root so VS Code can find `gwt`:
-
-```sh
-cd /home/g/code/gwt
-python -m pip install -e .
-gwt --help
-```
-
-Install extension dependencies:
-
-```sh
-cd /home/g/code/gwt/vscode-gwt
-npm install
-```
-
-Open the repo root in VS Code:
-
-```sh
-code /home/g/code/gwt
-```
-
-Choose **Run GWT VS Code Extension** in the Run and Debug panel, then press
-`F5`. In the Extension Development Host window, open
-`/home/g/code/gwt/examples/typed_contracts.gwt`.
-
-Expected behavior:
-
-- `.gwt` files use GWT syntax highlighting.
-- diagnostics appear for `gwt check` errors.
-- hover shows record, behavior, parameter, local, and field information.
-- go-to-definition works for behavior calls.
-- completion offers known GWT symbols.
-- **GWT: Validate Current File** saves the active file and runs `gwt validate`.
-- **GWT: Test Current File** saves the active file and runs `gwt test`.
-- **GWT: Run Current File** saves the active file and runs `gwt run --json`.
-- **GWT: Format Current File** saves the active file and runs `gwt format`.
-- command output streams to the **GWT** output channel.
-- pressing `F5` on a `.gwt` file runs it through the GWT debugger adapter.
-- line breakpoints pause execution before matching executable GWT lines.
-- breakpoint markers are verified against executable GWT lines before launch.
-- Continue resumes execution; Step Over advances to the next executable line.
-- the Call Stack panel shows active behavior calls while paused.
-- the Variables panel shows locals for the selected stack frame and GWT state.
-
-The debugger currently supports line breakpoints, continue, step over, stop,
-source-level call stacks, and state/local inspection. It does not yet support
-step into/out, conditional breakpoints, watch expressions, or variable editing.
+**GWT: Show Engine Information** reports the executable's identity without saving
+or running an open source file. Every operation checks engine identity first.
+An old Python command on PATH produces an actionable error, not a fallback.
 
 ## Settings
 
-When running from this repo, the extension starts the repo-local language server:
+- `gwt.command`: installed command or explicit executable path; default `gwt`.
+- `gwt.importRoot`: optional absolute path or workspace-relative import root.
+- `gwt.limitsFile`: optional execution budget file for Run, Test, Validate, and Profile.
+
+Explicit previous `gwt.native.*` settings are read as migration inputs when a new
+setting is not supplied at the same or a more specific scope. Remove obsolete
+`gwt.engine` and `gwt.server.*` settings; the extension explains old Python settings.
+There is no engine selector. Changes apply on the next invocation.
+
+## Capabilities
+
+| Action | Behavior |
+| --- | --- |
+| Check | Diagnostics over unsaved documents and imported sources |
+| Hover / Definition | Checked calls, bindings, type references, and record fields |
+| Declaration completion | Behavior signatures, requests, and types |
+| Outline | Source-backed declarations, including untitled buffers |
+| Format | Canonical layout without losing unsaved edits or undo history |
+| Validate | Save relevant files; check syntax, types, formatting, and scenarios |
+| Test | Execute embedded scenarios |
+| Run | Execute a sole scenario or select a request/scenario and JSON input |
+| Profile Execution Evidence | Execute and report evidence bytes, steps, and diagnostics |
+
+The output channel preserves exact numeric text. Import roots and source bounds
+apply to editor snapshots. Stale results are discarded after edits; missing or
+incorrect executables produce visible diagnostics. Untrusted workspaces do not
+execute a configured tool.
+
+The previous Python debugger and language-server integration are retired.
+Stepping/debugging and broader completion are not current capabilities. See
+[editor protocol details](../docs/native-editor.md) for the supported scope.
+
+## Develop and check
 
 ```sh
-python -m gwtlang lsp
+npm ci
+npm run check
+npm test
 ```
 
-It sets `PYTHONPATH` to the repo root for the language server process, so it
-does not depend on VS Code inheriting your shell's `gwt` PATH.
-
-To override the command explicitly:
-
-```json
-{
-  "gwt.server.command": "/absolute/path/to/gwt",
-  "gwt.server.args": ["lsp"]
-}
-```
+From the repository root, an installed VS Code can run the isolated extension-host
+qualification documented in the [contributor guide](../docs/contributing.md).

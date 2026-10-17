@@ -1,0 +1,16 @@
+{
+  "pythonTests": 650,
+  "focusedTests": 21,
+  "sourceHashesMatch": true,
+  "sealedResponsesMatch": true,
+  "exactPublicRequestsVerified": 36,
+  "containerAttempts": 72,
+  "publicInputExecutions": 72,
+  "fullInputExecutions": 7026,
+  "remainingEvaluationContainers": 0,
+  "unchangedEngineInputs": 56,
+  "liveModelCalls": 0,
+  "humanParticipants": 0,
+  "apiKeyConfigured": false,
+  "liveProviderQualified": false
+}

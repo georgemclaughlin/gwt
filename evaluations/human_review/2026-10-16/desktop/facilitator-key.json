@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 1,
+  "packet": {
+    "schemaVersion": 1,
+    "assignmentId": "rehearsal-desktop",
+    "group": 0,
+    "purpose": "rehearsal",
+    "instructions": "Review each proposed implementation against the existing policy and requested change. Predict what the proposed code actually returns for both inputs, then recommend approval, request changes, or say you are unsure. Explain your reasoning and any suspected mistake. Assume valid inputs matching the shared schema. Review source only: do not execute code, use AI, or consult outside help. A short language guide remains available. You may skip a task or stop at any time. Use Pause for interruptions. Time spent in a hidden tab is excluded from active time, but retained in wall time. Download a partial record before closing this page; refreshing loses progress. There is no server or autosave. Advancing freezes a task's answers. The page gives no correctness feedback.",
+    "tasks": [
+      {
+        "id": "task-1",
+        "domain": "refund",
+        "language": "gwt",
+        "title": "Refund eligibility",
+        "policy": "Without a receipt, send the claim for review regardless of age or defect. With a receipt, refund defective goods through day 30 inclusive and nondefective goods through day 14 inclusive. Deny other claims.",
+        "change": "Extend only the defective-goods deadline to day 45 inclusive. Preserve all other rules.",
+        "schema": "facts: days (nonnegative integer), defective (boolean), receipt (boolean). decision: status (review, refund, or deny).",
+        "guide": "RECORD declares fields. REQUEST supplies facts, initializes decision, calls a WHEN behavior, and exposes OUTPUT. GIVEN/AND in a behavior declare its parameter types. set replaces a value; add increases it. DECIDE takes the first matching WHEN, or ELSE. IF/ELSE selects a branch; separate IF statements are evaluated independently. FOR visits every list item in order. Dotted paths access fields. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups steps.",
+        "sources": {
+          "baseline": "PROGRAM refund review\n\nRECORD Facts\n  days: integer\n  defective: boolean\n  receipt: boolean\n\nRECORD Decision\n  status: \"review\" | \"refund\" | \"deny\"\n\nREQUEST assess\n  GIVEN facts is Facts\n  GIVEN decision is Decision\n    status: \"deny\"\n  WHEN assess facts into decision\n  OUTPUT decision is Decision\n\nWHEN assess <facts> into <decision>\n  GIVEN facts is Facts\n  AND decision is Decision\n  DECIDE\n    WHEN not facts.receipt\n      set decision.status to \"review\"\n    WHEN facts.defective and facts.days <= 30\n      set decision.status to \"refund\"\n    WHEN not facts.defective and facts.days <= 14\n      set decision.status to \"refund\"\n    ELSE\n      set decision.status to \"deny\"\n",
+          "proposed": "PROGRAM refund review\n\nRECORD Facts\n  days: integer\n  defective: boolean\n  receipt: boolean\n\nRECORD Decision\n  status: \"review\" | \"refund\" | \"deny\"\n\nREQUEST assess\n  GIVEN facts is Facts\n  GIVEN decision is Decision\n    status: \"deny\"\n  WHEN assess facts into decision\n  OUTPUT decision is Decision\n\nWHEN assess <facts> into <decision>\n  GIVEN facts is Facts\n  AND decision is Decision\n  DECIDE\n    WHEN not facts.receipt\n      set decision.status to \"review\"\n    WHEN facts.defective and facts.days <= 45\n      set decision.status to \"refund\"\n    WHEN not facts.defective and facts.days <= 14\n      set decision.status to \"refund\"\n    ELSE\n      set decision.status to \"deny\"\n"
+        },
+        "sourceDigests": {
+          "baseline": "0e9bb41a359636bb2faca906532cea5aadeac2556ad4caec818917cb3face276",
+          "proposed": "e42b37bb6c4278c15716e8868d9b3a6c4127c19ca3e0919d7180d46e6ea31b81"
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "input": {
+              "facts": {
+                "days": 45,
+                "defective": true,
+                "receipt": true
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "status": "review"
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "status": "deny"
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "status": "refund"
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          },
+          {
+            "id": "q2",
+            "input": {
+              "facts": {
+                "days": 20,
+                "defective": false,
+                "receipt": true
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "status": "refund"
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "status": "deny"
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "status": "review"
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "task-2",
+        "domain": "delivery",
+        "language": "python",
+        "title": "Delivery fees",
+        "policy": "The base delivery fee is 0 at a subtotal of 100 or more, otherwise 5. Express delivery always adds 10, including when the base fee is 0.",
+        "change": "Raise the free base-delivery threshold to 120 inclusive. Preserve the express surcharge.",
+        "schema": "facts: subtotal (nonnegative integer), express (boolean). decision: fee (integer).",
+        "guide": "def declares a function. state supplies facts; decide returns decision. Square brackets access dictionary fields. = assigns a value; += increases it. if/elif/else takes the first matching branch; separate if statements are evaluated independently. for visits every list item in order. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups statements. Curly braces construct dictionaries.",
+        "sources": {
+          "baseline": "def decide(state):\n    facts = state[\"facts\"]\n    if facts[\"subtotal\"] >= 100:\n        fee = 0\n    else:\n        fee = 5\n    if facts[\"express\"]:\n        fee += 10\n    return {\"decision\": {\"fee\": fee}}\n",
+          "proposed": "def decide(state):\n    facts = state[\"facts\"]\n    if facts[\"subtotal\"] >= 120:\n        fee = 0\n    else:\n        fee = 5\n    if facts[\"express\"]:\n        fee += 10\n    return {\"decision\": {\"fee\": fee}}\n"
+        },
+        "sourceDigests": {
+          "baseline": "7531809ac268f0cc5bdb54f2f99067b0ea4bacab34ee62fe34af3c6cc032dc8f",
+          "proposed": "aeffe5d8184dc59c5209e7f2c3a5a44645a4df4b656894aad06ead2861bbc04c"
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "input": {
+              "facts": {
+                "subtotal": 120,
+                "express": true
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "fee": 5
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "fee": 15
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "fee": 0
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "fee": 10
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          },
+          {
+            "id": "q2",
+            "input": {
+              "facts": {
+                "subtotal": 110,
+                "express": false
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "fee": 15
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "fee": 0
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "fee": 5
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "fee": 10
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "task-3",
+        "domain": "inventory",
+        "language": "gwt",
+        "title": "Inventory reservation",
+        "policy": "Reserve the requested quantity if enough stock is available; otherwise reserve nothing. Remaining stock is starting stock minus the amount reserved.",
+        "change": "Allow partial fulfillment: reserve all available stock when stock is insufficient. Keep remaining stock equal to starting stock minus the amount actually reserved.",
+        "schema": "facts: stock and requested (nonnegative integers). decision: reserved and remaining (integers).",
+        "guide": "RECORD declares fields. REQUEST supplies facts, initializes decision, calls a WHEN behavior, and exposes OUTPUT. GIVEN/AND in a behavior declare its parameter types. set replaces a value; add increases it. DECIDE takes the first matching WHEN, or ELSE. IF/ELSE selects a branch; separate IF statements are evaluated independently. FOR visits every list item in order. Dotted paths access fields. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups steps.",
+        "sources": {
+          "baseline": "PROGRAM inventory review\n\nRECORD Facts\n  stock: integer\n  requested: integer\n\nRECORD Decision\n  reserved: integer\n  remaining: integer\n\nREQUEST assess\n  GIVEN facts is Facts\n  GIVEN decision is Decision\n    reserved: 0\n    remaining: 0\n  WHEN assess facts into decision\n  OUTPUT decision is Decision\n\nWHEN assess <facts> into <decision>\n  GIVEN facts is Facts\n  AND decision is Decision\n  IF facts.stock >= facts.requested\n    set decision.reserved to facts.requested\n  ELSE\n    set decision.reserved to 0\n  set decision.remaining to facts.stock - decision.reserved\n",
+          "proposed": "PROGRAM inventory review\n\nRECORD Facts\n  stock: integer\n  requested: integer\n\nRECORD Decision\n  reserved: integer\n  remaining: integer\n\nREQUEST assess\n  GIVEN facts is Facts\n  GIVEN decision is Decision\n    reserved: 0\n    remaining: 0\n  WHEN assess facts into decision\n  OUTPUT decision is Decision\n\nWHEN assess <facts> into <decision>\n  GIVEN facts is Facts\n  AND decision is Decision\n  IF facts.stock >= facts.requested\n    set decision.reserved to facts.requested\n  ELSE\n    set decision.reserved to facts.stock\n  set decision.remaining to facts.stock - facts.requested\n"
+        },
+        "sourceDigests": {
+          "baseline": "d594d2ce66d28540a7b23cf73a7f70e82118bd4a03494ad7ecaf7c47046c4d15",
+          "proposed": "4a3dc8f8fb135d9c32edf1416d45289f25549824ccf4b72f16db29800d417061"
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "input": {
+              "facts": {
+                "stock": 3,
+                "requested": 5
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "reserved": 3,
+                    "remaining": 0
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "reserved": 3,
+                    "remaining": -2
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "reserved": 0,
+                    "remaining": 3
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "reserved": 5,
+                    "remaining": -2
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          },
+          {
+            "id": "q2",
+            "input": {
+              "facts": {
+                "stock": 5,
+                "requested": 3
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "reserved": 5,
+                    "remaining": 0
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "reserved": 3,
+                    "remaining": 5
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "reserved": 0,
+                    "remaining": 5
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "reserved": 3,
+                    "remaining": 2
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "task-4",
+        "domain": "expenses",
+        "language": "python",
+        "title": "Expense review",
+        "policy": "Send an expense report for review if a reimbursable line exceeds its limit. Otherwise approve it. Independently, total only reimbursable lines at or below the limit. This total is still reported when the status is review.",
+        "change": "Send the report for review if any line exceeds the limit, even if that line is not reimbursable. Preserve the total calculation.",
+        "schema": "facts: limit (nonnegative integer), lines (ordered list of amount: nonnegative integer and reimbursable: boolean). decision: status (approved or review), total (integer).",
+        "guide": "def declares a function. state supplies facts; decide returns decision. Square brackets access dictionary fields. = assigns a value; += increases it. if/elif/else takes the first matching branch; separate if statements are evaluated independently. for visits every list item in order. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups statements. Curly braces construct dictionaries.",
+        "sources": {
+          "baseline": "def decide(state):\n    facts = state[\"facts\"]\n    status = \"approved\"\n    total = 0\n    for line in facts[\"lines\"]:\n        if line[\"reimbursable\"] and line[\"amount\"] > facts[\"limit\"]:\n            status = \"review\"\n        if line[\"reimbursable\"] and line[\"amount\"] <= facts[\"limit\"]:\n            total += line[\"amount\"]\n    return {\"decision\": {\"status\": status, \"total\": total}}\n",
+          "proposed": "def decide(state):\n    facts = state[\"facts\"]\n    status = \"approved\"\n    total = 0\n    for line in facts[\"lines\"]:\n        if line[\"amount\"] > facts[\"limit\"]:\n            status = \"review\"\n        if line[\"amount\"] <= facts[\"limit\"]:\n            total += line[\"amount\"]\n    return {\"decision\": {\"status\": status, \"total\": total}}\n"
+        },
+        "sourceDigests": {
+          "baseline": "80fe161f05e3fb3b9d60d801694df662d23a3269ee0c4fecf14b170c3cffd4bb",
+          "proposed": "0b31d83a027a3701cb087c2763002317be98ee9d259d7d390f5605d0ae012635"
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "input": {
+              "facts": {
+                "limit": 100,
+                "lines": [
+                  {
+                    "amount": 50,
+                    "reimbursable": true
+                  },
+                  {
+                    "amount": 20,
+                    "reimbursable": false
+                  }
+                ]
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "status": "approved",
+                    "total": 50
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "status": "approved",
+                    "total": 70
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "status": "review",
+                    "total": 70
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "status": "review",
+                    "total": 50
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          },
+          {
+            "id": "q2",
+            "input": {
+              "facts": {
+                "limit": 100,
+                "lines": [
+                  {
+                    "amount": 101,
+                    "reimbursable": false
+                  }
+                ]
+              }
+            },
+            "choices": [
+              {
+                "id": "c0",
+                "value": {
+                  "decision": {
+                    "status": "approved",
+                    "total": 101
+                  }
+                }
+              },
+              {
+                "id": "c1",
+                "value": {
+                  "decision": {
+                    "status": "review",
+                    "total": 0
+                  }
+                }
+              },
+              {
+                "id": "c2",
+                "value": {
+                  "decision": {
+                    "status": "approved",
+                    "total": 0
+                  }
+                }
+              },
+              {
+                "id": "c3",
+                "value": {
+                  "decision": {
+                    "status": "review",
+                    "total": 101
+                  }
+                }
+              },
+              {
+                "id": "unsure",
+                "value": null,
+                "label": "I am not sure"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "packetId": "6bd7f8c93bcb88e4ae9a7f1749d3fd2393888807de17d9b85c357f628924080c"
+  },
+  "answers": [
+    {
+      "id": "task-1",
+      "revision": "correct",
+      "predictions": {
+        "q1": "c2",
+        "q2": "c1"
+      },
+      "recommendation": "approve",
+      "rationaleRubric": "No defect: requested and preserved rules hold."
+    },
+    {
+      "id": "task-2",
+      "revision": "correct",
+      "predictions": {
+        "q1": "c3",
+        "q2": "c2"
+      },
+      "recommendation": "approve",
+      "rationaleRubric": "No defect: requested and preserved rules hold."
+    },
+    {
+      "id": "task-3",
+      "revision": "faulty",
+      "predictions": {
+        "q1": "c1",
+        "q2": "c3"
+      },
+      "recommendation": "request_changes",
+      "rationaleRubric": "Remaining stock subtracts requested instead of reserved, becoming negative on a shortfall."
+    },
+    {
+      "id": "task-4",
+      "revision": "faulty",
+      "predictions": {
+        "q1": "c1",
+        "q2": "c1"
+      },
+      "recommendation": "request_changes",
+      "rationaleRubric": "The total wrongly includes nonreimbursable lines at or below the limit."
+    }
+  ]
+}

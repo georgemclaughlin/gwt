@@ -1,0 +1,76 @@
+{
+  "error": null,
+  "observations": [
+    {
+      "result": {
+        "decision": {
+          "remaining": 0,
+          "reserved": 3
+        }
+      }
+    },
+    {
+      "result": {
+        "decision": {
+          "remaining": 2,
+          "reserved": 3
+        }
+      }
+    }
+  ],
+  "exitCode": 0,
+  "durationSeconds": 0.243,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--pull",
+    "never",
+    "--name",
+    "gwt-evaluation-e0556fd96eea4875aafc77aaa7fd059e",
+    "--init",
+    "-i",
+    "--network",
+    "none",
+    "--read-only",
+    "--cap-drop",
+    "ALL",
+    "--security-opt",
+    "no-new-privileges",
+    "--user",
+    "65534:65534",
+    "--memory",
+    "256m",
+    "--memory-swap",
+    "256m",
+    "--cpus",
+    "1",
+    "--pids-limit",
+    "64",
+    "--log-driver",
+    "none",
+    "--tmpfs",
+    "/tmp:rw,nosuid,nodev,noexec,size=32m",
+    "--env",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "--workdir",
+    "/tmp",
+    "--mount",
+    "type=bind,src=/tmp/gwt-isolated-evaluation-6md3wztb/tmpmcs95i5v/candidate,dst=/candidate,readonly",
+    "--mount",
+    "type=bind,src=/tmp/gwt-isolated-evaluation-6md3wztb/worker.py,dst=/worker.py,readonly",
+    "--mount",
+    "type=bind,src=/tmp/gwt-isolated-evaluation-6md3wztb/native,dst=/native,readonly",
+    "--entrypoint",
+    "/usr/local/bin/python",
+    "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+    "-I",
+    "/worker.py",
+    "gwt",
+    "/candidate",
+    "/native"
+  ],
+  "stdout": "[{\"result\": {\"decision\": {\"remaining\": 0, \"reserved\": 3}}}, {\"result\": {\"decision\": {\"remaining\": 2, \"reserved\": 3}}}]\n",
+  "stderr": "",
+  "containerRemoved": true
+}

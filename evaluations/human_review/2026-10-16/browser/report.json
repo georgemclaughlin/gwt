@@ -1,0 +1,37 @@
+{
+  "kind": "synthetic-browser-rehearsal",
+  "humanParticipants": 0,
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "session": "desktop",
+      "profileRequired": true,
+      "answersRequired": true,
+      "sourceMatchesPacket": true,
+      "partialExport": true,
+      "pauseHidesTask": true,
+      "pauseTiming": true,
+      "simulatedVisibilityOverlap": true,
+      "finalExport": true,
+      "skippedTasks": 0,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "session": "mobile",
+      "profileRequired": true,
+      "answersRequired": true,
+      "sourceMatchesPacket": true,
+      "partialExport": true,
+      "pauseHidesTask": true,
+      "pauseTiming": true,
+      "simulatedVisibilityOverlap": true,
+      "finalExport": true,
+      "skippedTasks": 1,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "scriptErrors": [],
+  "externalRequests": []
+}

@@ -1,5 +1,18 @@
 # Loan Underwriting Example
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/loan_underwriting).
+
+The separate [`native_rules.gwt`](native_rules.gwt) demonstrates exact ratio
+records and threshold comparisons on the Rust engine. It changes the ratio output
+contract and rejects nonpositive denominators; it is not a drop-in replacement
+for the Python workflow below. See the
+[design and migration note](../../docs/native-exact-ratios.md) and
+[independent comparison](../../evaluations/underwriting/2026-10-16/README.md).
+
+```sh
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/loan_underwriting/native_rules.gwt
+```
+
 This folder shows GWT as a small embeddable rules/workflow engine.
 
 - `rules.gwt` contains reusable underwriting behavior and embedded regression

@@ -1,0 +1,8 @@
+{
+  "execution": {
+    "steps": 10000,
+    "evidenceBytes": 262144,
+    "textBytes": 1048576
+  },
+  "callDepth": 64
+}

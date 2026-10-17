@@ -1,0 +1,43 @@
+{
+  "kind": "gwt.site-build",
+  "schemaVersion": 1,
+  "engine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:71d194937d0d4b4d7dc5c25f13c40e587ca05812cf3b87b8f07b39a173c9fd31"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "sources": {
+    "examples/native_delivery/rules.gwt": "ef06278f3621adca10beaa35cee18d70fa475bd35175a456d005f655d6018891",
+    "examples/native_review_walkthrough/candidate.gwt": "64a5fc95908ba6dfebfdc20da677582f324d81e5238e52585214109ccf3693e2",
+    "examples/native_review_walkthrough/cases.json": "1377ad634eb56d366c77b87665dab992d4ba887036e7c6910756206a9025cb2d",
+    "examples/native_review_walkthrough/prepare.py": "f0a9d32890ded85e0b9f83ce2c00181e41c2997f6e8496e93a7fa8bac7929f4e",
+    "tools/build_site.py": "e44ac7942667aaef6ffda4b09bf7055387e239648a7a9aba0fbe79ff89a4cbb9",
+    "tools/highlight_site.py": "d2031eba63e4e7e2c733d3396bd22b93df841948e65465ec9ecf76043f12f6c7",
+    "tools/gwt_syntax.py": "7656f6ef978a19e479dbfdfeabfae87944a8f26fc84dac5743883e8a2b69eaa9",
+    "crates/gwt-core/src/vocabulary.json": "61b2e6febd9bed54a07f13fdab8e2e748dbe36d60adbb3986eec2c06f17f38a6"
+  },
+  "reviewTotals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 1,
+    "compared": 9,
+    "evidenceChanged": 9,
+    "outcomeChanged": 2,
+    "sourceChanged": 9,
+    "stateChanged": 2,
+    "total": 9,
+    "unavailable": 0,
+    "unchanged": 0
+  },
+  "artifacts": {
+    "demo/delivery-review.html": "8a740c354c9a4756bdbbce3b279e203c7053a24345bd67636dabe5061870ce16",
+    "downloads/delivery-example.zip": "123423765ed68c50aa8f0895f8e5c3c358439034cfd6046f2648792c826382e6"
+  }
+}

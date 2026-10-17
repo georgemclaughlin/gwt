@@ -1,0 +1,6 @@
+WHEN produce
+  THEN returns integer
+  RETURN 7
+REQUEST build
+  WHEN LET answer be produce
+  OUTPUT answer is integer

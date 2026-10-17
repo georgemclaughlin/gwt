@@ -1,0 +1,65 @@
+PROGRAM delivery response
+
+RECORD DeliveryFacts
+  status: "sent" | "retry" | "failed"
+  attempt: integer
+  notify: boolean
+
+RECORD Decision
+  action: "done" | "retry" | "manual"
+  delay: integer
+  notice: text
+
+REQUEST review delivery
+  GIVEN facts is DeliveryFacts
+  GIVEN decision is Decision
+    action: "manual"
+    delay: 0
+    notice: "silent"
+  WHEN review facts into decision
+  OUTPUT decision is Decision
+
+WHEN review <facts> into <decision>
+  GIVEN facts is DeliveryFacts
+  AND decision is Decision
+  REQUIRE facts.attempt >= 1
+  DEPENDING ON facts.status
+    WHEN the value is "sent"
+      set decision.action to "done"
+    WHEN the value is "retry"
+      set decision.action to "retry"
+      DEPENDING ON facts.attempt
+        WHEN the value is 1
+          set decision.delay to 5
+        WHEN the value is 2
+          set decision.delay to 15
+        ELSE
+          set decision.action to "manual"
+    WHEN the value is "failed"
+      set decision.action to "manual"
+  DEPENDING ON facts.notify
+    WHEN the value is true
+      set decision.notice to decision.action
+    WHEN the value is false
+      set decision.notice to "silent"
+
+SCENARIO delivery status and retry attempt determine the action
+GIVEN facts is DeliveryFacts
+  status: <status>
+  attempt: <attempt>
+  notify: <notify>
+
+REQUEST review delivery
+
+THEN decision.action == <action>
+AND decision.delay == <delay>
+AND decision.notice == <notice>
+
+EXAMPLES
+  | status   | attempt | notify | action   | delay | notice   |
+  | "sent"   | 1       | true   | "done"   | 0     | "done"   |
+  | "sent"   | 2       | false  | "done"   | 0     | "silent" |
+  | "retry"  | 1       | true   | "retry"  | 5     | "retry"  |
+  | "retry"  | 2       | false  | "retry"  | 15    | "silent" |
+  | "retry"  | 3       | true   | "manual" | 0     | "manual" |
+  | "failed" | 1       | false  | "manual" | 0     | "silent" |

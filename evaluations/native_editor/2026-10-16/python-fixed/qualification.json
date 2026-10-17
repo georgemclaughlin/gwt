@@ -1,0 +1,22 @@
+{
+  "engine": "python",
+  "command": [
+    "code",
+    "--new-window",
+    "--user-data-dir",
+    "/tmp/gwt-editor-qualification-4l_ebdh6/profile",
+    "--extensions-dir",
+    "/tmp/gwt-editor-qualification-4l_ebdh6/extensions",
+    "--extensionDevelopmentPath=/home/g/code/gwt/vscode-gwt",
+    "--extensionTestsPath=/home/g/code/gwt/vscode-gwt/tests/extension-host.js",
+    "--skip-welcome",
+    "--skip-release-notes",
+    "--disable-workspace-trust",
+    "--disable-extensions",
+    "--no-sandbox",
+    "--wait",
+    "/tmp/gwt-editor-qualification-4l_ebdh6/workspace"
+  ],
+  "temporaryDirectory": "/tmp/gwt-editor-qualification-4l_ebdh6",
+  "launcherExitCode": 0
+}

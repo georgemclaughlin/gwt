@@ -1,0 +1,14 @@
+{
+  "crates/gwt-core/src/type_label.rs": "715dcba9625de743ba1e15015778f37e7a2b8f2e3dc535479615e1dbfed44761",
+  "crates/gwt-core/src/lib.rs": "ae9f1dc80f34839f93a035e3b006b0633bc4ddb743aa38cb6688edbe0a4f9d5d",
+  "crates/gwt-core/src/expression.rs": "0c4030d79853586db0daa5cbc3f495851afba99cb242365cf7b64eb067e201c4",
+  "crates/gwt-core/src/program.rs": "4df6d21b4ead39ef83aaa6cf7dc3e936c012e3f309321dbc2bd1a2d3d2266375",
+  "crates/gwt-core/src/editor_navigation.rs": "703f95a6e72acba2e59d6ca751eb76a2c30fb5cca4a0559482cec3ed64bb35c9",
+  "crates/gwt-core/tests/type_diagnostics.rs": "8fba7251f3f58a0572d75da93f2135cff7cdc4f250f0151d41ffbe2d65c1863c",
+  "vscode-gwt/tests/extension-host.js": "a7f8096406cd928e6a64e086dc44f451d9f9c8788d0de0bdf7cf3becfd6f1009",
+  "vscode-gwt/README.md": "8c558375e8722266b0b4b969bc55a2db2fa410ba82b4c576701d30e019fd7afb",
+  "docs/native-editor.md": "e84df7f805bb477074465c7bafd3bcd638280ec2e63a03c5f42bef2b6daddd7c",
+  "docs/native-conformance.md": "89718f4fc03f560bf9197499c8eea4deaea3c612af03c69d7d202273829261a4",
+  "docs/project-goal-progress.md": "8f8b1b8f4ee98b6c201f8c18d3916b2ddee5c854d5bec2fb5190165e739f8835",
+  "evaluations/native_editor/2026-10-16-type-diagnostics/README.md": "55745c2f8f8f9c6177d28dfb29940d1f6134d8ab0fa6b489668c6ce9ab1198a2"
+}

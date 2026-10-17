@@ -1,0 +1,2 @@
+# Preserve CRLF validation fixtures and their recorded hashes.
+evaluations/native_validation/2026-10-16/fixtures*/mixed/main.gwt -text whitespace=cr-at-eol

@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "guides": {"gwt": "../../docs/agent-authoring.md", "python": "python-guide.md"},
+  "cases": [
+    {
+      "id": "damage-precedence",
+      "kind": "maintain",
+      "task": "Damaged goods must be approved even without a receipt, regardless of age. Evaluate damage before the receipt requirement. Preserve all other decisions, public input/output names, and reason codes. Add or update executable examples in your source where useful; acceptance is scored independently. Inputs are normalized: days is a nonnegative integer and flags are booleans.",
+      "request": "assess refund",
+      "starter": {
+        "gwt": "../../examples/refund_review/stage0.gwt",
+        "python": "../../examples/refund_review/stage0.py"
+      },
+      "gold": {
+        "gwt": "../../examples/refund_review/stage1.gwt",
+        "python": "../../examples/refund_review/stage1.py"
+      },
+      "publicProbes": [
+        {
+          "input": {
+            "facts": {
+              "days": 0,
+              "damaged": true,
+              "receipt": false,
+              "clearance": false,
+              "member": false
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "approved",
+              "reason": "damaged"
+            }
+          }
+        },
+        {
+          "input": {
+            "facts": {
+              "days": 0,
+              "damaged": false,
+              "receipt": false,
+              "clearance": false,
+              "member": false
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "rejected",
+              "reason": "missing_receipt"
+            }
+          }
+        }
+      ],
+      "probes": [
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"}
+      ]
+    },
+    {
+      "id": "clearance-exclusion",
+      "kind": "maintain",
+      "task": "Clearance goods must now be rejected with reason clearance, including damaged goods. This exclusion takes precedence over every existing rule. Preserve all decisions for non-clearance goods and all public input/output names. Add or update executable examples in your source where useful; acceptance is scored independently. Inputs are normalized: days is a nonnegative integer and flags are booleans.",
+      "request": "assess refund",
+      "starter": {
+        "gwt": "../../examples/refund_review/stage1.gwt",
+        "python": "../../examples/refund_review/stage1.py"
+      },
+      "gold": {
+        "gwt": "../../examples/refund_review/stage2.gwt",
+        "python": "../../examples/refund_review/stage2.py"
+      },
+      "publicProbes": [
+        {
+          "input": {
+            "facts": {
+              "days": 0,
+              "damaged": false,
+              "receipt": false,
+              "clearance": true,
+              "member": false
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "rejected",
+              "reason": "clearance"
+            }
+          }
+        },
+        {
+          "input": {
+            "facts": {
+              "days": 0,
+              "damaged": false,
+              "receipt": false,
+              "clearance": false,
+              "member": false
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "rejected",
+              "reason": "missing_receipt"
+            }
+          }
+        }
+      ],
+      "probes": [
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"changed"}
+      ]
+    },
+    {
+      "id": "member-window",
+      "kind": "maintain",
+      "task": "Extend the ordinary refund window to 45 days inclusive for members. Non-members retain the 30-day inclusive window. Damage, clearance, and missing-receipt precedence must remain unchanged. Preserve public input/output names and reason codes. Add or update executable examples in your source where useful; acceptance is scored independently. Inputs are normalized: days is a nonnegative integer and flags are booleans.",
+      "request": "assess refund",
+      "starter": {
+        "gwt": "../../examples/refund_review/stage2.gwt",
+        "python": "../../examples/refund_review/stage2.py"
+      },
+      "gold": {
+        "gwt": "../../examples/refund_review/stage3.gwt",
+        "python": "../../examples/refund_review/stage3.py"
+      },
+      "publicProbes": [
+        {
+          "input": {
+            "facts": {
+              "days": 31,
+              "damaged": false,
+              "receipt": true,
+              "clearance": false,
+              "member": true
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "approved",
+              "reason": "within_window"
+            }
+          }
+        },
+        {
+          "input": {
+            "facts": {
+              "days": 0,
+              "damaged": false,
+              "receipt": false,
+              "clearance": false,
+              "member": false
+            }
+          },
+          "expected": {
+            "decision": {
+              "status": "rejected",
+              "reason": "missing_receipt"
+            }
+          }
+        }
+      ],
+      "probes": [
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":0,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":29,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":30,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"changed"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":31,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"changed"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":44,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"within_window"}},"kind":"changed"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":45,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"missing_receipt"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"rejected","reason":"expired"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":false,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":false,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":false}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":false,"member":true}},"expected":{"decision":{"status":"approved","reason":"damaged"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":false}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"},
+        {"input":{"facts":{"days":46,"damaged":true,"receipt":true,"clearance":true,"member":true}},"expected":{"decision":{"status":"rejected","reason":"clearance"}},"kind":"preserved"}
+      ]
+    },
+    {
+      "id": "goodwill-ambiguity",
+      "kind": "clarify",
+      "task": "Allow goodwill refund exceptions when appropriate. Preserve existing rules except where the new exception should override them.",
+      "request": "assess refund",
+      "starter": {
+        "gwt": "../../examples/refund_review/stage3.gwt",
+        "python": "../../examples/refund_review/stage3.py"
+      },
+      "requiredConcepts": [
+        [
+          "qualif",
+          "eligible",
+          "eligibility",
+          "criteria"
+        ],
+        [
+          "precedence",
+          "override",
+          "overridden",
+          "priority"
+        ],
+        [
+          "reason",
+          "status",
+          "output"
+        ]
+      ]
+    }
+  ]
+}

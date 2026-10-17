@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "cases": 943,
+  "statementOrderings": 720,
+  "numericCases": 125,
+  "nativeExecutable": "/tmp/gwt-package-host-r4xiuq1n/installed/bin/gwt-native",
+  "nativeSha256": "b70d8bd3caaae1819dd488537f7351546f874a8ffbcf1b43cf7aaac17b4a1e1d",
+  "baselineSha256": "52efed8a6abae34a624e6edf6ff13a7c29f7c1d05e79c7be73befb764ea455ea",
+  "selectedSha256": "39e6e8f135873db42bb7a991c510db325e9c1969ea8b11a71feb85caf3a0dc25",
+  "limitations": "Integer-domain semantic checks; candidate is an evaluation artifact, not a human readability result or general translation tool."
+}

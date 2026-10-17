@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "cases": 436,
+  "pythonBeforeMatches": 436,
+  "pythonAfterMatches": 436,
+  "nativeMatches": 436,
+  "mutantsDetected": {
+    "inclusive-boundary": 100,
+    "ignore-nonreimbursable": 140
+  },
+  "nativeExecutable": "/tmp/gwt-package-host-2d3ruuwc/installed/bin/gwt-native",
+  "nativeSha256": "8760b8b831a914b8175fa36dae89cbd07f6d831f7a1608da3d99dd8e38256ab7",
+  "beforeSha256": "ce75ced3e5c0a6d92d0ca8b5e6416411d2cb48b64f65c465009ea1422b11914d",
+  "afterSha256": "68ec08f9749ea3720ad7c1053d01c49b3ab08cd8ac2e23635155ed2d9e9a37e1",
+  "limitations": "Integer-domain probes only; no human comprehension or performance claim."
+}

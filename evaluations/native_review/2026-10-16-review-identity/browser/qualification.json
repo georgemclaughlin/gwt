@@ -1,0 +1,66 @@
+{
+  "checks": [
+    "captured limits are rendered",
+    "matching saved choices restore",
+    "steps limit visible",
+    "steps stale decision refused",
+    "steps current note retained",
+    "steps current reviewer retained",
+    "mobile page has no horizontal overflow",
+    "evidence limit visible",
+    "evidence stale decision refused",
+    "evidence current note retained",
+    "evidence current reviewer retained",
+    "text limit visible",
+    "text stale decision refused",
+    "text current note retained",
+    "text current reviewer retained",
+    "depth limit visible",
+    "depth stale decision refused",
+    "depth current note retained",
+    "depth current reviewer retained",
+    "no browser script errors"
+  ],
+  "count": 20,
+  "browserVersion": "153.0.8010.12",
+  "screenshots": [
+    "default-desktop.png",
+    "stale-desktop.png",
+    "stale-mobile.png"
+  ],
+  "errors": [],
+  "browserDownloadedDecisionsAssessed": [
+    {
+      "case": "default",
+      "exitCode": 0,
+      "matching": true
+    },
+    {
+      "case": "steps",
+      "exitCode": 1,
+      "matching": false
+    },
+    {
+      "case": "evidence",
+      "exitCode": 1,
+      "matching": false
+    },
+    {
+      "case": "text",
+      "exitCode": 1,
+      "matching": false
+    },
+    {
+      "case": "depth",
+      "exitCode": 1,
+      "matching": false
+    }
+  ],
+  "reviewDownloadPreservedExactly": true,
+  "screenshotsVisuallyInspected": [
+    "stale-desktop.png",
+    "stale-mobile.png"
+  ],
+  "playwrightCliVersion": "0.1.13",
+  "realHumanApprovals": 0
+}

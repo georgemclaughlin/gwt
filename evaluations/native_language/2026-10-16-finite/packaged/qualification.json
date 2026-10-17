@@ -1,0 +1,28 @@
+{
+  "accepted": 12,
+  "capturedCases": 12,
+  "changedOutcomes": 3,
+  "engine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:79444fc4a87f366006de4d4be90ac3bf3fb81a8789bea9e01071e0a2adb8d42b"
+  },
+  "fault": "Intentional candidate changes retry multiplier from ten to twelve; no approval",
+  "independentRequests": 144,
+  "native": "/tmp/gwt-package-host-vxulc5pq/installed/bin/gwt-native",
+  "nativeSha256": "3f5e08d4fcfc56f1ce80c954b2152361c059a7088db78533d4f0d9e5eb61bf7c",
+  "rejectedBeforeExecution": 132,
+  "scenarios": 5,
+  "sourceSha256": "28b15a656ef325a647b2035fc2ebd41d15ea0e86c3a74e549aae0f1a76e47b7d",
+  "totals": {
+    "baselineMismatch": 0,
+    "candidateFailed": 3,
+    "compared": 12,
+    "evidenceChanged": 12,
+    "outcomeChanged": 3,
+    "sourceChanged": 12,
+    "stateChanged": 3,
+    "total": 12,
+    "unavailable": 0,
+    "unchanged": 0
+  }
+}

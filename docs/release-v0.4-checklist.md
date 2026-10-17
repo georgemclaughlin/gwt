@@ -1,6 +1,13 @@
 # GWT v0.4 Release-Candidate Checklist
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Status: **blocked; preparation only**.
+
+Implementation evidence and remaining decisions are summarized in the
+[October development checkpoint](development-checkpoint.md). Local benchmark
+and rehearsal results do not check off actual external pilots. Owner choices
+recorded on 2026-10-15 are to retain GWT and use the MIT license.
 
 This checklist is the publication gate for the v0.4 behavior-review milestone.
 It does not authorize a rename, license choice, version change, tag, GitHub
@@ -11,15 +18,11 @@ Release, package upload, or editor publication.
 The following are owner or external-state decisions, not engineering boxes that
 can be checked speculatively:
 
-- [ ] **Project identity:** the owner explicitly chooses to retain GWT or
-  approves a replacement name. If renamed, the compatibility migration matrix
-  in [Project Identity Decision For v0.4](project-identity-v0.4.md) is reviewed,
-  registry/domain checks are repeated at decision time, and appropriate legal
-  review is complete.
-- [ ] **License:** the owner chooses a license and authorizes publication under
-  it. The repository currently has no root license file and `pyproject.toml`
-  has no project license metadata. Do not infer a repository-wide license from
-  a component README or package convention.
+- [x] **Project identity:** owner chose to retain GWT for now on 2026-10-15.
+  See [Project Identity Decision For v0.4](project-identity-v0.4.md).
+- [x] **License choice:** owner selected MIT on 2026-10-15; the root `LICENSE`
+  and Python package metadata now agree. Publication itself still requires the
+  final release action below. Preserve third-party attribution files.
 - [ ] **Two actual external pilots:** two unrelated pilot-owned workflows
   complete the full loop in the
   [external pilot runbook](external-pilot-v0.4.md), with at least one maintained
@@ -40,7 +43,7 @@ values unchanged.
 
 | Surface | Current repository value | v0.4 release action |
 | --- | --- | --- |
-| Python distribution | `gwtlang` | Owner identity decision first; preserve compatibility if renamed |
+| Python distribution | `gwtlang` | Retain GWT identity; no rename migration |
 | Python package version | `0.3.0` | Choose and update only in an authorized release change |
 | Language specification | `v0.2` | Remain `v0.2` unless source syntax/semantics intentionally change with full spec alignment |
 | Existing execution payload | schema version `3` | Preserve `ExecutionResult.as_payload`; incompatible change requires an explicit version and migration |
@@ -140,7 +143,7 @@ item.
 ## Distribution Candidate
 
 The manual
-[`build-distribution.yml`](../.github/workflows/build-distribution.yml)
+[`build-distribution.yml`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/.github/workflows/build-distribution.yml)
 workflow is deliberately build-only. It installs pinned build tooling, builds
 the current sdist and wheel, inspects both archives for runtime modules and
 schemas, installs each in a separate clean virtual environment, runs
@@ -187,7 +190,7 @@ Execution Case author.
 
 Complete only after the owner decisions above:
 
-- [ ] Add the owner-approved root license file and matching package metadata.
+- [x] Add the owner-approved root license file and matching package metadata.
 - [ ] Review package description, authors/maintainers, project URLs,
   classifiers, keywords, and support status for the chosen identity.
 - [ ] Verify Python distribution, CLI, editor ID, language ID, docs URLs,

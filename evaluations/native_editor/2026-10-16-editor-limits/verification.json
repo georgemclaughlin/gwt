@@ -1,0 +1,30 @@
+{
+  "vscodeVersion": "1.137.0",
+  "nativeHostChecks": 38,
+  "pythonHostChecks": 2,
+  "javascriptTests": 10,
+  "javascriptSyntaxPassed": true,
+  "diffCheckPassed": true,
+  "unchangedEngineInputs": 56,
+  "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+  "nativeHostEvidence": "editor-native-verified/extension-host.json",
+  "pythonHostEvidence": "editor-python/extension-host.json",
+  "priorFailedRunRetained": "editor-native-final/",
+  "sourceSha256": {
+    "vscode-gwt/extension.js": "3e8b565fae0cb942500bef54dc8a2e19c1c34b008e6be80a49354053fd34a252",
+    "vscode-gwt/native-editor.js": "4d2639b13732a44cbc38755de855c5a7a07af980c9e5fe2170906dd93ab5497e",
+    "vscode-gwt/native-tools.js": "9f56d3e1d7ddecbeb8fc1a0fe1adb2bd6a29d215b4448dae53033efa2b8b4c26",
+    "vscode-gwt/package.json": "dcc8d6b324fe045b90b7504692e1fc3dc98fefee7249b3a2048bc7eafd9d3882",
+    "vscode-gwt/tests/native-commands.test.js": "a3d691d6199ae1407062a82339cf8afbee4d01c3cade8f6a7258916a73ce736f",
+    "vscode-gwt/tests/native-tools.test.js": "693eab0a304763fd7339f580b324ab893bef5692b5d38da2173a43c215398bc7",
+    "vscode-gwt/tests/extension-host.js": "3dc8866c819c530870160e381c40087982da9b2dbe0f8b02b5a63499fee5fe35",
+    "evaluations/native_editor/qualify.py": "ffd018deee847ff2acad882e56788240f8cd2f83f6a435668d2526eb7d08a631",
+    "vscode-gwt/README.md": "5f81bc7db581389d0394717844a2b889e866aa663966fc95e1fb4136f273fd39",
+    "docs/native-editor.md": "a663acc915db4c4cb2a758f9438f384b7127ca9ab21a83f93c2ac422143ed735",
+    "docs/native-execution-limits.md": "23f0bcd49c8972cf32971476b43ad95d55807714e7d146d4ccabd82f548a52c9",
+    "docs/native-profiling.md": "a21b00905b145c8ad4a437ba3d03946b05aec079368c0ba4f04c6d60280ba3ff",
+    "docs/project-goal-progress.md": "7e627be6bc911bc7641860375e55bb52fa3c52134ca0e0831dc0ca0c36384a73",
+    "README.md": "e9d1cf8a270b17ae0ffef2278f536f1a14fffd5dc2d3efedf6183ceee0f89560",
+    "evaluations/native_editor/2026-10-16-editor-limits/README.md": "13a33841b694c29939ba72e8d58ba8dec4e6e6a99b2920523a3a99051a2c62bc"
+  }
+}

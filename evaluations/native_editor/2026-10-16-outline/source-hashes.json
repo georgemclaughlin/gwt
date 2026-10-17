@@ -1,0 +1,15 @@
+{
+  "crates/gwt-core/src/editor_outline.rs": "8148263086c03c52400f6fb5bb8129a76b67bf5e376315a0983b1823c8b91f61",
+  "crates/gwt-core/src/outline_cli.rs": "0be117f2db7bf94dda888a51a2bd935b9c942d282f1c9cebf9a5a6730477c06f",
+  "crates/gwt-core/src/lib.rs": "322cd752a847f7b2f9e9e7a4cf61ae7bb6966ea12d2d22100b3aa81d1900dcd7",
+  "crates/gwt-core/src/main.rs": "c6f094ca2001c171868f7a86d80ed4b8aacf2687328045d876b299e2354f375d",
+  "crates/gwt-core/tests/editor_outline.rs": "53ea048d94de41c67c3adbc03384a0d1cf6dcfde0372ee23a99fb48b20c24431",
+  "vscode-gwt/native-editor.js": "fa5c265d9586640efec86c5907c9a3b7a7fb05196d2ce41a6ec582a67df5da09",
+  "vscode-gwt/tests/extension-host.js": "a87a79c3e20efcc09cc612427ecbf2d6e8418bdd0a3869d680a1df54731882b1",
+  "vscode-gwt/package.json": "98a72bdb4be282412cc1a40350216af5d9d132c93e450fb32b8073ab6f042889",
+  "vscode-gwt/README.md": "2f701c9de62b3ccb2469a1cda5c054c05927fc3b473d15e2d56a0dd96d7b556b",
+  "docs/native-editor.md": "be8ca8e0e56822106af75c38643c2d46ae23242ad1a34997a0028dd3f5e33ec8",
+  "docs/native-conformance.md": "d817bab339a71748c8840e224e0fa40250877608b4f10c7d9e1ab16ea5d33566",
+  "docs/project-goal-progress.md": "66101ff11806932a831b925cc10443aa5b1c4b3b22b5dc3861fb2e1529b16b68",
+  "evaluations/native_editor/2026-10-16-outline/README.md": "235e85994b05db72ba6af70a8342e34d5b9bc37249f688bdef6bc71244f1d072"
+}

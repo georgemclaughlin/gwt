@@ -1,0 +1,34 @@
+{
+  "protocol": "codex-cli-v1",
+  "prompt": "Complete this maintenance task using only the supplied source, language guide, intent, and public examples. Return complete replacement source with action code and an empty clarifications array. Preserve the request entry (GWT) or decide(state) (Python) and its output contract. No tools or external context are available.\n\nTASK\n{\"caseId\": \"native-maintenance-refund-gwt-2\", \"context\": {\"executionEngine\": \"native-gwt\", \"guide\": \"RECORD declares fields. REQUEST supplies facts, initializes decision, calls a WHEN behavior, and exposes OUTPUT. GIVEN/AND in a behavior declare its parameter types. set replaces a value; add increases it. DECIDE takes the first matching WHEN, or ELSE. IF/ELSE selects a branch; separate IF statements are evaluated independently. FOR visits every list item in order. Dotted paths access fields. and, not, <= and >= have their ordinary logical/comparison meanings. Indentation groups steps.\\nThis task uses the experimental Rust GWT engine, not the Python interpreter. REQUEST input contracts are checked before execution. OUTPUT returns a wrapper keyed by each output name. REQUIRE failure rejects the policy. Decimal values use exact arithmetic; / must have a finite decimal result. The explicit step divide numerator by denominator rounded to 2 places using floor into destination rounds once into an existing decimal. LET name be expression binds a copied value; LET name be RecordType: followed by indented fields constructs a record. A behavior can declare THEN returns Type and RETURN a value; call it with LET name be behavior arguments. Dotted-path behavior arguments are shared; parenthesized expressions pass copies. append item to list adds one item. sum item.field in collection into destination totals fields. FOR item in collection WHERE condition filters traversal. FIND item in collection WHERE condition takes the first matching item; ELSE handles no match. Behaviors cannot use arbitrary Python, list indexing, sorting, or general query syntax. Preserve the supplied request and output contracts. Embedded scenarios are optional for this comparison; only independently checked request outcomes determine scores.\", \"outcomeContract\": \"Public expected outcomes wrap successful return values in result; rejected:true denotes a policy rejection. Do not add this wrapper to the function/request return value.\", \"publicProbes\": [{\"expected\": {\"result\": {\"decision\": {\"status\": \"refund\"}}}, \"input\": {\"facts\": {\"days\": 45, \"defective\": true, \"receipt\": true}}}, {\"expected\": {\"result\": {\"decision\": {\"status\": \"deny\"}}}, \"input\": {\"facts\": {\"days\": 20, \"defective\": false, \"receipt\": true}}}], \"request\": \"assess\", \"source\": \"PROGRAM refund review\\n\\nRECORD Facts\\n  days: integer\\n  defective: boolean\\n  receipt: boolean\\n\\nRECORD Decision\\n  status: \\\"review\\\" | \\\"refund\\\" | \\\"deny\\\"\\n\\nREQUEST assess\\n  GIVEN facts is Facts\\n  GIVEN decision is Decision\\n    status: \\\"deny\\\"\\n  WHEN assess facts into decision\\n  OUTPUT decision is Decision\\n\\nWHEN assess <facts> into <decision>\\n  GIVEN facts is Facts\\n  AND decision is Decision\\n  DECIDE\\n    WHEN not facts.receipt\\n      set decision.status to \\\"review\\\"\\n    WHEN facts.defective and facts.days <= 30\\n      set decision.status to \\\"refund\\\"\\n    WHEN not facts.defective and facts.days <= 14\\n      set decision.status to \\\"refund\\\"\\n    ELSE\\n      set decision.status to \\\"deny\\\"\\n\"}, \"kind\": \"maintain\", \"language\": \"gwt\", \"task\": \"Without a receipt, send the claim for review regardless of age or defect. With a receipt, refund defective goods through day 30 inclusive and nondefective goods through day 14 inclusive. Deny other claims.\\nRequested change: Extend only the defective-goods deadline to day 45 inclusive. Preserve all other rules.\\nContract: facts: days (nonnegative integer), defective (boolean), receipt (boolean). decision: status (review, refund, or deny).\"}",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "medium",
+  "maximumOutputTokens": null,
+  "responseSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "source",
+      "clarifications"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "code",
+          "clarify"
+        ]
+      },
+      "source": {
+        "type": "string"
+      },
+      "clarifications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

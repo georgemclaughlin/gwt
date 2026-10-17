@@ -1,5 +1,7 @@
 # GWT v0.4 External Pilot Runbook
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Status: template ready; no external pilot has been completed yet.
 
 This runbook evaluates the complete local behavior-review loop on two

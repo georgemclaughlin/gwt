@@ -177,6 +177,15 @@ WHEN fulfill <order> from <inventory> into <fulfillment>
       classify_inventory fulfillment
       plan_shipping order into fulfillment
 
+WHEN inventory item for <sku> in <inventory>
+  GIVEN sku is text
+  AND inventory is InventoryState
+  THEN returns InventoryItem
+  FIND item in inventory.items WHERE item.sku == sku
+    RETURN item
+  ELSE
+    REQUIRE false
+
 SCENARIO partial allocation mutates list inventory
 GIVEN order is OrderRequest
   order_id: "LIST-100"

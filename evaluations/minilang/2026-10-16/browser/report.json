@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "width": 1440,
+      "fourRefactorPathsSelected": true,
+      "refactorSearch": true,
+      "fiveNativeCasesSelected": true,
+      "nativeBoundaryFilter": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 390,
+      "fourRefactorPathsSelected": true,
+      "refactorSearch": true,
+      "fiveNativeCasesSelected": true,
+      "nativeBoundaryFilter": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "scriptErrors": [],
+  "externalRequests": []
+}

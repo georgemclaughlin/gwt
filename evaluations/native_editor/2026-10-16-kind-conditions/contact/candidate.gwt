@@ -1,0 +1,134 @@
+PROGRAM contact review
+
+RECORD Contact is one of
+  email:
+    address: text
+    confirmed: boolean
+  sms:
+    number: text
+    opted_in: boolean
+  pickup:
+    location: text
+
+RECORD Facts
+  allow_pickup: boolean
+  contact: optional<Contact>
+
+RECORD Decision
+  status: "ready" | "review" | "blocked"
+  channel: text
+  destination: text
+
+REQUEST review contact
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    status: "review"
+    channel: "none"
+    destination: ""
+  WHEN review facts into decision
+  OUTPUT decision is Decision
+
+WHEN review <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  DECIDE
+    WHEN facts.contact is absent
+      PASS
+    WHEN facts.contact.kind == "email" and not facts.contact.confirmed
+      set decision.channel to "email"
+    WHEN facts.contact.kind == "email"
+      set decision.status to "ready"
+      set decision.channel to "email"
+      set decision.destination to facts.contact.address
+    WHEN facts.contact.kind == "sms" and not facts.contact.opted_in
+      set decision.status to "ready"
+      set decision.channel to "sms"
+      set decision.destination to facts.contact.number
+    WHEN facts.contact.kind == "sms"
+      set decision.status to "blocked"
+      set decision.channel to "sms"
+    ELSE
+      set decision.channel to "pickup"
+      IF facts.allow_pickup
+        set decision.status to "ready"
+        set decision.destination to facts.contact.location
+      ELSE
+        set decision.status to "blocked"
+
+SCENARIO no contact needs review
+GIVEN facts is Facts
+  allow_pickup: true
+REQUEST review contact
+THEN decision.status == "review"
+AND decision.channel == "none"
+AND decision.destination == ""
+
+SCENARIO confirmed email is ready
+GIVEN facts is Facts
+  allow_pickup: true
+  contact:
+    kind: "email"
+    address: "orders@example.test"
+    confirmed: true
+REQUEST review contact
+THEN decision.status == "ready"
+AND decision.channel == "email"
+AND decision.destination == "orders@example.test"
+
+SCENARIO unconfirmed email needs review
+GIVEN facts is Facts
+  allow_pickup: true
+  contact:
+    kind: "email"
+    address: "orders@example.test"
+    confirmed: false
+REQUEST review contact
+THEN decision.status == "review"
+AND decision.channel == "email"
+AND decision.destination == ""
+
+SCENARIO opted in sms is ready
+GIVEN facts is Facts
+  allow_pickup: true
+  contact:
+    kind: "sms"
+    number: "+1-555-0100"
+    opted_in: true
+REQUEST review contact
+THEN decision.status == "ready"
+AND decision.channel == "sms"
+AND decision.destination == "+1-555-0100"
+
+SCENARIO sms without consent is blocked
+GIVEN facts is Facts
+  allow_pickup: true
+  contact:
+    kind: "sms"
+    number: "+1-555-0100"
+    opted_in: false
+REQUEST review contact
+THEN decision.status == "blocked"
+AND decision.channel == "sms"
+AND decision.destination == ""
+
+SCENARIO pickup is ready
+GIVEN facts is Facts
+  allow_pickup: true
+  contact:
+    kind: "pickup"
+    location: "West counter"
+REQUEST review contact
+THEN decision.status == "ready"
+AND decision.channel == "pickup"
+AND decision.destination == "West counter"
+
+SCENARIO pickup is disabled
+GIVEN facts is Facts
+  allow_pickup: false
+  contact:
+    kind: "pickup"
+    location: "West counter"
+REQUEST review contact
+THEN decision.status == "blocked"
+AND decision.channel == "pickup"
+AND decision.destination == ""

@@ -1,0 +1,9 @@
+{
+  "examples/language_tour/rules.gwt": "68ec08f9749ea3720ad7c1053d01c49b3ab08cd8ac2e23635155ed2d9e9a37e1",
+  "examples/language_tour/native_request.gwt": "f52f87a9d9e974ca07077de6f8049939c749e61e3a48b00fb6ae871921059852",
+  "examples/language_tour/request.gwt": "ad206b0e0c7b5cca1e44b8414065f81eec2358945247e0f3bfb7adc08131f42a",
+  "tests/test_examples.py": "53ef6f2069c32cbd00ff1d9d8ee798dbc94468859351206429f1a05414750323",
+  "crates/gwt-core/tests/language_tour.rs": "f1d5e1829bd036be738c244e3f50fb96a1c4e796b7989d84e68750555e7fe989",
+  "evaluations/language_tour/qualify.py": "71c39a32fd6e69e3ca62f96c38f5d3b70e7fda36c11d3251906900320eb38f28",
+  "evaluations/language_tour/check_browser.py": "e4c3b7ba6b8046e29dd03cac91a5dad89c11444aac4f52e9a4dbd7a06a27c970"
+}

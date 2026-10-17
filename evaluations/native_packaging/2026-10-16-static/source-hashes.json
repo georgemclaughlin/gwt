@@ -1,0 +1,11 @@
+{
+  "evaluations/native_packaging/qualify.py": "9a56e6e657a04f59075fd6a7ab3e476bb9bbdaf61eb21d44e3e9df855fb729cb",
+  "evaluations/native_packaging/binary_artifact.py": "cc71aa1c5f5b6523e2a55c82422d7664e6ac2479968dcbd45b33a68830a9dc06",
+  "evaluations/native_packaging/qualify_binary_runtime.py": "5daf94c896d42d11612e62d651826204edd0054b6a30f7b442e779ac82d6749c",
+  ".github/workflows/ci.yml": "da8d1e6ec81e66865ba03ff366889a83a849aa65523dac086038fab42d2bbe53",
+  "docs/native-embedding.md": "0d230ae1806b05c6c2c206d001fe23f6fe5941a220fe05dbd995ec27286d0377",
+  "docs/native-conformance.md": "85e29e546cab27eae004fdb598be587d4384f0d97e7b585aac424ca910c8707f",
+  "docs/project-goal-progress.md": "3c11d1ecae226486e7359974f8c2d50e9675a55cda3e14abb5cce2eb7301c748",
+  "evaluations/native_packaging/README.md": "c73aab9005629fa8af8aa4c2e96d544c48f4d41d61d3a78f3cfa1227107585db",
+  "evaluations/native_packaging/2026-10-16-static/README.md": "719a2e06204f9b8fcf67385de3f1a89cb7f076708bc3a049e7bc2a2807d2cbe3"
+}

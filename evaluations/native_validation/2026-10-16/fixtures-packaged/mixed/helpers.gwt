@@ -1,0 +1,6 @@
+WHEN touch <amount>
+  GIVEN amount is integer
+  PASS
+WHEN unused <amount>
+  GIVEN amount is integer
+  PASS

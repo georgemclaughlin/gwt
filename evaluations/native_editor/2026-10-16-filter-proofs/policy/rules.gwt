@@ -1,0 +1,131 @@
+PROGRAM counter pickup preparation
+
+RECORD Route is one of
+  counter:
+    code: text
+    ready: boolean
+  courier:
+    tracking: text
+
+RECORD Parcel
+  label: text
+  route: optional<Route>
+  prepared: boolean
+
+RECORD Queue
+  parcels: list<Parcel>
+
+RECORD Dispatch
+  codes: list<text>
+  first_code: text
+
+REQUEST prepare pickups
+  GIVEN queue is Queue
+  GIVEN dispatch is Dispatch
+    codes: []
+    first_code: ""
+  WHEN prepare queue into dispatch
+  OUTPUT queue is Queue
+  OUTPUT dispatch is Dispatch
+
+WHEN prepare <queue> into <dispatch>
+  GIVEN queue is Queue
+  AND dispatch is Dispatch
+  FOR parcel in queue.parcels WHERE parcel.route is present and parcel.route.kind == "counter" and parcel.route.ready and parcel.route.code != ""
+    set parcel.prepared to true
+    append parcel.route.code to dispatch.codes
+  FIND parcel in queue.parcels WHERE parcel.route is present and parcel.route.kind == "counter" and parcel.route.ready and parcel.route.code != ""
+    set dispatch.first_code to parcel.route.code
+  ELSE
+    set dispatch.first_code to ""
+
+SCENARIO empty queue
+GIVEN queue is Queue
+  parcels: []
+REQUEST prepare pickups
+THEN dispatch.codes == []
+AND dispatch.first_code == ""
+AND queue.parcels == []
+
+SCENARIO absent route is skipped
+GIVEN missing_parcel is Parcel
+  label: "missing"
+  prepared: false
+GIVEN queue is Queue
+  parcels: [missing_parcel]
+REQUEST prepare pickups
+THEN dispatch.codes == []
+AND dispatch.first_code == ""
+AND queue.parcels == [missing_parcel]
+
+SCENARIO courier is skipped
+GIVEN courier_parcel is Parcel
+  label: "courier"
+  route:
+    kind: "courier"
+    tracking: "T-1"
+  prepared: false
+GIVEN queue is Queue
+  parcels: [courier_parcel]
+REQUEST prepare pickups
+THEN dispatch.codes == []
+AND dispatch.first_code == ""
+AND queue.parcels == [courier_parcel]
+
+SCENARIO unready and empty codes are skipped
+GIVEN unready is Parcel
+  label: "unready"
+  route:
+    kind: "counter"
+    code: "A"
+    ready: false
+  prepared: false
+GIVEN empty_code is Parcel
+  label: "empty"
+  route:
+    kind: "counter"
+    code: ""
+    ready: true
+  prepared: false
+GIVEN queue is Queue
+  parcels: [unready, empty_code]
+REQUEST prepare pickups
+THEN dispatch.codes == []
+AND dispatch.first_code == ""
+AND queue.parcels == [unready, empty_code]
+
+SCENARIO ready parcels keep queue order
+GIVEN first is Parcel
+  label: "first"
+  route:
+    kind: "counter"
+    code: "B"
+    ready: true
+  prepared: false
+GIVEN second is Parcel
+  label: "second"
+  route:
+    kind: "counter"
+    code: "A"
+    ready: true
+  prepared: false
+GIVEN queue is Queue
+  parcels: [first, second]
+REQUEST prepare pickups
+GIVEN expected_first is Parcel
+  label: "first"
+  route:
+    kind: "counter"
+    code: "B"
+    ready: true
+  prepared: true
+GIVEN expected_second is Parcel
+  label: "second"
+  route:
+    kind: "counter"
+    code: "A"
+    ready: true
+  prepared: true
+THEN dispatch.codes == ["B", "A"]
+AND dispatch.first_code == "B"
+AND queue.parcels == [expected_first, expected_second]

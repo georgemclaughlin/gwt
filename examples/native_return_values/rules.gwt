@@ -1,0 +1,63 @@
+PROGRAM member pricing
+
+RECORD Order
+  unit_price: decimal
+  quantity: integer
+  member: boolean
+
+RECORD Quote
+  total: decimal
+
+REQUEST quote order
+  GIVEN order is Order
+  GIVEN quote is Quote
+    total: 0.0
+  WHEN quote order into quote
+  OUTPUT quote is Quote
+  THEN quote.total >= 0
+
+WHEN quote <order> into <quote>
+  GIVEN order is Order
+  AND quote is Quote
+  LET total be calculate total for order
+  set quote.total to total
+
+WHEN calculate total for <order>
+  GIVEN order is Order
+  THEN returns decimal
+  LET subtotal be calculate subtotal for order
+  LET rate be discount rate for order
+  RETURN subtotal - subtotal * rate
+
+WHEN calculate subtotal for <order>
+  GIVEN order is Order
+  THEN returns decimal
+  REQUIRE order.unit_price >= 0
+  REQUIRE order.quantity > 0
+  RETURN order.unit_price * order.quantity
+
+WHEN discount rate for <order>
+  GIVEN order is Order
+  THEN returns decimal
+  DECIDE
+    WHEN order.member
+      RETURN 0.1
+    ELSE
+      RETURN 0.0
+
+SCENARIO exact totals follow membership
+GIVEN order is Order
+  unit_price: <price>
+  quantity: <quantity>
+  member: <member>
+
+REQUEST quote order
+
+THEN quote.total == <total>
+
+EXAMPLES
+  | price | quantity | member | total |
+  | 19.95 | 2        | false  | 39.9  |
+  | 19.95 | 2        | true   | 35.91 |
+  | 0.1   | 3        | true   | 0.27  |
+  | 0.0   | 1        | false  | 0.0   |

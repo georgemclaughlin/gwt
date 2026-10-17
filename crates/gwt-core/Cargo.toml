@@ -1,0 +1,26 @@
+[package]
+name = "gwt-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+publish = false
+description = "Experimental source-located GWT language foundation"
+repository = "https://github.com/georgemclaughlin/gwt"
+readme = "PACKAGE.md"
+include = ["src/**", "build.rs", "Cargo.toml", "engine-dependencies.lock", "PACKAGE.md", "LICENSE", "examples/embed.rs", "tests/fixtures/invoice.gwt"]
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154", features = ["arbitrary_precision"] }
+num-bigint = "=0.4.8"
+num-rational = "=0.4.2"
+num-traits = "=0.2.19"
+sha2 = "=0.10.9"
+
+[build-dependencies]
+sha2 = "=0.10.9"
+
+[[bin]]
+name = "gwt"
+path = "src/main.rs"

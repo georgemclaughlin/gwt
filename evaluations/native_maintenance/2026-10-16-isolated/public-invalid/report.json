@@ -1,0 +1,425 @@
+{
+  "kind": "native-maintenance-public-feedback",
+  "schemaVersion": 1,
+  "publicOnly": true,
+  "maximumAttempts": 3,
+  "metrics": {
+    "gwt": {
+      "trials": 15,
+      "missing": 15,
+      "firstPassSucceeded": null,
+      "finalSucceeded": 0,
+      "repairedTrials": null,
+      "recoveredTrials": null
+    },
+    "python": {
+      "trials": 15,
+      "missing": 14,
+      "firstPassSucceeded": null,
+      "finalSucceeded": 0,
+      "repairedTrials": null,
+      "recoveredTrials": null
+    }
+  },
+  "cases": [
+    {
+      "caseId": "native-maintenance-refund-gwt-1",
+      "pairId": "refund",
+      "trial": 1,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-refund-python-1",
+      "pairId": "refund",
+      "trial": 1,
+      "language": "python",
+      "missing": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "error": "process_error",
+          "scores": {
+            "all": {
+              "passed": 0,
+              "total": 2
+            },
+            "changed": {
+              "passed": 0,
+              "total": 1
+            },
+            "preserved": {
+              "passed": 0,
+              "total": 1
+            },
+            "public": {
+              "passed": 0,
+              "total": 2
+            },
+            "withheld": {
+              "passed": 0,
+              "total": 0
+            }
+          },
+          "sourceSha256": "8201b8f4baeec22e95b05dcf1db19c1df78dbfd690f6e203a5c33cbf0a280631",
+          "feedback": [
+            {
+              "gate": "execution",
+              "message": "process_error",
+              "details": "Traceback (most recent call last):\n  File \"/worker.py\", line 47, in <module>\n    main()\n  File \"/worker.py\", line 19, in main\n    decide = runpy.run_path(filename)['decide'] if language == 'python' else None\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen runpy>\", line 286, in run_path\n  File \"<frozen runpy>\", line 259, in _get_code_from_file\n  File \"/candidate\", line 1\n    def broken(\n              ^\nSyntaxError: '(' was never closed\n"
+            }
+          ]
+        }
+      ],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 2
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-1",
+      "pairId": "delivery",
+      "trial": 1,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-1",
+      "pairId": "delivery",
+      "trial": 1,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-1",
+      "pairId": "expenses",
+      "trial": 1,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-1",
+      "pairId": "expenses",
+      "trial": 1,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-1",
+      "pairId": "inventory",
+      "trial": 1,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-1",
+      "pairId": "inventory",
+      "trial": 1,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-1",
+      "pairId": "allocation",
+      "trial": 1,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-1",
+      "pairId": "allocation",
+      "trial": 1,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-refund-python-2",
+      "pairId": "refund",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-2",
+      "pairId": "refund",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-2",
+      "pairId": "delivery",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-2",
+      "pairId": "delivery",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-2",
+      "pairId": "expenses",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-2",
+      "pairId": "expenses",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-2",
+      "pairId": "inventory",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-2",
+      "pairId": "inventory",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-2",
+      "pairId": "allocation",
+      "trial": 2,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-2",
+      "pairId": "allocation",
+      "trial": 2,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-refund-gwt-3",
+      "pairId": "refund",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-refund-python-3",
+      "pairId": "refund",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-delivery-python-3",
+      "pairId": "delivery",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-delivery-gwt-3",
+      "pairId": "delivery",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-gwt-3",
+      "pairId": "expenses",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-expenses-python-3",
+      "pairId": "expenses",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-python-3",
+      "pairId": "inventory",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-inventory-gwt-3",
+      "pairId": "inventory",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-gwt-3",
+      "pairId": "allocation",
+      "trial": 3,
+      "language": "gwt",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    },
+    {
+      "caseId": "native-maintenance-allocation-python-3",
+      "pairId": "allocation",
+      "trial": 3,
+      "language": "python",
+      "missing": true,
+      "attempts": [],
+      "firstPassSuccess": null,
+      "finalSuccess": false,
+      "nextAttempt": 1
+    }
+  ],
+  "identities": {
+    "taskSha256": "dae8b5c0561211c3e6b388605f90aa9095b1335f88611115f9a472057988b659",
+    "corpusSha256": "368b460142da5bf4388237d793b650d9c586adb830b6e33d5bb44285cbb47441",
+    "qualificationSha256": "19f1fef8c752b17ee7c6c554afaaca9ad2bf9246e150c85addd8b41d8b2972aa",
+    "qualifiedNativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+    "qualifiedWorkerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "responsesSha256": "5c3232247b1a2052853feac9e2954fa71ee8efe31a09c103160e53d50c5baac6"
+  },
+  "executionEnvironment": {
+    "imageId": "sha256:b4acd70b6f4ca3e8fa68f11d4bc6831d141744654e62286f862b3c8ca7bd0467",
+    "repoDigests": [
+      "python@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286"
+    ],
+    "architecture": "amd64",
+    "os": "linux",
+    "nativeSha256": "196484f5a1889b371b4e9cdd904d3b256c771061fb464e88cb9acd50ca8c3510",
+    "workerSha256": "2fb2e84ba57b35bc4e2257cc351825170c9d58733cccfa51e968f2d12de40556",
+    "timeoutSeconds": 120,
+    "stdoutBytes": 16777216,
+    "stderrBytes": 262144,
+    "network": "none",
+    "readOnlyRoot": true,
+    "user": "65534:65534",
+    "memoryBytes": 268435456,
+    "cpus": 1,
+    "pids": 64,
+    "temporaryBytes": 33554432
+  },
+  "scorerSourceSha256": {
+    "/home/g/code/gwt/evaluations/native_maintenance/scorer.py": "26df96f51f304e46a56dae245eb34e27c5b9602c2058eb300023ac54a2783638",
+    "/home/g/code/gwt/evaluations/native_maintenance/isolated.py": "d27a8bd08ae99d3efac33d820425e57242e8621caad22dc1f0db145460c82b96",
+    "/home/g/code/gwt/evaluations/native_maintenance/study.py": "7cf958795385836360c56ad2b5bfc0dfb1345c217dcc2aa6ae036a27d11606cb"
+  }
+}

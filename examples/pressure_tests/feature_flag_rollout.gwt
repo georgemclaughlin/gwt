@@ -1,5 +1,7 @@
 PROGRAM feature flag rollout pressure test
 
+TYPE FlagDecisionReason is "new" | "account_disabled" | "kill_switch" | "override_enabled" | "override_disabled" | "rollout_rule_enabled" | "rollout_rule_disabled" | "no_matching_rule" | "invalid_bucket"
+
 RECORD AccountFlagOverride
   account_id: text
   flag_key: text
@@ -28,7 +30,7 @@ RECORD FlagDecision
   blocked_by_kill_switch: boolean
   reasons: list<text>
   status: "new" | "enabled" | "disabled" | "needs_review"
-  reason: "new" | "account_disabled" | "kill_switch" | "override_enabled" | "override_disabled" | "rollout_rule_enabled" | "rollout_rule_disabled" | "no_matching_rule" | "invalid_bucket"
+  reason: FlagDecisionReason
 
 REQUEST evaluate flag
   GIVEN request is FlagRequest
@@ -60,7 +62,7 @@ WHEN reset <decision>
   set decision.reason to "new"
 
 WHEN disable flag with <reason> into <decision>
-  GIVEN reason is text
+  GIVEN reason is FlagDecisionReason
   AND decision is FlagDecision
   set decision.enabled to false
   set decision.status to "disabled"
@@ -68,7 +70,7 @@ WHEN disable flag with <reason> into <decision>
   append reason to decision.reasons
 
 WHEN enable flag with <reason> into <decision>
-  GIVEN reason is text
+  GIVEN reason is FlagDecisionReason
   AND decision is FlagDecision
   set decision.enabled to true
   set decision.status to "enabled"
@@ -94,9 +96,9 @@ WHEN apply override for <request> into <decision>
     set decision.matched_override to true
     append override.reason to decision.reasons
     IF override.enabled
-      enable flag with override_enabled into decision
+      enable flag with "override_enabled" into decision
     ELSE
-      disable flag with override_disabled into decision
+      disable flag with "override_disabled" into decision
   ELSE
     PASS
 
@@ -108,16 +110,16 @@ WHEN apply rollout rules for <request> into <decision>
       LET applies be segment matches rule for request
       IF applies and request.bucket <= rule.percent
         set decision.matched_rule to true
-        enable flag with rollout_rule_enabled into decision
+        enable flag with "rollout_rule_enabled" into decision
   IF decision.matched_rule == false
     FOR rule in request.rollout_rules WHERE rule.enabled == false
       IF decision.matched_rule == false
         LET applies be segment matches rule for request
         IF applies
           set decision.matched_rule to true
-          disable flag with rollout_rule_disabled into decision
+          disable flag with "rollout_rule_disabled" into decision
   IF decision.matched_rule == false
-    disable flag with no_matching_rule into decision
+    disable flag with "no_matching_rule" into decision
 
 WHEN evaluate flag <request> into <decision>
   GIVEN request is FlagRequest
@@ -129,11 +131,11 @@ WHEN evaluate flag <request> into <decision>
     append "invalid_bucket" to decision.reasons
   ELSE
     IF request.account_enabled == false
-      disable flag with account_disabled into decision
+      disable flag with "account_disabled" into decision
     ELSE
       IF request.kill_switch_active
         set decision.blocked_by_kill_switch to true
-        disable flag with kill_switch into decision
+        disable flag with "kill_switch" into decision
       ELSE
         apply override for request into decision
         IF decision.matched_override == false
@@ -259,3 +261,102 @@ THEN decision.enabled == false
 AND decision.status == "needs_review"
 AND decision.reason == "invalid_bucket"
 AND decision.reasons == ["invalid_bucket"]
+
+SCENARIO the first matching account override wins
+GIVEN request is FlagRequest
+  account_id: "acct"
+  flag_key: "dashboard"
+  segment: "beta"
+  bucket: 50
+  account_enabled: true
+  kill_switch_active: false
+  overrides: []
+  rollout_rules: []
+
+GIVEN request.overrides are AccountFlagOverride
+  | account_id | flag_key    | enabled | reason          |
+  | "other"    | "dashboard" | true    | "other_account" |
+  | "acct"     | "other"     | true    | "other_flag"    |
+  | "acct"     | "dashboard" | false   | "first_match"   |
+  | "acct"     | "dashboard" | true    | "later_match"   |
+
+REQUEST evaluate flag
+
+THEN decision.enabled == false
+AND decision.matched_override == true
+AND decision.matched_rule == false
+AND decision.reason == "override_disabled"
+AND decision.reasons == ["first_match", "override_disabled"]
+
+SCENARIO enabled rules precede disabled fallback and include the cutoff
+GIVEN request is FlagRequest
+  account_id: "acct"
+  flag_key: "dashboard"
+  segment: "beta"
+  bucket: <bucket>
+  account_enabled: true
+  kill_switch_active: false
+  overrides: []
+  rollout_rules: []
+
+GIVEN request.rollout_rules are RolloutRule
+  | segment | percent | enabled |
+  | "all"   | 100     | false   |
+  | "beta"  | 50      | true    |
+
+REQUEST evaluate flag
+
+THEN decision.enabled == <enabled>
+AND decision.reason == <reason>
+AND decision.matched_rule == true
+AND decision.matched_override == false
+AND decision.reasons == [<reason>]
+
+EXAMPLES
+  | bucket | enabled | reason                  |
+  | 50     | true    | "rollout_rule_enabled"  |
+  | 51     | false   | "rollout_rule_disabled" |
+
+SCENARIO bucket zero is included by a zero percent enabled rule
+GIVEN request is FlagRequest
+  account_id: "acct"
+  flag_key: "dashboard"
+  segment: "free"
+  bucket: 0
+  account_enabled: true
+  kill_switch_active: false
+  overrides: []
+  rollout_rules: []
+
+GIVEN request.rollout_rules are RolloutRule
+  | segment | percent | enabled |
+  | "all"   | 0       | true    |
+
+REQUEST evaluate flag
+
+THEN decision.enabled == true
+AND decision.reason == "rollout_rule_enabled"
+AND decision.matched_rule == true
+
+SCENARIO reusing a decision clears earlier kill switch state
+GIVEN request is FlagRequest
+  account_id: "acct"
+  flag_key: "dashboard"
+  segment: "free"
+  bucket: 0
+  account_enabled: true
+  kill_switch_active: true
+  overrides: []
+  rollout_rules: []
+
+REQUEST evaluate flag
+WHEN set request.kill_switch_active to false
+WHEN evaluate flag request into decision
+
+THEN decision.enabled == false
+AND decision.status == "disabled"
+AND decision.reason == "no_matching_rule"
+AND decision.blocked_by_kill_switch == false
+AND decision.matched_override == false
+AND decision.matched_rule == false
+AND decision.reasons == ["no_matching_rule"]

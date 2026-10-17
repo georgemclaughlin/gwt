@@ -1,0 +1,58 @@
+{
+  "core": "/home/g/code/gwt/crates/gwt-core",
+  "toolchain": "1.96.0",
+  "commands": [
+    {
+      "command": [
+        "rustup",
+        "run",
+        "1.96.0",
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/tmp/gwt-cutover-wasm/bridge/Cargo.toml",
+        "--locked",
+        "--offline"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "rustup",
+        "run",
+        "1.96.0",
+        "cargo",
+        "clippy",
+        "--manifest-path",
+        "/tmp/gwt-cutover-wasm/bridge/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "rustup",
+        "run",
+        "1.96.0",
+        "cargo",
+        "build",
+        "--manifest-path",
+        "/tmp/gwt-cutover-wasm/bridge/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--release",
+        "--target",
+        "wasm32-unknown-unknown"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "wasmBytes": 1116087,
+  "wasmSha256": "e4d01465a7ec5345b05d45b8f2f0db387b0586a07188e24195810c9df6bcc6fb",
+  "rustflags": "-C link-arg=--max-memory=67108864"
+}

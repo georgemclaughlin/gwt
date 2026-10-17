@@ -1,0 +1,173 @@
+{
+  "previousExecutable": "/home/g/.cache/gwt-qualifications/gwt-type-diagnostics-5pbs4xi_/gwt-native",
+  "nativeExecutable": "/home/g/.cache/gwt-qualifications/gwt-package-host-hzspl0s_/installed/bin/gwt-native",
+  "checks": [
+    {
+      "id": "exact-decimal",
+      "expectedError": null,
+      "messageChanged": false,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_preserved",
+      "originalSha256": "5131c81f5503e5479ce8cd52c4114ea4d13172d0747d05a04712efe7cf24c326",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "integer-decimal",
+      "expectedError": null,
+      "messageChanged": false,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_preserved",
+      "originalSha256": "31d04d87e8bd5c743aaf36193da0e393af5de31173304ebd130cf27c2b6b05ac",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "valid-kind",
+      "expectedError": null,
+      "messageChanged": false,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_preserved",
+      "originalSha256": "b3776fd93534f0cf5311033a43b9891d4a112459cc3e85afc3d77da1ca05f68b",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "boolean-count",
+      "expectedError": "input_type",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "a814c80a1d7f32407d21b343abd1f4881fe52b0a245490899433963e6e435a9b",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "fractional-number",
+      "expectedError": "input_type",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "2e509afb87076e6dfd4e31ac4c09c76c8b5de32f6999a0101196f49d64eaf0bd",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "missing-amount",
+      "expectedError": "missing_input",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "fe03bfa646409dd0a9e65af0899da40a9bde456f4e135fef29536787121cc61a",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "missing-count",
+      "expectedError": "missing_input",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "a04fad2183ff5bd8a8f3c18f4484beeab5429b8999305d4349fb5061c25cdcad",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "unknown-field",
+      "expectedError": "unknown_input",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "1ccc2ff4eff09dfc1a0e76eae46d0b7e687131c13686b9df43eebb70e1d813c4",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "unknown-quality",
+      "expectedError": "input_type",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "29a7c90be0677901bd5fad9983e3548565e57523a1727dc3e4fffbd0884e8755",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "wrong-list",
+      "expectedError": "input_type",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "f382e3e402d1b2e908c38df615856b90c7249d505534691c6c837367f19afa2f",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "missing-kind",
+      "expectedError": "one_of_kind",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "4a3679865e3f00a2407d26f37dc5d519b41e75607def91c6ac68e23fa4fdf7b9",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "wrong-kind-type",
+      "expectedError": "one_of_kind",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "9a4df61a3bbc4cd64ff92e09a87a024e47d152b10d41e9543c6e7c168ba3a650",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "unknown-kind",
+      "expectedError": "one_of_kind",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "1a18866bc3a68171d9ad9666778b7302c13bc481b63276f66d5b937fa47fa083",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "missing-facts",
+      "expectedError": "missing_input",
+      "messageChanged": true,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_changed",
+      "originalSha256": "f2662102835b024becf705608064c3ff8f617ee3fc411f2b1d9415bf037b908b",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    },
+    {
+      "id": "invalid-decimal",
+      "expectedError": "invalid_number",
+      "messageChanged": false,
+      "allOtherObservationFieldsEqual": true,
+      "migrationStatus": "observation_preserved",
+      "originalSha256": "0493b48f9467f060c36269e41914daab6aa5283176113d1007818bfc034c6b54",
+      "originalUnchanged": true,
+      "candidateReplayVerified": true,
+      "approved": false
+    }
+  ],
+  "cases": 15,
+  "messageChanges": 11
+}

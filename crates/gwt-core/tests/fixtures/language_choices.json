@@ -1,0 +1,309 @@
+[
+  {
+    "id": "direct-return-call",
+    "source": "RECORD Counter\n  calls: integer\n  total: integer\nWHEN bump <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  add 1 to counter.calls\n  RETURN counter.calls + 2\nWHEN relay <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  RETURN bump counter\nWHEN collect <counter>\n  GIVEN counter is Counter\n  LET total be relay counter\n  set counter.total to total\nGIVEN counter is Counter\n  calls: 0\n  total: 0\nWHEN collect counter\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unexpected_token"
+  },
+  {
+    "id": "named-return-call",
+    "source": "RECORD Counter\n  calls: integer\n  total: integer\nWHEN bump <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  add 1 to counter.calls\n  RETURN counter.calls + 2\nWHEN relay <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  LET result be bump counter\n  RETURN result\nWHEN collect <counter>\n  GIVEN counter is Counter\n  LET total be relay counter\n  set counter.total to total\nGIVEN counter is Counter\n  calls: 0\n  total: 0\nWHEN collect counter\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "counter": {
+        "calls": 1,
+        "total": 3
+      }
+    }
+  },
+  {
+    "id": "embedded-arithmetic-call",
+    "source": "RECORD Counter\n  calls: integer\n  total: integer\nWHEN bump <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  add 1 to counter.calls\n  RETURN counter.calls + 2\nWHEN relay <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  RETURN 1 + bump counter\nWHEN collect <counter>\n  GIVEN counter is Counter\n  LET total be relay counter\n  set counter.total to total\nGIVEN counter is Counter\n  calls: 0\n  total: 0\nWHEN collect counter\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unexpected_token"
+  },
+  {
+    "id": "conditional-call-stays-conditional",
+    "source": "RECORD Counter\n  calls: integer\n  total: integer\nWHEN bump <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  add 1 to counter.calls\n  RETURN counter.calls + 2\nWHEN collect <counter>\n  GIVEN counter is Counter\n  IF false\n    LET result be bump counter\n    set counter.total to result\nGIVEN counter is Counter\n  calls: 0\n  total: 0\nWHEN collect counter\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "counter": {
+        "calls": 0,
+        "total": 0
+      }
+    }
+  },
+  {
+    "id": "hoisted-call-changes-state",
+    "source": "RECORD Counter\n  calls: integer\n  total: integer\nWHEN bump <counter>\n  GIVEN counter is Counter\n  THEN returns integer\n  add 1 to counter.calls\n  RETURN counter.calls + 2\nWHEN collect <counter>\n  GIVEN counter is Counter\n  LET result be bump counter\n  IF false\n    set counter.total to result\nGIVEN counter is Counter\n  calls: 0\n  total: 0\nWHEN collect counter\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "counter": {
+        "calls": 1,
+        "total": 0
+      }
+    }
+  },
+  {
+    "id": "english-comparison",
+    "source": "RECORD Facts\n  amount: integer\n  allowed: boolean\nWHEN assess <facts>\n  GIVEN facts is Facts\n  IF facts.amount is at least 5\n    set facts.allowed to true\n  ELSE\n    set facts.allowed to false\nGIVEN facts is Facts\n  amount: 5\n  allowed: false\nWHEN assess facts\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "expected_presence"
+  },
+  {
+    "id": "symbolic-comparison-4",
+    "source": "RECORD Facts\n  amount: integer\n  allowed: boolean\nWHEN assess <facts>\n  GIVEN facts is Facts\n  IF facts.amount >= 5\n    set facts.allowed to true\n  ELSE\n    set facts.allowed to false\nGIVEN facts is Facts\n  amount: 4\n  allowed: false\nWHEN assess facts\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "facts": {
+        "amount": 4,
+        "allowed": false
+      }
+    }
+  },
+  {
+    "id": "symbolic-comparison-5",
+    "source": "RECORD Facts\n  amount: integer\n  allowed: boolean\nWHEN assess <facts>\n  GIVEN facts is Facts\n  IF facts.amount >= 5\n    set facts.allowed to true\n  ELSE\n    set facts.allowed to false\nGIVEN facts is Facts\n  amount: 5\n  allowed: false\nWHEN assess facts\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "facts": {
+        "amount": 5,
+        "allowed": true
+      }
+    }
+  },
+  {
+    "id": "symbolic-comparison-6",
+    "source": "RECORD Facts\n  amount: integer\n  allowed: boolean\nWHEN assess <facts>\n  GIVEN facts is Facts\n  IF facts.amount >= 5\n    set facts.allowed to true\n  ELSE\n    set facts.allowed to false\nGIVEN facts is Facts\n  amount: 6\n  allowed: false\nWHEN assess facts\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "facts": {
+        "amount": 6,
+        "allowed": true
+      }
+    }
+  },
+  {
+    "id": "english-negative-membership",
+    "source": "GIVEN label is \"clear\"\nTHEN label does not contain \"blocked\"\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unexpected_token"
+  },
+  {
+    "id": "symbolic-negative-membership",
+    "source": "GIVEN label is \"clear\"\nTHEN not (label contains \"blocked\")\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "label": "clear"
+    }
+  },
+  {
+    "id": "nested-request-binding",
+    "source": "RECORD Customer\n  score: integer\nREQUEST inspect customer\n  GIVEN bundle.customer is Customer\n  WHEN print bundle.customer.score\n  OUTPUT bundle.customer is Customer\n",
+    "nativeCheck": false,
+    "request": "inspect customer",
+    "input": {
+      "bundle": {
+        "customer": {
+          "score": 7
+        }
+      }
+    },
+    "nativeCheckDiagnostic": "invalid_name"
+  },
+  {
+    "id": "root-request-record",
+    "source": "RECORD Customer\n  score: integer\nRECORD Bundle\n  customer: Customer\nREQUEST inspect customer\n  GIVEN bundle is Bundle\n  WHEN print bundle.customer.score\n  OUTPUT bundle is Bundle\n",
+    "nativeCheck": true,
+    "request": "inspect customer",
+    "input": {
+      "bundle": {
+        "customer": {
+          "score": 7
+        }
+      }
+    },
+    "expectedResult": {
+      "bundle": {
+        "customer": {
+          "score": 7
+        }
+      }
+    }
+  },
+  {
+    "id": "nested-request-extra-sibling",
+    "source": "RECORD Customer\n  score: integer\nREQUEST inspect customer\n  GIVEN bundle.customer is Customer\n  WHEN print bundle.customer.score\n  OUTPUT bundle.customer is Customer\n",
+    "nativeCheck": false,
+    "request": "inspect customer",
+    "input": {
+      "bundle": {
+        "customer": {
+          "score": 7
+        },
+        "note": "unused"
+      }
+    },
+    "nativeCheckDiagnostic": "invalid_name"
+  },
+  {
+    "id": "root-request-extra-sibling",
+    "source": "RECORD Customer\n  score: integer\nRECORD Bundle\n  customer: Customer\nREQUEST inspect customer\n  GIVEN bundle is Bundle\n  WHEN print bundle.customer.score\n  OUTPUT bundle is Bundle\n",
+    "nativeCheck": true,
+    "request": "inspect customer",
+    "input": {
+      "bundle": {
+        "customer": {
+          "score": 7
+        },
+        "note": "unused"
+      }
+    },
+    "nativeRun": false,
+    "diagnostic": "unknown_input"
+  },
+  {
+    "id": "untyped-table",
+    "source": "GIVEN items are\n  | name | value |\n  | \"first\" | 1 |\n  | \"second\" | 2 |\nGIVEN total is 0\nWHEN sum item.value in items into total\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "given_syntax"
+  },
+  {
+    "id": "typed-table",
+    "source": "RECORD Item\n  name: text\n  value: integer\n\nGIVEN items are Item\n  | name | value |\n  | \"first\" | 1 |\n  | \"second\" | 2 |\nGIVEN total is 0\nWHEN sum item.value in items into total\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "items": [
+        {
+          "name": "first",
+          "value": 1
+        },
+        {
+          "name": "second",
+          "value": 2
+        }
+      ],
+      "total": 3
+    }
+  },
+  {
+    "id": "numeric-literal-union",
+    "source": "TYPE Code is 1 | 2\nWHEN accept <code>\n  GIVEN code is Code\n  PASS\nGIVEN code is 1\nWHEN accept code\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unsupported_type"
+  },
+  {
+    "id": "boolean-literal-union",
+    "source": "TYPE Code is true | false\nWHEN accept <code>\n  GIVEN code is Code\n  PASS\nGIVEN code is true\nWHEN accept code\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unsupported_type"
+  },
+  {
+    "id": "checked-integer-code-1",
+    "source": "WHEN accept <code>\n  GIVEN code is integer\n  REQUIRE code == 1 or code == 2\nGIVEN code is 1\nWHEN accept code\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "code": 1
+    },
+    "nativeRun": true
+  },
+  {
+    "id": "checked-integer-code-2",
+    "source": "WHEN accept <code>\n  GIVEN code is integer\n  REQUIRE code == 1 or code == 2\nGIVEN code is 2\nWHEN accept code\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "code": 2
+    },
+    "nativeRun": true
+  },
+  {
+    "id": "checked-integer-code-3",
+    "source": "WHEN accept <code>\n  GIVEN code is integer\n  REQUIRE code == 1 or code == 2\nGIVEN code is 3\nWHEN accept code\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "code": 3
+    },
+    "nativeRun": false,
+    "diagnostic": "assertion_failed"
+  },
+  {
+    "id": "boolean-type-true",
+    "source": "WHEN accept <code>\n  GIVEN code is boolean\n  PASS\nGIVEN code is true\nWHEN accept code\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "code": true
+    }
+  },
+  {
+    "id": "boolean-type-false",
+    "source": "WHEN accept <code>\n  GIVEN code is boolean\n  PASS\nGIVEN code is false\nWHEN accept code\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "code": false
+    }
+  },
+  {
+    "id": "indexed-expression",
+    "source": "GIVEN items is [10, 20]\nTHEN items[0] == 10\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unexpected_token"
+  },
+  {
+    "id": "any-input",
+    "source": "REQUEST accept\n  GIVEN fact is any\n  WHEN print fact\n  OUTPUT fact is any\n",
+    "nativeCheck": false,
+    "request": "accept",
+    "input": {
+      "fact": {
+        "dynamic": 1
+      }
+    },
+    "nativeCheckDiagnostic": "unknown_name"
+  },
+  {
+    "id": "optional-find-found",
+    "source": "RECORD Item\n  name: text\n  value: integer\nWHEN choose <items> into <selected>\n  GIVEN items is list<Item>\n  AND selected is Item\n  find optional item in items WHERE item.name == \"wanted\" into selected\nGIVEN items are Item\n  | name | value |\n  | \"wanted\" | 1 |\nGIVEN selected is Item\n  name: \"previous\"\n  value: 7\nWHEN choose items into selected\nWHEN set selected.value to 99\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unknown_behavior"
+  },
+  {
+    "id": "optional-find-missing",
+    "source": "RECORD Item\n  name: text\n  value: integer\nWHEN choose <items> into <selected>\n  GIVEN items is list<Item>\n  AND selected is Item\n  find optional item in items WHERE item.name == \"missing\" into selected\nGIVEN items are Item\n  | name | value |\n  | \"wanted\" | 1 |\nGIVEN selected is Item\n  name: \"previous\"\n  value: 7\nWHEN choose items into selected\nWHEN set selected.value to 99\n",
+    "nativeCheck": false,
+    "nativeCheckDiagnostic": "unknown_behavior"
+  },
+  {
+    "id": "explicit-find-copy-found",
+    "source": "RECORD Item\n  name: text\n  value: integer\nWHEN choose <items> into <selected>\n  GIVEN items is list<Item>\n  AND selected is Item\n  FIND item in items WHERE item.name == \"wanted\"\n    set selected to item\n  ELSE\n    PASS\nGIVEN items are Item\n  | name | value |\n  | \"wanted\" | 1 |\nGIVEN selected is Item\n  name: \"previous\"\n  value: 7\nWHEN choose items into selected\nWHEN set selected.value to 99\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "items": [
+        {
+          "name": "wanted",
+          "value": 1
+        }
+      ],
+      "selected": {
+        "name": "wanted",
+        "value": 99
+      }
+    }
+  },
+  {
+    "id": "explicit-find-copy-missing",
+    "source": "RECORD Item\n  name: text\n  value: integer\nWHEN choose <items> into <selected>\n  GIVEN items is list<Item>\n  AND selected is Item\n  FIND item in items WHERE item.name == \"missing\"\n    set selected to item\n  ELSE\n    PASS\nGIVEN items are Item\n  | name | value |\n  | \"wanted\" | 1 |\nGIVEN selected is Item\n  name: \"previous\"\n  value: 7\nWHEN choose items into selected\nWHEN set selected.value to 99\n",
+    "nativeCheck": true,
+    "expectedState": {
+      "items": [
+        {
+          "name": "wanted",
+          "value": 1
+        }
+      ],
+      "selected": {
+        "name": "previous",
+        "value": 99
+      }
+    }
+  }
+]

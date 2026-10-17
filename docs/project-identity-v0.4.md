@@ -1,8 +1,16 @@
 # Project Identity Decision For v0.4
 
-Status: owner decision required before public v0.4 publication.
+Status: owner chose **retain GWT for now** on 2026-10-15.
 
-Recommendation: rename the public project before investing in a hosted brand,
+Keep the current project name, `gwtlang` distribution/import, `gwt` CLI,
+`.gwt` files, and artifact identifiers. No rename or compatibility migration is
+planned for this checkpoint. Publication remains a separate release action.
+
+The original recommendation and candidate research below are retained as
+historical context, not an active rename plan. Registry observations are dated
+research and must not be treated as current availability checks.
+
+Original recommendation: rename the public project before investing in a hosted brand,
 while preserving GWT's source and artifact compatibility through a documented
 transition. The leading working candidate is **CauSpec** (pronounced
 “cause-spec”), pending owner preference and professional trademark review.
@@ -78,9 +86,9 @@ not branding collateral.
 | Trace attributes | `gwt.*` | dual emit only if needed | Existing dashboards and collectors must not silently break |
 | Repository/docs URLs | current GitHub repository | owner-selected rename | Preserve redirects supported by the hosting platform |
 
-## Decision Needed
+## Original Options And Recorded Decision
 
-The owner should choose one of:
+The memo presented these options:
 
 1. approve **CauSpec** for formal clearance and implementation of the migration
    matrix
@@ -88,5 +96,6 @@ The owner should choose one of:
 3. explicitly retain **GWT**, accepting the search, package, and marketplace
    collisions and positioning `gwtlang` as the discoverable long name
 
-Until that choice is recorded, v0.4 artifacts should retain their current
-identifiers and release automation must not publish a renamed distribution.
+The owner selected option 3 on 2026-10-15: retain GWT for now. Use `gwtlang`
+for package discovery and preserve current identifiers. The historical CauSpec
+migration matrix above is not authorized work.

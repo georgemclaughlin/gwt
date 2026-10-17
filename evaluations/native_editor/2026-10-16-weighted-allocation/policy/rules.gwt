@@ -1,0 +1,224 @@
+PROGRAM weighted cent allocation
+
+RECORD Recipient
+  label: text
+  weight: integer
+  eligible: boolean
+
+RECORD Budget
+  total: decimal
+  recipients: list<Recipient>
+
+RECORD Share
+  label: text
+  participates: boolean
+  amount: decimal
+  remainder_score: decimal
+  received_extra_cent: boolean
+
+RECORD Allocation
+  shares: list<Share>
+  total: decimal
+
+REQUEST allocate budget
+  GIVEN budget is Budget
+  GIVEN draft is Share
+    label: ""
+    participates: false
+    amount: 0.0
+    remainder_score: 0.0
+    received_extra_cent: false
+  GIVEN allocation is Allocation
+    shares: []
+    total: 0.0
+  WHEN allocate budget.total among budget.recipients using draft into allocation
+  OUTPUT allocation is Allocation
+  THEN allocation.total == budget.total
+
+WHEN allocate <total> among <recipients> using <draft> into <allocation>
+  GIVEN total is decimal
+  AND recipients is list<Recipient>
+  AND draft is Share
+  AND allocation is Allocation
+  REQUIRE total >= 0
+  LET whole_cents be 0.0
+  divide total by 1 rounded to 2 places using toward_zero into whole_cents
+  REQUIRE total == whole_cents
+  LET eligible_weight be 0
+  FOR recipient in recipients
+    REQUIRE recipient.weight >= 0
+    IF recipient.eligible
+      add recipient.weight to eligible_weight
+  REQUIRE total == 0 or eligible_weight > 0
+  set allocation.shares to []
+  set allocation.total to 0.0
+  FOR recipient in recipients
+    LET share be prepare recipient from total over eligible_weight using (draft)
+    append share to allocation.shares
+  sum share.amount in allocation.shares into allocation.total
+  LET remaining be total - allocation.total
+  FOR slot in allocation.shares
+    IF remaining > 0
+      award next cent among allocation.shares
+      subtract 0.01 from remaining
+  REQUIRE remaining == 0
+  sum share.amount in allocation.shares into allocation.total
+  REQUIRE allocation.total == total
+
+WHEN prepare <recipient> from <total> over <eligible_weight> using <share>
+  GIVEN recipient is Recipient
+  AND total is decimal
+  AND eligible_weight is integer
+  AND share is Share
+  THEN returns Share
+  set share.label to recipient.label
+  set share.participates to recipient.eligible and recipient.weight > 0
+  set share.amount to 0.0
+  set share.remainder_score to 0.0
+  set share.received_extra_cent to false
+  IF share.participates
+    divide (total * recipient.weight) by eligible_weight rounded to 2 places using floor into share.amount
+    set share.remainder_score to total * recipient.weight - share.amount * eligible_weight
+  RETURN share
+
+WHEN award next cent among <shares>
+  GIVEN shares is list<Share>
+  LET largest_remainder be -1.0
+  FOR share in shares WHERE share.participates and not share.received_extra_cent
+    IF share.remainder_score > largest_remainder
+      set largest_remainder to share.remainder_score
+  REQUIRE largest_remainder >= 0
+  FIND share in shares WHERE share.participates and not share.received_extra_cent and share.remainder_score == largest_remainder
+    add 0.01 to share.amount
+    set share.received_extra_cent to true
+  ELSE
+    REQUIRE false
+
+SCENARIO equal remainders use input order
+GIVEN recipients are Recipient
+  | label | weight | eligible |
+  | "Z"   | 1      | true     |
+  | "A"   | 1      | true     |
+GIVEN budget is Budget
+  total: 0.01
+  recipients: recipients
+REQUEST allocate budget
+GIVEN expected are Share
+  | label | participates | amount | remainder_score | received_extra_cent |
+  | "Z"   | true         | 0.01   | 0.01            | true                |
+  | "A"   | true         | 0.0    | 0.01            | false               |
+THEN allocation.shares == expected
+AND allocation.total == 0.01
+
+SCENARIO largest remainder outranks input order
+GIVEN recipients are Recipient
+  | label   | weight | eligible |
+  | "small" | 1      | true     |
+  | "large" | 2      | true     |
+GIVEN budget is Budget
+  total: 0.01
+  recipients: recipients
+REQUEST allocate budget
+GIVEN expected are Share
+  | label   | participates | amount | remainder_score | received_extra_cent |
+  | "small" | true         | 0.0    | 0.01            | false               |
+  | "large" | true         | 0.01   | 0.02            | true                |
+THEN allocation.shares == expected
+AND allocation.total == 0.01
+
+SCENARIO multiple leftover cents go to distinct recipients
+GIVEN recipients are Recipient
+  | label | weight | eligible |
+  | "A"   | 1      | true     |
+  | "B"   | 1      | true     |
+  | "C"   | 1      | true     |
+GIVEN budget is Budget
+  total: 0.02
+  recipients: recipients
+REQUEST allocate budget
+GIVEN expected are Share
+  | label | participates | amount | remainder_score | received_extra_cent |
+  | "A"   | true         | 0.01   | 0.02            | true                |
+  | "B"   | true         | 0.01   | 0.02            | true                |
+  | "C"   | true         | 0.0    | 0.02            | false               |
+THEN allocation.shares == expected
+AND allocation.total == 0.02
+
+SCENARIO excluded and zero weight recipients receive nothing
+GIVEN recipients are Recipient
+  | label      | weight | eligible |
+  | "excluded" | 100    | false    |
+  | "zero"     | 0      | true     |
+  | "included" | 2      | true     |
+GIVEN budget is Budget
+  total: 1.23
+  recipients: recipients
+REQUEST allocate budget
+GIVEN expected are Share
+  | label      | participates | amount | remainder_score | received_extra_cent |
+  | "excluded" | false        | 0.0    | 0.0             | false               |
+  | "zero"     | false        | 0.0    | 0.0             | false               |
+  | "included" | true         | 1.23   | 0.0             | false               |
+THEN allocation.shares == expected
+AND allocation.total == 1.23
+
+SCENARIO zero budget allows an empty recipient list
+GIVEN budget is Budget
+  total: 0.0
+  recipients: []
+REQUEST allocate budget
+THEN allocation.shares == []
+AND allocation.total == 0
+
+SCENARIO a larger budget can reduce one recipient share
+GIVEN recipients are Recipient
+  | label   | weight | eligible |
+  | "small" | 1      | true     |
+  | "large" | 3      | true     |
+  | "large" | 3      | true     |
+GIVEN budget is Budget
+  total: <total>
+  recipients: recipients
+REQUEST allocate budget
+GIVEN expected are Share
+  | label   | participates | amount  | remainder_score | received_extra_cent |
+  | "small" | true         | <small> | <small_score>   | <small_bonus>       |
+  | "large" | true         | <large> | <large_score>   | <large_bonus>       |
+  | "large" | true         | <large> | <large_score>   | <large_bonus>       |
+THEN allocation.shares == expected
+AND allocation.total == <total>
+EXAMPLES
+  | total | small | large | small_score | large_score | small_bonus | large_bonus |
+  | 0.03  | 0.01  | 0.01  | 0.03        | 0.02        | true        | false       |
+  | 0.04  | 0.0   | 0.02  | 0.04        | 0.05        | false       | true        |
+
+SCENARIO positive budget requires eligible weight
+GIVEN budget is Budget
+  total: 0.01
+  recipients: []
+REQUEST allocate budget
+THEN fails with "assertion_failed"
+
+SCENARIO fractional cents are rejected before allocation
+GIVEN budget is Budget
+  total: 0.001
+  recipients: []
+REQUEST allocate budget
+THEN fails with "assertion_failed"
+
+SCENARIO negative budget is rejected before allocation
+GIVEN budget is Budget
+  total: -0.01
+  recipients: []
+REQUEST allocate budget
+THEN fails with "assertion_failed"
+
+SCENARIO negative weights are invalid even when excluded
+GIVEN recipients are Recipient
+  | label      | weight | eligible |
+  | "excluded" | -1     | false    |
+GIVEN budget is Budget
+  total: 0.0
+  recipients: recipients
+REQUEST allocate budget
+THEN fails with "assertion_failed"

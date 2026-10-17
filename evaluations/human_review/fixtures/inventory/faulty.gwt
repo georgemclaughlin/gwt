@@ -1,0 +1,26 @@
+PROGRAM inventory review
+
+RECORD Facts
+  stock: integer
+  requested: integer
+
+RECORD Decision
+  reserved: integer
+  remaining: integer
+
+REQUEST assess
+  GIVEN facts is Facts
+  GIVEN decision is Decision
+    reserved: 0
+    remaining: 0
+  WHEN assess facts into decision
+  OUTPUT decision is Decision
+
+WHEN assess <facts> into <decision>
+  GIVEN facts is Facts
+  AND decision is Decision
+  IF facts.stock >= facts.requested
+    set decision.reserved to facts.requested
+  ELSE
+    set decision.reserved to facts.stock
+  set decision.remaining to facts.stock - facts.requested

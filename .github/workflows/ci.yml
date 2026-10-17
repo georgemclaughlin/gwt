@@ -6,181 +6,90 @@ on:
   pull_request:
 
 jobs:
-  validate:
+  native:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        rust: ["1.85.0", "1.96.0"]
+        profile: ["dev", "release"]
+        target: ["x86_64-unknown-linux-gnu"]
+        include:
+          - rust: "1.85.0"
+            profile: "release"
+            target: "x86_64-unknown-linux-musl"
+          - rust: "1.96.0"
+            profile: "release"
+            target: "x86_64-unknown-linux-musl"
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Set up Python
+      - name: Install Rust toolchain
+        run: rustup toolchain install "${{ matrix.rust }}" --profile minimal --component clippy,rustfmt --target "${{ matrix.target }}"
+      - name: Configure static musl linking
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          GWT_SYSROOT=$(rustup run "${{ matrix.rust }}" rustc --print sysroot)
+          echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=$GWT_SYSROOT/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld" >> "$GITHUB_ENV"
+          echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-C link-self-contained=yes -C target-feature=+crt-static' >> "$GITHUB_ENV"
+      - name: Test native foundation
+        run: rustup run "${{ matrix.rust }}" cargo test --profile "${{ matrix.profile }}" --target "${{ matrix.target }}" --workspace --locked
+      - name: Check native code
+        if: matrix.profile == 'dev' || matrix.target == 'x86_64-unknown-linux-musl'
+        run: rustup run "${{ matrix.rust }}" cargo clippy --profile "${{ matrix.profile }}" --target "${{ matrix.target }}" --workspace --all-targets --locked -- -D warnings
+      - name: Check native formatting
+        if: matrix.rust == '1.96.0' && matrix.profile == 'dev'
+        run: rustup run "${{ matrix.rust }}" cargo fmt --all -- --check
+      - name: Set up Python for native package qualification
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-
-      - name: Set up Node
+      - name: Qualify packaged native library and CLI
+        run: |
+          python evaluations/native_packaging/qualify.py \
+            --toolchain "${{ matrix.rust }}" \
+            --profile "${{ matrix.profile }}" \
+            --target "${{ matrix.target }}" \
+            --output "$RUNNER_TEMP/gwt-packaging-${{ matrix.rust }}-${{ matrix.profile }}-${{ matrix.target }}"
+      - name: Set up Node for native host qualification
         uses: actions/setup-node@v6
         with:
           node-version: "22"
-
-      - name: Install Python package
+      - name: Qualify Node host against the packaged native executable
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e '.[serve]' 'hypercorn>=0.18,<1'
+          GWT_PACKAGE_EVIDENCE="$RUNNER_TEMP/gwt-packaging-${{ matrix.rust }}-${{ matrix.profile }}-${{ matrix.target }}"
+          GWT_NATIVE_PATH="$(python -c 'import json, pathlib, sys; print(pathlib.Path(json.load(open(sys.argv[1]))["workspace"]) / "installed/bin/gwt")' "$GWT_PACKAGE_EVIDENCE/qualification.json")"
+          export GWT_NATIVE_PATH
+          GWT_NODE_EVIDENCE="$GWT_PACKAGE_EVIDENCE/node-host" node --test tests/native_node_host.test.mjs
 
-      - name: Run Python tests
+      - name: Exercise native review walkthrough
+        if: matrix.rust == '1.96.0' && matrix.profile == 'dev'
+        run: |
+          python examples/native_review_walkthrough/prepare.py "$RUNNER_TEMP/gwt-delivery-walkthrough" \
+            --native "target/${{ matrix.target }}/debug/gwt"
+
+  product:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install Rust
+        run: rustup toolchain install 1.96.0 --profile minimal
+      - name: Install GWT outside the source tree
+        run: cargo +1.96.0 install --path crates/gwt-core --locked --root "$RUNNER_TEMP/gwt-install"
+      - name: Verify the consumer product and generated site
+        run: python tools/verify_product.py --gwt "$RUNNER_TEMP/gwt-install/bin/gwt"
+      - name: Check independent research and packaging tools
         run: python -m unittest discover
-
-      - name: Qualify the external-pilot serve boundaries
+      - name: Check editor and host integration
         run: |
-          EVIDENCE_DIR="$RUNNER_TEMP/commit-analyzer-evidence"
-          python examples/external_pilots/semantic_release_commit_analyzer/served_evidence_demo.py \
-            "$EVIDENCE_DIR"
-          python -m gwtlang qualify-serve \
-            examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
-            --corpus "$EVIDENCE_DIR/corpus.json" \
-            --engine asgi \
-            --json >"$EVIDENCE_DIR/serve-qualification.json"
-          python -m json.tool "$EVIDENCE_DIR/serve-qualification.json" >/dev/null
-          python examples/deployable_api/qualify_container.py \
-            examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
-            --program-root examples/external_pilots/semantic_release_commit_analyzer \
-            --corpus "$EVIDENCE_DIR/corpus.json" \
-            --timeout 30 \
-            --json >"$EVIDENCE_DIR/container-qualification.json"
-          python -m json.tool "$EVIDENCE_DIR/container-qualification.json" >/dev/null
-
-      - name: Type-check Python package and host examples
-        run: npx --yes pyright@1.1.410 --project pyrightconfig.json
-
-      - name: Check example formatting
-        run: |
-          find examples -name '*.gwt' -print0 | while IFS= read -r -d '' file; do
-            python -m gwtlang format "$file" --check >/dev/null || exit 1
-          done
-
-      - name: Check external pilot Node adapters
-        run: |
-          node --check examples/external_pilots/semantic_release_commit_analyzer/host_match_core.mjs
-          node --check examples/external_pilots/semantic_release_commit_analyzer/host_match_adapter.mjs
-          node --check examples/external_pilots/semantic_release_commit_analyzer/upstream_oracle.mjs
-          node --check examples/external_pilots/semantic_release_commit_analyzer/openapi_client_demo.mjs
-
-      - name: Check top-level examples
-        run: |
-          for file in examples/*.gwt; do
-            python -m gwtlang check "$file" >/dev/null || exit 1
-          done
-
-      - name: Run reference request workflows
-        run: |
-          python -m gwtlang run examples/order_fulfillment/rules.gwt \
-            --input examples/order_fulfillment/request.gwt \
-            --json >/tmp/gwt-order.json
-          python -m gwtlang run examples/language_tour/rules.gwt \
-            --input examples/language_tour/request.gwt \
-            --json >/tmp/gwt-tour.json
-
-      - name: Validate typed module fixture
-        run: |
-          python -m gwtlang validate examples/vendor_onboarding/rules.gwt \
-            --import-root examples/vendor_onboarding \
-            --no-absolute-imports
-          python examples/vendor_onboarding/host_app.py
-          python -m gwtlang validate examples/release_readiness/rules.gwt \
-            --import-root examples/release_readiness \
-            --no-absolute-imports
-          python examples/release_readiness/host_app.py
-          python -m gwtlang validate examples/incident_triage/rules.gwt \
-            --import-root examples/incident_triage \
-            --no-absolute-imports
-          python examples/incident_triage/host_app.py
-
-      - name: Verify generated host types
-        run: |
-          python -m gwtlang types examples/vendor_onboarding/rules.gwt \
-            --language typescript \
-            --output /tmp/vendor-onboarding.generated.d.ts
-          diff -u clients/typescript/examples/vendor-onboarding.generated.d.ts \
-            /tmp/vendor-onboarding.generated.d.ts
-          python -m gwtlang types examples/vendor_onboarding/rules.gwt \
-            --language python \
-            --output /tmp/vendor-onboarding.rules_types.py
-          diff -u examples/vendor_onboarding/rules_types.py \
-            /tmp/vendor-onboarding.rules_types.py
-          python -m gwtlang types examples/release_readiness/rules.gwt \
-            --language python \
-            --output /tmp/release-readiness.rules_types.py
-          diff -u examples/release_readiness/rules_types.py \
-            /tmp/release-readiness.rules_types.py
-          python -m gwtlang types examples/incident_triage/rules.gwt \
-            --language python \
-            --output /tmp/incident-triage.rules_types.py
-          diff -u examples/incident_triage/rules_types.py \
-            /tmp/incident-triage.rules_types.py
-
-      - name: Verify generated OpenAPI
-        run: |
-          python -m gwtlang openapi examples/deployable_api/rules.gwt \
-            --output /tmp/gwt-openapi.json
-          python -m json.tool /tmp/gwt-openapi.json >/dev/null
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          document = json.loads(Path("/tmp/gwt-openapi.json").read_text())
-          assert document["openapi"] == "3.1.0"
-          assert "/requests/triage-ticket" in document["paths"]
-          assert "TriageTicketRequest" in document["components"]["schemas"]
-          assert "TriageTicketOutput" in document["components"]["schemas"]
-          PY
-          python -m gwtlang openapi \
-            examples/external_pilots/semantic_release_commit_analyzer/rules.gwt \
-            --output /tmp/gwt-commit-analyzer-openapi.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          document = json.loads(Path("/tmp/gwt-commit-analyzer-openapi.json").read_text())
-          operation = document["paths"]["/requests/select-release-from-evaluated-rules"]["post"]
-          assert operation["operationId"] == "selectReleaseFromEvaluatedRules"
-          assert "RuleEvaluation" in document["components"]["schemas"]
-          PY
-          python -m gwtlang openapi \
-            examples/external_pilots/spree_item_total/rules.gwt \
-            --output /tmp/gwt-spree-openapi.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          document = json.loads(Path("/tmp/gwt-spree-openapi.json").read_text())
-          facts = document["components"]["schemas"]["ItemTotalFacts"]
-          assert "amount_max" not in facts["required"]
-          assert {"type": "null"} in facts["properties"]["amount_max"]["anyOf"]
-          decimal_types = [item["type"] for item in facts["properties"]["amount_min"]["anyOf"]]
-          assert decimal_types == ["string", "integer"]
-          PY
-
-      - name: Install TypeScript client dependencies
-        working-directory: clients/typescript
-        run: npm install
-
-      - name: Check TypeScript client
-        working-directory: clients/typescript
-        run: |
-          npm run check
-          npm test
-
-      - name: Install VS Code extension dependencies
-        working-directory: vscode-gwt
-        run: npm ci
-
-      - name: Check VS Code extension
-        working-directory: vscode-gwt
-        run: npm run check
-
+          npm --prefix vscode-gwt ci
+          npm --prefix vscode-gwt run check
+          npm --prefix vscode-gwt test
+          GWT_NATIVE_PATH="$RUNNER_TEMP/gwt-install/bin/gwt" node --test tests/native_node_host.test.mjs
       - name: Check whitespace
         run: git diff --check
-
-      - name: Run advisory GWT release gate
-        run: python examples/release_readiness/release_gate.py --evidence ci-passed

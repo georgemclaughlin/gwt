@@ -1,5 +1,7 @@
 # Execution Cases
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 An Execution Case is GWT's portable, source-linked record of one named
 `REQUEST` execution. It is the interchange object used by explanation,
 scenario generation, old/new comparison, and the local review workbench.

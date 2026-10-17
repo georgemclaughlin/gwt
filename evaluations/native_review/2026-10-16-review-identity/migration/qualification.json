@@ -1,0 +1,441 @@
+{
+  "cases": 72,
+  "native": "/home/g/.cache/gwt-qualifications/gwt-package-host-fc2qk7m9/installed/bin/gwt-native",
+  "nativeSha256": "f3c425ef4ff8d00a73f0e92121d61d25a8220febd0820057120bfd4eb2ab298a",
+  "previousEngine": "/home/g/.cache/gwt-qualifications/gwt-package-host-jh_4ju09/installed/bin/gwt-native",
+  "previousSha256": "6efafab2c6322db66d5939b4ccee32184977f3e74bca2adc940316d4b5b888ea",
+  "checks": [
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-0.json",
+      "baselineSha256": "bc02bb7b7ec1c7e5c01e79dcaaead8e235b3885e5d81740365b84d586901d761",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-1.json",
+      "baselineSha256": "33f23fd8c143f1273f4f41dfd82a7edbd72f4779a68c9e2137b3bf35e6fe1b03",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-10.json",
+      "baselineSha256": "04dc6f55b57e529505a00c873042daf844647f9dfb204de9e17a0767fb00f12e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-11.json",
+      "baselineSha256": "ff0eb9a4916c1fcd6e4513c678e683140a14eb956284e7fe2ccd8da5eb7d1d32",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-12.json",
+      "baselineSha256": "9f9b40411c2907864bcd570ce4eec14d41304ec7bcc0c401492850bd5e59bed2",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-13.json",
+      "baselineSha256": "595b692f613135d5de497d028cea9d73e4392ea83ea212f7069546cc54cd4bde",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-14.json",
+      "baselineSha256": "76ee7bf409b26a3432643446811619266468bc165eef34608dd0c30026275bfb",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-15.json",
+      "baselineSha256": "0ae1a3a1eaf960ae11531bca4ece139ce297ae66f502d846680b474b4b1bb453",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-16.json",
+      "baselineSha256": "69a30a31c0806b1f35c4f3183647459e76820796bf857b7aebc01d9b96f59dda",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-17.json",
+      "baselineSha256": "dbe2967da346794043dcc98c832821671ce53ba2d59632bf4da2696a83e67ac6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-18.json",
+      "baselineSha256": "40c0616d3ad9762fcf1a0ba3168f5ede759d8e7464261fe27bc28a6a3801281c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-19.json",
+      "baselineSha256": "fcdde45040b03f1d1ff3924c9e2ff773e47a1e993bcbbe495f2b28e99432222a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-2.json",
+      "baselineSha256": "f04032eb35a1bd4917deef358c55d567bd1974aab54c7aefc19a88c7c08d7f2a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-20.json",
+      "baselineSha256": "b1bb5c201c8dbea4a1e80ec6d3bb682d36fcad75ba440e8126fdf605b3dab880",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-21.json",
+      "baselineSha256": "bec0a48d09ec367dbb774b82807d21f46149d53a18bf6bdec18347ef8b61cc16",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-22.json",
+      "baselineSha256": "1e2db0e2d2823f0f49278ec4b3ee570e6c2b1099ec47e4c5b47fe9f8c2acfa45",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-23.json",
+      "baselineSha256": "44d647af9211d5d4be159d3feeae20e66c01b950aef68e66efcfafb6625f95bf",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-24.json",
+      "baselineSha256": "710232ed8cc1d898eecee810f7c7a3a0ddb150b47bcdddd704c2be644373f6f5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-25.json",
+      "baselineSha256": "e7f79572af7f258e52dd360c62763cd4637fd94a32bab47a4f81176858217bc8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-26.json",
+      "baselineSha256": "67bd8a06aa92cb45a30e22acf12a64773b43fde2767fb61f1040763aa6aebdb4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-27.json",
+      "baselineSha256": "9c0d76b3f61992c85c67fd0d8e2647b8efdfa8ca789e225a85ba53d17bc77bb2",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-28.json",
+      "baselineSha256": "80d26235f2524da012b5d9ce454aea682a15880dcf1970f8ddd842831c178beb",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-29.json",
+      "baselineSha256": "641c6513226cb6cfd48f674348f4daea96e062612ac6980c57accafb7f14acf3",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-3.json",
+      "baselineSha256": "ada82763ab445a473e13510d58913987518d88738c46fabd90c43fd2bfac9262",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-30.json",
+      "baselineSha256": "34f41b0254eee1aefb8c4c7d3d1b83a417b3b07ee3ec61771f55c940189ca5cc",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-31.json",
+      "baselineSha256": "47366f6472ea63ae22e97d51841fda8f074e8c839d2f9214f6e3ed374d45f1ef",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-32.json",
+      "baselineSha256": "de4fad7f05f9b6cc86cdf71a4bb0877fd713c5b5cd8362f132b72bbfa06d351d",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-33.json",
+      "baselineSha256": "85613908e0b1e69d28aba2f342bd2a449e04e5ba06226a7f1a099e0c7606da26",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-34.json",
+      "baselineSha256": "70b97a7cc9be977fa66f7ed77d53a8e52b27268b1c70b085161acb17d4743355",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-35.json",
+      "baselineSha256": "35b57f7144b48996efb4b52a257bc226f8e335b02081870f9f99b1fffd7fadc9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-36.json",
+      "baselineSha256": "c553add567d60fabc9c6533542c9826d6bebec3a81c23fd9df10694add965ba1",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-37.json",
+      "baselineSha256": "3b7f86d197d08f90a75d39d58a70ca21bad4f6f587e2ba94b38c46ec6571121e",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-38.json",
+      "baselineSha256": "78dff525cdef3816910e300e395cb2b5654ef73bb7e162c3f70af8df20acbc56",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-39.json",
+      "baselineSha256": "9165763edc111184c41b506eae8eb2e9908cd6067b8911abd64c4744debeba86",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-4.json",
+      "baselineSha256": "7366c791eed9f0b95bf9cff33644e5e07df559acb2b61799341a819e907b217c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-40.json",
+      "baselineSha256": "71af676bdc400e435573871367ba34c433a43f56a4a0d659dfd2894cbf7e3f79",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-41.json",
+      "baselineSha256": "7e6c6e5be44768960a5fee7e3116cf70d3cab8be227383f3736107b21e77009f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-42.json",
+      "baselineSha256": "af73520de7d944e9c80dc0c218c4aab52b63626bd1477832a688bb8644e169f8",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-43.json",
+      "baselineSha256": "9be8234101e0dcafa0980ea9fb0ea74b58c70ae239cc9d527642ed1aecbc5ff0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-44.json",
+      "baselineSha256": "4395e37e8a7ffd06fff9ebcaaee87cdec311a5583f538873c5bc11911c509ad5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-45.json",
+      "baselineSha256": "c77121722b4f5e3c23b920fa7964374d79fdf4f007c427f2af4f9f0dbb034916",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-46.json",
+      "baselineSha256": "182077ada52a2a4aa09d667619d7be744566a42626ee8c21bdc68be58f6b18c0",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-47.json",
+      "baselineSha256": "4ebee708c8d147cea22173b3923a803f1356c55b9abcea3364b3c420affb7926",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-48.json",
+      "baselineSha256": "628a784bd89ee541cf8dca2863176ae77e9d004c2e6e6b313accd9f5c10e2760",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-49.json",
+      "baselineSha256": "96e469510d371360e8c8cb69586569b29d7028af1f22f3e852ed5f009a1d6dd5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-5.json",
+      "baselineSha256": "908fe9e71e0204f205662c5beadc5dccd7e5cb584a0c642a89b562b5251cd281",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-50.json",
+      "baselineSha256": "813cb471d35f39b6fea914362967cfb71c3376899cddbe1e3d8ef0ece45a7306",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-51.json",
+      "baselineSha256": "601cdbef3da58f970e9f25e56007a9690fdbc26eb98c216caebfe32f9b7bf0bd",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-52.json",
+      "baselineSha256": "66c71137d2d02c95ec5d4f76d4e4a5436f5cfa02eec46e6b9697aa9cee958fe9",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-53.json",
+      "baselineSha256": "d03aaa14e10e46c5f756ace7245ea7b811d63018fb555c14e7407c33de1c977b",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-54.json",
+      "baselineSha256": "079edd4c79d2d9c26aa0c7268612d9bb9b49c33f8176e7d92e5907ec11780fda",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-55.json",
+      "baselineSha256": "10d74c27648c8c62d0ab53f955e9a970c5e3fad644ba67c39e9c7ecd0c594b43",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-56.json",
+      "baselineSha256": "9e833a332460c910461fddeaa25265642832894a1b1b46205edd30a65ae476b6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-57.json",
+      "baselineSha256": "d83e435f2942b978b36b08daee5a7d62a02b0619fd694c9f9c088d41b7128d9f",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-58.json",
+      "baselineSha256": "6e8c97bd831fb020aa33c985a99b531e1e2991fa57b5a63afc4f18ff283fb2e4",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-59.json",
+      "baselineSha256": "9290b31aef8112b68dfd0e3424c33056dbdc3aa5bc114ec072a220597d2693e5",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-6.json",
+      "baselineSha256": "2fba7ec0f9ea972afe83f848f369c5fdc5808f68fffba8d8069cb7905b4888fa",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-60.json",
+      "baselineSha256": "f816ed22e306635a9161eedf6c56d2e039f1aea5bd6d722590f32ff54e9cf1aa",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-61.json",
+      "baselineSha256": "dc37a3342f849b179f1e5e369edebcb419f8eeaebba4b9aecfb703b51b6780e6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-62.json",
+      "baselineSha256": "bfafa2a3c8e936b205a66e6a4cc8e0e4f57c89fc6bf7657dfd041f7f219757b2",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-7.json",
+      "baselineSha256": "325c18a0b12bcf63e399e6fefedb769a67d74da263962da057b591ad0b6c4565",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-8.json",
+      "baselineSha256": "d81f467bf5632662a1e4a63f36650af2b481bb0bf34c56c89a3c9e360b999f2d",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-regressions/migration/candidate-9.json",
+      "baselineSha256": "8f49d79dc6f21c640e0102db7939b8391a981581c1395da0499d76fa789b97cb",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-success.json",
+      "baselineSha256": "1010d9380bba6d7f1da6bfab1e211ae6b7aa5f324d1a0a0fbc3ad676d6ec57b6",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-boundary.json",
+      "baselineSha256": "80e10bbebc83f369f4d93ceaecbca6a8df8ddf765bfa2eadd0c7b5cf839034ef",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-domain.json",
+      "baselineSha256": "af5b5580f6901d1539f2dffdcdfe886be6a9986d550b55b61c951deed818f3d2",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-at-budget.json",
+      "baselineSha256": "7362833309d42ca291d46db9a9bda41fe53620ba8b759fe0d94f924b6370bc69",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-below-budget.json",
+      "baselineSha256": "5a0b8f5012d242518b8877c38ccc91c56c019bd73322679f2012b55d87348244",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-zero-steps.json",
+      "baselineSha256": "0a459a52fefae3cdf07320035ee47145e176fc3c84e8264500f291069ba52d85",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-zero-evidence.json",
+      "baselineSha256": "88f899a02e877704844092101bda0b81212ef847a54f94df959e830d18c4cb5a",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-zero-depth.json",
+      "baselineSha256": "c427d8877eec908f5768f2dbda0217cda8dbb4ccde4a1f110e185644e1f6172c",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    },
+    {
+      "baseline": "evaluations/native_review/2026-10-16-review-identity/migration/original-scenario.json",
+      "baselineSha256": "86c90f9136b6f2a0dcfee1a2c2b385020167cce76a99b9381832177cb50749dd",
+      "fullObservationPreserved": true,
+      "candidateReplays": true
+    }
+  ]
+}
