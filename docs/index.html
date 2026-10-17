@@ -177,22 +177,26 @@
           <p class="eyebrow">Try it</p>
           <h2>Run It Locally</h2>
         </div>
-<div class="command-grid">
-<article class="command-item"><div class="command-copy"><h3>Build The Rust Engine</h3><p>From the repository root, with Rust 1.96.0 installed. See Getting Started for the development checkout.</p></div><pre><code>cargo +1.96.0 build --locked -p gwt-core --bin gwt-native</code></pre></article>
-<article class="command-item"><div class="command-copy"><h3>Validate The Candidate</h3><p>Check layout, types, and all 14 embedded scenarios.</p></div><pre><code>target/debug/gwt-native validate examples/native_review_walkthrough/candidate.gwt</code></pre></article>
-<article class="command-item"><div class="command-copy"><h3>Run The Changed Rule</h3><p>Quote a 1,500g nonmember parcel. The result has fee 5.</p></div><pre><code>target/debug/gwt-native run examples/native_review_walkthrough/candidate.gwt \
+        <p>Use GWT to check a policy, run a request, and review a proposed change.</p>
+        <a class="text-link" href="getting-started.html">Set up the developer preview and follow the example</a>
+        <div class="command-grid">
+          <article class="command-item">
+            <div class="command-copy"><h3>Check Your Rules</h3><p>Validate the policy and run its embedded scenarios.</p></div>
+            <pre><code>gwt-native validate delivery.gwt</code></pre>
+          </article>
+          <article class="command-item">
+            <div class="command-copy"><h3>Run A Request</h3><p>Send a parcel’s weight and membership status to the delivery policy.</p></div>
+            <pre><code>gwt-native run delivery.gwt \
   --request &quot;quote delivery&quot; \
-  --input examples/native_review_walkthrough/input.json</code></pre></article>
-<article class="command-item"><div class="command-copy"><h3>Compare And Review</h3><p>Capture the baseline and open a review showing how the same input behaves after the change.</p></div><pre><code>target/debug/gwt-native capture examples/native_delivery/rules.gwt \
-  --request &quot;quote delivery&quot; \
-  --input examples/native_review_walkthrough/input.json &gt; delivery.case.json
-
-target/debug/gwt-native corpus delivery.case.json &gt; delivery.corpus.json
-
-target/debug/gwt-native review delivery.corpus.json \
-  --candidate examples/native_review_walkthrough/candidate.gwt \
-  --html delivery-review.html &gt; delivery-review.json</code></pre></article>
-</div>
+  --input parcel.json</code></pre>
+          </article>
+          <article class="command-item">
+            <div class="command-copy"><h3>Review A Change</h3><p>Compare captured requests with the proposed policy and explore the evidence in your browser.</p></div>
+            <pre><code>gwt-native review delivery.corpus.json \
+  --candidate proposed.gwt \
+  --html delivery-review.html</code></pre>
+          </article>
+        </div>
       </section>
 
       <section class="section principles">

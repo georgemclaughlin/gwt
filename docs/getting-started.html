@@ -17,16 +17,30 @@
 <p class="lede">Follow one delivery policy from executable rules to a review of a real change.
 The Rust engine runs the GWT program and records the evidence behind its decisions.</p></section>
 <div class="doc-layout"><aside class="doc-nav" aria-label="Walkthrough steps">
-<a href="#setup">Build the engine</a><a href="#read">Read the policy</a><a href="#run">Run and validate</a>
+<a href="#setup">Get ready</a><a href="#read">Read the policy</a><a href="#run">Run and validate</a>
 <a href="#review">Compare and review</a><a href="#next">Next steps</a></aside><article class="doc-article">
-<section id="setup" class="walk-step"><h2>Build The Rust Engine</h2>
-<p>This walkthrough uses the current development branch. Install Rust 1.96.0 through rustup,
-then build from the repository root. If you already have this checkout, start at the build command.</p><pre><code>git clone --branch work/native-foundation-checkpoint https://github.com/georgemclaughlin/gwt.git
+<section id="setup" class="walk-step"><h2>Get Ready</h2>
+<p>You’ll use three files: <code>delivery.gwt</code> for the current policy,
+<code>proposed.gwt</code> for the change, and <code>parcel.json</code> for a customer’s request.</p>
+<p>Run the commands below in the directory containing those files, with <code>gwt-native</code> installed.
+The current preview is available from source; a public installer is not available yet.</p>
+<details><summary>Developer preview: install from source and prepare the example</summary>
+<p>With Git and rustup installed, run the following in a terminal. Cargo installs the optimized executable
+in its bin directory, which must be on your <code>PATH</code> (normally configured by rustup).
+Use a fresh directory for this checkout and example.</p><pre><code>git clone --branch work/native-foundation-checkpoint https://github.com/georgemclaughlin/gwt.git
 cd gwt
 rustup toolchain install 1.96.0
-cargo +1.96.0 build --locked -p gwt-core --bin gwt-native
-target/debug/gwt-native version --json</code></pre><p>The resulting executable runs GWT directly. Python is not required for the commands on this page.
-The native language draft is experimental and has not been assigned a language release version.</p>
+cargo +1.96.0 install --path crates/gwt-core --locked
+
+mkdir delivery-demo
+cp examples/native_delivery/rules.gwt delivery-demo/delivery.gwt
+cp examples/native_review_walkthrough/candidate.gwt delivery-demo/proposed.gwt
+cp examples/native_review_walkthrough/input.json delivery-demo/parcel.json
+cd delivery-demo
+
+gwt-native version --json</code></pre>
+<p>The command is currently named <code>gwt-native</code> to distinguish this engine from the earlier toolchain.
+The native language remains experimental.</p></details>
 </section>
 <section id="read" class="walk-step"><h2>Read The Executable Policy</h2>
 <p>The baseline charges nonmembers 5 up to 1,000g and 9 above that. Members pay zero.
@@ -70,23 +84,23 @@ WHEN quote delivery for &lt;parcel&gt; into &lt;quote&gt;
       set quote.fee to 9</code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/examples/native_delivery/rules.gwt">Read the complete baseline</a>
 </section>
 <section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
-<p>The prepared candidate extends the low-fee band to <strong>1,500g inclusive</strong>.
-It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code>target/debug/gwt-native validate examples/native_review_walkthrough/candidate.gwt
+<p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.
+It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code>gwt-native validate proposed.gwt
 
-target/debug/gwt-native run examples/native_review_walkthrough/candidate.gwt \
+gwt-native run proposed.gwt \
   --request &quot;quote delivery&quot; \
-  --input examples/native_review_walkthrough/input.json</code></pre><p>The declared <code>result</code> is:</p><pre><code>{&quot;quote&quot;:{&quot;status&quot;:&quot;standard&quot;,&quot;fee&quot;:5}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
+  --input parcel.json</code></pre><p>The declared <code>result</code> is:</p><pre><code>{&quot;quote&quot;:{&quot;status&quot;:&quot;standard&quot;,&quot;fee&quot;:5}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
 </section>
 <section id="review" class="walk-step"><h2>Compare The Same Input</h2>
 <p>Capture that same input against the baseline, then compare it with the candidate.
-These commands write four files in your checkout; use fresh filenames when preserving earlier reviews.</p><pre><code>target/debug/gwt-native capture examples/native_delivery/rules.gwt \
+These commands write four files in your example directory; use fresh filenames when preserving earlier reviews.</p><pre><code>gwt-native capture delivery.gwt \
   --request &quot;quote delivery&quot; \
-  --input examples/native_review_walkthrough/input.json &gt; delivery.case.json
+  --input parcel.json &gt; delivery.case.json
 
-target/debug/gwt-native corpus delivery.case.json &gt; delivery.corpus.json
+gwt-native corpus delivery.case.json &gt; delivery.corpus.json
 
-target/debug/gwt-native review delivery.corpus.json \
-  --candidate examples/native_review_walkthrough/candidate.gwt \
+gwt-native review delivery.corpus.json \
+  --candidate proposed.gwt \
   --html delivery-review.html &gt; delivery-review.json</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select the case and compare the fee:
 <strong>9 → 5</strong>. Follow the branch and write events to the source conditions:
 <code>1500 &lt;= 1000</code> was false; <code>1500 &lt;= 1500</code> is true.</p>
