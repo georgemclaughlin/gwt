@@ -7,7 +7,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("output", type=Path)
-parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt-native")
+parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt")
 args = parser.parse_args()
 directory = args.output / "scenarios"
 directory.mkdir(parents=True, exist_ok=True)

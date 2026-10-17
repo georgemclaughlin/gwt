@@ -1,5 +1,7 @@
 # Repeated refund-rule review
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/refund_review).
+
 This synthetic adoption rehearsal exercises three consecutive maintenance
 requests in equivalent GWT and Python programs:
 

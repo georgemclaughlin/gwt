@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use std::{collections::BTreeMap, path::Path};
 
 pub fn run(args: &[String]) -> Result<(bool, Value), Box<dyn std::error::Error>> {
-    let usage = "usage: gwt-native test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]";
+    let usage = "usage: gwt test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]";
     if args.len() < 5 || args.len() % 2 != 1 {
         return Err(usage.into());
     }

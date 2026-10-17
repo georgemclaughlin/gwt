@@ -27,7 +27,7 @@ def main():
     for profile in ['dev', 'release']:
         report = json.loads((getattr(args, profile) / 'qualification.json').read_text())
         assert report['profile'] == profile
-        executable = Path(report['workspace']) / 'installed/bin/gwt-native'
+        executable = Path(report['workspace']) / 'installed/bin/gwt'
         assert hashlib.sha256(executable.read_bytes()).hexdigest() == report['installedExecutableSha256']
         engines[profile] = {'executable': str(executable), 'sha256': report['installedExecutableSha256'],
                             'toolchain': report['toolchain'], 'engine': report['engine'], 'bytes': executable.stat().st_size}

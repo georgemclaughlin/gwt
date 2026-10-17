@@ -136,8 +136,8 @@ retains the kind-specific address/number in the output for the host. It does not
 claim to demonstrate access to kind-specific payloads in behavior:
 
 ```sh
-target/debug/gwt-native validate examples/native_one_of/rules.gwt
-target/debug/gwt-native test examples/native_one_of/rules.gwt
+target/debug/gwt validate examples/native_one_of/rules.gwt
+target/debug/gwt test examples/native_one_of/rules.gwt
 ```
 
 ## Evidence and tooling

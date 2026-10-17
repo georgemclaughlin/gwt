@@ -5,7 +5,7 @@ use std::process::Command;
 fn native_command_emits_result_and_reports_check_failures() {
     let fixture = |name: &str| format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
     let run = |source: &str| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .args([
                 "expression",
                 source,
@@ -32,7 +32,7 @@ fn native_command_emits_result_and_reports_check_failures() {
 fn native_program_commands_check_test_and_run_source_files() {
     let fixture = |name: &str| format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
     for command in ["check", "test"] {
-        let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
             .args([command, &fixture("invoice.gwt")])
             .output()
             .unwrap();
@@ -47,7 +47,7 @@ fn native_program_commands_check_test_and_run_source_files() {
             assert_eq!(payload["scenarioCount"], 2);
         }
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args([
             "run",
             &fixture("invoice.gwt"),
@@ -61,7 +61,7 @@ fn native_program_commands_check_test_and_run_source_files() {
     assert!(output.status.success());
     let payload: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(payload["result"]["decision"]["total"], "47.88");
-    let failed = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let failed = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args([
             "run",
             &fixture("invoice.gwt"),

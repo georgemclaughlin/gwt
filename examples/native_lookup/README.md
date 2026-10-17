@@ -32,9 +32,9 @@ selection request uses `ELSE PASS` intentionally: it does not clear stale state.
 ## Validate and inspect
 
 ```sh
-gwt-native inspect examples/native_lookup/rules.gwt
-gwt-native validate examples/native_lookup/rules.gwt
-python -m gwtlang format examples/native_lookup/rules.gwt --check
+gwt inspect examples/native_lookup/rules.gwt
+gwt validate examples/native_lookup/rules.gwt
+gwt format examples/native_lookup/rules.gwt --check
 ```
 
 The seven embedded scenarios assert snapshots, absence, retained state, missing
@@ -51,8 +51,8 @@ For host execution, `preview stock count` and `record stock count` accept:
 Save that JSON in `input.json`, then run:
 
 ```sh
-gwt-native run examples/native_lookup/rules.gwt --request "preview stock count" --input input.json
-gwt-native run examples/native_lookup/rules.gwt --request "record stock count" --input input.json
+gwt run examples/native_lookup/rules.gwt --request "preview stock count" --input input.json
+gwt run examples/native_lookup/rules.gwt --request "record stock count" --input input.json
 ```
 
 The preview leaves stock at `[5, 9]` and selects a proposed count of 2. Recording

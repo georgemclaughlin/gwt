@@ -1,5 +1,14 @@
 # Evaluation sources and retained evidence
 
+Current product qualification is recorded in [product_cutover](product_cutover/README.md).
+Dated evidence remains immutable. Historical Python-runtime harnesses were
+retired; reproduce them from the reference commit in
+[the retirement inventory](../docs/retirement-inventory.json).
+Independent policy oracles, ordinary-Python comparison fixtures, human-study
+preparation tools, and native package/editor/browser qualification remain active.
+Actual human sessions and external pilots remain pending.
+
+
 This directory contains reproducible evaluation tools, independent fixtures,
 curated checkpoint summaries, and selected observations. Real model results are
 labeled separately from synthetic rehearsals. There are no human-participant

@@ -4,7 +4,7 @@ Use profiling to see which operations and source locations contribute most to
 an execution's evidence budget:
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- profile examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json
+cargo run -p gwt-core --bin gwt -- profile examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json
 ```
 
 An installed executable accepts the same `profile FILE.gwt` command. Use
@@ -19,7 +19,7 @@ check formatting and all embedded scenarios.
 Use [a limit file](native-execution-limits.md) with trailing `--limits FILE.json`
 to profile the same explicit operating budget used by the host or validation.
 VS Code's native **GWT: Profile Execution Evidence** command uses the same entry
-selection as Run and the configured `gwt.native.limitsFile`, if any. Results
+selection as Run and the configured `gwt.limitsFile`, if any. Results
 appear in the GWT output channel; see [editor setup](../vscode-gwt/README.md).
 
 ## Read the report

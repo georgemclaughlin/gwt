@@ -31,7 +31,7 @@ fn executable_and_library_identity_match_the_engine_that_captures_cases() {
         vec!["-V"],
     ] {
         // No source checkout, environment configuration, or stdin is needed.
-        let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
             .args(args)
             .current_dir(std::env::temp_dir())
             .env_clear()
@@ -55,7 +55,7 @@ fn version_refuses_extra_arguments_instead_of_reading_source_or_stdin() {
         vec!["--version", "--json"],
         vec!["-V", "--request", "anything"],
     ] {
-        let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
             .args(args)
             .stdin(Stdio::null())
             .output()
@@ -65,7 +65,7 @@ fn version_refuses_extra_arguments_instead_of_reading_source_or_stdin() {
         assert!(
             String::from_utf8(output.stderr)
                 .unwrap()
-                .contains("usage: gwt-native version")
+                .contains("usage: gwt version")
         );
     }
 }

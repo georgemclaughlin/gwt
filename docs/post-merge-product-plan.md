@@ -1,6 +1,8 @@
 # GWT after the Rust cutover
 
-Status: implementation plan, not a completed transition or published release.
+Status: implemented on the development branch; qualification is recorded in
+[evaluations/product_cutover](../evaluations/product_cutover/README.md). Merge and
+public publication remain pending.
 
 The public product is **GWT**. The Rust engine owns the **`gwt` command**.
 People write `.gwt` programs, run scenarios, inspect decisions, and review
@@ -8,9 +10,9 @@ changes. Rust describes the implementation; it is not a separate product tier.
 The website and onboarding should describe that destination.
 
 The owner requested this post-merge direction after reviewing the website.
-The recommendation is to retire the Python runtime from the active product,
-rather than maintain two supported engines. Planning this transition does not
-merge the branch, publish packages, or claim that it has already happened.
+The authorized cutover retires the Python runtime from the active product.
+The sections below record its design and acceptance criteria. Implementation
+does not merge the branch or publish packages.
 
 ## The experience we are building
 
@@ -23,10 +25,10 @@ merge the branch, publish packages, or claim that it has already happened.
    evidence with `gwt review`.
 6. Use the editor with the same installed engine and semantics by default.
 
-These are target commands, not the current executable names. Build paths,
+These are the implemented command names. Build paths,
 repository layout, work-branch names, and engine-selection switches belong in
-contributor or migration documentation. The current checkout still uses
-`gwt-native`, and the Python distribution still installs `gwt`.
+contributor or migration documentation. The current checkout installs `gwt` from Rust. Existing Python installations
+can still shadow it until explicitly removed or bypassed.
 
 ## One supported engine
 

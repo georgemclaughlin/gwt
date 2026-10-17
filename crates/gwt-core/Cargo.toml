@@ -22,5 +22,5 @@ sha2 = "=0.10.9"
 sha2 = "=0.10.9"
 
 [[bin]]
-name = "gwt-native"
+name = "gwt"
 path = "src/main.rs"

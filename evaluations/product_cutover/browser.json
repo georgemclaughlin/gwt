@@ -1,0 +1,49 @@
+{
+  "views": [
+    {
+      "route": "/",
+      "width": 1440,
+      "scroll": 1440
+    },
+    {
+      "route": "/getting-started.html",
+      "width": 1440,
+      "scroll": 1440
+    },
+    {
+      "route": "/installation.html",
+      "width": 1440,
+      "scroll": 1440
+    },
+    {
+      "route": "/demo/delivery-review.html",
+      "width": 1440,
+      "scroll": 1440
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "route": "/getting-started.html",
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "route": "/installation.html",
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "route": "/demo/delivery-review.html",
+      "width": 390,
+      "scroll": 390
+    }
+  ],
+  "caseCount": 9,
+  "changedOutcomes": 2,
+  "preservedFailure": 1,
+  "download": "delivery-example.zip",
+  "pageErrors": []
+}

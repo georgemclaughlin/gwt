@@ -11,8 +11,8 @@ directly. FIND has an explicit empty result in ELSE. The rule does not sort or
 deduplicate codes; repeated eligible codes retain their positions.
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- validate examples/native_filter_proofs/rules.gwt
-cargo run -p gwt-core --bin gwt-native -- run examples/native_filter_proofs/rules.gwt --request "prepare pickups" --input examples/native_filter_proofs/request.json
+cargo run -p gwt-core --bin gwt -- validate examples/native_filter_proofs/rules.gwt
+cargo run -p gwt-core --bin gwt -- run examples/native_filter_proofs/rules.gwt --request "prepare pickups" --input examples/native_filter_proofs/request.json
 ```
 
 The sample returns codes `["B", "A"]`, first code `"B"`, and both parcels marked

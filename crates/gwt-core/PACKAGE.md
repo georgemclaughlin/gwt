@@ -1,17 +1,17 @@
 # GWT native core (experimental)
 
 GWT expresses domain behavior as executable `GIVEN / WHEN / THEN` programs.
-This Rust library and `gwt-native` CLI implement an experimental language subset.
+This Rust library and `gwt` CLI implement an experimental language subset.
 The crate is MIT-licensed and remains unpublished (`publish = false`).
 
 The source package is self-contained. With Rust 1.85 or newer, extract it into a
 new directory and run:
 
 ```sh
-cargo build --locked --bin gwt-native
-cargo run --locked --bin gwt-native -- version --json
+cargo build --locked --bin gwt
+cargo run --locked --bin gwt -- version --json
 cargo run --locked --example embed
-cargo run --locked --bin gwt-native -- test tests/fixtures/invoice.gwt
+cargo run --locked --bin gwt -- test tests/fixtures/invoice.gwt
 ```
 
 The embedding example compiles frozen source, tests its two scenarios, and runs
@@ -19,7 +19,7 @@ a typed request. Its result includes an exact decimal total of `"47.88"`, source
 identity, and factual execution evidence. Inspect `ok` before using `result`;
 failed requests retain diagnostics/evidence and have no successful result.
 
-`gwt-native version --json` and the library's `version_info()` identify the
+`gwt version --json` and the library's `version_info()` identify the
 compiled package, experimental language profile, and case engine fingerprint.
 The language release version is null: crate version 0.1.0 is not a language
 version. The command works without source files and does not execute a program.

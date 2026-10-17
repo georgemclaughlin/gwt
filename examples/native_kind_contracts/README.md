@@ -20,8 +20,8 @@ setup can create an `Addition` directly, retaining its explicit `kind` field.
 From the repository root after building the native executable:
 
 ```sh
-target/debug/gwt-native validate examples/native_kind_contracts/rules.gwt
-target/debug/gwt-native test examples/native_kind_contracts/rules.gwt
+target/debug/gwt validate examples/native_kind_contracts/rules.gwt
+target/debug/gwt test examples/native_kind_contracts/rules.gwt
 ```
 
 Five scenarios contain ten expectations: a negative literal, addition, and

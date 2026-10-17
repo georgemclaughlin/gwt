@@ -316,9 +316,9 @@ For arithmetic, short-circuit proofs, and resource bounds, consult
 From the repository root:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_return_values/rules.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_setup_tables/rules.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_value_dispatch/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_return_values/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_setup_tables/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_value_dispatch/rules.gwt
 ```
 
 The implementation references for this audit are

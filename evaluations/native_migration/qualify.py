@@ -12,7 +12,7 @@ parser.add_argument("output", type=Path)
 parser.add_argument("--previous-engine", type=Path, required=True)
 parser.add_argument("--changed-engine", type=Path,
                     help="optional qualification engine whose assertion message was deliberately changed")
-parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt-native")
+parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt")
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 

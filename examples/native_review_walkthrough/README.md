@@ -12,14 +12,14 @@ inclusive while preserving membership, overweight precedence, and rejection.
   and generate HTML plus all-pending decisions in a new directory.
 
 ```sh
-cargo +1.96.0 build --locked -p gwt-core --bin gwt-native
+cargo +1.96.0 build --locked -p gwt-core --bin gwt
 python examples/native_review_walkthrough/prepare.py /tmp/gwt-delivery-review
 ```
 
 Expected: nine verified comparisons, two changed outcomes (`new-band`,
 `new-limit`), one preserved rejection (`invalid-weight`), and nine pending
 decisions. `complete` describes comparison coverage; it is not approval.
-Use `--native /path/to/gwt-native` to select another executable explicitly.
+Use `--native /path/to/gwt` to select another executable explicitly.
 Fresh artifacts include source copies, captured inputs/cases, engine identity,
 explicit expectations, validation reports, and source/executable hashes.
 

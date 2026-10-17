@@ -37,7 +37,7 @@ impl Fixture {
         .unwrap();
     }
     fn command(&self, args: &[&str]) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .current_dir(&self.0)
             .args(args)
             .output()

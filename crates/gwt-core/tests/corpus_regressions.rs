@@ -367,7 +367,7 @@ fn cli_requires_explicit_scope_preserves_files_and_reports_nonzero_regressions()
     let cases = corpus(capture(&facts(), ProgramLimits::default())).to_json();
     fs::write(f.0.join("corpus.json"), &cases).unwrap();
     let command = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .current_dir(&f.0)
             .args(args)
             .output()

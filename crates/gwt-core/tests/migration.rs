@@ -297,7 +297,7 @@ fn cli_executes_the_selected_verifier_with_limits_and_preserves_the_original_fil
         fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     };
     let run = |timeout: &str| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg("migrate")
             .arg(&path)
             .arg("--previous-engine")
@@ -348,11 +348,11 @@ fn cli_executes_the_selected_verifier_with_limits_and_preserves_the_original_fil
         "migration"
     );
     // A real, wrong engine must refuse the old fingerprint before any candidate is proposed.
-    let result = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let result = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("migrate")
         .arg(&path)
         .arg("--previous-engine")
-        .arg(env!("CARGO_BIN_EXE_gwt-native"))
+        .arg(env!("CARGO_BIN_EXE_gwt"))
         .output()
         .unwrap();
     assert!(!result.status.success());
@@ -547,7 +547,7 @@ fn cli_review_assessment_and_export_reverify_and_never_overwrite() {
     fs::write(&verifier, &script).unwrap();
     fs::set_permissions(&verifier, fs::Permissions::from_mode(0o700)).unwrap();
     let run = |command: &str, options: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg(command)
             .arg(&path)
             .arg("--previous-engine")

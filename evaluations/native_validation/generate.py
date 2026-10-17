@@ -6,7 +6,7 @@ import subprocess
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("output", type=Path)
-parser.add_argument("--native", type=Path, default=Path("target/debug/gwt-native"))
+parser.add_argument("--native", type=Path, default=Path("target/debug/gwt"))
 args = parser.parse_args()
 native = args.native.resolve()
 args.output.mkdir(parents=True, exist_ok=False)

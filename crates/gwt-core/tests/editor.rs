@@ -150,7 +150,7 @@ fn cli_uses_bounded_stdin_and_refuses_duplicate_documents() {
     let entry = root.0.join("main.gwt");
     let request = serde_json::json!({"entry":entry,"importRoot":root.0,"documents":[{"path":"main.gwt","text":"SCENARIO exact\nGIVEN note is \"😀\"\nTHEN prints []\n"}]});
     let invoke = |input: String| {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg("check-editor")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

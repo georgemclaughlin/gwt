@@ -14,14 +14,14 @@ replace the Python workbench schema, or imply complete language support.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   crates/gwt-core/tests/fixtures/invoice.gwt \
   --request 'price invoice' \
   --input crates/gwt-core/tests/fixtures/invoice-input.json \
   > /tmp/gwt-native-invoice.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- corpus \
+cargo run --locked -p gwt-core --bin gwt -- corpus \
   /tmp/gwt-native-invoice.case.json > /tmp/gwt-native-corpus.json
-cargo run --locked -p gwt-core --bin gwt-native -- review \
+cargo run --locked -p gwt-core --bin gwt -- review \
   /tmp/gwt-native-corpus.json \
   --candidate crates/gwt-core/tests/fixtures/invoice.gwt \
   --html /tmp/gwt-native-review.html > /tmp/gwt-native-review.json

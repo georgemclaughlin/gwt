@@ -17,7 +17,7 @@ Supply an operator-owned engine map. Paths are never taken from saved cases:
   "engines": [
     {
       "sourceDigest": "sha256:62cee770b291bfffe3082c8a81d6c2a1aba57013b78b562b6b4d6345f1c7e0d7",
-      "executable": "/path/to/previous/gwt-native"
+      "executable": "/path/to/previous/gwt"
     }
   ]
 }
@@ -39,7 +39,7 @@ authentication and execution is not sandboxed.
 ## Prepare and review the complete transition
 
 ```sh
-gwt-native migrate-corpus original.corpus.json --engines engines.json \
+gwt migrate-corpus original.corpus.json --engines engines.json \
   --html corpus-migration.html --decisions-template corpus-decisions.json \
   > corpus-migration.json
 ```
@@ -78,9 +78,9 @@ choices or alter the requirements for export.
 ## Assess and export
 
 ```sh
-gwt-native assess-corpus-migration original.corpus.json --engines engines.json \
+gwt assess-corpus-migration original.corpus.json --engines engines.json \
   --decisions corpus-decisions.json
-gwt-native export-corpus-migration original.corpus.json --engines engines.json \
+gwt export-corpus-migration original.corpus.json --engines engines.json \
   --decisions corpus-decisions.json --output migrated.corpus.json \
   > corpus-export.json
 ```

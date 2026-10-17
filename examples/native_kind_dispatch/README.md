@@ -7,9 +7,9 @@ into the route. Adding another kind requires updating this exhaustive decision.
 From the repository root:
 
 ```sh
-cargo build --locked -p gwt-core --bin gwt-native
-target/debug/gwt-native validate examples/native_kind_dispatch/rules.gwt
-target/debug/gwt-native test examples/native_kind_dispatch/rules.gwt
+cargo build --locked -p gwt-core --bin gwt
+target/debug/gwt validate examples/native_kind_dispatch/rules.gwt
+target/debug/gwt test examples/native_kind_dispatch/rules.gwt
 ```
 
 Three scenarios contain six expectations for the channel and destination. Rust

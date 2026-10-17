@@ -45,9 +45,9 @@ changing the initialized quote. Both revisions stay available.
 From the repository root, build and run the candidate:
 
 ```sh
-cargo +1.96.0 build --locked -p gwt-core --bin gwt-native
-target/debug/gwt-native validate examples/native_review_walkthrough/candidate.gwt
-target/debug/gwt-native run examples/native_review_walkthrough/candidate.gwt --request "quote delivery" --input examples/native_review_walkthrough/input.json
+cargo +1.96.0 build --locked -p gwt-core --bin gwt
+target/debug/gwt validate examples/native_review_walkthrough/candidate.gwt
+target/debug/gwt run examples/native_review_walkthrough/candidate.gwt --request "quote delivery" --input examples/native_review_walkthrough/input.json
 ```
 
 Validation checks layout, types, and all 14 candidate scenarios. The request
@@ -116,7 +116,7 @@ No participant response or approval is required just to run this walkthrough.
 To see the pending gate now:
 
 ```sh
-target/debug/gwt-native assess-review /tmp/gwt-delivery-review/corpus.json --candidate examples/native_review_walkthrough/candidate.gwt --decisions /tmp/gwt-delivery-review/pending-decisions.json
+target/debug/gwt assess-review /tmp/gwt-delivery-review/corpus.json --candidate examples/native_review_walkthrough/candidate.gwt --decisions /tmp/gwt-delivery-review/pending-decisions.json
 ```
 
 Expect exit status **1**, `pending: 9`, `accepted: 0`, and `allAccepted: false`.

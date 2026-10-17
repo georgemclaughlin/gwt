@@ -20,7 +20,7 @@ From the repository root:
 
 ```sh
 python -m gwtlang validate examples/pressure_tests/subscription_entitlements.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/pressure_tests/subscription_entitlements.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/pressure_tests/subscription_entitlements.gwt
 ```
 
 Both commands pass thirteen scenario executions, including invoice order,

@@ -151,7 +151,7 @@ work from the preceding implementation; preserve it when resuming.
 
 ## Interrupted work
 
-The latest implementation adds `gwt-native profile` and the Rust
+The latest implementation adds `gwt profile` and the Rust
 `CompiledProgram::profile_request` / `profile_scenario` APIs. They execute one
 request or scenario with its normal limits and report exact retained evidence
 bytes, grouped by operation and source span, together with the execution step

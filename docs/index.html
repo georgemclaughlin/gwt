@@ -27,14 +27,14 @@
             The same file can also carry <strong>GIVEN</strong> /
             <strong>WHEN</strong> / <strong>THEN</strong> scenarios for tests.
             Capture real runs and compare behavior changes without creating a
-            second implementation of the rules. The experimental Rust engine
-            runs GWT directly, with exact numbers and source-backed explanations.
+            second implementation of the rules. GWT runs directly, with exact numbers and source-backed explanations.
           </p>
           <div class="actions" aria-label="Primary links">
-            <a class="button primary" href="getting-started.html">Getting Started</a>
-            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/tree/work/native-foundation-checkpoint/examples/native_review_walkthrough">Review Walkthrough</a>
+            <a class="button primary" href="demo/delivery-review.html">Explore A Change</a>
+            <a class="button secondary" href="getting-started.html">Get Started</a>
+            <a class="button secondary" href="getting-started.html#review">Review Walkthrough</a>
             <a class="button secondary" href="#run">Run The Examples</a>
-            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/spec/native-draft.md">Language Reference</a>
+            <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec-is-code.md">Spec Is Code</a>
             <a class="button secondary" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/dsl-and-llms.md">DSLs And LLMs</a>
             <a class="button secondary icon-button" href="https://github.com/georgemclaughlin/gwt" aria-label="View GWT on GitHub" title="View GWT on GitHub">
@@ -147,7 +147,7 @@
             domain names, replay them against two real program versions, and
             open a self-contained review dossier.
           </p>
-          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-review-walkthrough.md">
+          <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-review-walkthrough.md">
             Read the evidence workflow
           </a>
         </div>
@@ -164,7 +164,7 @@
           <p class="eyebrow">Rust foundation</p><h2>Readable Behavior, Native Execution</h2>
           <p>The Rust engine checks and executes GWT source. Use the command line, embed it in a Rust application,
           or run the WebAssembly build in a browser. The language has its own explicit semantics.</p>
-          <a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-embedding.md">Explore host integration</a>
+          <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-embedding.md">Explore host integration</a>
         </div>
         <ol class="pipeline" aria-label="Native execution pipeline">
           <li>check typed contracts and behavior</li><li>execute with exact numbers and explicit limits</li>
@@ -178,21 +178,21 @@
           <h2>Run It Locally</h2>
         </div>
         <p>Use GWT to check a policy, run a request, and review a proposed change.</p>
-        <a class="text-link" href="getting-started.html">Set up the developer preview and follow the example</a>
+        <a class="text-link" href="getting-started.html">Get GWT and follow the example</a>
         <div class="command-grid">
           <article class="command-item">
             <div class="command-copy"><h3>Check Your Rules</h3><p>Validate the policy and run its embedded scenarios.</p></div>
-            <pre><code>gwt-native validate delivery.gwt</code></pre>
+            <pre><code>gwt validate delivery.gwt</code></pre>
           </article>
           <article class="command-item">
             <div class="command-copy"><h3>Run A Request</h3><p>Send a parcel’s weight and membership status to the delivery policy.</p></div>
-            <pre><code>gwt-native run delivery.gwt \
+            <pre><code>gwt run delivery.gwt \
   --request &quot;quote delivery&quot; \
   --input parcel.json</code></pre>
           </article>
           <article class="command-item">
             <div class="command-copy"><h3>Review A Change</h3><p>Compare captured requests with the proposed policy and explore the evidence in your browser.</p></div>
-            <pre><code>gwt-native review delivery.corpus.json \
+            <pre><code>gwt review delivery.corpus.json \
   --candidate proposed.gwt \
   --html delivery-review.html</code></pre>
           </article>
@@ -204,10 +204,10 @@
           <p class="eyebrow">Boundaries</p>
           <h2>Current Status</h2>
           <p>
-            The Rust engine and native language draft are experimental. GWT is aimed
+            GWT is experimental. GWT is aimed
             at workflows whose rules need to stay readable, executable, and reviewable.
             Whether it improves human understanding is still to be measured.
-            The earlier Python v0.2 toolchain remains available for existing programs.
+
           </p>
           <a class="text-link" href="https://github.com/georgemclaughlin/gwt/blob/main/docs/design-principles.md">Read the principles</a>
         </div>
@@ -215,10 +215,10 @@
     </main>
 
     <footer class="footer">
-      <span>Experimental Rust engine · Native language draft</span>
+      <span>GWT · Experimental language</span>
       <a href="getting-started.html">Getting Started</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/spec/native-draft.md">Language Reference</a>
-      <a href="https://github.com/georgemclaughlin/gwt/blob/work/native-foundation-checkpoint/docs/native-grammar.md">Grammar</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/spec/native-draft.md">Language Reference</a>
+      <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-grammar.md">Grammar</a>
       <a href="https://github.com/georgemclaughlin/gwt">GitHub</a>
     </footer>
   </body>

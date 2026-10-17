@@ -3,7 +3,7 @@
 The native crate now builds independently of the repository directory layout.
 The Cargo source artifact contains its Rust code, review assets, build inputs,
 MIT license, a small embedding example, and an invoice fixture with two scenarios.
-It provides both `gwt-core` and `gwt-native`. It remains an unpublished development
+It provides both `gwt-core` and `gwt`. It remains an unpublished development
 package with `publish = false`.
 
 ## Build a local artifact
@@ -22,9 +22,9 @@ the declared dependencies cached before using `--offline`.
 Extract the artifact into a new directory. From its root:
 
 ```sh
-cargo build --locked --bin gwt-native
+cargo build --locked --bin gwt
 cargo run --locked --example embed
-cargo run --locked --bin gwt-native -- test tests/fixtures/invoice.gwt
+cargo run --locked --bin gwt -- test tests/fixtures/invoice.gwt
 cargo install --path . --locked --root /path/to/local/install
 ```
 
@@ -144,14 +144,14 @@ It recompiles per invocation; use the Rust library above for compile-once sharin
 
 ## Discover contracts before supplying inputs
 
-`gwt-native inspect FILE.gwt` reports checked request inputs/outputs, named types,
+`gwt inspect FILE.gwt` reports checked request inputs/outputs, named types,
 behavior signatures, scenarios, and the frozen source identity. Rust hosts can
 use `program.inspect()` and its bounded `to_json()` method. The report excludes
 locally initialized request state from caller inputs and distinguishes optional
 omission from required inputs. See [native inspection](native-inspection.md) for
 its type representation and limits. Inspection does not execute the rules.
 
-For resource investigation, `gwt-native profile` executes a selected request or
+For resource investigation, `gwt profile` executes a selected request or
 scenario and groups exact retained evidence bytes by operation and source span.
 Rust hosts use `profile_request` or `profile_scenario` with explicit limits.
 See [native profiling](native-profiling.md) for partial-failure accounting and
@@ -272,8 +272,8 @@ with older kernels, other architectures, or other operating systems.
 
 ## Standalone release bundle
 
-Release qualification also produces `gwt-native-0.1.0-<target>.tar.gz` and an
-archive checksum. It contains `bin/gwt-native`, the MIT license, a README,
+Release qualification also produces `gwt-0.1.0-<target>.tar.gz` and an
+archive checksum. It contains `bin/gwt`, the MIT license, a README,
 `manifest.json`, and an invoice source/input example. No Rust or Python
 installation is needed to execute the extracted binary. The manifest records
 file hashes, modes and sizes; compiler/target/profile; engine and source-package

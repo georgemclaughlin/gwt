@@ -1,35 +1,19 @@
-# Native language support and transition contract
+# GWT language support and transition
 
-GWT currently has two explicitly selected implementations. The Python toolchain
-implements the [v0.2 specification](spec/v0.2.md). The Rust toolchain's current
-contract is consolidated in the [native draft specification](spec/native-draft.md),
-with the [experimental native grammar](native-grammar.md) and
-[native semantics](native-semantics.md). Shared `.gwt` syntax does not imply
-equivalent acceptance, state changes, numbers, or evidence.
-
-This document consolidates the current support boundary and the procedure for
-moving a workflow to native GWT. It also specifies the work needed to make a
-versioned native language release. It does not assign that release a number,
-change the default engine, or publish a package.
-
-## Planned product cutover
-
-The [post-merge product plan](post-merge-product-plan.md) targets one Rust engine
-under the public `gwt` command and retirement of the active Python runtime.
-That coordinated transition is not implemented yet. The identities below
-describe the current checkout; the plan describes the intended merged product.
+GWT uses one Rust engine under the `gwt` command. The [language reference](spec/native-draft.md),
+[grammar](native-grammar.md), and [semantics](native-semantics.md) define its current contract.
+The Python v0.2 implementation is retired; see the [upgrade guide](python-retirement.md).
+A common `.gwt` extension does not imply equivalent semantics or artifact formats.
 
 ## Select and identify the implementation
 
 | Surface | Current identity | What it identifies |
 | --- | --- | --- |
-| Python command | `python -m gwtlang` / installed `gwt` | Existing Python language and artifact workflow |
-| Python distribution | `gwtlang` 0.3.0; language v0.2; run payload schema 3 | Separate package, language, and envelope versions |
-| Native command | `gwt-native`; `version --json` describes the selected executable | Explicit native execution; no fallback to Python |
+| Native command | `gwt`; `version --json` describes the selected executable | Explicit native execution; no fallback to Python |
 | Rust crate | `gwt-core` 0.1.0, `publish = false` | Experimental library package; not language v0.1 |
 | Native saved case | Native artifact kind, schema, source and engine identity, frozen limits | Reproducibility of a particular observation; not Python artifact compatibility |
 
-`gwt-native version --json` (also `version`, `--version`, or `-V`) returns a
+`gwt version --json` (also `version`, `--version`, or `-V`) returns a
 `gwt.native-version` schema-1 report. It reports the compiled package name and
 version, `languageProfile: "gwt-native-experimental"`, `languageVersion: null`,
 `status: "experimental"`, and the same engine identity used in captured cases.
@@ -44,16 +28,11 @@ a saved case. A source digest identifies the frozen
 import closure; an engine digest identifies the engine inputs. Neither is a
 human approval or authenticated provenance claim.
 
-Select native mode explicitly in the editor and use the same engine for
-checking, running, capturing, and reviewing. Python formatting can preserve
-some native-only source, but passing that formatter does not establish Python
-or native semantic acceptance.
-
-**GWT: Show Engine Information** displays the active editor engine's version
-report and selected command without saving or executing the open source. After
-changing `gwt.engine`, reload the window; the report describes the engine active
-in that window until reload. Older native executables without `version` fail
-explicitly instead of reporting inferred identity.
+The editor defaults to the same `gwt` executable used by the terminal. It checks
+engine identity before running source and does not fall back to Python.
+**GWT: Show Engine Information** reports the selected executable without saving
+or executing the edited document. Explicit `gwt.command` configuration changes
+apply on the next invocation.
 
 ## Supported native language
 
@@ -169,9 +148,9 @@ Before declaring a native language version:
    State which platforms and workflows are supported rather than implying
    production readiness from a local package build.
 4. Publish the intentional incompatibilities and manual/unavailable migration
-   paths. Preserve the existing Python command and payload contract until a
-   separately reviewed default/compatibility transition is implemented.
-5. Apply the existing [release gates](release-v0.4-checklist.md). External pilots
+   paths. Preserve historical Python artifacts and their reference checkout; the retired
+   command is not installed by the new product.
+5. Apply the [release gates](release-checklist.md). External pilots
    and publication remain deferred; preparing this contract does not waive
    either gate or demonstrate human benefit.
 

@@ -1,10 +1,10 @@
 # Native validation
 
-`gwt-native validate` checks one captured import closure, checks its formatting,
+`gwt validate` checks one captured import closure, checks its formatting,
 and executes the entry's scenarios. It never rewrites source.
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_delivery/rules.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_delivery/rules.gwt
 ```
 
 The command accepts `--import-root DIRECTORY`, `--limits FILE.json`, `--allow-no-scenarios`, and
@@ -114,7 +114,7 @@ apply; there is no additional whole-validation time budget in the library or CLI
 Add `--html` to produce a self-contained report that opens offline:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/native_delivery/rules.gwt --html /tmp/gwt-delivery-validation.html
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/native_delivery/rules.gwt --html /tmp/gwt-delivery-validation.html
 ```
 
 The destination must be new; an existing file, including a source file, is never
@@ -152,7 +152,7 @@ file is a presentation of local checks rather than authenticated evidence.
 
 ## VS Code
 
-With `gwt.engine` set to `native`, **Validate Current File** saves dirty open GWT
+In the GWT editor, **Validate Current File** saves dirty open GWT
 documents, aborts on a failed save, and invokes this command on the active file.
 It uses the configured native executable and import root, a thirty-second process
 timeout, and the existing 32 MiB output bound. The complete JSON summary appears

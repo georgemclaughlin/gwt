@@ -1,7 +1,7 @@
 # Call native GWT from Node
 
 This reference adapter runs the standalone Rust engine from a Node application.
-It needs Node 22+ and an explicitly selected `gwt-native` executable, with no npm
+It needs Node 22+ and an explicitly selected `gwt` executable, with no npm
 dependencies. It is separate from the existing Python-backed TypeScript client.
 The [local qualification](../../evaluations/native_packaging/2026-10-16-node-host/README.md)
 covers Node 22.22.2 and the packaged static Linux x86_64 engine.
@@ -9,7 +9,7 @@ covers Node 22.22.2 and the packaged static Linux x86_64 engine.
 Run the invoice example from the repository root:
 
 ```sh
-node examples/native_node_host/quote.mjs /absolute/path/to/gwt-native
+node examples/native_node_host/quote.mjs /absolute/path/to/gwt
 ```
 
 It uses the packaged crate's invoice fixture and supplies a quantity larger than
@@ -26,7 +26,7 @@ import { runNativeRequest, parseExact } from './native.mjs';
 
 const input = parseExact(receivedJsonText);
 const { execution, stdout } = await runNativeRequest({
-  executable: '/opt/gwt/bin/gwt-native',
+  executable: '/opt/gwt/bin/gwt',
   program: '/srv/rules/invoice.gwt',
   request: 'price invoice',
   input,
@@ -115,7 +115,7 @@ integration work. The trusted native engine does not spawn child processes.
 ## Verify
 
 ```sh
-GWT_NATIVE_PATH=/absolute/path/to/gwt-native node --test tests/native_node_host.test.mjs
+GWT_NATIVE_PATH=/absolute/path/to/gwt node --test tests/native_node_host.test.mjs
 ```
 
 The tests cover exact results and full observation equality with direct CLI runs,

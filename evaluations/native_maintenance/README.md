@@ -36,7 +36,7 @@ It passes both public examples but fails mixed-weight withheld cases.
 From the repository root, select a frozen native executable and a new directory:
 
 ```sh
-python -m evaluations.native_maintenance.study --native /path/to/gwt-native --output /path/to/new-qualification
+python -m evaluations.native_maintenance.study --native /path/to/gwt --output /path/to/new-qualification
 python -m unittest tests.test_native_maintenance
 ```
 

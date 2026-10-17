@@ -4,7 +4,7 @@ Use native inspection to discover the contracts in the program you are about to
 integrate or change:
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- inspect examples/native_early_returns/rules.gwt
+cargo run -p gwt-core --bin gwt -- inspect examples/native_early_returns/rules.gwt
 ```
 
 An installed executable accepts the same `inspect FILE.gwt` command. Add

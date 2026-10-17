@@ -1,5 +1,7 @@
 # Language Tour
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/language_tour).
+
 This example is a small expense reimbursement workflow. It shows the current
 language surface in one place without the size of the larger order fulfillment
 sample.
@@ -81,8 +83,8 @@ Excerpt from the JSON output:
 The same rules also run on the native engine:
 
 ```sh
-target/debug/gwt-native validate examples/language_tour/rules.gwt
-target/debug/gwt-native run examples/language_tour/native_request.gwt
+target/debug/gwt validate examples/language_tour/rules.gwt
+target/debug/gwt run examples/language_tour/native_request.gwt
 ```
 
 Native `number` values use exact decimal strings in JSON, so the native approved

@@ -48,7 +48,7 @@ impl Directory {
         }
     }
     fn cli(&self, args: &[&str], ok: bool) -> Json {
-        let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
             .current_dir(&self.0)
             .args(args)
             .output()

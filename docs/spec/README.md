@@ -24,7 +24,7 @@ These version surfaces move independently:
 The formatter targets the current spec's source layout rules. Grammar-only
 changes should update the versioned spec, [../grammar.md](../grammar.md), and
 the v0.2 conformance tests in
-[`../../tests/test_spec_v02.py`](../../tests/test_spec_v02.py).
+[`../../tests/test_spec_v02.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/tests/test_spec_v02.py).
 
 Non-normative design guidance lives in
 [../design-principles.md](../design-principles.md). Use it when evaluating new

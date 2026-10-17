@@ -7,7 +7,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("output", type=Path)
-parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt-native")
+parser.add_argument("--native", type=Path, default=ROOT / "target/debug/gwt")
 parser.add_argument("--value-arguments", action="store_true", help="exercise copied expression arguments")
 args = parser.parse_args()
 directory = args.output / ("arguments" if args.value_arguments else "returns")

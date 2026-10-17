@@ -83,7 +83,7 @@ unit_count=int(re.search(r'test result: ok\. (\d+) passed;',unit_output).group(1
 example=json.loads(run(cargo+['run',*profile_flags,*target_flags,'--example','embed','--manifest-path',str(artifact/'Cargo.toml'),'--target-dir',str(target),'--locked','--offline']))
 assert example['ok'] and example['result']['decision']['total']=='47.88'
 run(cargo+['install',*target_flags,'--path',str(artifact),'--root',str(workspace/'installed'),'--target-dir',str(target),'--locked','--offline','--profile',args.profile])
-native=workspace/'installed/bin/gwt-native'
+native=workspace/'installed/bin/gwt'
 assert native.is_file()
 source=(artifact/'tests/fixtures/invoice.gwt').read_text()
 program=workspace/'program'
@@ -158,8 +158,8 @@ for index,row in enumerate(host['records']):
 # Relocate the package to a different depth, then rebuild without repository ancestors.
 relocated=workspace/'other'/'depth'/'package'
 shutil.copytree(artifact,relocated)
-run(cargo+['build',*profile_flags,*target_flags,'--manifest-path',str(relocated/'Cargo.toml'),'--bin','gwt-native','--target-dir',str(workspace/'relocated-target'),'--locked','--offline'])
-relocated_native=workspace/'relocated-target'/build_target/('release' if args.profile=='release' else 'debug')/'gwt-native'
+run(cargo+['build',*profile_flags,*target_flags,'--manifest-path',str(relocated/'Cargo.toml'),'--bin','gwt','--target-dir',str(workspace/'relocated-target'),'--locked','--offline'])
+relocated_native=workspace/'relocated-target'/build_target/('release' if args.profile=='release' else 'debug')/'gwt'
 assert json.loads(run([str(relocated_native),'inspect',str(program/'invoice.gwt')]))==host['inspection']
 assert json.loads(run([str(relocated_native),'--version']))==host['version']
 for index,row in enumerate(host['records']):
@@ -205,10 +205,10 @@ if args.profile=='release':
            'dependencyGraphSha256':hashlib.sha256((args.output/'dependency-graph.json').read_bytes()).hexdigest(),
            'buildEnvironment':{key:build_env[key] for key in sorted(build_env) if key in ['RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS','CARGO_BUILD_TARGET','CARGO_INCREMENTAL'] or key.startswith(('CARGO_PROFILE_RELEASE_','CARGO_TARGET_'))},
            'linkage':linkage}
-    binary_archive=args.output/f"gwt-native-{manifest['package']['version']}-{build_target}.tar.gz"
+    binary_archive=args.output/f"gwt-{manifest['package']['version']}-{build_target}.tar.gz"
     create_bundle(binary_archive,native.read_bytes(),(artifact/'LICENSE').read_bytes(),source.encode(),build)
     binary_root,binary_manifest=verify_and_extract(binary_archive,workspace/'binary-only')
-    binary_executable=binary_root/'bin/gwt-native'
+    binary_executable=binary_root/'bin/gwt'
     no_tools={**os.environ,'PATH':''}
     smoke=json.loads(run([str(binary_executable),'run','examples/invoice.gwt','--request','price invoice','--input','examples/invoice.json'],cwd=binary_root,env=no_tools))
     assert smoke['ok'] and smoke['result']['decision']['total']=='47.88'

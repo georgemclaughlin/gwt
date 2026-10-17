@@ -12,9 +12,9 @@ make that access valid without repeating the checks. The request returns
 assertion failure; callers must not use an unsuccessful request's output.
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- validate examples/native_branch_proofs/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run examples/native_branch_proofs/rules.gwt --request 'authorize collection' --input examples/native_branch_proofs/request.json
-python -m gwtlang format examples/native_branch_proofs/rules.gwt --check
+cargo run --locked -p gwt-core --bin gwt -- validate examples/native_branch_proofs/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run examples/native_branch_proofs/rules.gwt --request 'authorize collection' --input examples/native_branch_proofs/request.json
+gwt format examples/native_branch_proofs/rules.gwt --check
 ```
 
 Seven scenario executions cover both successful routes, wrong-route checks,

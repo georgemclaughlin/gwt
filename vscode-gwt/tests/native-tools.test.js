@@ -44,3 +44,26 @@ test('stderr-only configuration failures retain the command diagnostic and remai
   await assert.rejects(runNative(process.execPath, ['-e', 'process.stderr.write("x".repeat(2000));process.exitCode=1;']).promise,
     error => error.message.length <= 1030 && !error.message.includes('invalid JSON'));
 });
+
+test('configured legacy preview paths migrate while the default is the single gwt command', () => {
+  const { setting } = require('../native-tools');
+  const values = { 'native.command': { workspaceValue: '/previous/engine' } };
+  const config = { inspect: key => values[key] };
+  assert.equal(setting(config, 'command', 'gwt'), '/previous/engine');
+  values.command = { workspaceValue: '/installed/gwt' };
+  assert.equal(setting(config, 'command', 'gwt'), '/installed/gwt');
+  assert.equal(setting({ inspect: () => undefined }, 'command', 'gwt'), 'gwt');
+});
+test('an old Python gwt on PATH is rejected before any source command executes', async () => {
+  const fs = require('node:fs/promises');
+  const os = require('node:os');
+  const { runGwt } = require('../native-tools');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'gwt-engine-test-'));
+  try {
+    const marker = path.join(dir, 'executed');
+    const executable = path.join(dir, 'gwt');
+    await fs.writeFile(executable, `#!${process.execPath}\nif(process.argv[2]==='version')console.log(JSON.stringify({packageName:'gwtlang',packageVersion:'0.3.0'}));else require('node:fs').writeFileSync(${JSON.stringify(marker)},'bad');\n`, { mode: 0o755 });
+    await assert.rejects(runGwt(executable, ['run', 'policy.gwt']).promise, /Remove the old gwtlang installation/);
+    await assert.rejects(fs.stat(marker), { code: 'ENOENT' });
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});

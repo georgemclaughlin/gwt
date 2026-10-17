@@ -1,5 +1,7 @@
 # Host Integration
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 GWT should be easy to call from ordinary application code. A host application
 should not need to be written in GWT; it should be able to treat GWT as the
 portable executable module for deterministic domain behavior.
@@ -332,13 +334,13 @@ dependencies: Node spawns the configured GWT command, writes stdin JSON, and
 returns the parsed envelope.
 
 The typed vendor onboarding example at
-[`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts)
+[`clients/typescript/examples/vendor-onboarding.ts`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/clients/typescript/examples/vendor-onboarding.ts)
 shows the complete host flow: generate declarations from GWT contracts, read a
 JSON request, check the rules file, run the named request, and consume a typed
 `GwtOutput` result.
 
 The paired Python host example at
-[`examples/vendor_onboarding/host_app.py`](../examples/vendor_onboarding/host_app.py)
+[`examples/vendor_onboarding/host_app.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/host_app.py)
 uses generated `TypedDict` contracts and the generated
 `VendorOnboardingClient` wrapper for the same `REQUEST review vendor` boundary.
 It validates the GWT file, inspects the public request manifest, compiles once,

@@ -308,7 +308,7 @@ fn cli_counts_expanded_rows_and_reports_each_failure() {
         "{}/../../examples/native_delivery/rules.gwt",
         env!("CARGO_MANIFEST_DIR")
     );
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .args(["test", &fixture])
         .output()
         .unwrap();
@@ -318,7 +318,7 @@ fn cli_counts_expanded_rows_and_reports_each_failure() {
     let temporary =
         std::env::temp_dir().join(format!("gwt-scenario-failure-{}.gwt", std::process::id()));
     std::fs::write(&temporary, "SCENARIO assertion\nTHEN <value>\nEXAMPLES\n  | value |\n  | true |\n  | false |\n  | true |\n").unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let output = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("test")
         .arg(&temporary)
         .output()

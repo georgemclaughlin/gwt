@@ -40,7 +40,7 @@ Generate a review from a captured corpus and candidate as described in
 without opening a browser:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- review \
+cargo run --locked -p gwt-core --bin gwt -- review \
   /tmp/gwt-native-corpus.json \
   --candidate crates/gwt-core/tests/fixtures/invoice.gwt \
   --html /tmp/gwt-native-review.html \
@@ -53,7 +53,7 @@ decisions action creates the same schema, including the choices actually made.
 After saving a decision file, assess it against a freshly executed review:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- assess-review \
+cargo run --locked -p gwt-core --bin gwt -- assess-review \
   /tmp/gwt-native-corpus.json \
   --candidate crates/gwt-core/tests/fixtures/invoice.gwt \
   --decisions /tmp/gwt-native-review-decisions.json

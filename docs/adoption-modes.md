@@ -1,5 +1,7 @@
 # GWT Adoption Modes
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 GWT works best when it is introduced around deterministic behavior with clear
 JSON-shaped inputs and outputs. It should not own UI rendering, persistence,
 network side effects, hardware timing, audio/display latency, or real-time

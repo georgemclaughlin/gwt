@@ -1,5 +1,7 @@
 # Development checkpoint — October 2026
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 The next investment is evidence about maintenance and adoption. The grammar
 remains v0.2; package metadata remains 0.3.0 while v0.4 publication gates are
 open. No version bump, publication, or compatibility migration is implied.

@@ -1,5 +1,7 @@
 # GWT v0.4 Release-Candidate Checklist
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Status: **blocked; preparation only**.
 
 Implementation evidence and remaining decisions are summarized in the
@@ -141,7 +143,7 @@ item.
 ## Distribution Candidate
 
 The manual
-[`build-distribution.yml`](../.github/workflows/build-distribution.yml)
+[`build-distribution.yml`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/.github/workflows/build-distribution.yml)
 workflow is deliberately build-only. It installs pinned build tooling, builds
 the current sdist and wheel, inspects both archives for runtime modules and
 schemas, installs each in a separate clean virtual environment, runs

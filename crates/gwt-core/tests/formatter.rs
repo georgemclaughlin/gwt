@@ -185,7 +185,7 @@ fn cli_preview_check_write_and_snapshot_modes_have_explicit_effects() {
     let path = root.join("rules.gwt");
     fs::write(&path, "THEN  true  #yes\n").unwrap();
     let invoke = |mode: Option<&str>| {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_gwt-native"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_gwt"));
         command.arg("format").arg(&path);
         if let Some(mode) = mode {
             command.arg(mode);
@@ -202,7 +202,7 @@ fn cli_preview_check_write_and_snapshot_modes_have_explicit_effects() {
     assert!(!invoke(Some("--write")).status.success());
     assert_eq!(fs::read_to_string(&path).unwrap(), " THEN true\n");
     assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
-    let mut child = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("format-editor")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -247,7 +247,7 @@ fn file_formatting_refuses_symlinks_and_read_only_files_and_preserves_permission
     fs::write(&path, "THEN  true\n").unwrap();
     symlink(&path, &link).unwrap();
     let write = |path: &std::path::Path| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg("format")
             .arg(path)
             .arg("--write")

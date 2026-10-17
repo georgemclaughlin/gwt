@@ -1,0 +1,23 @@
+{
+  "toolchain": "1.96.0",
+  "checks": [
+    {
+      "requestedImage": "nginx:stable-alpine",
+      "imageId": "sha256:0d831f5435ede3eeaba5768270c9e6f542d58306f69bb61f148e5c2374b57c56",
+      "repoDigests": [
+        "nginx@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5"
+      ],
+      "architecture": "amd64",
+      "os": "linux",
+      "libc": "musl libc (x86_64)\nVersion 1.2.6\nDynamic Program Loader\nUsage: /lib/ld-musl-x86_64.so.1 [options] [--] pathname [args]",
+      "kernel": "Linux 7.2.4-200.fc44.x86_64 x86_64 Linux",
+      "requestExitCode": 0,
+      "inspectionMatchesHost": true,
+      "profileMatchesHost": true,
+      "status": "qualified",
+      "exampleScenarios": 2,
+      "exactExampleObservation": true,
+      "verifiedCaseReplays": 18
+    }
+  ]
+}

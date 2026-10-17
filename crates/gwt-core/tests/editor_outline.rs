@@ -125,7 +125,7 @@ fn layout_and_resource_errors_return_no_guessed_structure() {
 }
 
 fn cli(input: Value) -> std::process::Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_gwt"))
         .arg("outline-editor")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

@@ -14,7 +14,7 @@ Images are never pulled automatically; the selected local image is pinned by ID.
 First qualify trusted fixtures with the intended native executable:
 
 ```sh
-python -m evaluations.native_maintenance.study --native /path/to/gwt-native --output /path/to/new-qualification
+python -m evaluations.native_maintenance.study --native /path/to/gwt --output /path/to/new-qualification
 ```
 
 Retain that directory. Task and corpus digests, native executable, and execution
@@ -31,8 +31,8 @@ Python source must define `decide(state)`; GWT source must retain the task's
 request entry. Return the task's decision object, without a scoring wrapper.
 
 ```sh
-python -m evaluations.native_maintenance.scorer --qualification /path/to/new-qualification --responses /path/to/responses.jsonl --native /path/to/gwt-native --image python:3.12-slim --output /path/to/new-public-feedback --public-only
-python -m evaluations.native_maintenance.scorer --qualification /path/to/new-qualification --responses /path/to/responses.jsonl --native /path/to/gwt-native --image python:3.12-slim --output /path/to/new-final-score
+python -m evaluations.native_maintenance.scorer --qualification /path/to/new-qualification --responses /path/to/responses.jsonl --native /path/to/gwt --image python:3.12-slim --output /path/to/new-public-feedback --public-only
+python -m evaluations.native_maintenance.scorer --qualification /path/to/new-qualification --responses /path/to/responses.jsonl --native /path/to/gwt --image python:3.12-slim --output /path/to/new-final-score
 python -m unittest tests.test_native_maintenance_scorer tests.test_native_maintenance
 ```
 

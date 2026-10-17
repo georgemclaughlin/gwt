@@ -1,5 +1,7 @@
 # MiniLang Executable Spec
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/minilang_spec).
+
 This example uses GWT to drive a tiny scripting-language pipeline. It is not a
 full self-hosted interpreter; the source has fixture-provided tokens and AST
 records so GWT can focus on executable specification:
@@ -85,8 +87,8 @@ With the native executable built, validate its scenarios and run the same JSON
 request against the shared engine:
 
 ```sh
-target/debug/gwt-native validate examples/minilang_spec/native_scenarios.gwt
-target/debug/gwt-native run examples/minilang_spec/engine.gwt \
+target/debug/gwt validate examples/minilang_spec/native_scenarios.gwt
+target/debug/gwt run examples/minilang_spec/engine.gwt \
   --request "run mini source" --input examples/minilang_spec/request.json
 ```
 

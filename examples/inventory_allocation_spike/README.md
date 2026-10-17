@@ -1,5 +1,7 @@
 # Inventory Allocation Spike
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/inventory_allocation_spike).
+
 This example pressure-tests GWT against a more realistic inventory shape than
 `examples/order_fulfillment`.
 
@@ -68,8 +70,8 @@ The Rust entry imports these same rules and uses a returning domain helper to
 inspect allocated inventory:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/inventory_allocation_spike/native_scenarios.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/inventory_allocation_spike/native_scenarios.gwt --request "fulfill order" --input examples/inventory_allocation_spike/request.json
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/inventory_allocation_spike/native_scenarios.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/inventory_allocation_spike/native_scenarios.gwt --request "fulfill order" --input examples/inventory_allocation_spike/request.json
 ```
 
 `inventory item for <sku> in <inventory>` returns a snapshot of the first match

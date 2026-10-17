@@ -11,14 +11,14 @@ unproven.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   crates/gwt-core/tests/fixtures/invoice.gwt \
   --request 'price invoice' \
   --input crates/gwt-core/tests/fixtures/invoice-input.json \
   > /tmp/gwt-native-invoice.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- replay \
+cargo run --locked -p gwt-core --bin gwt -- replay \
   /tmp/gwt-native-invoice.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- compare \
+cargo run --locked -p gwt-core --bin gwt -- compare \
   /tmp/gwt-native-invoice.case.json \
   --candidate crates/gwt-core/tests/fixtures/invoice.gwt
 ```
@@ -44,16 +44,16 @@ and resource failures without treating those failures as passing domain scenario
 ## Capture and compare a scenario
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_delivery/rules.gwt \
   --scenario 'weight and membership determine the quote example 3'
-cargo run --locked -p gwt-core --bin gwt-native -- capture \
+cargo run --locked -p gwt-core --bin gwt -- capture \
   examples/native_delivery/rules.gwt \
   --scenario 'weight and membership determine the quote example 3' \
   > /tmp/gwt-native-delivery-scenario.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- replay \
+cargo run --locked -p gwt-core --bin gwt -- replay \
   /tmp/gwt-native-delivery-scenario.case.json
-cargo run --locked -p gwt-core --bin gwt-native -- compare \
+cargo run --locked -p gwt-core --bin gwt -- compare \
   /tmp/gwt-native-delivery-scenario.case.json \
   --candidate examples/native_delivery/rules.gwt
 ```

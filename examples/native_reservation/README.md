@@ -15,9 +15,9 @@ the caller's supplied JSON is unchanged.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_reservation/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_reservation/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_reservation/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_reservation/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_reservation/rules.gwt --request 'reserve order' \
   --input examples/native_reservation/input.json
 ```
@@ -30,8 +30,8 @@ empty collections, and exact stock exhaustion.
 The source uses the shared syntax and also validates with the Python toolchain:
 
 ```sh
-python -m gwtlang format examples/native_reservation/rules.gwt --check
-python -m gwtlang validate examples/native_reservation/rules.gwt
+gwt format examples/native_reservation/rules.gwt --check
+gwt validate examples/native_reservation/rules.gwt
 ```
 
 Native [collection semantics](../../docs/native-semantics.md#lists-iteration-and-collection-steps)

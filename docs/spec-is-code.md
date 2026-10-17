@@ -36,12 +36,11 @@ that normative behavior becomes the `.gwt` program:
 - `WHEN` defines and invokes executable behavior.
 - `THEN` checks observable outcomes.
 - `RECORD`, `REQUEST`, and `OUTPUT` define runtime contracts.
-- The checker, formatter, runtime, CLI, LSP, and debugger all operate on the
+- The checker, formatter, runtime, CLI, and editor all operate on the
   same source.
 
-Generated types, JSON Schema, OpenAPI, Execution Cases, comparisons, and review
-workbenches project or record that source; they do not become alternate rule
-implementations. Execution evidence can show what happened and what changed,
+Captured execution cases, comparisons, and review pages record that source;
+they do not become alternate rule implementations. Execution evidence can show what happened and what changed,
 while the `.gwt` program remains the normative behavior.
 
 ## What Becomes Unambiguous
@@ -79,7 +78,7 @@ UX taste, broad architecture, deployment strategy, and non-deterministic
 integrations can still live in surrounding docs and host systems. Those systems
 can call GWT through host-language clients, but durable domain behavior should
 remain visible in GWT source. See
-[host-language-clients.md](host-language-clients.md) for the integration model.
+[embedding guidance](native-embedding.md) for the integration model.
 
 ## Working With Agents
 

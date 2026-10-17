@@ -1,12 +1,13 @@
-# GWT native language — consolidated draft
+# GWT language — consolidated draft
 
 Status: **experimental draft**, consolidated 2026-10-16. Profile:
 `gwt-native-experimental`; language release version: **unassigned**.
 
 This is the main language reference for the Rust implementation. It consolidates
 the implemented choices into one contract for authors and reviewers. It does not
-introduce syntax, change execution, freeze compatibility, or replace the Python
-[v0.2 specification](v0.2.md). The crate version is not a language version.
+introduce syntax, change execution, or freeze compatibility. The Python
+[v0.2 specification](v0.2.md) is retained as a historical contract for the retired
+implementation. The crate version is not a language version.
 
 Sections 1–10 describe the current language requirements. Section 11 identifies
 implementation bounds; section 12 separates tooling evidence from language
@@ -411,7 +412,7 @@ column locations; editor UTF-16 conversion is a tooling responsibility.
 
 Exact source identity includes reachable file paths, bytes, comments and line
 endings. It is not a signature. Native run/case/review envelopes have their own
-schemas; they do not replace Python's stable payload contract. See
+schemas, separate from the retired Python payload contract. See
 [case identity and replay](../native-cases.md) for the artifact encoding.
 
 ## 11. Current implementation bounds

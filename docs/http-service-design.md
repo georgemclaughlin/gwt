@@ -1,5 +1,7 @@
 # HTTP Service And OpenAPI
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Status: active serve-first integration hardening. OpenAPI generation, the
 transport-neutral HTTP application, the built-in adapter, and the optional
 ASGI adapter are implemented; the service remains experimental while the

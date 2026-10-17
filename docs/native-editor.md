@@ -1,8 +1,8 @@
 # Native editor integration
 
-GWT's VS Code extension has an explicit Rust mode for live diagnostics and
-test/run/validation/profiling commands. Python remains the default. See the [extension setup and
-capability table](../vscode-gwt/README.md) before switching engines. This is a
+GWT's VS Code extension uses the Rust engine for live diagnostics and
+test/run/validation/profiling commands. See the [extension setup and
+capability table](../vscode-gwt/README.md). This is a
 partial editor integration. Native hover and definitions cover resolved calls,
 bindings, type references, and declared record fields. Native layout formatting
 supports unsaved and untitled buffers, as does the local document outline;
@@ -13,7 +13,7 @@ Native declaration completion suggests behavior signatures, request names, and
 type names from the current import closure, including unsaved edits and incomplete
 call/type lines. This is distinct from checked semantic navigation; see below.
 
-`gwt.native.limitsFile` selects the [execution budget](native-execution-limits.md)
+`gwt.limitsFile` selects the [execution budget](native-execution-limits.md)
 used by Run, Profile, Test, and Validate. The editor saves the selected file's
 dirty buffer before execution and reports missing/malformed settings as command
 failures. This resource-scoped setting resolves relative to the active workspace
@@ -24,14 +24,14 @@ Run's existing target selection and preserves the CLI's exact output.
 
 ## Snapshot checking
 
-`gwt-native check-editor` reads one JSON request from standard input and emits
+`gwt check-editor` reads one JSON request from standard input and emits
 one JSON response. It loads and checks source without executing behaviors or
 scenarios, writing source files, or invoking Python.
 
 From the repository root, this checks a saved native example:
 
 ```sh
-printf '%s\n' '{"entry":"examples/native_print_expectations/rules.gwt","importRoot":".","documents":[]}' | target/debug/gwt-native check-editor
+printf '%s\n' '{"entry":"examples/native_print_expectations/rules.gwt","importRoot":".","documents":[]}' | target/debug/gwt check-editor
 ```
 
 An editor supplies unsaved replacements in `documents`:
@@ -172,7 +172,7 @@ fallback.
 
 ## Declaration completion
 
-`gwt-native complete-editor` accepts the same snapshot request as `check-editor`,
+`gwt complete-editor` accepts the same snapshot request as `check-editor`,
 with a required `query`. The library exports `complete_editor`,
 `EditorCompletion`, and `CompletionItem`. It loads the current import closure and
 indexes source declarations without executing or type-checking behavior bodies.
@@ -333,7 +333,7 @@ cross-file definitions still require a successful check. Invalid indentation
 or exceeded source limits return no guessed outline. Empty/comment-only buffers
 have an empty outline.
 
-`gwt-native outline-editor` reads `{ "file": "untitled.gwt", "text": "..." }`
+`gwt outline-editor` reads `{ "file": "untitled.gwt", "text": "..." }`
 from standard input. It emits `kind: "gwt.native-outline"`, `schemaVersion: 1`,
 `ok`, `sourceDigest`, `symbols`, and `diagnostic`. Each symbol has `name`, `kind`,
 `range`, `selectionRange`, and `children`; ranges use the existing UTF-8 span

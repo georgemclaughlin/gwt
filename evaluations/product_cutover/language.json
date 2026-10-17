@@ -1,0 +1,19 @@
+{
+  "probes": 30,
+  "nativeAccepted": 18,
+  "nativeExecuted": 18,
+  "nativeSuccessful": 16,
+  "nativeExecutable": "/tmp/gwt-cutover-engine/gwt",
+  "nativeSha256": "4e5c39970e19fccd686dde1d2f550cdb304fa54028d765234630dbe98fe014f8",
+  "fixtureSha256": "99c8a7e7ac4944fbb1338417219a8df0af59a92051f98191b69316ccf88ef6e5",
+  "expectationOverrides": {
+    "numeric-literal-union": {
+      "nativeCheckDiagnostic": "argument_type"
+    },
+    "boolean-literal-union": {
+      "nativeCheck": true
+    }
+  },
+  "expectationSha256": "76d7cc7cb855f5adce53dcdb47e5c2e2b9e5d9674bb0860ae68d3aa60a515b53",
+  "humanParticipants": 0
+}

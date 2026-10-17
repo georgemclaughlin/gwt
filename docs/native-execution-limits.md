@@ -5,8 +5,8 @@ limit file beside the rules or deployment configuration and use it consistently
 for validation, request execution, profiling, and case capture:
 
 ```sh
-cargo run -p gwt-core --bin gwt-native -- validate examples/native_weighted_allocation/rules.gwt --limits examples/native_weighted_allocation/limits.json
-cargo run -p gwt-core --bin gwt-native -- profile examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json --limits examples/native_weighted_allocation/limits.json
+cargo run -p gwt-core --bin gwt -- validate examples/native_weighted_allocation/rules.gwt --limits examples/native_weighted_allocation/limits.json
+cargo run -p gwt-core --bin gwt -- profile examples/native_weighted_allocation/rules.gwt --request "allocate budget" --input examples/native_weighted_allocation/request.json --limits examples/native_weighted_allocation/limits.json
 ```
 
 The example budget is an illustrative operating envelope for the checked inputs,
@@ -43,7 +43,7 @@ UTF-8, and files larger than 4,096 bytes are rejected. Limit-file errors produce
 stderr and exit one before source loading, execution, or HTML report creation.
 The file is read once for that command. Execution does not reopen it.
 
-In VS Code native mode, set `gwt.native.limitsFile` to this same file. Run,
+In VS Code, set `gwt.limitsFile` to this same file. Run,
 Profile, Test, and Validate use it, saving a dirty open limit buffer before
 execution. See [editor setup](../vscode-gwt/README.md) for path resolution and
 command behavior. Static diagnostics do not execute or apply budgets.

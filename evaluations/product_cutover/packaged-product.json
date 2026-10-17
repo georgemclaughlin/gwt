@@ -1,0 +1,23 @@
+{
+  "engine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:315e5bf4ce904801485b6970c99c820a56834d9c46efc15cc10b7d09907af64e"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "exampleEntriesValidated": 28,
+  "downloadedCasesCompared": 9,
+  "changedOutcomes": 2,
+  "expectedFailures": 1,
+  "runtimeWithoutToolchainPath": true,
+  "installUpgradeUninstall": true,
+  "pythonCollisionRefused": true,
+  "siteArtifactsReproduced": true
+}

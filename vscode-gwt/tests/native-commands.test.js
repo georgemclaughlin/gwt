@@ -20,7 +20,7 @@ async function harness(t, { workspace = '/project', limitsName = 'policies/opera
   const config = { 'native.command': 'selected-native', 'native.importRoot': root, 'native.limitsFile': limitsName };
   const report = { kind: 'gwt.native-editor-check', schemaVersion: 1, ok: true, requests: ['allocate'], scenarios: [], checkedSources: {} };
   const exact = '{"kind":"gwt.native-profile","ok":true,"steps":9007199254740993}\n';
-  t.mock.method(nativeTools, 'runNative', (command, args, input, options) => {
+  t.mock.method(nativeTools, 'runGwt', (command, args, input, options) => {
     calls.push({ command, args, input, options });
     const stdout = args[0] === 'check-editor' ? JSON.stringify(report) : args[0] === 'complete-editor'
       ? JSON.stringify({ kind: 'gwt.native-completion', schemaVersion: 1, basis: 'declarations', ok: true, items: [], replacement: null }) : exact;
@@ -113,5 +113,5 @@ test('a malformed execution setting does not disable static checking or silently
   assert.equal((await h.editor.command('check')).ok, true);
   assert.equal((await h.editor.command('test')).ok, false);
   assert.deepEqual(h.calls.map(call => call.args[0]), ['check-editor']);
-  assert(h.messages.some(message => message.includes('gwt.native.limitsFile must be a file path')));
+  assert(h.messages.some(message => message.includes('gwt.limitsFile must be a file path')));
 });

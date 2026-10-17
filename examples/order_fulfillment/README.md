@@ -1,5 +1,7 @@
 # Order Fulfillment Example
 
+> Historical example/reference. Only entries in the [active catalog](../catalog.json) are qualified for current GWT. Retired host commands can be reproduced from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/order_fulfillment).
+
 This folder shows a state-transition workflow: an order is authorized, allocated
 against inventory, classified as ready/partial/backordered/held, and assigned
 shipping details.
@@ -79,8 +81,8 @@ python -m gwtlang run examples/order_fulfillment/rules.gwt --input examples/orde
 The Rust engine can execute the self-contained request entry:
 
 ```sh
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- run examples/order_fulfillment/native_request.gwt
-cargo +1.96.0 run --locked -p gwt-core --bin gwt-native -- validate examples/order_fulfillment/native_request.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- run examples/order_fulfillment/native_request.gwt
+cargo +1.96.0 run --locked -p gwt-core --bin gwt -- validate examples/order_fulfillment/native_request.gwt
 ```
 
 The entry imports rule declarations without running their five embedded scenarios.

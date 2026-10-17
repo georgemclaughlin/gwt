@@ -392,7 +392,7 @@ fn cli_mixed_corpus_replays_every_case_and_never_partially_promotes() {
     let engines = json!({"kind":"gwt.native-migration-engines","schemaVersion":1,"engines":[{"sourceDigest":digest('a'),"executable":"verifier"},{"sourceDigest":digest('b'),"executable":"verifier"}]});
     fs::write(&map, engines.to_string()).unwrap();
     let run = |command: &str, extra: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg(command)
             .arg(&path)
             .arg("--engines")

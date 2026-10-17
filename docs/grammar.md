@@ -1,5 +1,7 @@
 # GWT v0.2 Grammar
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 This grammar describes the implemented v0.2 surface. The normative v0.2
 language notes live in [spec/v0.2.md](spec/v0.2.md). The parser is currently
 hand-written, but behavior bodies are parsed into structured statement nodes for

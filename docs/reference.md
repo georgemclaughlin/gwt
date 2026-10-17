@@ -1,5 +1,7 @@
 # GWT language and command reference
 
+> Historical Python-era document. Reproduce its commands from [the pre-retirement tree](https://github.com/georgemclaughlin/gwt/tree/4f403dc51eda5382c6a12c0757cb26deac34012a). Current product guidance is in the [language reference](spec/native-draft.md), [upgrade guide](python-retirement.md), and [release checklist](release-checklist.md).
+
 Start with the [quick start](../README.md) or the [language guide](language.md).
 Commands below assume a repository checkout as the working directory.
 
@@ -566,18 +568,18 @@ modules with `TypeAlias` declarations, `TypedDict` records, request/output
 aliases, request-name constants, and a request-specific client wrapper.
 
 Runnable Python host examples live in
-[`examples/vendor_onboarding/host_app.py`](../examples/vendor_onboarding/host_app.py)
-and [`examples/exact_pricing/host_app.py`](../examples/exact_pricing/host_app.py).
+[`examples/vendor_onboarding/host_app.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/host_app.py)
+and [`examples/exact_pricing/host_app.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/exact_pricing/host_app.py).
 The vendor onboarding host is the typed executable-spec module path: it
 validates the GWT file, inspects the public request manifest, compiles once,
 and calls `review vendor` through generated Python types in
-[`examples/vendor_onboarding/rules_types.py`](../examples/vendor_onboarding/rules_types.py).
+[`examples/vendor_onboarding/rules_types.py`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/examples/vendor_onboarding/rules_types.py).
 The exact-pricing host additionally shows exact `decimal` handling, float input
 rejection, and trusted prevalidated execution.
 
 The Python package includes a `py.typed` marker and typed payload aliases for
 the public host boundary. The Pyright gate in
-[`pyrightconfig.json`](../pyrightconfig.json) runs in strict mode for the full
+[`pyrightconfig.json`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/pyrightconfig.json) runs in strict mode for the full
 `gwtlang` package plus selected Python host and deployable API examples:
 
 ```sh
@@ -631,7 +633,7 @@ gwt types examples/vendor_onboarding/rules.gwt --language typescript --output ru
 
 With NodeNext-style ESM, import generated declarations through the runtime-style
 `./rules.js` specifier. A complete typed host example lives at
-[`clients/typescript/examples/vendor-onboarding.ts`](../clients/typescript/examples/vendor-onboarding.ts).
+[`clients/typescript/examples/vendor-onboarding.ts`](https://github.com/georgemclaughlin/gwt/blob/4f403dc51eda5382c6a12c0757cb26deac34012a/clients/typescript/examples/vendor-onboarding.ts).
 
 The same analysis layer is available from Python:
 

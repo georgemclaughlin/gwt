@@ -1,0 +1,23 @@
+{
+  "toolchain": "1.96.0",
+  "checks": [
+    {
+      "requestedImage": "mcr.microsoft.com/playwright/python:v1.63.0-noble",
+      "imageId": "sha256:59fe35832a79d1324e778b737760b2afc11cffcbaeba325012f96cabae832a75",
+      "repoDigests": [
+        "mcr.microsoft.com/playwright/python@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0"
+      ],
+      "architecture": "amd64",
+      "os": "linux",
+      "libc": "glibc 2.39",
+      "kernel": "Linux 7.2.4-200.fc44.x86_64 x86_64 GNU/Linux",
+      "requestExitCode": 0,
+      "inspectionMatchesHost": true,
+      "profileMatchesHost": true,
+      "status": "qualified",
+      "exampleScenarios": 2,
+      "exactExampleObservation": true,
+      "verifiedCaseReplays": 18
+    }
+  ]
+}

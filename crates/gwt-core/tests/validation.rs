@@ -208,7 +208,7 @@ fn cli_reports_gates_exit_statuses_and_refuses_ambiguous_flags_without_writing()
     let directory = Directory::new();
     let file = directory.0.join("main.gwt");
     let invoke = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_gwt-native"))
+        Command::new(env!("CARGO_BIN_EXE_gwt"))
             .arg("validate")
             .arg(&file)
             .args(args)

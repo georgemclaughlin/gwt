@@ -45,9 +45,9 @@ class NativeBinaryArtifactTests(unittest.TestCase):
         checksum = self.archive.with_name(self.archive.name + '.sha256').read_text().split()[0]
         self.assertEqual(checksum, hashlib.sha256(self.archive.read_bytes()).hexdigest())
         root, manifest = verify_and_extract(self.archive, self.root / 'extracted')
-        self.assertEqual((root / 'bin/gwt-native').read_bytes(), self.executable)
+        self.assertEqual((root / 'bin/gwt').read_bytes(), self.executable)
         self.assertEqual((root / 'examples/invoice.gwt').read_bytes(), self.source)
-        self.assertEqual((root / 'bin/gwt-native').stat().st_mode & 0o777, 0o755)
+        self.assertEqual((root / 'bin/gwt').stat().st_mode & 0o777, 0o755)
         self.assertEqual((root / 'LICENSE').stat().st_mode & 0o777, 0o644)
         self.assertEqual(manifest['build'], self.build)
         self.assertEqual(json.loads((root / 'examples/invoice.json').read_text()),
@@ -58,7 +58,7 @@ class NativeBinaryArtifactTests(unittest.TestCase):
             with self.subTest(label=label):
                 members = self.members()
                 for index, (member, content) in enumerate(members):
-                    if member.name.endswith('/bin/gwt-native'):
+                    if member.name.endswith('/bin/gwt'):
                         if label == 'bytes':
                             members[index] = (member, content + b'changed')
                         else:
@@ -105,7 +105,7 @@ class NativeBinaryArtifactTests(unittest.TestCase):
                             elif label == 'root':
                                 manifest['build']['target'] = 'another-target'
                             else:
-                                del manifest['files']['bin/gwt-native']
+                                del manifest['files']['bin/gwt']
                             content = json.dumps(manifest).encode()
                         members[index] = (member, content)
                 destination = self.root / ('failed-' + label)

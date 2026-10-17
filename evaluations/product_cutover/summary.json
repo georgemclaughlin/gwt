@@ -1,0 +1,39 @@
+{
+  "kind": "gwt.product-cutover-qualification",
+  "referenceCommit": "4f403dc51eda5382c6a12c0757cb26deac34012a",
+  "tests": {
+    "rustCurrent": 431,
+    "rustMinimum": 431,
+    "pythonDevelopmentTools": 54,
+    "editorUnit": 13,
+    "nodeHost": 13
+  },
+  "sourceEngine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:23000dac2fc04d506dcbba27a197bb7530d689fc5d917cba72195902269b8444"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "packagedEngine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:315e5bf4ce904801485b6970c99c820a56834d9c46efc15cc10b7d09907af64e"
+  },
+  "researchFixtureExecutions": 870,
+  "humanParticipants": 0,
+  "humanSessions": "pending",
+  "externalPilots": "deferred",
+  "merge": "pending",
+  "publication": "pending",
+  "historicalEvidenceChanged": false,
+  "historicalBinaryBundleVerified": true,
+  "formatAndClippy": "passed",
+  "browser": "desktop and mobile passed; download and 9-case review checked",
+  "wasm": "bridge tests/clippy/build and Chromium exact/offline requests passed"
+}

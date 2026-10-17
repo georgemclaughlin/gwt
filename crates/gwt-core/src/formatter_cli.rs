@@ -46,7 +46,7 @@ pub(crate) fn editor() -> Result<(bool, Value), Box<dyn std::error::Error>> {
 pub(crate) fn file(args: &[String]) -> Result<(bool, Value), Box<dyn std::error::Error>> {
     if !(args.len() == 1 || (args.len() == 2 && matches!(args[1].as_str(), "--check" | "--write")))
     {
-        return Err("usage: gwt-native format FILE.gwt [--check | --write]".into());
+        return Err("usage: gwt format FILE.gwt [--check | --write]".into());
     }
     let path = Path::new(&args[0]);
     let metadata = fs::symlink_metadata(path)?;

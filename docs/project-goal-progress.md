@@ -12,6 +12,17 @@ CLI access is a different evaluation route, not a completed or qualified run of
 that experiment. The [completion checkpoint](../evaluations/goal_audit/2026-10-16/completion-checkpoint.md)
 records the current evidence and what would allow work to resume.
 
+## Product cutover update
+
+The Rust engine is now the only active implementation and installs `gwt`.
+Python runtime/distribution and editor launch/debug paths are retired. The
+[upgrade guide](python-retirement.md) records the historical reference and
+existing-installation conflicts. The [cutover evidence](../evaluations/product_cutover/README.md)
+qualifies packaging, installed examples, editor integration, and the generated site.
+Package and language release versions have not been advanced. Merge, publication,
+human sessions, and external pilots remain pending; the historical ledger below
+records earlier checkpoints and should not be read as current engine selection.
+
 ## Objective audit
 
 Audited on 2026-10-16 against the current native engine and retained evidence.
@@ -45,7 +56,7 @@ separate external-pilot and publication gates, which remain in effect.
 ## Completed foundation work
 
 - Added a Cargo workspace and an unpublished `gwt-core` library with an
-  experimental `gwt-native` expression command.
+  experimental `gwt` expression command.
 - Parsed expressions once and checked their types before execution; resolved
   input bindings to slots while preserving source paths for evidence.
 - Defined strict booleans, exact integer/decimal operations, closed input
@@ -591,7 +602,7 @@ understanding/review evidence remain open. At that checkpoint, native Validate
 still used static checking, separate from formatting and scenario execution. No external pilot
 was started or package published.
 
-The combined-validation checkpoint adds `gwt-native validate` and typed library
+The combined-validation checkpoint adds `gwt validate` and typed library
 APIs over one captured import closure. Reports distinguish loading, static
 checking, formatting, and scenario execution, with explicit failed, skipped, and
 unexercised states. Zero scenarios fail by default; an explicit declaration-only
@@ -1411,7 +1422,7 @@ or public release occurred.
 
 The preceding goal turn made concrete progress on host-input diagnostics and
 message-aware case migration. Native authoring now has contract discovery through
-`gwt-native inspect` and the borrowed Rust `program.inspect()` API. Both use the
+`gwt inspect` and the borrowed Rust `program.inspect()` API. Both use the
 checked program, exposing resolved named types, caller inputs versus local setup,
 required input names, declared outputs, behavior parameters/returns, expanded
 entry scenarios, original source locations, and the frozen source identity.
@@ -2345,7 +2356,7 @@ versioned release or human-benefit criteria.
 
 ## Native toolchain identity
 
-`gwt-native version --json` and Rust `version_info()` now identify the package,
+`gwt version --json` and Rust `version_info()` now identify the package,
 experimental language profile, explicitly unassigned language release version,
 and exact case engine. The editor's **GWT: Show Engine Information** reports
 the active Python or native implementation without saving or executing source.

@@ -19,12 +19,12 @@ roll back changes; the stock assertion proves this rejection left stock intact.
 From the repository root:
 
 ```sh
-cargo run --locked -p gwt-core --bin gwt-native -- check examples/native_expected_failures/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- test examples/native_expected_failures/rules.gwt
-cargo run --locked -p gwt-core --bin gwt-native -- run \
+cargo run --locked -p gwt-core --bin gwt -- check examples/native_expected_failures/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- test examples/native_expected_failures/rules.gwt
+cargo run --locked -p gwt-core --bin gwt -- run \
   examples/native_expected_failures/rules.gwt --request 'reserve stock' \
   --input examples/native_expected_failures/input.json
-python -m gwtlang format examples/native_expected_failures/rules.gwt --check
+gwt format examples/native_expected_failures/rules.gwt --check
 ```
 
 The host `run` command intentionally exits **1** with `assertion_failed`, unchanged
