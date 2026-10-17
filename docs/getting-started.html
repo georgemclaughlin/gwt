@@ -25,7 +25,7 @@ GWT records the evidence behind each decision, so you can check the effect of th
 The download includes the rules, a proposed change, input facts, nine captured cases, and matching engine information.</p>
 <p>For local execution, <a href="installation.html">install GWT</a>, unzip the example,
 and open a terminal in its <code>delivery-example</code> directory.</p>
-<pre><code>gwt version --json</code></pre>
+<pre><code data-language="sh"><span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
 <p>You’ll use <code>delivery.gwt</code> for the current policy,
 <code>proposed.gwt</code> for the change, and <code>parcel.json</code> for a customer’s request.</p>
 </section>
@@ -33,56 +33,56 @@ and open a terminal in its <code>delivery-example</code> directory.</p>
 <p>The baseline charges nonmembers 5 up to 1,000g and 9 above that. Members pay zero.
 Parcels above 5,000g require manual handling, even for members; nonpositive weights fail.</p>
 <p><code>REQUEST</code> describes the input and output. A named <code>WHEN</code> block implements the behavior.
-<code>DECIDE</code> executes its first matching arm, so the order expresses policy precedence.</p><pre><code>PROGRAM delivery quote
+<code>DECIDE</code> executes its first matching arm, so the order expresses policy precedence.</p><pre><code data-language="gwt"><span class="tok-kw">PROGRAM</span> delivery quote
 
-RECORD Parcel
-  weight_grams: integer
-  member: boolean
+<span class="tok-kw">RECORD</span> <span class="tok-type">Parcel</span>
+  weight_grams: <span class="tok-type">integer</span>
+  member: <span class="tok-type">boolean</span>
 
-RECORD Quote
-  status: &quot;standard&quot; | &quot;manual&quot;
-  fee: integer
+<span class="tok-kw">RECORD</span> <span class="tok-type">Quote</span>
+  status: <span class="tok-string">"standard"</span> | <span class="tok-string">"manual"</span>
+  fee: <span class="tok-type">integer</span>
 
-REQUEST quote delivery
-  GIVEN parcel is Parcel
-  GIVEN quote is Quote
-    status: &quot;standard&quot;
-    fee: 0
-  WHEN quote delivery for parcel into quote
-  OUTPUT quote is Quote
-  THEN quote.fee &gt;= 0
+<span class="tok-kw">REQUEST</span> quote delivery
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-action">is</span> <span class="tok-type">Parcel</span>
+  <span class="tok-kw">GIVEN</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
+    status: <span class="tok-string">"standard"</span>
+    fee: <span class="tok-number">0</span>
+  <span class="tok-kw">WHEN</span> quote delivery <span class="tok-action">for</span> parcel <span class="tok-action">into</span> quote
+  <span class="tok-kw">OUTPUT</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
+  <span class="tok-kw">THEN</span> quote.fee &gt;= <span class="tok-number">0</span>
 
-WHEN quote delivery for &lt;parcel&gt; into &lt;quote&gt;
-  GIVEN parcel is Parcel
-  AND quote is Quote
-  REQUIRE parcel.weight_grams &gt; 0
-  DECIDE
-    WHEN parcel.weight_grams &gt; 5000
-      set quote.status to &quot;manual&quot;
-      set quote.fee to 0
-    WHEN parcel.member
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 0
-    WHEN parcel.weight_grams &lt;= 1000
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 5
-    ELSE
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 9</code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
+<span class="tok-kw">WHEN</span> quote delivery <span class="tok-action">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-action">into</span> <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-action">is</span> <span class="tok-type">Parcel</span>
+  <span class="tok-kw">AND</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams &gt; <span class="tok-number">0</span>
+  <span class="tok-kw">DECIDE</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams &gt; <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"manual"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.member
+      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams &lt;= <span class="tok-number">1000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">5</span>
+    <span class="tok-kw">ELSE</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">9</span></code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
 </section>
 <section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
 <p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.
-It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code>gwt validate proposed.gwt
+It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code data-language="sh"><span class="tok-kw">gwt</span> validate proposed.gwt
 
-gwt run proposed.gwt \
-  --request &quot;quote delivery&quot; \
-  --input parcel.json</code></pre><p>The declared <code>result</code> is:</p><pre><code>{&quot;quote&quot;:{&quot;status&quot;:&quot;standard&quot;,&quot;fee&quot;:5}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
+<span class="tok-kw">gwt</span> run proposed.gwt \
+  <span class="tok-key">--request</span> <span class="tok-string">"quote delivery"</span> \
+  <span class="tok-key">--input</span> parcel.json</code></pre><p>The declared <code>result</code> is:</p><pre><code data-language="json">{<span class="tok-key">"quote"</span>:{<span class="tok-key">"status"</span>:<span class="tok-string">"standard"</span>,<span class="tok-key">"fee"</span>:<span class="tok-number">5</span>}}</code></pre><p>The complete run payload also includes final state, diagnostics, source identity, and execution evidence.</p>
 </section>
 <section id="review" class="walk-step"><h2>Compare The Same Input</h2>
 <p>The example includes nine captured baseline requests. Compare them with the proposed policy:</p>
-<pre><code>gwt review delivery.corpus.json \
-  --candidate proposed.gwt \
-  --html delivery-review.html</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
+<pre><code data-language="sh"><span class="tok-kw">gwt</span> review delivery.corpus.json \
+  <span class="tok-key">--candidate</span> proposed.gwt \
+  <span class="tok-key">--html</span> delivery-review.html</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
 <strong>9 → 5</strong>. Follow the branch and write events to the source conditions:
 <code>1500 &lt;= 1000</code> was false; <code>1500 &lt;= 1500</code> is true.</p>
 <p>The page lets you record Pending, Accept, Reject, or Needs information, add notes, and download your decisions.

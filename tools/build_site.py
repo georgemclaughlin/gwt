@@ -4,11 +4,13 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
-import shutil
 import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+syntax_spec = importlib.util.spec_from_file_location('site_syntax', ROOT / 'tools/highlight_site.py')
+syntax = importlib.util.module_from_spec(syntax_spec)
+syntax_spec.loader.exec_module(syntax)
 
 
 def build(executable, destination):
@@ -21,7 +23,7 @@ def build(executable, destination):
     with tempfile.TemporaryDirectory(prefix='gwt-site-build-') as temporary:
         output = Path(temporary) / 'review'
         summary = helper.prepare(executable, output)
-        shutil.copyfile(output / 'review.html', destination / 'demo/delivery-review.html')
+        (destination / 'demo/delivery-review.html').write_text(syntax.highlight_review((output / 'review.html').read_text()))
         files = {
             'delivery.gwt': (ROOT / 'examples/native_delivery/rules.gwt').read_bytes(),
             'proposed.gwt': (ROOT / 'examples/native_review_walkthrough/candidate.gwt').read_bytes(),
@@ -70,7 +72,7 @@ These are illustrative fixtures, not participant responses or a public release.
         archive.with_suffix('.zip.sha256').write_text(checksum + '  ' + archive.name + '\n')
         manifest = {'kind': 'gwt.site-build', 'schemaVersion': 1,
                     'engine': json.loads(files['engine.json']),
-                    'sources': {**summary['sourceSha256'], 'tools/build_site.py': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
+                    'sources': {**summary['sourceSha256'], **{path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in ['tools/build_site.py', 'tools/highlight_site.py']}},
                     'reviewTotals': summary['reviewTotals'],
                     'artifacts': {str(p.relative_to(destination)): hashlib.sha256(p.read_bytes()).hexdigest()
                                   for p in [destination / 'demo/delivery-review.html', archive]}}
