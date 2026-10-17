@@ -14,27 +14,44 @@ curated checkpoint summaries, and selected observations. Real model results are
 labeled separately from synthetic rehearsals. There are no human-participant
 results in the current checkpoint.
 
-The development history also produced roughly 600 MiB of generated HTML,
-repeated full execution captures, browser screenshots/logs, and compiled package
-artifacts. Those files remain on the development machine and are excluded from
-Git. A local compressed backup was made before the checkpoint; no originals were
-deleted. [`local-artifacts.json`](local-artifacts.json) records their paths,
-sizes, and SHA-256 digests so references in historical reports are explicit.
-That inventory identifies bytes; it does not validate their claims or imply
-that Git contains them.
+## Archived raw evidence
 
-Historical reports may link to these local artifacts. Such links are available
-in the original development checkout, not necessarily in a fresh clone. Use the
-recorded qualification commands to produce new evidence in a fresh output
-directory. Historical engine identities require the matching retained source
-and executable; a current run cannot silently recreate an old engine checkpoint.
-Do not overwrite old evidence or report a rerun as the original observation.
+Bulky execution captures, three full comparison reports, two retired Python
+runtime snapshots, and the local-artifact inventory are archived at an
+[immutable Git revision](https://github.com/georgemclaughlin/gwt/tree/52f56d34b117f2bccd8e3f70bde4381d3a3d2b8b/evaluations).
+[`archive.json`](archive.json) lists all 66 removed files with sizes and SHA-256
+checksums. Their bytes remain in repository history, without rewriting results,
+source identities, or reviewer decisions. This reduces the checked-out tree and
+review noise; it does not shrink existing Git history or full-clone downloads.
 
-Source, test fixtures, reproduction scripts, compact qualification records, the
-live refund comparison, the complete five-domain Codex CLI comparison, and the
-direct Python/native CLI benchmark are versioned.
-Tests run from a clean staged checkout before committing to verify that local
-generated artifacts are not required for the source regression suite.
+Restore the original evaluation tree, including the archived files and the
+reports that reference them, into a new directory:
+
+```sh
+python tools/evidence_archive.py --output /tmp/gwt-historical-evidence
+python -m evaluations.native_maintenance.verify_codex_run /tmp/gwt-historical-evidence/evaluations/native_maintenance/2026-10-16-codex-cli/live
+```
+
+The first command verifies every archived file against the manifest and refuses
+an existing destination. It needs Git history (`git fetch --unshallow` for a
+shallow checkout). The second audits the original model records without model
+calls or candidate execution. New results are new evidence, never replacements
+for historical observations. Historical relative links to archived files work
+in the restored tree or when browsing the pinned revision.
+
+The original development checkout also contains roughly 600 MiB of ignored
+screenshots, HTML reports, and compiled outputs. Those were never versioned;
+the archived `local-artifacts.json` identifies their local originals, but cannot
+restore their bytes. A local backup was made at that checkpoint.
+
+## What belongs in the working tree
+
+Keep independent fixtures, reproduction tools, concise result summaries, and
+regression inputs needed by the test suite. Existing smaller qualification
+records remain available. Put new raw execution captures and generated browser
+or package outputs in fresh ignored run directories; do not bulk-add them to a
+PR. Preserve original evidence before archiving it and provide a pinned source
+and checksums. Summaries must distinguish real observations from rehearsals.
 
 Useful entry points:
 

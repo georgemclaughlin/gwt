@@ -29,19 +29,19 @@ pub(crate) fn run(
     if args.len() < 4 || args.len() % 2 != 0 {
         return Err("migration requires CASE.json and paired options; see --help".into());
     }
-    let mut options = std::collections::BTreeMap::new();
-    for pair in args[2..].chunks_exact(2) {
-        let allowed = matches!(pair[0].as_str(), "--previous-engine" | "--timeout-ms")
-            || match command {
-                "migrate" => matches!(pair[0].as_str(), "--html" | "--decision-template"),
-                "assess-migration" => pair[0] == "--decision",
-                "export-migration" => matches!(pair[0].as_str(), "--decision" | "--output"),
-                _ => false,
-            };
-        if !allowed || options.insert(pair[0].as_str(), pair[1].as_str()).is_some() {
-            return Err("unknown or duplicate migration option".into());
-        }
-    }
+    let options = super::cli_options::paired(
+        &args[2..],
+        |option| {
+            matches!(option, "--previous-engine" | "--timeout-ms")
+                || match command {
+                    "migrate" => matches!(option, "--html" | "--decision-template"),
+                    "assess-migration" => option == "--decision",
+                    "export-migration" => matches!(option, "--decision" | "--output"),
+                    _ => false,
+                }
+        },
+        "unknown or duplicate migration option",
+    )?;
     let executable = options
         .get("--previous-engine")
         .ok_or("requires --previous-engine")?;
