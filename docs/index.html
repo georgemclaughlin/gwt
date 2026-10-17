@@ -10,7 +10,7 @@
     >
     <meta name="color-scheme" content="dark light">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="assets/site.css?v=native-1">
+    <link rel="stylesheet" href="assets/site.css?v=policy-2">
   </head>
   <body>
     <main id="top">
@@ -45,25 +45,44 @@
           </div>
         </div>
 
-        <div class="execution-visual" aria-label="Delivery policy change">
-          <div class="visual-tabs policy-tabs"><span>Readable rules</span><span>Traceable decisions</span></div>
-<pre><code>WHEN quote delivery for &lt;parcel&gt; into &lt;quote&gt;
-  GIVEN parcel is Parcel
-  AND quote is Quote
-  REQUIRE parcel.weight_grams &gt; 0
-  DECIDE
-    WHEN parcel.weight_grams &gt; 5000
-      set quote.status to &quot;manual&quot;
-      set quote.fee to 0
-    WHEN parcel.member
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 0
-    WHEN parcel.weight_grams &lt;= 1500
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 5
-    ELSE
-      set quote.status to &quot;standard&quot;
-      set quote.fee to 9</code></pre>
+        <div class="execution-visual policy-preview" aria-label="Delivery policy and example execution">
+          <section class="policy-rules" aria-labelledby="rules-heading">
+            <h2 id="rules-heading" class="policy-heading">Readable rules</h2>
+<pre><code><span class="tok-kw">WHEN</span> quote delivery for <span class="tok-param">&lt;parcel&gt;</span> into <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel is <span class="tok-type">Parcel</span>
+  <span class="tok-kw">AND</span> quote is <span class="tok-type">Quote</span>
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams &gt; <span class="tok-number">0</span>
+  <span class="tok-kw">DECIDE</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams &gt; <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;manual&quot;</span>
+      <span class="tok-action">set</span> quote.fee to <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.member
+      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
+      <span class="tok-action">set</span> quote.fee to <span class="tok-number">0</span>
+<span class="policy-selected">    <span class="tok-kw">WHEN</span> parcel.weight_grams &lt;= <span class="tok-number">1500</span>
+      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
+      <span class="tok-action">set</span> quote.fee to <span class="tok-number">5</span></span>
+    <span class="tok-kw">ELSE</span>
+      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
+      <span class="tok-action">set</span> quote.fee to <span class="tok-number">9</span></code></pre>
+          </section>
+          <section class="policy-decisions" aria-labelledby="decisions-heading">
+            <h2 id="decisions-heading" class="policy-heading">Traceable decisions</h2>
+            <div class="policy-trace">
+              <p class="policy-input"><span class="eyebrow">Example input</span><strong>1,500g parcel · Nonmember</strong></p>
+              <ol class="policy-steps" aria-label="Execution path">
+                <li><span>Positive weight required</span><strong>Passed</strong></li>
+                <li><span>Heavier than 5,000g?</span><strong>No</strong></li>
+                <li><span>Member?</span><strong>No</strong></li>
+                <li class="policy-match"><span>At or below 1,500g?</span><strong>Matched</strong></li>
+              </ol>
+              <div class="policy-result" aria-label="Execution result">
+                <span class="eyebrow">Selected branch writes</span>
+                <dl><div><dt>Status</dt><dd>standard</dd></div><div><dt>Fee</dt><dd>5</dd></div></dl>
+              </div>
+              <a class="text-link" href="demo/delivery-review.html">Explore the full execution evidence →</a>
+            </div>
+          </section>
         </div>
       </section>
 
