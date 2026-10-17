@@ -79,19 +79,19 @@ pub(crate) fn run(args: &[String]) -> Result<(bool, Value), Box<dyn std::error::
     if args.len() < 4 || args.len() % 2 != 0 {
         return Err("corpus migration requires CORPUS.json and paired options; see --help".into());
     }
-    let mut options = BTreeMap::new();
-    for pair in args[2..].chunks_exact(2) {
-        let allowed = matches!(pair[0].as_str(), "--engines" | "--timeout-ms")
-            || match command {
-                "migrate-corpus" => matches!(pair[0].as_str(), "--html" | "--decisions-template"),
-                "assess-corpus-migration" => pair[0] == "--decisions",
-                "export-corpus-migration" => matches!(pair[0].as_str(), "--decisions" | "--output"),
-                _ => false,
-            };
-        if !allowed || options.insert(pair[0].as_str(), pair[1].as_str()).is_some() {
-            return Err("unknown or duplicate corpus migration option".into());
-        }
-    }
+    let options = super::cli_options::paired(
+        &args[2..],
+        |option| {
+            matches!(option, "--engines" | "--timeout-ms")
+                || match command {
+                    "migrate-corpus" => matches!(option, "--html" | "--decisions-template"),
+                    "assess-corpus-migration" => option == "--decisions",
+                    "export-corpus-migration" => matches!(option, "--decisions" | "--output"),
+                    _ => false,
+                }
+        },
+        "unknown or duplicate corpus migration option",
+    )?;
     let mappings = engines(
         options
             .get("--engines")

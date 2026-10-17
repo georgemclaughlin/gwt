@@ -72,7 +72,7 @@ Python v0.2 grammar and linking it to the execution-model guide. Confirm any
 suspected documentation contradictions against implementation before editing.
 
 That audit was subsequently completed in the
-[native grammar checkpoint](project-goal-progress.md#native-grammar-and-context-rules-2026-10-16).
+[native grammar checkpoint](https://github.com/georgemclaughlin/gwt/blob/52f56d34b117f2bccd8e3f70bde4381d3a3d2b8b/docs/project-goal-progress.md#native-grammar-and-context-rules-2026-10-16).
 Use the progress ledger for current work.
 
 Live native model comparison, actual human-review evidence, and interactive
@@ -102,7 +102,7 @@ human-review evidence, and pending browser validation remain outstanding;
 external pilots remain deferred. The full project goal is active and incomplete.
 
 The documentation audit was subsequently completed as the
-[connected execution-model checkpoint](project-goal-progress.md#connected-native-execution-model-2026-10-16).
+[connected execution-model checkpoint](https://github.com/georgemclaughlin/gwt/blob/52f56d34b117f2bccd8e3f70bde4381d3a3d2b8b/docs/project-goal-progress.md#connected-native-execution-model-2026-10-16).
 Use the progress ledger for work completed after this recovery inspection.
 
 The extensive uncommitted and untracked work is preserved. No commit or push
