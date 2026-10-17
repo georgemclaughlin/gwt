@@ -8,24 +8,43 @@
 <main class="doc-page"><section class="doc-hero"><p class="eyebrow">Installation</p><h1>Get GWT</h1>
 <p class="lede">Run readable policies locally with a standalone executable.</p></section>
 <article class="doc-article" style="padding: 0 32px 64px">
-<section class="walk-step"><h2>Developer Preview</h2>
-<p>GWT is experimental. Public binary downloads are not available yet. The source installation below
-builds the same Rust engine used by the examples. Linux x86-64 is the currently qualified distribution target.</p>
-<p>If you have a locally built binary bundle, verify its checksum, extract it, and run:</p>
-<pre><code data-language="sh"><span class="tok-kw">sh</span> install.sh <span class="tok-key">--prefix</span> <span class="tok-string">"$HOME/.local"</span>
+<section class="walk-step"><h2>Install Preview 1</h2>
+<p>Download the <a href="https://github.com/georgemclaughlin/gwt/releases/tag/preview-1">first GWT preview</a>
+for Linux x86-64. It runs without Python or Rust. The language is experimental;
+this preview is for local evaluation, with no compatibility or production-support guarantee.</p>
+<p><strong>Choose the static Linux build</strong> unless you specifically need the GNU build.
+Windows, macOS, and ARM binaries are not included in this preview.</p>
+<div class="link-list">
+<a href="https://github.com/georgemclaughlin/gwt/releases/download/preview-1/gwt-0.1.0-x86_64-unknown-linux-musl.tar.gz">Download Linux x86-64 (static)</a>
+<a href="https://github.com/georgemclaughlin/gwt/releases/download/preview-1/gwt-0.1.0-x86_64-unknown-linux-musl.tar.gz.sha256">Download its SHA-256 checksum</a>
+</div>
+<p>Save both files in the same directory. Verify the download before extracting:</p>
+<pre><code data-language="sh">sha256sum -c gwt-<span class="tok-number">0.1</span>.<span class="tok-number">0</span>-x86_64-unknown-linux-musl.tar.gz.sha256
+tar -xzf gwt-<span class="tok-number">0.1</span>.<span class="tok-number">0</span>-x86_64-unknown-linux-musl.tar.gz
+<span class="tok-kw">cd</span> gwt-<span class="tok-number">0.1</span>.<span class="tok-number">0</span>-x86_64-unknown-linux-musl
+<span class="tok-kw">sh</span> install.sh <span class="tok-key">--prefix</span> <span class="tok-string">"$HOME/.local"</span>
 <span class="tok-kw">export</span> PATH=<span class="tok-string">"$HOME/.local/bin:$PATH"</span>
 <span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
-<p>Keep the extracted installer to remove this installation with <code>sh install.sh --prefix "$HOME/.local" --uninstall</code>.</p>
-<details><summary>Build and install from source</summary>
-<p>With Git and rustup installed, clone the repository or use your current checkout. These instructions describe the merged branch;
-when reviewing an unmerged change, use that change’s checkout.</p>
-<pre><code data-language="sh"><span class="tok-kw">git</span> clone https://github.com/georgemclaughlin/gwt.git
-<span class="tok-kw">cd</span> gwt
+<p>The version identifies package <code>gwt-core</code> <code>0.1.0</code> and an experimental language profile.
+<code>preview-1</code> identifies this download; it does not assign a stable language version.</p>
+<p>Keep the extracted installer. Run the same install command to upgrade a Rust GWT installation;
+remove it with <code>sh install.sh --prefix "$HOME/.local" --uninstall</code>.</p>
+<details><summary>GNU build and runtime requirements</summary>
+<p>The <a href="https://github.com/georgemclaughlin/gwt/releases/download/preview-1/gwt-0.1.0-x86_64-unknown-linux-gnu.tar.gz">GNU Linux build</a>
+requires glibc 2.39 or later and the shared libraries listed in its manifest. The static build has no
+shared-library dependencies. Both were qualified on GitHub’s Ubuntu runner; other Linux distributions
+and kernels are not a tested support matrix. <a href="https://github.com/georgemclaughlin/gwt/releases/tag/preview-1">Release assets</a>
+include checksums and build provenance.</p></details>
+<details><summary>Build the preview from source</summary>
+<p>Download the <a href="https://github.com/georgemclaughlin/gwt/releases/download/preview-1/gwt-core-0.1.0.crate">qualified source package</a>.
+With rustup installed, extract and build it:</p>
+<pre><code data-language="sh">tar -xzf gwt-core-<span class="tok-number">0.1</span>.<span class="tok-number">0</span>.crate
 <span class="tok-kw">rustup</span> toolchain install <span class="tok-number">1.96</span>.<span class="tok-number">0</span>
-<span class="tok-kw">cargo</span> +<span class="tok-number">1.96</span>.<span class="tok-number">0</span> install <span class="tok-key">--path</span> crates/gwt-core <span class="tok-key">--locked</span>
+<span class="tok-kw">cargo</span> +<span class="tok-number">1.96</span>.<span class="tok-number">0</span> install <span class="tok-key">--path</span> gwt-core-<span class="tok-number">0.1</span>.<span class="tok-number">0</span> <span class="tok-key">--locked</span>
 <span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
-<p>Cargo installs the optimized executable in its bin directory. Ensure that directory is on PATH.
-For a Cargo installation, uninstall with <code>cargo uninstall gwt-core</code>.</p></details>
+<p>Cargo installs the executable in its bin directory. Ensure that directory is on PATH.
+Uninstall with <code>cargo uninstall gwt-core</code>. This source package matches the release binaries and example.
+For repository development, use the <a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/contributing.md">contributor guide</a>.</p></details>
 </section><section class="walk-step"><h2>Check An Existing Installation</h2>
 <p>The version report should identify <code>gwt-core</code> and <code>gwt.native-version</code>.
 If it identifies <code>gwtlang</code>, your shell is finding the retired Python implementation.</p>

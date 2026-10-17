@@ -1,6 +1,9 @@
 # Read, change, explain, review
 
-This short walkthrough uses the experimental **Rust engine**. The policy is
+This walkthrough uses the installed **GWT Preview 1** executable.
+[Install it](installation.html), download the [matching example](https://github.com/georgemclaughlin/gwt/releases/download/preview-1/delivery-example.zip),
+unzip it, and open a terminal in `delivery-example/`. No source checkout,
+Python, or Rust toolchain is needed. The policy is
 delivery pricing: nonmembers pay 5 up to 1,000g and 9 above that; members pay
 zero; anything above 5,000g needs manual handling, even for members. Nonpositive
 weights are rejected. Fees are illustrative integer units.
@@ -10,7 +13,7 @@ Membership, overweight precedence, and invalid-weight rejection must remain.
 
 ## 1. Read the executable policy
 
-Open the [baseline rules](../examples/native_delivery/rules.gwt). `Parcel` names
+Open `delivery.gwt` in the downloaded example. `Parcel` names
 the supplied facts; `Quote` names the outcome. `REQUEST quote delivery` accepts
 a parcel, initializes a quote, invokes the behavior, and declares the output.
 The behavior's `DECIDE` runs the first matching arm:
@@ -37,18 +40,23 @@ decision. `THEN` and `EXAMPLES` below the behavior describe expected outcomes.
 
 ## 2. Change one policy boundary
 
-The [candidate](../examples/native_review_walkthrough/candidate.gwt) changes
+The supplied `proposed.gwt` changes
 `<= 1000` to `<= 1500`. It also updates the 1,001g expectation, adds 1,499g,
 1,500g and 1,501g examples, and explicitly tests zero-weight rejection without
 changing the initialized quote. Both revisions stay available.
 
-From the repository root, build and run the candidate:
+Before running it, predict the fee for a 1,500g and a 1,501g nonmember parcel,
+and the handling of a 5,001g member parcel. The intended answers are 5, 9, and
+manual handling. Check them against the actual evidence below.
 
 ```sh
-cargo +1.96.0 build --locked -p gwt-core --bin gwt
-target/debug/gwt validate examples/native_review_walkthrough/candidate.gwt
-target/debug/gwt run examples/native_review_walkthrough/candidate.gwt --request "quote delivery" --input examples/native_review_walkthrough/input.json
+gwt validate delivery.gwt
+gwt validate proposed.gwt
+gwt run delivery.gwt --request "quote delivery" --input parcel.json
+gwt run proposed.gwt --request "quote delivery" --input parcel.json
 ```
+
+The same input returns baseline fee 9 and proposed fee 5.
 
 Validation checks layout, types, and all 14 candidate scenarios. The request
 input is a nonmember parcel weighing 1,500g. Its `result` should be:
@@ -62,21 +70,19 @@ captured requests. That is the next step.
 
 ## 3. Compare the same facts and explain the difference
 
-Generate the review in a **new** directory:
+The download contains nine baseline captures from the same engine as the preview.
+Compare them with the proposed rules:
 
 ```sh
-python examples/native_review_walkthrough/prepare.py /tmp/gwt-delivery-review
+gwt review delivery.corpus.json --candidate proposed.gwt --html delivery-review.html --decisions-template pending-decisions.json
 ```
 
-The helper validates both sources, captures nine baseline requests, and compares
-the candidate against those same frozen inputs. It checks explicit expectations
-from [cases.json](../examples/native_review_walkthrough/cases.json), writes the
-review, and creates an all-pending decision file. It refuses to reuse an existing
-output directory. Use a new path for another run, with the same native executable
-for capture and review.
+Use new output filenames if you repeat this command. Existing report and decision
+files are protected from overwrite. The checked cases and expected outcomes are
+listed in the included `expected-cases.json`.
 
-Open `/tmp/gwt-delivery-review/review.html` in a browser. Select **Outcome changed**:
-only `new-band` (1,001g) and `new-limit` (1,500g) should appear. Select `new-limit`
+Open `delivery-review.html` in a browser. Select **Outcome changed**: only
+`new-band` (1,001g) and `new-limit` (1,500g) should appear. Select `new-limit`
 and compare baseline/candidate results: fee **9 → 5**. Follow the condition and
 write events in each decision trail to the frozen source. The baseline condition
 `1500 <= 1000` is false; the candidate condition `1500 <= 1500` is true.
@@ -116,10 +122,10 @@ No participant response or approval is required just to run this walkthrough.
 To see the pending gate now:
 
 ```sh
-target/debug/gwt assess-review /tmp/gwt-delivery-review/corpus.json --candidate examples/native_review_walkthrough/candidate.gwt --decisions /tmp/gwt-delivery-review/pending-decisions.json
+gwt assess-review delivery.corpus.json --candidate proposed.gwt --decisions pending-decisions.json
 ```
 
-Expect exit status **1**, `pending: 9`, `accepted: 0`, and `allAccepted: false`.
+An exit status of **1** is expected while decisions are pending, with `pending: 9`, `accepted: 0`, and `allAccepted: false`.
 The command re-executes the comparison. A later reviewer can pass their downloaded
 file instead; decisions must match the exact fresh report. Neither review nor
 assessment deploys the candidate.

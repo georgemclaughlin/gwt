@@ -21,8 +21,8 @@ GWT records the evidence behind each decision, so you can check the effect of th
 <a href="#review">Compare and review</a><a href="#next">Next steps</a></aside><article class="doc-article">
 <section id="setup" class="walk-step"><h2>Try A Delivery Policy</h2>
 <p>Start with the <a href="demo/delivery-review.html">interactive review</a> in your browser, or
-<a href="downloads/delivery-example.zip" download>download the example</a> to run it yourself.
-The download includes the rules, a proposed change, input facts, nine captured cases, and matching engine information.</p>
+<a href="https://github.com/georgemclaughlin/gwt/releases/download/preview-1/delivery-example.zip" download>download the example</a> to run it yourself.
+The download matches the Preview 1 binaries and includes the rules, a proposed change, input facts, nine captured cases, and matching engine information.</p>
 <p>For local execution, <a href="installation.html">install GWT</a>, unzip the example,
 and open a terminal in its <code>delivery-example</code> directory.</p>
 <pre><code data-language="sh"><span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
@@ -71,8 +71,11 @@ Parcels above 5,000g require manual handling, even for members; nonpositive weig
       <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">9</span></code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
 </section>
 <section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
+<p>Before running the change, predict the outcome: a 1,500g nonmember parcel should cost 5;
+a 1,501g parcel should still cost 9. A 5,001g member parcel should still require manual handling.</p>
 <p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.
-It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code data-language="sh"><span class="tok-kw">gwt</span> validate proposed.gwt
+It updates the boundary examples and tests zero-weight rejection. Validate its 14 scenarios, then run a 1,500g nonmember request:</p><pre><code data-language="sh"><span class="tok-kw">gwt</span> validate delivery.gwt
+<span class="tok-kw">gwt</span> validate proposed.gwt
 
 <span class="tok-kw">gwt</span> run proposed.gwt \
   <span class="tok-key">--request</span> <span class="tok-string">"quote delivery"</span> \
@@ -82,11 +85,13 @@ It updates the boundary examples and tests zero-weight rejection. Validate its 1
 <p>The example includes nine captured baseline requests. Compare them with the proposed policy:</p>
 <pre><code data-language="sh"><span class="tok-kw">gwt</span> review delivery.corpus.json \
   <span class="tok-key">--candidate</span> proposed.gwt \
-  <span class="tok-key">--html</span> delivery-review.html</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
+  <span class="tok-key">--html</span> delivery-review.html \
+  <span class="tok-key">--decisions-template</span> pending-decisions.json</code></pre><p>Open <code>delivery-review.html</code> in your browser. Select <strong>Outcome changed</strong>, then <strong>new-limit</strong>, and compare the fee:
 <strong>9 → 5</strong>. Follow the branch and write events to the source conditions:
 <code>1500 &lt;= 1000</code> was false; <code>1500 &lt;= 1500</code> is true.</p>
 <p>The page lets you record Pending, Accept, Reject, or Needs information, add notes, and download your decisions.
-The generated review starts pending. Execution evidence explains what happened; the reviewer decides whether it matches the intended policy.</p>
+The generated review starts pending. Use new output filenames if you repeat the command; existing reviews and decision files are protected from overwrite. Execution evidence explains what happened; the reviewer decides whether it matches the intended policy.</p>
+<p>To check the decision gate, run <code>gwt assess-review delivery.corpus.json --candidate proposed.gwt --decisions pending-decisions.json</code>. It intentionally exits with status 1 while all nine decisions are pending; this is not an execution failure.</p>
 <p>Only two outcomes change. The zero-weight rejection remains a failure in both revisions; the other cases check unchanged policy boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/docs/native-review-walkthrough.md">Continue to the nine-case walkthrough</a>
 </section>
 <section id="next" class="walk-step"><h2>Continue Exploring</h2>
