@@ -26,9 +26,9 @@ def create_bundle(archive, executable, license_text, source, build):
     prefix = 'gwt-' + build['version'] + '-' + build['target']
     readme = f'''# GWT (experimental)
 
-This local bundle contains a release build for {build['target']}.
-It runs the experimental GWT language directly. This locally built artifact
-has not been published as a release.
+This bundle contains an optimized build for {build['target']}.
+It runs the experimental GWT language directly. Consult the accompanying release
+notes for the preview scope, source revision, and qualification evidence.
 
 From this extracted directory:
 
