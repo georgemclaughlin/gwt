@@ -17,6 +17,13 @@ these productions do not promise arbitrary whitespace between every token.
 
 ## Layout, names, and literals
 
+Source spellings and user-defined names match case-sensitively. Uppercase marks
+structure, binding, assertions, and control; the primitive action verbs such as
+`set` remain lowercase. Type-name capitalization is a style convention, not a
+parser requirement. `WHERE` is the preferred collection-filter spelling; `where`
+is also accepted. See [casing and naming](language-style.md) for `LET` versus
+`set`, `RETURN` versus `print`, and `AND` versus expression `and`.
+
 Top-level forms begin at column one. Indentation uses two spaces per level,
 without tabs or skipped levels. Blank lines and comments do not introduce
 blocks. `#` begins a comment outside a double-quoted string. Expressions occupy

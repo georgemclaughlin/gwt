@@ -218,3 +218,23 @@ fn bad_closures_and_queries_fail_without_stale_items_and_cli_requires_query() {
             .contains("completion requires a query")
     );
 }
+
+#[test]
+fn case_distinct_domain_completions_keep_spelling_and_exclude_reserved_heads() {
+    let root = Directory::new();
+    let declarations = "WHEN SET <target> to <value>\n  GIVEN target is integer\n  AND value is integer\n  PASS\nWHEN set invalid\n  PASS\nWHEN Find domain\n  PASS\nWHEN find invalid\n  PASS\nRECORD parcel\n  WHEN: integer\n";
+    let report = query(&root, "USE \"types.gwt\"\nWHEN S|\n", declarations);
+    assert!(report.ok);
+    assert_eq!(labels(&report), ["SET <target> to <value>"]);
+    let report = query(&root, "USE \"types.gwt\"\nWHEN s|\n", declarations);
+    assert!(report.ok);
+    assert!(report.items.is_empty());
+    let report = query(&root, "USE \"types.gwt\"\nWHEN F|\n", declarations);
+    assert_eq!(labels(&report), ["Find domain"]);
+    let report = query(
+        &root,
+        "USE \"types.gwt\"\nGIVEN value is p|\n",
+        declarations,
+    );
+    assert_eq!(labels(&report), ["parcel"]);
+}

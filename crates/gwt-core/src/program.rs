@@ -907,29 +907,7 @@ impl Compiler {
             .collect();
         if signature.is_empty()
             || signature[0].starts_with('<')
-            || matches!(
-                signature[0].as_str(),
-                "set"
-                    | "add"
-                    | "subtract"
-                    | "append"
-                    | "count"
-                    | "sum"
-                    | "divide"
-                    | "find"
-                    | "exists"
-                    | "print"
-                    | "LET"
-                    | "RETURN"
-                    | "PASS"
-                    | "REQUIRE"
-                    | "IF"
-                    | "ELSE"
-                    | "FOR"
-                    | "FIND"
-                    | "DECIDE"
-                    | "DEPENDING"
-            )
+            || crate::vocabulary::reserved_behavior(&signature[0])
         {
             return Err(node.error(
                 "behavior_name",
@@ -1495,7 +1473,11 @@ impl Compiler {
                 _ => {
                     return Err(node.error(
                         "unsupported_statement",
-                        format!("unsupported top-level statement '{}'", node.text),
+                        crate::vocabulary::hint(
+                            format!("unsupported top-level statement '{}'", node.text),
+                            node.text.split_whitespace().next().unwrap_or(""),
+                            crate::vocabulary::Context::Step,
+                        ),
                     ));
                 }
             }
@@ -1983,7 +1965,11 @@ impl Compiler {
                 let Some((id, arguments)) = self.call(&node.text, &node.span, environment)? else {
                     return Err(node.error(
                         "unknown_behavior",
-                        format!("unknown or unsupported behavior step '{}'", node.text),
+                        crate::vocabulary::hint(
+                            format!("unknown or unsupported behavior step '{}'", node.text),
+                            node.text.split_whitespace().next().unwrap_or(""),
+                            crate::vocabulary::Context::Statement,
+                        ),
                     ));
                 };
                 StatementKind::Call {

@@ -10,7 +10,7 @@
     >
     <meta name="color-scheme" content="dark light">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="assets/site.css?v=policy-2">
+    <link rel="stylesheet" href="assets/site.css?v=syntax-3">
   </head>
   <body>
     <main id="top">
@@ -48,23 +48,23 @@
         <div class="execution-visual policy-preview" aria-label="Delivery policy and example execution">
           <section class="policy-rules" aria-labelledby="rules-heading">
             <h2 id="rules-heading" class="policy-heading">Readable rules</h2>
-<pre><code><span class="tok-kw">WHEN</span> quote delivery for <span class="tok-param">&lt;parcel&gt;</span> into <span class="tok-param">&lt;quote&gt;</span>
-  <span class="tok-kw">GIVEN</span> parcel is <span class="tok-type">Parcel</span>
-  <span class="tok-kw">AND</span> quote is <span class="tok-type">Quote</span>
-  <span class="tok-kw">REQUIRE</span> parcel.weight_grams &gt; <span class="tok-number">0</span>
+<pre><code data-language="gwt" data-selected-lines="12-14"><span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-word">into</span> <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">AND</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">0</span>
   <span class="tok-kw">DECIDE</span>
-    <span class="tok-kw">WHEN</span> parcel.weight_grams &gt; <span class="tok-number">5000</span>
-      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;manual&quot;</span>
-      <span class="tok-action">set</span> quote.fee to <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"manual"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
     <span class="tok-kw">WHEN</span> parcel.member
-      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
-      <span class="tok-action">set</span> quote.fee to <span class="tok-number">0</span>
-<span class="policy-selected">    <span class="tok-kw">WHEN</span> parcel.weight_grams &lt;= <span class="tok-number">1500</span>
-      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
-      <span class="tok-action">set</span> quote.fee to <span class="tok-number">5</span></span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+<span class="policy-selected">    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&lt;=</span> <span class="tok-number">1500</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">5</span></span>
     <span class="tok-kw">ELSE</span>
-      <span class="tok-action">set</span> quote.status to <span class="tok-string">&quot;standard&quot;</span>
-      <span class="tok-action">set</span> quote.fee to <span class="tok-number">9</span></code></pre>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">9</span></code></pre>
           </section>
           <section class="policy-decisions" aria-labelledby="decisions-heading">
             <h2 id="decisions-heading" class="policy-heading">Traceable decisions</h2>

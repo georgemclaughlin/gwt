@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "structural": {
+    "declaration": ["PROGRAM", "USE", "TYPE", "RECORD", "REQUEST", "BACKGROUND", "SCENARIO", "EXAMPLES"],
+    "step": ["GIVEN", "WHEN", "THEN", "AND", "OUTPUT"],
+    "statement": ["LET", "RETURN", "REQUIRE", "PASS", "IF", "ELSE", "FOR", "FIND", "DECIDE", "DEPENDING"]
+  },
+  "phrases": ["DEPENDING ON"],
+  "actions": ["set", "add", "subtract", "append", "count", "sum", "divide", "print"],
+  "connectors": ["is", "be", "to", "from", "into", "in", "by", "rounded", "places", "using", "returns", "prints", "fails", "with", "the", "kind", "value", "one", "of", "for"],
+  "expressionWords": ["not", "and", "or", "contains", "is", "present", "absent"],
+  "primitiveTypes": ["boolean", "integer", "decimal", "number", "text"],
+  "containers": ["list", "optional"],
+  "literals": ["true", "false"],
+  "roundingModes": ["half_even", "half_away_from_zero", "toward_zero", "floor", "ceiling"],
+  "filter": {"accepted": ["WHERE", "where"], "preferred": "WHERE", "context": "FOR/FIND header"},
+  "reservedBehaviorHeads": ["set", "add", "subtract", "append", "count", "sum", "divide", "find", "exists", "print", "LET", "RETURN", "PASS", "REQUIRE", "IF", "ELSE", "FOR", "FIND", "DECIDE", "DEPENDING"]
+}

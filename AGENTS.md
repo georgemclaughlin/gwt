@@ -56,6 +56,11 @@ walkthrough changes with `python tools/build_site.py --gwt target/debug/gwt`.
 
 ## Language design
 
+Follow `docs/language-style.md` for casing and naming. Keep the shared
+`crates/gwt-core/src/vocabulary.json` inventory and generated TextMate grammar
+aligned; run `python tools/gwt_syntax.py --check` after vocabulary/tooling changes.
+Do not case-fold domain names or treat lexical highlighting as validation.
+
 Preserve the spec-as-code shape: named executable behavior over state, not SQL
 or general query pipelines. Prefer explicit behavior signatures such as
 `WHEN review <report> into <decision>`.

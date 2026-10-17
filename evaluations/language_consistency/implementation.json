@@ -1,0 +1,349 @@
+{
+  "kind": "gwt.language-consistency-implementation",
+  "schemaVersion": 1,
+  "baseRevision": "da2745264f349dbc46e1d1b80a1f06186ceeceac",
+  "engine": {
+    "engine": {
+      "profile": "gwt-native-case-engine-v1",
+      "sourceDigest": "sha256:71d194937d0d4b4d7dc5c25f13c40e587ca05812cf3b87b8f07b39a173c9fd31"
+    },
+    "kind": "gwt.native-version",
+    "languageProfile": "gwt-native-experimental",
+    "languageVersion": null,
+    "packageName": "gwt-core",
+    "packageVersion": "0.1.0",
+    "schemaVersion": 1,
+    "status": "experimental"
+  },
+  "previousEngine": {
+    "profile": "gwt-native-case-engine-v1",
+    "sourceDigest": "sha256:23000dac2fc04d506dcbba27a197bb7530d689fc5d917cba72195902269b8444"
+  },
+  "checks": {
+    "rustTests": {
+      "1.96.0": 437,
+      "1.85.0": 437
+    },
+    "rustFmt": true,
+    "rustClippyAllTargets": true,
+    "pythonTests": 59,
+    "editorTestsIncludingRealTextMateTokenizer": 16,
+    "nodeHostTests": 13,
+    "generatedGrammarCurrent": true,
+    "product": {
+      "engine": {
+        "engine": {
+          "profile": "gwt-native-case-engine-v1",
+          "sourceDigest": "sha256:71d194937d0d4b4d7dc5c25f13c40e587ca05812cf3b87b8f07b39a173c9fd31"
+        },
+        "kind": "gwt.native-version",
+        "languageProfile": "gwt-native-experimental",
+        "languageVersion": null,
+        "packageName": "gwt-core",
+        "packageVersion": "0.1.0",
+        "schemaVersion": 1,
+        "status": "experimental"
+      },
+      "exampleEntriesValidated": 28,
+      "downloadedCasesCompared": 9,
+      "changedOutcomes": 2,
+      "expectedFailures": 1,
+      "runtimeWithoutToolchainPath": true,
+      "installUpgradeUninstall": true,
+      "pythonCollisionRefused": true,
+      "siteArtifactsReproduced": true
+    },
+    "browser": {
+      "checks": [
+        {
+          "route": "index.html",
+          "width": 1440,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 4
+        },
+        {
+          "route": "index.html",
+          "width": 1440,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 4
+        },
+        {
+          "route": "index.html",
+          "width": 390,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 4
+        },
+        {
+          "route": "index.html",
+          "width": 390,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 4
+        },
+        {
+          "route": "getting-started.html",
+          "width": 1440,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 5
+        },
+        {
+          "route": "getting-started.html",
+          "width": 1440,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 5
+        },
+        {
+          "route": "getting-started.html",
+          "width": 390,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 5
+        },
+        {
+          "route": "getting-started.html",
+          "width": 390,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 5
+        },
+        {
+          "route": "installation.html",
+          "width": 1440,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 2
+        },
+        {
+          "route": "installation.html",
+          "width": 1440,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 2
+        },
+        {
+          "route": "installation.html",
+          "width": 390,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 2
+        },
+        {
+          "route": "installation.html",
+          "width": 390,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 2
+        },
+        {
+          "route": "demo/delivery-review.html",
+          "width": 1440,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 130
+        },
+        {
+          "route": "demo/delivery-review.html",
+          "width": 1440,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 130
+        },
+        {
+          "route": "demo/delivery-review.html",
+          "width": 390,
+          "colorScheme": "light",
+          "overflow": false,
+          "highlightedBlocks": 130
+        },
+        {
+          "route": "demo/delivery-review.html",
+          "width": 390,
+          "colorScheme": "dark",
+          "overflow": false,
+          "highlightedBlocks": 130
+        }
+      ],
+      "errors": [],
+      "selectedBranchPreserved": true,
+      "offlineCaseSwitching": true
+    },
+    "finalDemoCasesChecked": 9
+  },
+  "probes": [
+    {
+      "name": "set_lowercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "SET_uppercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "Set_titlecase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "when_lowercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "IS_uppercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "LET_RETURN_uppercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "let_lowercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "return_lowercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "WHERE_uppercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "where_lowercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "Where_titlecase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "DEPENDING_ON_uppercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "DEPENDING_on_lowercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "true_lowercase",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "TRUE_uppercase",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "custom_SET_distinct_from_set",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "custom_set_reserved",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "custom_find_reserved",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "custom_Find_allowed",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "lowercase_record_type",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "uppercase_binding",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "keyword_field",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "AND_expression",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": true
+    },
+    {
+      "name": "and_expression",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "and_identifier_reserved",
+      "accepted": false,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    },
+    {
+      "name": "AND_identifier_allowed",
+      "accepted": true,
+      "stateAndDiagnosticCodePreserved": true,
+      "diagnosticHintAdded": false
+    }
+  ],
+  "corpusMigration": {
+    "complete": true,
+    "approved": false,
+    "totals": {
+      "observationChanged": 0,
+      "observationPreserved": 9,
+      "ready": 9,
+      "retainedCurrent": 0,
+      "total": 9,
+      "unavailable": 0
+    }
+  },
+  "humanSessions": "pending",
+  "externalPilot": "deferred"
+}

@@ -438,7 +438,15 @@ pub(crate) fn compile_as(
     if parser.peek().kind != TokenKind::End {
         return Err(Diagnostic::new(
             "unexpected_token",
-            "unexpected token after expression",
+            crate::vocabulary::hint(
+                "unexpected token after expression".into(),
+                text.get(
+                    parser.peek().span.start.saturating_sub(span.start)
+                        ..parser.peek().span.end.saturating_sub(span.start),
+                )
+                .unwrap_or(""),
+                crate::vocabulary::Context::Operator,
+            ),
             &parser.peek().span,
         ));
     }
@@ -574,7 +582,11 @@ fn check_as(
             else {
                 return Err(Diagnostic::new(
                     "unknown_name",
-                    format!("unknown input '{}'", path[0]),
+                    crate::vocabulary::hint(
+                        format!("unknown input '{}'", path[0]),
+                        &path[0],
+                        crate::vocabulary::Context::Literal,
+                    ),
                     &syntax.span,
                 ));
             };

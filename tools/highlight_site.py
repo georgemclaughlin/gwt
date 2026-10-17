@@ -1,17 +1,27 @@
 """Build-time syntax coloring for public examples; never changes source text."""
 import html
+import importlib.util
 from html.parser import HTMLParser
 import json
 import re
 from pathlib import Path
 
 TOKENS = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|\#[^\n]*|<[A-Za-z_][\w]*>|--[\w-]+|\b\d+(?:\.\d+)?\b|[A-Za-z_][\w]*|<=|>=|!=|==|[<>|=]')
-KEYWORDS = set('PROGRAM RECORD REQUEST OUTPUT GIVEN WHEN THEN AND REQUIRE DECIDE ELSE BACKGROUND SCENARIO EXAMPLES IF FOR RETURN LET PASS'.split())
-TYPES = set('integer decimal boolean text string list table'.split())
+syntax_spec = importlib.util.spec_from_file_location('gwt_syntax', Path(__file__).with_name('gwt_syntax.py'))
+syntax = importlib.util.module_from_spec(syntax_spec)
+syntax_spec.loader.exec_module(syntax)
 COMMANDS = set('gwt git cd sh export rustup cargo python'.split())
 
 
 def highlight(source, language):
+    if language == 'gwt':
+        parts, end = [], 0
+        for start, stop, role in syntax.tokens(source):
+            parts.append(html.escape(source[end:start], quote=False))
+            parts.append(f'<span class="tok-{role}">{html.escape(source[start:stop], quote=False)}</span>')
+            end = stop
+        parts.append(html.escape(source[end:], quote=False))
+        return ''.join(parts)
     parts = []
     end = 0
     for match in TOKENS.finditer(source):
@@ -26,15 +36,6 @@ def highlight(source, language):
             kind = 'number'
         elif token in {'true', 'false', 'null'}:
             kind = 'bool'
-        elif language == 'gwt':
-            if token in KEYWORDS:
-                kind = 'kw'
-            elif token in TYPES or token[0].isupper():
-                kind = 'type'
-            elif token.startswith('<') and token.endswith('>'):
-                kind = 'param'
-            elif token in {'set', 'to', 'is', 'into', 'for'}:
-                kind = 'action'
         elif language == 'sh':
             if token in COMMANDS and not source[:match.start()].rsplit('\n', 1)[-1].strip():
                 kind = 'kw'
@@ -64,9 +65,19 @@ def plain_text(markup):
 
 def highlight_page(page):
     """Refresh explicitly tagged static examples, preserving copyable source."""
-    return re.sub(r'(<code data-language="(gwt|sh|json)">)(.*?)</code>',
-                  lambda m: m[1] + highlight(plain_text(m[3]), m[2]) + '</code>',
-                  page, flags=re.S)
+    def replace(match):
+        source = plain_text(match[4])
+        rendered = highlight(source, match[2])
+        # The hero selects source lines, not independently hand-colored HTML.
+        if match[3]:
+            first, last = map(int, match[3].split('-'))
+            lines = rendered.split('\n')
+            lines[first - 1] = '<span class="policy-selected">' + lines[first - 1]
+            lines[last - 1] += '</span>'
+            rendered = '\n'.join(lines)
+        return match[1] + rendered + '</code>'
+    return re.sub(r'(<code data-language="(gwt|sh|json)"(?: data-selected-lines="(\d+-\d+)")?>)(.*?)</code>',
+                  replace, page, flags=re.S)
 
 
 def highlight_review(page):
@@ -88,7 +99,7 @@ def highlight_review(page):
 .tok-kw{color:#175e47;font-weight:750}.tok-key{color:#244e89}
 .tok-string{color:#825009}.tok-number,.tok-param{color:#005d78}
 .tok-type,.tok-bool{color:#67408c}.tok-action{color:#364c43;font-weight:650}
-.tok-comment{color:#53665b}
+.tok-comment{color:#53665b}.tok-word{color:#43534c}.tok-operator{color:#385b72}
 </style>'''
     return page.replace('</style>', '</style>' + styles, 1)
 

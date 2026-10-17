@@ -72,7 +72,7 @@ These are illustrative fixtures, not participant responses or a public release.
         archive.with_suffix('.zip.sha256').write_text(checksum + '  ' + archive.name + '\n')
         manifest = {'kind': 'gwt.site-build', 'schemaVersion': 1,
                     'engine': json.loads(files['engine.json']),
-                    'sources': {**summary['sourceSha256'], **{path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in ['tools/build_site.py', 'tools/highlight_site.py']}},
+                    'sources': {**summary['sourceSha256'], **{path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in ['tools/build_site.py', 'tools/highlight_site.py', 'tools/gwt_syntax.py', 'crates/gwt-core/src/vocabulary.json']}},
                     'reviewTotals': summary['reviewTotals'],
                     'artifacts': {str(p.relative_to(destination)): hashlib.sha256(p.read_bytes()).hexdigest()
                                   for p in [destination / 'demo/delivery-review.html', archive]}}

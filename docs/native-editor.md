@@ -379,3 +379,13 @@ host-input validation has its own [boundary explanations](native-embedding.md),
 while remaining diagnostic categories retain their existing wording.
 [Before/after and installed-editor evidence](../evaluations/native_editor/2026-10-16-type-diagnostics/README.md)
 checks the changed wording and actual repairs. It is not a comprehension study.
+
+## Syntax colors and spelling
+
+The editor grammar is generated from the same native vocabulary and lexical
+rules as the site. It distinguishes action verbs from structural words and
+connectors, recognizes lowercase type declarations and keyword-shaped field
+names, and no longer advertises retired `find`, `exists`, `any`, or English
+comparison aliases as native features. Coloring is lexical, not proof of a valid
+program. See [casing and naming](language-style.md). Declaration completion
+preserves exact domain spelling; it is not an automatic case-repair service.

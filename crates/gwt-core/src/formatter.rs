@@ -37,47 +37,12 @@ fn normalize_statement(text: &str) -> String {
         }
     }
     let (word, rest) = text.split_once(char::is_whitespace).unwrap_or((text, ""));
-    if matches!(
-        word,
-        "PROGRAM"
-            | "USE"
-            | "TYPE"
-            | "RECORD"
-            | "REQUEST"
-            | "OUTPUT"
-            | "BACKGROUND"
-            | "SCENARIO"
-            | "EXAMPLES"
-            | "GIVEN"
-            | "WHEN"
-            | "THEN"
-            | "AND"
-            | "LET"
-            | "REQUIRE"
-            | "IF"
-            | "ELSE"
-            | "FOR"
-            | "FIND"
-            | "DECIDE"
-            | "RETURN"
-            | "PASS"
-            | "set"
-            | "add"
-            | "subtract"
-            | "append"
-            | "count"
-            | "sum"
-            | "divide"
-            | "print"
-    ) {
+    if crate::vocabulary::format_head(word) {
         let rest = rest.trim();
         // Only normalize a built-in verb after WHEN, never a domain phrase.
         let rest = if word == "WHEN" {
             let first = rest.split_whitespace().next().unwrap_or("");
-            if matches!(
-                first,
-                "set" | "add" | "subtract" | "append" | "count" | "sum" | "divide" | "print"
-            ) {
+            if crate::vocabulary::action(first) {
                 normalize_statement(rest)
             } else {
                 rest.into()

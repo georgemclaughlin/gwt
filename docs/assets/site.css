@@ -430,9 +430,17 @@ pre code {
 }
 
 .tok-bool,
-.tok-type,
-.tok-word {
+.tok-type {
+  color: var(--syntax-type);
+}
+
+.tok-word,
+.tok-comment {
   color: var(--syntax-word);
+}
+
+.tok-operator {
+  color: var(--syntax-key);
 }
 
 .tok-action {
