@@ -201,19 +201,19 @@
         <div class="command-grid">
           <article class="command-item">
             <div class="command-copy"><h3>Check Your Rules</h3><p>Validate the policy and run its embedded scenarios.</p></div>
-            <pre><code>gwt validate delivery.gwt</code></pre>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> validate delivery.gwt</code></pre>
           </article>
           <article class="command-item">
             <div class="command-copy"><h3>Run A Request</h3><p>Send a parcel’s weight and membership status to the delivery policy.</p></div>
-            <pre><code>gwt run delivery.gwt \
-  --request &quot;quote delivery&quot; \
-  --input parcel.json</code></pre>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> run delivery.gwt \
+  <span class="tok-key">--request</span> <span class="tok-string">"quote delivery"</span> \
+  <span class="tok-key">--input</span> parcel.json</code></pre>
           </article>
           <article class="command-item">
             <div class="command-copy"><h3>Review A Change</h3><p>Compare captured requests with the proposed policy and explore the evidence in your browser.</p></div>
-            <pre><code>gwt review delivery.corpus.json \
-  --candidate proposed.gwt \
-  --html delivery-review.html</code></pre>
+            <pre><code data-language="sh"><span class="tok-kw">gwt</span> review delivery.corpus.json \
+  <span class="tok-key">--candidate</span> proposed.gwt \
+  <span class="tok-key">--html</span> delivery-review.html</code></pre>
           </article>
         </div>
       </section>

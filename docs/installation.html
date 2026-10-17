@@ -12,18 +12,18 @@
 <p>GWT is experimental. Public binary downloads are not available yet. The source installation below
 builds the same Rust engine used by the examples. Linux x86-64 is the currently qualified distribution target.</p>
 <p>If you have a locally built binary bundle, verify its checksum, extract it, and run:</p>
-<pre><code>sh install.sh --prefix "$HOME/.local"
-export PATH="$HOME/.local/bin:$PATH"
-gwt version --json</code></pre>
+<pre><code data-language="sh"><span class="tok-kw">sh</span> install.sh <span class="tok-key">--prefix</span> <span class="tok-string">"$HOME/.local"</span>
+<span class="tok-kw">export</span> PATH=<span class="tok-string">"$HOME/.local/bin:$PATH"</span>
+<span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
 <p>Keep the extracted installer to remove this installation with <code>sh install.sh --prefix "$HOME/.local" --uninstall</code>.</p>
 <details><summary>Build and install from source</summary>
 <p>With Git and rustup installed, clone the repository or use your current checkout. These instructions describe the merged branch;
 when reviewing an unmerged change, use that change’s checkout.</p>
-<pre><code>git clone https://github.com/georgemclaughlin/gwt.git
-cd gwt
-rustup toolchain install 1.96.0
-cargo +1.96.0 install --path crates/gwt-core --locked
-gwt version --json</code></pre>
+<pre><code data-language="sh"><span class="tok-kw">git</span> clone https://github.com/georgemclaughlin/gwt.git
+<span class="tok-kw">cd</span> gwt
+<span class="tok-kw">rustup</span> toolchain install <span class="tok-number">1.96</span>.<span class="tok-number">0</span>
+<span class="tok-kw">cargo</span> +<span class="tok-number">1.96</span>.<span class="tok-number">0</span> install <span class="tok-key">--path</span> crates/gwt-core <span class="tok-key">--locked</span>
+<span class="tok-kw">gwt</span> version <span class="tok-key">--json</span></code></pre>
 <p>Cargo installs the optimized executable in its bin directory. Ensure that directory is on PATH.
 For a Cargo installation, uninstall with <code>cargo uninstall gwt-core</code>.</p></details>
 </section><section class="walk-step"><h2>Check An Existing Installation</h2>
