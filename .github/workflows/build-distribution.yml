@@ -16,6 +16,8 @@ jobs:
           python-version: '3.11'
       - name: Install Rust
         run: rustup toolchain install 1.96.0 --profile minimal --target "${{ matrix.target }}"
+      - name: Fetch locked dependencies for offline qualification
+        run: cargo +1.96.0 fetch --locked
       - name: Build and qualify the source and binary artifacts
         run: |
           python evaluations/native_packaging/qualify.py --toolchain 1.96.0 --profile release \
