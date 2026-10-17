@@ -21,3 +21,7 @@ own engine. The distribution workflow performs that generation and verification.
 Dated historical artifacts remain unchanged. Reviewer choices remain pending;
 no human session, external pilot, merge, tag, registry upload, or site deployment
 is claimed by this checkpoint.
+
+The standalone ZIP uses stored entries with fixed metadata. Python 3.11 and
+3.14 produce byte-identical assets; the product verifier compares complete
+artifact hashes. This avoids differences from host zlib compression versions.
