@@ -12,9 +12,9 @@ deferred by owner choice. Those are evidence gaps, not reasons to stop engineeri
   the [grammar](native-grammar.md) and [execution model](native-execution-model.md).
 - The CLI, Rust/Node embedding, VS Code integration, capture/replay, and offline
   change review are implemented for the documented experimental profile.
-- The [public site](https://georgemclaughlin.github.io/gwt/) is deployed. Source
-  installation and qualified GNU/musl CI artifacts are available; public binary
-  releases and a versioned language release remain pending.
+- The [public site](https://georgemclaughlin.github.io/gwt/) is deployed. The [first preview](https://github.com/georgemclaughlin/gwt/releases/tag/preview-1)
+  provides qualified GNU/musl Linux x86-64 binaries. A stable release and a
+  versioned language release remain pending.
 - [PR #2](https://github.com/georgemclaughlin/gwt/pull/2) merged the Rust cutover
   and language consistency work. [Cutover evidence](../evaluations/product_cutover/README.md)
   and [consistency evidence](../evaluations/language_consistency/implementation.md)

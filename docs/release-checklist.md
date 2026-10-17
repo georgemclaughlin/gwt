@@ -1,6 +1,7 @@
 # GWT release checklist
 
-Status: development cutover; public publication is pending. GWT retains its name
+Status: [Preview 1](preview-1.md) is the authorized, limited GitHub prerelease scope.
+Stable publication and the historical pilot milestone remain pending. GWT retains its name
 and MIT license. One Rust engine owns the `gwt` executable. Package version,
 language version, and artifact schema versions are separate decisions.
 
@@ -24,7 +25,8 @@ language version, and artifact schema versions are separate decisions.
 Human sessions remain pending and external pilots deferred by owner choice.
 They are not completed by tests, model comparisons, or this cutover. Preserve the
 external-pilot requirements from the [historical milestone checklist](release-v0.4-checklist.md)
-unless the owner explicitly revises the release scope. The
+for that milestone. The owner authorized a separate local-evaluation preview
+without completing or claiming those pilots; see [Preview 1 scope](preview-1.md). The
 [project goal](project-goal.md) still requires demonstrated human-review value.
 
 ## Publication (separate authorization)
@@ -38,3 +40,15 @@ unless the owner explicitly revises the release scope. The
 
 The distribution workflow prepares downloadable CI artifacts only. It does not
 create a tag, GitHub Release, registry upload, or automatic website deployment.
+
+## Repeatable preview preparation
+
+1. Freeze a reviewed commit and require green CI.
+2. Dispatch `Build distribution` at that revision and require both jobs to pass.
+3. Download that run's artifacts and save its GitHub run metadata.
+4. Prepare and verify release assets with `tools/prepare_preview.py` (see `--help`).
+5. Publish the authorized tag as a GitHub **prerelease**, without marking it latest
+   stable. Verify the public downloads, installation, and matching walkthrough.
+6. Merge/deploy matching consumer guidance and require all main Actions to pass.
+
+This scope does not authorize registries, marketplaces, or a stable release.
