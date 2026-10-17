@@ -126,5 +126,9 @@
       "supported": false,
       "description": "GWT checks and commands execute a configured local language tool."
     }
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
   }
 }

@@ -54,6 +54,7 @@ pub use inspection::{
 mod type_label;
 mod value;
 mod version;
+mod vocabulary;
 pub use bundle::{
     ModuleIdentity, ProgramIdentity, SourceBundle, compile_bundle, compile_file, load_bundle,
 };

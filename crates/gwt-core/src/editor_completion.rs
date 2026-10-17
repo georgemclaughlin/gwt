@@ -149,30 +149,8 @@ fn context<'a>(text: &'a str, query: &EditorQuery, nodes: &[Node]) -> Option<Con
                 tail
             };
             if tail.split_whitespace().next().is_some_and(|w| {
-                [
-                    "GIVEN",
-                    "AND",
-                    "THEN",
-                    "RETURN",
-                    "REQUIRE",
-                    "IF",
-                    "ELSE",
-                    "FOR",
-                    "FIND",
-                    "DECIDE",
-                    "DEPENDING",
-                    "OUTPUT",
-                    "set",
-                    "add",
-                    "subtract",
-                    "append",
-                    "print",
-                    "count",
-                    "sum",
-                    "divide",
-                    "PASS",
-                ]
-                .contains(&w)
+                ["GIVEN", "AND", "THEN", "OUTPUT"].contains(&w)
+                    || crate::vocabulary::statement_head(w)
             }) {
                 return None;
             }
@@ -237,29 +215,7 @@ fn declaration(node: &Node) -> Option<(String, CompletionItem)> {
             }
             if canonical.is_empty()
                 || canonical[0] == "<parameter>"
-                || [
-                    "set",
-                    "add",
-                    "subtract",
-                    "append",
-                    "count",
-                    "sum",
-                    "divide",
-                    "find",
-                    "exists",
-                    "print",
-                    "LET",
-                    "RETURN",
-                    "PASS",
-                    "REQUIRE",
-                    "IF",
-                    "ELSE",
-                    "FOR",
-                    "FIND",
-                    "DECIDE",
-                    "DEPENDING",
-                ]
-                .contains(&canonical[0])
+                || crate::vocabulary::reserved_behavior(canonical[0])
             {
                 return None;
             }
@@ -364,7 +320,7 @@ pub fn complete_editor(
             }
         }
         if context.kind == "type" {
-            for name in ["boolean", "decimal", "integer", "number", "text"] {
+            for name in crate::vocabulary::primitive_types() {
                 candidates
                     .entry(format!("type:{name}"))
                     .and_modify(|item| *item = None)

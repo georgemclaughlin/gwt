@@ -4,7 +4,7 @@
   "engine": {
     "engine": {
       "profile": "gwt-native-case-engine-v1",
-      "sourceDigest": "sha256:23000dac2fc04d506dcbba27a197bb7530d689fc5d917cba72195902269b8444"
+      "sourceDigest": "sha256:71d194937d0d4b4d7dc5c25f13c40e587ca05812cf3b87b8f07b39a173c9fd31"
     },
     "kind": "gwt.native-version",
     "languageProfile": "gwt-native-experimental",
@@ -19,8 +19,10 @@
     "examples/native_review_walkthrough/candidate.gwt": "64a5fc95908ba6dfebfdc20da677582f324d81e5238e52585214109ccf3693e2",
     "examples/native_review_walkthrough/cases.json": "1377ad634eb56d366c77b87665dab992d4ba887036e7c6910756206a9025cb2d",
     "examples/native_review_walkthrough/prepare.py": "f0a9d32890ded85e0b9f83ce2c00181e41c2997f6e8496e93a7fa8bac7929f4e",
-    "tools/build_site.py": "9cad19e7e534b975f7f76c7cd07e37d8c67a5e70a2bef771e3aa4a5b86f0712b",
-    "tools/highlight_site.py": "8b83764c72b92e4b3f660f9b6eb89d618127812ba6c7bf0922669ce79d3fa5b5"
+    "tools/build_site.py": "e44ac7942667aaef6ffda4b09bf7055387e239648a7a9aba0fbe79ff89a4cbb9",
+    "tools/highlight_site.py": "d2031eba63e4e7e2c733d3396bd22b93df841948e65465ec9ecf76043f12f6c7",
+    "tools/gwt_syntax.py": "7656f6ef978a19e479dbfdfeabfae87944a8f26fc84dac5743883e8a2b69eaa9",
+    "crates/gwt-core/src/vocabulary.json": "61b2e6febd9bed54a07f13fdab8e2e748dbe36d60adbb3986eec2c06f17f38a6"
   },
   "reviewTotals": {
     "baselineMismatch": 0,
@@ -35,7 +37,7 @@
     "unchanged": 0
   },
   "artifacts": {
-    "demo/delivery-review.html": "cb919c1c70ec70b17fe295ebfd9a9218da6d12f23ebc079d93546811faece2e8",
-    "downloads/delivery-example.zip": "0699d503af9b1bb5899aaf1b5b7e50df88122700953d19eebaac643b96cd5034"
+    "demo/delivery-review.html": "8a740c354c9a4756bdbbce3b279e203c7053a24345bd67636dabe5061870ce16",
+    "downloads/delivery-example.zip": "123423765ed68c50aa8f0895f8e5c3c358439034cfd6046f2648792c826382e6"
   }
 }

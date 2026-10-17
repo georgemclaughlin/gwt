@@ -6,7 +6,7 @@
   <meta name="description" content="Read, run, change, and review an executable delivery policy with GWT's experimental Rust engine.">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="stylesheet" href="assets/site.css?v=policy-2">
+  <link rel="stylesheet" href="assets/site.css?v=syntax-3">
 </head>
 <body>
 <header class="site-header"><a class="wordmark" href="index.html">GWT</a>
@@ -36,39 +36,39 @@ Parcels above 5,000g require manual handling, even for members; nonpositive weig
 <code>DECIDE</code> executes its first matching arm, so the order expresses policy precedence.</p><pre><code data-language="gwt"><span class="tok-kw">PROGRAM</span> delivery quote
 
 <span class="tok-kw">RECORD</span> <span class="tok-type">Parcel</span>
-  weight_grams: <span class="tok-type">integer</span>
-  member: <span class="tok-type">boolean</span>
+  <span class="tok-key">weight_grams</span>: <span class="tok-type">integer</span>
+  <span class="tok-key">member</span>: <span class="tok-type">boolean</span>
 
 <span class="tok-kw">RECORD</span> <span class="tok-type">Quote</span>
-  status: <span class="tok-string">"standard"</span> | <span class="tok-string">"manual"</span>
-  fee: <span class="tok-type">integer</span>
+  <span class="tok-key">status</span>: <span class="tok-string">"standard"</span> <span class="tok-operator">|</span> <span class="tok-string">"manual"</span>
+  <span class="tok-key">fee</span>: <span class="tok-type">integer</span>
 
 <span class="tok-kw">REQUEST</span> quote delivery
-  <span class="tok-kw">GIVEN</span> parcel <span class="tok-action">is</span> <span class="tok-type">Parcel</span>
-  <span class="tok-kw">GIVEN</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
-    status: <span class="tok-string">"standard"</span>
-    fee: <span class="tok-number">0</span>
-  <span class="tok-kw">WHEN</span> quote delivery <span class="tok-action">for</span> parcel <span class="tok-action">into</span> quote
-  <span class="tok-kw">OUTPUT</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
-  <span class="tok-kw">THEN</span> quote.fee &gt;= <span class="tok-number">0</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">GIVEN</span> quote <span class="tok-operator">is</span> Quote
+    <span class="tok-key">status</span>: <span class="tok-string">"standard"</span>
+    <span class="tok-key">fee</span>: <span class="tok-number">0</span>
+  <span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> parcel <span class="tok-word">into</span> quote
+  <span class="tok-kw">OUTPUT</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">THEN</span> quote.fee <span class="tok-operator">&gt;=</span> <span class="tok-number">0</span>
 
-<span class="tok-kw">WHEN</span> quote delivery <span class="tok-action">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-action">into</span> <span class="tok-param">&lt;quote&gt;</span>
-  <span class="tok-kw">GIVEN</span> parcel <span class="tok-action">is</span> <span class="tok-type">Parcel</span>
-  <span class="tok-kw">AND</span> quote <span class="tok-action">is</span> <span class="tok-type">Quote</span>
-  <span class="tok-kw">REQUIRE</span> parcel.weight_grams &gt; <span class="tok-number">0</span>
+<span class="tok-kw">WHEN</span> quote delivery <span class="tok-word">for</span> <span class="tok-param">&lt;parcel&gt;</span> <span class="tok-word">into</span> <span class="tok-param">&lt;quote&gt;</span>
+  <span class="tok-kw">GIVEN</span> parcel <span class="tok-operator">is</span> Parcel
+  <span class="tok-kw">AND</span> quote <span class="tok-operator">is</span> Quote
+  <span class="tok-kw">REQUIRE</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">0</span>
   <span class="tok-kw">DECIDE</span>
-    <span class="tok-kw">WHEN</span> parcel.weight_grams &gt; <span class="tok-number">5000</span>
-      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"manual"</span>
-      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&gt;</span> <span class="tok-number">5000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"manual"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
     <span class="tok-kw">WHEN</span> parcel.member
-      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
-      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">0</span>
-    <span class="tok-kw">WHEN</span> parcel.weight_grams &lt;= <span class="tok-number">1000</span>
-      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
-      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">5</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">0</span>
+    <span class="tok-kw">WHEN</span> parcel.weight_grams <span class="tok-operator">&lt;=</span> <span class="tok-number">1000</span>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">5</span>
     <span class="tok-kw">ELSE</span>
-      <span class="tok-action">set</span> quote.status <span class="tok-action">to</span> <span class="tok-string">"standard"</span>
-      <span class="tok-action">set</span> quote.fee <span class="tok-action">to</span> <span class="tok-number">9</span></code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
+      <span class="tok-action">set</span> quote.status <span class="tok-word">to</span> <span class="tok-string">"standard"</span>
+      <span class="tok-action">set</span> quote.fee <span class="tok-word">to</span> <span class="tok-number">9</span></code></pre><p>The rest of the file contains a shared setup, a scenario, and ten example rows that check weight and membership boundaries.</p><a href="https://github.com/georgemclaughlin/gwt/blob/main/examples/native_delivery/rules.gwt">Read the complete baseline</a>
 </section>
 <section id="run" class="walk-step"><h2>Run The Proposed Change</h2>
 <p>The proposed policy in <code>proposed.gwt</code> extends the low-fee band to <strong>1,500g inclusive</strong>.

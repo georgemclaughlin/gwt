@@ -15,3 +15,7 @@ examples or captured cases. It also inventories the 28 catalog entry files and
 samples the website highlighter. Results are observational: future intentional
 language/tooling changes may differ. Preserve this checkpoint and write a new
 output when comparing an implementation change.
+
+The subsequent [implementation record](implementation.md) and
+[verification summary](implementation.json) describe the fixes without replacing
+this original checkpoint.

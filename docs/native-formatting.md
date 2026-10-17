@@ -36,7 +36,10 @@ The library equivalent is `format_source(source, filename)`, returning
 - Leading/trailing blank lines are removed; repeated interior blank lines
   collapse to one. Nonempty output ends with one newline.
 - Leading keyword/built-in spacing and field colons are normalized. Internal
-  expression spacing and domain phrases are preserved.
+  expression spacing and domain phrases are preserved. This includes the
+  leading `DEPENDING` marker and optional `AND` step prefixes; internal clause
+  spacing is not a general normalization promise. Casing and the accepted
+  `WHERE`/`where` spellings are preserved (see [language style](language-style.md)).
 - Comments use `# text`, with two spaces before an inline comment. Comment
   placement and indentation are preserved.
 - Table columns align across intervening comments or blank lines. Quoted pipes,

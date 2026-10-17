@@ -42,6 +42,13 @@ The library interprets checked GWT; this profile does not generate Rust programs
 
 ## 2. Source and declarations
 
+Source spellings and user-defined names match case-sensitively. Uppercase marks
+structure, binding, assertions, and control; the primitive action verbs such as
+`set` remain lowercase. Type-name capitalization is a style convention, not a
+parser requirement. `WHERE` is the preferred collection-filter spelling; `where`
+is also accepted. See [casing and naming](../language-style.md) for `LET` versus
+`set`, `RETURN` versus `print`, and `AND` versus expression `and`.
+
 Source is UTF-8, with LF or CRLF line endings. Top-level forms start at column
 one. Blocks indent by two spaces; tabs and skipped indentation levels fail.
 Blank lines and `#` comments outside double-quoted strings do not create blocks.

@@ -4,6 +4,9 @@ GWT source is the program. Keep domain rules in `.gwt`; the host owns I/O and
 external effects. Use the [language reference](spec/native-draft.md) and
 [validated examples](../examples/README.md) for the current engine.
 
+Follow the [casing and naming convention](language-style.md): preserve exact
+source spellings and domain names; formatting is not case repair.
+
 1. Inspect the existing contracts with `gwt inspect rules.gwt`, then read the
    actual bodies and imported sources. Inspection does not replace reading.
 2. State intended changed and preserved outcomes, including failure, precedence,

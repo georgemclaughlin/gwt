@@ -3,6 +3,9 @@
 Status: review and recommendations, not a grammar change. Reviewed revision:
 `d81235e`, using the Rust engine identified in the accompanying evidence.
 
+Implementation follow-up: [fixes and verification](../evaluations/language_consistency/implementation.md).
+The findings below describe the reviewed pre-fix revision.
+
 ## Conclusion
 
 Keep lowercase `set`. Keep the existing mixed-case language, but document its
