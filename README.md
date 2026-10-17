@@ -16,7 +16,7 @@ not yet been demonstrated.
 
 Open the [project site](https://georgemclaughlin.github.io/gwt/). The site includes an interactive delivery-policy review
 and a standalone example download. See [Getting Started](docs/getting-started.html)
-and [installation](docs/installation.html). Public binary releases remain pending.
+and [installation](docs/installation.html). Download the [Linux x86-64 preview](https://github.com/georgemclaughlin/gwt/releases/tag/preview-1); no Rust or Python installation is needed.
 
 With Git and Rust installed, build the developer preview from this checkout:
 
