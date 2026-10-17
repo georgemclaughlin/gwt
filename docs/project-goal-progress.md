@@ -19,9 +19,15 @@ Python runtime/distribution and editor launch/debug paths are retired. The
 [upgrade guide](python-retirement.md) records the historical reference and
 existing-installation conflicts. The [cutover evidence](../evaluations/product_cutover/README.md)
 qualifies packaging, installed examples, editor integration, and the generated site.
-Package and language release versions have not been advanced. Merge, publication,
-human sessions, and external pilots remain pending; the historical ledger below
-records earlier checkpoints and should not be read as current engine selection.
+The [consistency follow-up](../evaluations/language_consistency/implementation.md)
+aligns language guidance, editor/site syntax coloring, and casing diagnostics;
+437 Rust tests pass on each supported toolchain, and all nine saved delivery
+observations are preserved across the engine update.
+Package and language release versions have not been advanced. Integration status
+is tracked in [PR #2](https://github.com/georgemclaughlin/gwt/pull/2).
+Publication, human sessions, and external pilots remain pending; the historical
+ledger below records earlier checkpoints and should not be read as current engine
+selection.
 
 ## Objective audit
 
@@ -34,7 +40,7 @@ See the [dated evidence audit](../evaluations/goal_audit/2026-10-16/README.md).
 | --- | --- | --- |
 | Human understanding | Executable examples, source-backed review workbench, and a qualified offline source-review kit across four domains | Actual comprehension, error detection, and review-time measurements with representative participants; sessions are pending by owner choice |
 | Independent semantics | Documented execution model, exact numbers, explicit state/aliasing, typed boundaries, failure/resource rules, finite scalar contracts, and deliberate language choices | [Support and migration contract](native-language-transition.md) is consolidated; CLI/library/editor profile identity is implemented; assigning a language release, freezing its scope, and final migration qualification remain |
-| Rust foundation | Parser, checker, execution, independent conformance, scenarios, imports, source identity, capture/replay/comparison, and bounded evidence; 431 Rust tests at the latest identity checkpoint | Resolve remaining scope questions against concrete workflows; unsupported Python forms are not automatically features to port |
+| Rust foundation | Parser, checker, execution, independent conformance, scenarios, imports, source identity, capture/replay/comparison, and bounded evidence; 437 Rust tests at the latest identity checkpoint | Resolve remaining scope questions against concrete workflows; unsupported Python forms are not automatically features to port |
 | Complete behavioral review | Source-backed offline comparison, saved decisions, fresh assessment, regression scopes, generated scenarios, engine-transition review, and qualified source adaptations | Representative human review and broader migration policy validation; browser automation verifies mechanics rather than comprehension |
 | Practical adoption | Qualified Rust library/CLI packaging, GNU/static Linux bundles, Node host, native VS Code integration, and offline WASM execution in Chromium, Firefox, and Linux WebKit | Deployment/support decisions and representative integration evidence; additional platforms and editor conveniences need concrete demand |
 | Demonstrated value | Small live refund maintenance comparison tied; five-domain maintenance apparatus and four-domain human-study fixtures now requalified on the current engine; separate runtime measurements | Larger live model experiment, actual human-benefit evidence, and representative adoption; no superiority claim follows from fixture checks |
