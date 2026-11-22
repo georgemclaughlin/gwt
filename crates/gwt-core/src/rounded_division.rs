@@ -55,6 +55,11 @@ pub(crate) fn divide(
     }
     let factor = BigInt::from(10).pow(scale);
     let scaled = numerator / denominator * BigRational::from_integer(factor.clone());
+    let whole = round_scaled(&scaled, mode);
+    checked_numeric(BigRational::new(whole, factor), &Type::Decimal, span)
+}
+
+fn round_scaled(scaled: &BigRational, mode: Rounding) -> BigInt {
     let negative = scaled.is_negative();
     let n = scaled.numer().abs();
     let d = scaled.denom();
@@ -75,5 +80,5 @@ pub(crate) fn divide(
     if negative {
         whole = -whole;
     }
-    checked_numeric(BigRational::new(whole, factor), &Type::Decimal, span)
+    whole
 }
