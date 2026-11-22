@@ -368,6 +368,46 @@ pub(crate) fn equal(first: &Value, second: &Value) -> bool {
     }
 }
 
+#[cfg(kani)]
+mod proofs {
+    use super::{Context, Limits, Span};
+
+    #[kani::proof]
+    // The diagnostic code comparison visits at most "execution_limit".len() bytes.
+    #[kani::unwind(16)]
+    fn charge_respects_step_budget() {
+        let limit: usize = kani::any();
+        let used: usize = kani::any();
+        let mut context = Context::new(Limits {
+            steps: limit,
+            ..Limits::default()
+        });
+        context.steps = used;
+        let span = Span {
+            file: String::new(),
+            start: 0,
+            end: 0,
+            line: 1,
+            column: 1,
+        };
+
+        let result = context.charge(&span);
+        if used < limit {
+            assert!(result.is_ok());
+            assert_eq!(context.steps, used + 1);
+        } else {
+            assert_eq!(result.unwrap_err().code, "execution_limit");
+            assert_eq!(context.steps, used);
+        }
+        kani::cover!(used == 0 && limit == 0, "empty budget");
+        kani::cover!(
+            used < limit && context.steps == usize::MAX,
+            "last available step at usize::MAX"
+        );
+        kani::cover!(used > limit, "already over budget");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
