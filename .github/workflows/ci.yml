@@ -6,6 +6,17 @@ on:
   pull_request:
 
 jobs:
+  engine-proofs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Kani
+        run: |
+          cargo install --locked kani-verifier --version 0.68.0
+          cargo kani setup
+      - name: Verify all engine proofs
+        run: cargo kani -p gwt-core --lib -Z stubbing
+
   native:
     runs-on: ubuntu-latest
     strategy:
