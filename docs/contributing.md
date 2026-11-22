@@ -24,19 +24,26 @@ Rust 1.85.0 as its minimum toolchain.
 
 ## Engine proofs
 
-Run the step-budget proof from the repository root with Kani 0.68.0:
+CI checks all Rust engine proof harnesses on pull requests and pushes to main.
+To run the same suite locally, use Kani 0.68.0 from the repository root:
 
 ```sh
 cargo install --locked kani-verifier --version 0.68.0
 cargo kani setup
-cargo kani -p gwt-core --lib --harness charge_respects_step_budget
+cargo kani -p gwt-core --lib -Z stubbing
 ```
 
-The harness checks `Context::charge` for every pair of starting counter and
-limit values on the target. A successful charge spends exactly one step. An
-exhausted budget returns `execution_limit` and preserves the counter. Its three
-coverage goals exercise an empty budget, the final step up to `usize::MAX`, and
-a counter already over budget. Expression evaluation has a separate step check.
+To run a single proof, append `--harness` and its name.
+
+- `charge_respects_step_budget` checks every pair of counter and limit values on
+  the target. A successful charge spends one step. An exhausted budget returns
+  `execution_limit` and preserves the counter.
+- `exhausted_path_evaluation_stops_before_read` checks the evaluator with a
+  binding-path expression. For every counter at or above the limit, evaluation
+  returns `execution_limit`, preserves the counter, emits no event, and never
+  calls the binding reader. This harness replaces the dispatch method after the
+  entry check with a panic, so reaching dispatch also fails the proof. Coverage
+  goals exercise equality and strict excess.
 
 ## Site and example generation
 
