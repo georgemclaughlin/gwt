@@ -72,6 +72,23 @@ struct Address {
     label: String,
 }
 impl Address {
+    fn with_fields(&self, fields: &[String]) -> Self {
+        let mut address = self.clone();
+        address
+            .fields
+            .extend(fields.iter().cloned().map(Segment::Field));
+        if !fields.is_empty() {
+            address.label.push('.');
+            address.label.push_str(&fields.join("."));
+        }
+        address
+    }
+    fn with_index(&self, index: usize) -> Self {
+        let mut address = self.clone();
+        address.fields.push(Segment::Index(index));
+        address.label.push_str(&format!("[{index}]"));
+        address
+    }
     fn read(&self, span: &Span) -> Result<Value> {
         self.read_fields(&[], span)
     }
@@ -143,15 +160,7 @@ impl Frame {
         }
     }
     fn place(&self, place: &Place) -> Address {
-        let mut address = self.slots[place.slot].clone();
-        address
-            .fields
-            .extend(place.fields.iter().cloned().map(Segment::Field));
-        if !place.fields.is_empty() {
-            address.label.push('.');
-            address.label.push_str(&place.fields.join("."));
-        }
-        address
+        self.slots[place.slot].with_fields(&place.fields)
     }
     fn state(&self, bindings: &BTreeMap<String, Binding>, span: &Span) -> Json {
         Json::Object(
@@ -675,10 +684,7 @@ impl<'a> Runtime<'a> {
             for (index, item) in items.into_iter().enumerate() {
                 self.context.charge(span)?;
                 let address = if let Some(location) = &location {
-                    let mut address = location.clone();
-                    address.fields.push(Segment::Index(index));
-                    address.label.push_str(&format!("[{index}]"));
-                    address
+                    location.with_index(index)
                 } else {
                     Address {
                         cell: Rc::new(RefCell::new(Some(item))),
