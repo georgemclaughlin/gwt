@@ -129,6 +129,14 @@ impl Context {
             ));
         }
         self.steps += 1;
+        self.eval_after_charge(expression, read)
+    }
+
+    fn eval_after_charge(
+        &mut self,
+        expression: &Expression,
+        read: &impl Fn(usize, &[String], &Span) -> Result<Value>,
+    ) -> Result<(Value, usize)> {
         let mut inputs = Vec::new();
         let mut skipped = None;
         let (value, operation) = match &expression.kind {
@@ -370,7 +378,8 @@ pub(crate) fn equal(first: &Value, second: &Value) -> bool {
 
 #[cfg(kani)]
 mod proofs {
-    use super::{Context, Limits, Span};
+    use super::{Context, Expression, Kind, Limits, Result, Span, Value};
+    use crate::Type;
 
     #[kani::proof]
     // The diagnostic code comparison visits at most "execution_limit".len() bytes.
@@ -405,6 +414,59 @@ mod proofs {
             "last available step at usize::MAX"
         );
         kani::cover!(used > limit, "already over budget");
+    }
+
+    // Reaching expression dispatch is itself a failure for an exhausted budget.
+    fn unexpected_dispatch(
+        _: &mut Context,
+        _: &Expression,
+        _: &impl Fn(usize, &[String], &Span) -> Result<Value>,
+    ) -> Result<(Value, usize)> {
+        panic!("exhausted evaluation reached expression dispatch")
+    }
+
+    #[kani::proof]
+    #[kani::stub(Context::eval_after_charge, unexpected_dispatch)]
+    #[kani::unwind(16)]
+    fn exhausted_path_evaluation_stops_before_read() {
+        let limit: usize = kani::any();
+        let used: usize = kani::any();
+        kani::assume(used >= limit);
+
+        let mut context = Context::new(Limits {
+            steps: limit,
+            ..Limits::default()
+        });
+        context.steps = used;
+        // The proof ends at eval's return. Skip recursive AST and Value teardown.
+        let path = std::mem::ManuallyDrop::new(Expression {
+            kind: Kind::Path {
+                slot: 0,
+                fields: Vec::new(),
+                spelling: "amount".into(),
+                kinds: Default::default(),
+            },
+            ty: Type::Integer,
+            span: Span {
+                file: String::new(),
+                start: 0,
+                end: 6,
+                line: 1,
+                column: 1,
+            },
+        });
+
+        let result = std::mem::ManuallyDrop::new(context.eval(&path, &|_, _, _| {
+            panic!("exhausted evaluation read a binding")
+        }));
+        let Err(error) = &*result else {
+            panic!("exhausted evaluation returned a value");
+        };
+        assert_eq!(error.code, "execution_limit");
+        assert_eq!(context.steps, used);
+        assert!(context.events.is_empty());
+        kani::cover!(used == limit, "exactly at the limit");
+        kani::cover!(used > limit, "past the limit");
     }
 }
 

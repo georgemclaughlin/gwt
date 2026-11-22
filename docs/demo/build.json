@@ -4,7 +4,7 @@
   "engine": {
     "engine": {
       "profile": "gwt-native-case-engine-v1",
-      "sourceDigest": "sha256:ff584fbdae235690458fe1f38b0d4a65b585075f5b213639ae0c785c675a0114"
+      "sourceDigest": "sha256:c56f6389d51a16c97d7626de6714f1774b472692aa5d8253006732c78b94eb4c"
     },
     "kind": "gwt.native-version",
     "languageProfile": "gwt-native-experimental",
@@ -37,7 +37,7 @@
     "unchanged": 0
   },
   "artifacts": {
-    "demo/delivery-review.html": "89cac43c0db3d2820caac6b17a340120778b742e4913fa2271a8056012f71c30",
-    "downloads/delivery-example.zip": "e6bee9b046b4be8641562286d4583e74a47e8384b14d81182714509efd24a944"
+    "demo/delivery-review.html": "d3b291ee78394c033c2fcf00cb3f2591e65aaad7e0398b236cb33beb8f207d8d",
+    "downloads/delivery-example.zip": "952661e78e118cb8c266863ac7e723aed12934f1fcbbe6574ff1577e900d2c4c"
   }
 }
