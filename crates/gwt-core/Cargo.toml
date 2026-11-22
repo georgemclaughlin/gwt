@@ -21,6 +21,9 @@ sha2 = "=0.10.9"
 [build-dependencies]
 sha2 = "=0.10.9"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(kani)"] }
+
 [[bin]]
 name = "gwt"
 path = "src/main.rs"

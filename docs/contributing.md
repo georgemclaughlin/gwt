@@ -22,6 +22,22 @@ Python and Node are development tools for qualification and browser/host tooling
 users do not need them to run the compiled executable. The project also tests
 Rust 1.85.0 as its minimum toolchain.
 
+## Engine proofs
+
+Run the step-budget proof from the repository root with Kani 0.68.0:
+
+```sh
+cargo install --locked kani-verifier --version 0.68.0
+cargo kani setup
+cargo kani -p gwt-core --lib --harness charge_respects_step_budget
+```
+
+The harness checks `Context::charge` for every pair of starting counter and
+limit values on the target. A successful charge spends exactly one step. An
+exhausted budget returns `execution_limit` and preserves the counter. Its three
+coverage goals exercise an empty budget, the final step up to `usize::MAX`, and
+a counter already over budget. Expression evaluation has a separate step check.
+
 ## Site and example generation
 
 ```sh
