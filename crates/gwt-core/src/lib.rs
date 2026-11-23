@@ -20,6 +20,8 @@ mod explanation;
 mod expression;
 mod failure_expectation;
 mod migration;
+mod policy_diff;
+pub use policy_diff::compare_policies;
 mod print_expectation;
 mod profiling;
 pub use profiling::{

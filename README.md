@@ -38,6 +38,7 @@ nine captured cases and leaves reviewer decisions pending.
 | [Language reference](docs/spec/native-draft.md) | Syntax, types, state, contracts, failures, and evidence |
 | [Examples](examples/README.md) | Validated programs and focused language examples |
 | [Review walkthrough](docs/native-review-walkthrough.md) | Read, change, explain, and review one policy |
+| [Policy comparison](docs/policy-diff.md) | Find every changed outcome region for a supported request (development build) |
 | [Editor](vscode-gwt/README.md) | Checking, navigation, formatting, and execution in VS Code |
 | [Embed GWT](docs/native-embedding.md) | Rust library and host boundaries |
 | [Upgrade guide](docs/python-retirement.md) | Retired Python implementation and command conflicts |
