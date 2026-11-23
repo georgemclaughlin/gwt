@@ -14,6 +14,7 @@ include = ["src/**", "build.rs", "Cargo.toml", "engine-dependencies.lock", "PACK
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = { version = "=1.0.154", features = ["arbitrary_precision"] }
 num-bigint = "=0.4.8"
+num-integer = "=0.1.47"
 num-rational = "=0.4.2"
 num-traits = "=0.2.19"
 sha2 = "=0.10.9"
