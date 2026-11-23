@@ -13,6 +13,7 @@ mod formatter_cli;
 mod limits_cli;
 mod migration_cli;
 mod outline_cli;
+mod policy_diff_cli;
 mod regression_cli;
 mod validation_cli;
 
@@ -28,7 +29,15 @@ fn read_bounded(path: &str, maximum: usize) -> Result<String, Box<dyn std::error
 }
 
 fn main() -> ExitCode {
-    match run() {
+    let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|command| command == "policy-diff") {
+        return emit(policy_diff_cli::run(&args[1..]));
+    }
+    emit(run(args))
+}
+
+fn emit<T: std::fmt::Display>(result: Result<(bool, T), Box<dyn std::error::Error>>) -> ExitCode {
+    match result {
         Ok((ok, payload)) => {
             println!("{payload}");
             if ok {
@@ -56,8 +65,7 @@ fn profile_payload(
     }
 }
 
-fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
-    let mut args: Vec<_> = std::env::args().skip(1).collect();
+fn run(mut args: Vec<String>) -> Result<(bool, Value), Box<dyn std::error::Error>> {
     if args
         .first()
         .is_some_and(|command| matches!(command.as_str(), "version" | "--version" | "-V"))
@@ -131,7 +139,7 @@ fn run() -> Result<(bool, Value), Box<dyn std::error::Error>> {
     if args.len() == 1 && matches!(args[0].as_str(), "--help" | "-h") {
         return Ok((
             true,
-            json!({"usage": ["gwt version [--json] | --version | -V", "gwt run|capture|profile ENTRY.gwt [--import-root DIRECTORY] [--limits FILE.json] (exactly one entry scenario)", "gwt validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]", "gwt format FILE.gwt [--check | --write]", "gwt format-editor < snapshot.json", "gwt outline-editor < snapshot.json", "gwt check-editor < snapshot.json", "gwt complete-editor < snapshot.json","gwt expression EXPRESSION TYPES.json INPUT.json", "gwt check FILE.gwt [--import-root DIRECTORY]", "gwt inspect FILE.gwt [--import-root DIRECTORY]", "gwt test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]", "gwt profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt replay CASE.json", "gwt migrate CASE.json --previous-engine EXECUTABLE [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decision-template NEW_FILE.json]", "gwt assess-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json [--timeout-ms MILLISECONDS]", "gwt export-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json --output NEW_CASE.json [--timeout-ms MILLISECONDS]", "gwt scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]", "gwt compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]", "gwt corpus CASE.json ...", "gwt test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]", "gwt migrate-corpus CORPUS.json --engines ENGINES.json [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decisions-template NEW_FILE.json]", "gwt assess-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json [--timeout-ms MILLISECONDS]", "gwt export-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json --output NEW_CORPUS.json [--timeout-ms MILLISECONDS]", "gwt review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--decisions-template NEW_FILE.json] [--import-root DIRECTORY]", "gwt assess-review CORPUS.json --candidate FILE.gwt --decisions DECISIONS.json [--import-root DIRECTORY]"], "status": "experimental native language subset; see docs/native-semantics.md"}),
+            json!({"usage": ["gwt version [--json] | --version | -V", "gwt policy-diff BASELINE.gwt CANDIDATE.gwt --request NAME [--text]", "gwt run|capture|profile ENTRY.gwt [--import-root DIRECTORY] [--limits FILE.json] (exactly one entry scenario)", "gwt validate FILE.gwt [--import-root DIRECTORY] [--limits FILE.json] [--allow-no-scenarios] [--html NEW_REPORT.html]", "gwt format FILE.gwt [--check | --write]", "gwt format-editor < snapshot.json", "gwt outline-editor < snapshot.json", "gwt check-editor < snapshot.json", "gwt complete-editor < snapshot.json","gwt expression EXPRESSION TYPES.json INPUT.json", "gwt check FILE.gwt [--import-root DIRECTORY]", "gwt inspect FILE.gwt [--import-root DIRECTORY]", "gwt test FILE.gwt [--import-root DIRECTORY] [--limits FILE.json]", "gwt profile FILE.gwt [--request NAME --input INPUT.json | --scenario NAME] [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --request NAME --input INPUT.json [--import-root DIRECTORY] [--limits FILE.json]", "gwt run FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt capture FILE.gwt --scenario NAME [--import-root DIRECTORY] [--limits FILE.json]", "gwt replay CASE.json", "gwt migrate CASE.json --previous-engine EXECUTABLE [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decision-template NEW_FILE.json]", "gwt assess-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json [--timeout-ms MILLISECONDS]", "gwt export-migration CASE.json --previous-engine EXECUTABLE --decision DECISION.json --output NEW_CASE.json [--timeout-ms MILLISECONDS]", "gwt scenario-from-case CASE.json [--name NAME] [--output NEW_DIRECTORY]", "gwt compare CASE.json --candidate FILE.gwt [--import-root DIRECTORY]", "gwt corpus CASE.json ...", "gwt test-cases CORPUS.json --candidate FILE.gwt --match outcomes-and-state|execution [--import-root DIRECTORY]", "gwt migrate-corpus CORPUS.json --engines ENGINES.json [--timeout-ms MILLISECONDS] [--html NEW_REVIEW.html] [--decisions-template NEW_FILE.json]", "gwt assess-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json [--timeout-ms MILLISECONDS]", "gwt export-corpus-migration CORPUS.json --engines ENGINES.json --decisions DECISIONS.json --output NEW_CORPUS.json [--timeout-ms MILLISECONDS]", "gwt review CORPUS.json --candidate FILE.gwt [--html REVIEW.html] [--decisions-template NEW_FILE.json] [--import-root DIRECTORY]", "gwt assess-review CORPUS.json --candidate FILE.gwt --decisions DECISIONS.json [--import-root DIRECTORY]"], "status": "experimental native language subset; see docs/native-semantics.md"}),
         ));
     }
     if args
