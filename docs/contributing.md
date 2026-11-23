@@ -44,6 +44,11 @@ To run a single proof, append `--harness` and its name.
   calls the binding reader. This harness replaces the dispatch method after the
   entry check with a panic, so reaching dispatch also fails the proof. Coverage
   goals exercise equality and strict excess.
+- `half_even_midpoints_select_even_neighbor` checks rounding at `k + ½` for
+  every signed 8-bit integer `k` (including the upper neighbor 128). Kani calls
+  the shared rounding function with 16-bit integers, which represent every
+  intermediate exactly in this domain. The Rust unit suite independently runs
+  the same property exhaustively with the engine's production `BigInt` type.
 
 ## Site and example generation
 
